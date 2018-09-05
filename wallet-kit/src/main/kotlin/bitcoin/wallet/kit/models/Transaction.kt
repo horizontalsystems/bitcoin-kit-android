@@ -68,12 +68,12 @@ open class Transaction() : RealmObject() {
         version = input.readInt()
 
         val txInCount = input.readVarInt() // do not store count
-        for (i in 0..txInCount.toInt()) {
+        repeat(txInCount.toInt()) {
             txIns.add(TxIn(input))
         }
 
         val txOutCount = input.readVarInt() // do not store count
-        for (i in 0..txOutCount.toInt()) {
+        repeat(txOutCount.toInt()) {
             txOuts.add(TxOut(input))
         }
 
