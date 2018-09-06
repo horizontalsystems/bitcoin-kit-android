@@ -1,13 +1,13 @@
 package bitcoin.wallet.kit.network
 
+import bitcoin.wallet.kit.models.Block
 import bitcoin.walllet.kit.utils.HashUtils
-
 
 /**
  * <p>NetworkParameters contains the data needed for working with an instantiation of a Bitcoin chain.</p>
  */
 
-abstract class NetworkParameters{
+abstract class NetworkParameters {
 
     /** The string returned by getId() for the main, production network where people trade things.  */
     val ID_MAINNET = "org.bitcoin.production"
@@ -25,20 +25,20 @@ abstract class NetworkParameters{
 
     abstract var id: String
 
-     abstract var port: Int
+    abstract var port: Int
 
     // Indicates message origin network and is used to seek to the next message when stream state is unknown.
-     abstract var packetMagic: Long
+    abstract var packetMagic: Long
 
-     abstract var bip32HeaderPub: Int
-     abstract var bip32HeaderPriv: Int
-     abstract var addressHeader: Int
-     abstract var scriptAddressHeader: Int
-     abstract var coinType: Int
+    abstract var bip32HeaderPub: Int
+    abstract var bip32HeaderPriv: Int
+    abstract var addressHeader: Int
+    abstract var scriptAddressHeader: Int
+    abstract var coinType: Int
 
-     abstract var dnsSeeds: Array<String>
+    abstract var dnsSeeds: Array<String>
 
-     abstract var paymentProtocolId: String
+    abstract var paymentProtocolId: String
 
     fun isMainNet(): Boolean {
         return id == ID_MAINNET
@@ -69,6 +69,8 @@ abstract class NetworkParameters{
      */
     val zeroHashBytes = HashUtils
             .toBytesAsLittleEndian("0000000000000000000000000000000000000000000000000000000000000000")
+
+    abstract val checkpointBlock: Block
 
     fun magicAsUInt32ByteArray(): ByteArray {
         return longToUInt32ByteArray(packetMagic)
