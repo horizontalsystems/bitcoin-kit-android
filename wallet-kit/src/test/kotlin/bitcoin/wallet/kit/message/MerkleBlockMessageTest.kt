@@ -27,7 +27,7 @@ class MerkleBlockMessageTest {
         val merkleBlock = message.merkleBlock
 
         Assert.assertEquals(expectedBlockHash, TestHelper.byteArrayToHex(merkleBlock.blockHash))
-        Assert.assertArrayEquals(expectedTransactionHashes, merkleBlock.associatedTransactionHashes.map { TestHelper.byteArrayToHex(it) }.toTypedArray())
+        Assert.assertArrayEquals(expectedTransactionHashes, merkleBlock.associatedTransactionHexes.toTypedArray())
     }
 
 }
