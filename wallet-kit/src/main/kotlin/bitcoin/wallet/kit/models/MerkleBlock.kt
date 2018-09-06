@@ -1,5 +1,6 @@
 package bitcoin.wallet.kit.models
 
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.exceptions.InvalidMerkleBlockException
 import bitcoin.wallet.kit.utils.MerkleBranch
 import bitcoin.walllet.kit.io.BitcoinInput
@@ -22,8 +23,8 @@ class MerkleBlock(input: BitcoinInput) {
     var hashes: Array<ByteArray> = arrayOf()
     var flags: ByteArray = byteArrayOf()
 
-    var associatedTransactionHashes: MutableList<ByteArray> = mutableListOf()
-    val associatedTransactions: MutableList<Transaction> = mutableListOf()
+    var associatedTransactionHexes = listOf<String>()
+    val associatedTransactions = mutableListOf<Transaction>()
     val blockHash: ByteArray by lazy {
         HashUtils.doubleSha256(header.toByteArray())
     }
@@ -58,7 +59,10 @@ class MerkleBlock(input: BitcoinInput) {
 
         flags = input.readBytes(flagsCount.toInt())
 
-        val merkleRoot = MerkleBranch(txCount, hashes, flags).calculateMerkleRoot(associatedTransactionHashes)
+        val matchedHashes = mutableListOf<ByteArray>()
+        val merkleRoot = MerkleBranch(txCount, hashes, flags).calculateMerkleRoot(matchedHashes)
+        associatedTransactionHexes = matchedHashes.map { it.toHexString() }
+
         if (!header.merkleHash.contentEquals(merkleRoot)) {
             throw InvalidMerkleBlockException("Merkle root is not valid")
         }

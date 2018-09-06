@@ -2,16 +2,15 @@ package bitcoin.wallet.kit.network
 
 import android.content.Context
 import bitcoin.wallet.kit.TestHelper
+import bitcoin.wallet.kit.core.hexStringToByteArray
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.messages.*
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.InventoryItem
 import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.walllet.kit.io.BitcoinInput
-import com.nhaarman.mockito_kotlin.argumentCaptor
-import com.nhaarman.mockito_kotlin.reset
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockito_kotlin.*
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.internal.RealmCore
@@ -24,6 +23,7 @@ import org.mockito.Mockito.mock
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
+import java.util.*
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Peer::class, Realm::class, RealmConfiguration::class, RealmCore::class)
@@ -100,14 +100,16 @@ class PeerTest {
         val anyException = Exception()
 
         val headerHashes = arrayOf(
-                "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1".toByteArray(),
-                "0000000000000027d222eb8a315aae9e437f907edd85ce9ec6ef4a3de3ee2d2f".toByteArray()
+                "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1",
+                "0000000000000027d222eb8a315aae9e437f907edd85ce9ec6ef4a3de3ee2d2f"
         )
 
-        peer.requestMerkleBlocks(headerHashes)
+        peer.requestMerkleBlocks(headerHashes.map { it.hexStringToByteArray() }.toTypedArray())
         peer.disconnected(anyException)
 
-        verify(listener).disconnected(peer, anyException, headerHashes)
+        verify(listener).disconnected(eq(peer), eq(anyException), argThat {
+            Arrays.equals(headerHashes, this.map { it.toHexString() }.toTypedArray())
+        })
     }
 
     // when
@@ -118,23 +120,25 @@ class PeerTest {
     // it notifies us about error with list of not processed block hashes
     @Test
     fun requestMerkleBlocks_onFailedOne() {
-        val successMerkleBlockHash = "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1".toByteArray()
-        val failureMerkleBlockHash = "0000000000000027d222eb8a315aae9e437f907edd85ce9ec6ef4a3de3ee2d2f".toByteArray()
+        val successMerkleBlockHash = "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1"
+        val failureMerkleBlockHash = "0000000000000027d222eb8a315aae9e437f907edd85ce9ec6ef4a3de3ee2d2f"
 
-        val headerHashes = arrayOf(successMerkleBlockHash, failureMerkleBlockHash)
+        val headerHashes = arrayOf(successMerkleBlockHash.hexStringToByteArray(), failureMerkleBlockHash.hexStringToByteArray())
 
         val successMerkleBlock = mock(MerkleBlock::class.java)
         val successMerkleBlockMessage = mock(MerkleBlockMessage::class.java)
 
         whenever(successMerkleBlockMessage.merkleBlock).thenReturn(successMerkleBlock)
-        whenever(successMerkleBlock.blockHash).thenReturn(successMerkleBlockHash)
-        whenever(successMerkleBlock.associatedTransactionHashes).thenReturn(mutableListOf())
+        whenever(successMerkleBlock.blockHash).thenReturn(successMerkleBlockHash.hexStringToByteArray())
+        whenever(successMerkleBlock.associatedTransactionHexes).thenReturn(mutableListOf())
 
         peer.requestMerkleBlocks(headerHashes)
         peer.onMessage(successMerkleBlockMessage)
         peer.disconnected()
 
-        verify(listener).disconnected(peer, null, arrayOf(failureMerkleBlockHash))
+        verify(listener).disconnected(eq(peer), eq(null), argThat {
+            Arrays.equals(arrayOf(failureMerkleBlockHash), this.map { it.toHexString() }.toTypedArray())
+        })
     }
 
 
@@ -149,7 +153,7 @@ class PeerTest {
 
         whenever(merkleBlockMessage.merkleBlock).thenReturn(merkleBlock)
         whenever(merkleBlock.blockHash).thenReturn(byteArrayOf(1, 2))
-        whenever(merkleBlock.associatedTransactionHashes).thenReturn(mutableListOf())
+        whenever(merkleBlock.associatedTransactionHexes).thenReturn(mutableListOf())
 
         peer.onMessage(merkleBlockMessage)
 
@@ -167,13 +171,14 @@ class PeerTest {
     @Test
     fun onMessage_MerkleBlockMessage_withOneTransaction() {
         // given
-        val txHash = "d4a3974699818360b76bc62f4ec61d4a8ccb9abe161a24572644007bd85f2aaa".toByteArray()
+        val txHash = "d4a3974699818360b76bc62f4ec61d4a8ccb9abe161a24572644007bd85f2aaa"
 
         val merkleBlock = mock(MerkleBlock::class.java)
         val merkleBlockMessage = mock(MerkleBlockMessage::class.java)
 
         whenever(merkleBlockMessage.merkleBlock).thenReturn(merkleBlock)
-        whenever(merkleBlock.associatedTransactionHashes).thenReturn(mutableListOf(txHash))
+        whenever(merkleBlock.blockHash).thenReturn("0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1".hexStringToByteArray())
+        whenever(merkleBlock.associatedTransactionHexes).thenReturn(listOf(txHash))
 
         peer.onMessage(merkleBlockMessage)
 
@@ -182,7 +187,7 @@ class PeerTest {
         val txMessage = mock(TransactionMessage::class.java)
 
         whenever(txMessage.transaction).thenReturn(transaction)
-        whenever(transaction.txHash).thenReturn(txHash)
+        whenever(transaction.txHash).thenReturn(txHash.hexStringToByteArray())
         whenever(merkleBlock.associatedTransactions).thenReturn(mutableListOf(transaction))
 
         peer.onMessage(txMessage)
@@ -201,16 +206,16 @@ class PeerTest {
     @Test
     fun requestMerkleBlocks_allCompleted() {
         // given
-        val merkleBlockHash = "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1".toByteArray()
-        peer.requestMerkleBlocks(arrayOf(merkleBlockHash))
+        val merkleBlockHash = "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1"
+        peer.requestMerkleBlocks(arrayOf(merkleBlockHash.hexStringToByteArray()))
 
         // when
         val merkleBlock = mock(MerkleBlock::class.java)
         val merkleBlockMessage = mock(MerkleBlockMessage::class.java)
 
         whenever(merkleBlockMessage.merkleBlock).thenReturn(merkleBlock)
-        whenever(merkleBlock.blockHash).thenReturn(merkleBlockHash)
-        whenever(merkleBlock.associatedTransactionHashes).thenReturn(mutableListOf())
+        whenever(merkleBlock.blockHash).thenReturn(merkleBlockHash.hexStringToByteArray())
+        whenever(merkleBlock.associatedTransactionHexes).thenReturn(mutableListOf())
 
         peer.onMessage(merkleBlockMessage)
 

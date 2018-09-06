@@ -1,5 +1,7 @@
 package bitcoin.wallet.kit.network
 
+import bitcoin.wallet.kit.core.hexStringToByteArray
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.messages.*
 import bitcoin.wallet.kit.models.Header
@@ -25,7 +27,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     var isFree = true
 
     private val peerConnection = PeerConnection(host, network, this)
-    private var requestedMerkleBlocks: MutableMap<ByteArray, MerkleBlock?> = mutableMapOf()
+    private var requestedMerkleBlocks: MutableMap<String, MerkleBlock?> = mutableMapOf()
     private var relayedTransactions: MutableMap<ByteArray, Transaction> = mutableMapOf()
 
     fun start() {
@@ -46,7 +48,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     }
 
     override fun requestMerkleBlocks(headerHashes: Array<ByteArray>) {
-        requestedMerkleBlocks.plusAssign(headerHashes.map { it to null }.toMap())
+        requestedMerkleBlocks.plusAssign(headerHashes.map { it.toHexString() to null }.toMap())
 
         peerConnection.sendMessage(GetDataMessage(InventoryItem.MSG_FILTERED_BLOCK, headerHashes))
         isFree = false
@@ -76,19 +78,19 @@ class Peer(val host: String, private val network: NetworkParameters, private val
             is HeadersMessage -> listener.onReceiveHeaders(message.headers)
             is MerkleBlockMessage -> {
                 val merkleBlock = message.merkleBlock
-                requestedMerkleBlocks[merkleBlock.blockHash] = merkleBlock
+                requestedMerkleBlocks[merkleBlock.blockHash.toHexString()] = merkleBlock
 
-                if (merkleBlock.associatedTransactionHashes.isEmpty()) {
+                if (merkleBlock.associatedTransactionHexes.isEmpty()) {
                     merkleBlockCompleted(merkleBlock)
                 }
             }
             is TransactionMessage -> {
                 val transaction = message.transaction
 
-                val merkleBlock = requestedMerkleBlocks.values.filterNotNull().firstOrNull { it.associatedTransactionHashes.contains(transaction.txHash) }
+                val merkleBlock = requestedMerkleBlocks.values.filterNotNull().firstOrNull { it.associatedTransactionHexes.contains(transaction.txHash.toHexString()) }
                 if (merkleBlock != null) {
                     merkleBlock.addTransaction(transaction)
-                    if (merkleBlock.associatedTransactionHashes.size == merkleBlock.associatedTransactions.size) {
+                    if (merkleBlock.associatedTransactionHexes.size == merkleBlock.associatedTransactions.size) {
                         merkleBlockCompleted(merkleBlock)
                     }
                 } else {
@@ -140,14 +142,14 @@ class Peer(val host: String, private val network: NetworkParameters, private val
 
     private fun merkleBlockCompleted(merkleBlock: MerkleBlock) {
         listener.onReceiveMerkleBlock(merkleBlock)
-        requestedMerkleBlocks.minusAssign(merkleBlock.blockHash)
+        requestedMerkleBlocks.minusAssign(merkleBlock.blockHash.toHexString())
         if (requestedMerkleBlocks.isEmpty()) {
             isFree = true
         }
     }
 
     override fun disconnected(e: Exception?) {
-        listener.disconnected(this, e, requestedMerkleBlocks.keys.toTypedArray())
+        listener.disconnected(this, e, requestedMerkleBlocks.keys.map { it.hexStringToByteArray() }.toTypedArray())
     }
 
 }
