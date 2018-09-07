@@ -18,6 +18,31 @@ object Fixtures {
         }
     }
 
+    var block1 = Block().apply {
+        height = 2013 // 538269
+        header = Header().apply {
+            version = 1
+            prevHash = HashUtils.toBytesAsLittleEndian("00000000000000000011206e641083b68ffc41b7fe6ee1af4a5d69995d1b2d0e")
+            merkleHash = HashUtils.toBytesAsLittleEndian("5510c0c3d1fd9d2b56a34aab98c29860015caf248fa62a1907b197ddec17c788")
+            timestamp = 1535128609
+            bits = 388763047
+            nonce = 2295801359
+        }
+    }
+
+    var block2 = Block().apply {
+        height = 2014 // 538270
+        header = Header().apply {
+            version = 1
+            prevHash = HashUtils.toBytesAsLittleEndian("0000000000000000000a876dbca5804f792afa90b6dc7946dedb5866245d0c55")
+            merkleHash = HashUtils.toBytesAsLittleEndian("ccf2737e44e435e2e11481755b00d161815a24e605d605a17bf20da49320ad7d")
+            timestamp = 1535128839
+            bits = 388763047
+            nonce = 3401296263
+        }
+        previousBlock = block1
+    }
+
     var block3 = Block().apply {
         height = 2015 // 538271
         header = Header().apply {
@@ -28,6 +53,7 @@ object Fixtures {
             bits = 388763047
             nonce = 59591417
         }
+        previousBlock = block2
     }
 
     var checkpointBlock2 = Block().apply {

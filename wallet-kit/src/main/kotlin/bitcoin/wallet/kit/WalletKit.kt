@@ -57,9 +57,8 @@ class WalletKit {
 
         peerGroup = PeerGroup(peerManager, network, 1)
         peerGroup.setBloomFilter(filters)
-        peerGroup.listener = Syncer(peerGroup)
+        peerGroup.listener = Syncer(realmFactory, peerGroup, network)
         peerGroup.start()
-
     }
 
     private fun getRealmConfig(): RealmConfiguration {

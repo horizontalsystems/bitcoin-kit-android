@@ -1,20 +1,24 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.blocks.BlockSyncer
+import bitcoin.wallet.kit.core.RealmFactory
+import bitcoin.wallet.kit.headers.HeaderHandler
 import bitcoin.wallet.kit.headers.HeaderSyncer
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.InventoryItem
 import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
+import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.walllet.kit.io.BitcoinInput
 import java.util.logging.Level
 import java.util.logging.Logger
 
-class Syncer(peerGroup: PeerGroup) : PeerGroup.Listener {
+class Syncer(realmFactory: RealmFactory, peerGroup: PeerGroup, network: NetworkParameters) : PeerGroup.Listener {
     private val logger = Logger.getLogger("Syncer")
-    private val headerSyncer = HeaderSyncer(peerGroup)
-    private val blockSyncer = BlockSyncer(peerGroup)
+    private val headerSyncer = HeaderSyncer(realmFactory, peerGroup, network)
+    private val headerHandler = HeaderHandler(realmFactory, network)
+    private val blockSyncer = BlockSyncer(realmFactory, peerGroup)
 
     enum class SyncStatus {
         Syncing, Synced, Error
@@ -31,7 +35,7 @@ class Syncer(peerGroup: PeerGroup) : PeerGroup.Listener {
     }
 
     override fun onReceiveHeaders(headers: Array<Header>) {
-//        TODO("not implemented")
+        headerHandler.handle(headers)
     }
 
     override fun onReceiveMerkleBlock(merkleBlock: MerkleBlock) {
@@ -48,8 +52,6 @@ class Syncer(peerGroup: PeerGroup) : PeerGroup.Listener {
     }
 
     override fun getTransaction(hash: String): Transaction {
-//        TODO("not implemented")
         return Transaction(BitcoinInput(byteArrayOf()))
     }
-
 }
