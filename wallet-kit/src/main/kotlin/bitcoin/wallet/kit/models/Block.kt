@@ -16,6 +16,8 @@ import io.realm.annotations.PrimaryKey
  *  Variable    Transactions    The transactions in the block
  */
 open class Block : RealmObject() {
+    @PrimaryKey
+    var reversedHeaderHashHex = ""
 
     var synced = false
     var height: Int = 0
@@ -33,9 +35,13 @@ open class Block : RealmObject() {
             reversedHeaderHashHex = HashUtils.toHexString(value.reversedArray())
         }
 
-    @PrimaryKey
-    var reversedHeaderHashHex = ""
     var previousBlock: Block? = null
+        set(value) {
+            field = value
+            value?.let {
+                height = value.height + 1
+            }
+        }
 
     @LinkingObjects("block")
     val transactions: RealmResults<Transaction>? = null
