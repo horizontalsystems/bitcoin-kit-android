@@ -1,5 +1,7 @@
 package bitcoin.wallet.kit.network
 
+import bitcoin.wallet.kit.models.Block
+
 class RegTest : TestNet() {
 
     override var id: String = ID_REGTEST
@@ -14,5 +16,7 @@ class RegTest : TestNet() {
     )
 
     override var paymentProtocolId: String = PAYMENT_PROTOCOL_ID_REGTEST
+
+    override val checkpointBlock = Block()
 
 }

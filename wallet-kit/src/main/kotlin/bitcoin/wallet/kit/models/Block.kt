@@ -1,8 +1,10 @@
 package bitcoin.wallet.kit.models
 
+import bitcoin.walllet.kit.utils.HashUtils
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.annotations.LinkingObjects
+import io.realm.annotations.PrimaryKey
 
 /**
  * Block
@@ -18,6 +20,21 @@ open class Block : RealmObject() {
     var synced = false
     var height: Int = 0
     var header: Header? = null
+        set(value) {
+            field = value
+            value?.let {
+                headerHash = value.hash
+            }
+        }
+
+    var headerHash: ByteArray = byteArrayOf()
+        set(value) {
+            field = value
+            reversedHeaderHashHex = HashUtils.toHexString(value.reversedArray())
+        }
+
+    @PrimaryKey
+    var reversedHeaderHashHex = ""
     var previousBlock: Block? = null
 
     @LinkingObjects("block")

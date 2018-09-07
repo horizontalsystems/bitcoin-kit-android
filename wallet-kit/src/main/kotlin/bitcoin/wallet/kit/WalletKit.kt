@@ -1,6 +1,7 @@
 package bitcoin.wallet.kit
 
 import android.content.Context
+import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.Mnemonic
@@ -40,6 +41,8 @@ class WalletKit {
     private var peerGroup: PeerGroup
 
     init {
+        val realmFactory = RealmFactory(getRealmConfig())
+
         //todo make network switch to select networkParameters
         val network = MainNet()
         val wallet = Wallet(network)
@@ -54,23 +57,21 @@ class WalletKit {
 
         peerGroup = PeerGroup(peerManager, network, 1)
         peerGroup.setBloomFilter(filters)
-        peerGroup.listener = Syncer(peerGroup)
+        peerGroup.listener = Syncer(realmFactory, peerGroup, network)
         peerGroup.start()
+    }
 
+    private fun getRealmConfig(): RealmConfiguration {
+        return RealmConfiguration.Builder()
+                .name("kit")
+                .deleteRealmIfMigrationNeeded()
+                .modules(WalletKitModule())
+                .build()
     }
 
     companion object {
         fun init(context: Context) {
             Realm.init(context)
-
-            val config = RealmConfiguration.Builder()
-                    .name("kit")
-                    .deleteRealmIfMigrationNeeded()
-                    .modules(WalletKitModule())
-                    .build()
-
-            Realm.setDefaultConfiguration(config)
-
             WalletKit()
         }
     }
