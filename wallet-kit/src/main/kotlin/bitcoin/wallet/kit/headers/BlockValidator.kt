@@ -32,7 +32,7 @@ class BlockValidator {
         }
 
         val blockHeader = block.header
-        if (blockHeader == null || blockHeader.prevHash != previousBlock.headerHash) {
+        if (blockHeader == null || !blockHeader.prevHash.contentEquals(previousBlock.headerHash)) {
             throw InvalidBlock(ValidatorError.WrongPreviousHeaderHash)
         }
     }
