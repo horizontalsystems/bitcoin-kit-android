@@ -10,6 +10,8 @@ import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.network.PeerGroup
+import bitcoin.wallet.kit.transactions.TransactionHandler
+import bitcoin.wallet.kit.transactions.TransactionProcessor
 import bitcoin.walllet.kit.io.BitcoinInput
 import java.util.logging.Level
 import java.util.logging.Logger
@@ -19,6 +21,7 @@ class Syncer(realmFactory: RealmFactory, peerGroup: PeerGroup, network: NetworkP
     private val headerSyncer = HeaderSyncer(realmFactory, peerGroup, network)
     private val headerHandler = HeaderHandler(realmFactory, network)
     private val blockSyncer = BlockSyncer(realmFactory, peerGroup)
+    private val transactionHandler = TransactionHandler(realmFactory, TransactionProcessor(), ProgressSyncer())
 
     enum class SyncStatus {
         Syncing, Synced, Error
@@ -31,7 +34,7 @@ class Syncer(realmFactory: RealmFactory, peerGroup: PeerGroup, network: NetworkP
             logger.log(Level.SEVERE, "Header Syncer Error", e)
         }
 
-        blockSyncer.run()
+        blockSyncer.enqueueRun()
     }
 
     override fun onReceiveHeaders(headers: Array<Header>) {
@@ -39,7 +42,7 @@ class Syncer(realmFactory: RealmFactory, peerGroup: PeerGroup, network: NetworkP
     }
 
     override fun onReceiveMerkleBlock(merkleBlock: MerkleBlock) {
-//        TODO("not implemented")
+        transactionHandler.handle(merkleBlock.associatedTransactions.toTypedArray(), merkleBlock.header)
     }
 
     override fun onReceiveTransaction(transaction: Transaction) {
