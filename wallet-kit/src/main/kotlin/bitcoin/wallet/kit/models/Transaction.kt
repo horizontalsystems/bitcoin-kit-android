@@ -6,6 +6,7 @@ import bitcoin.walllet.kit.utils.HashUtils
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
+import io.realm.annotations.PrimaryKey
 import java.io.IOException
 
 /**
@@ -62,6 +63,29 @@ open class Transaction() : RealmObject() {
     }
 
     var block: Block? = null
+
+    @PrimaryKey
+    var reversedHashHex = ""
+
+    enum class Status {
+        NEW, RELAYED, INVALID
+    }
+
+    // To store enum field value in Realm we need int representation
+    private var statusInt: Int? = null
+
+    var status: Status?
+        get() {
+            statusInt.let { tmpStatusInt ->
+                return when (tmpStatusInt) {
+                    null -> null
+                    else -> Status.values()[tmpStatusInt]
+                }
+            }
+        }
+        set(value) {
+            statusInt = value?.ordinal
+        }
 
     @Throws(IOException::class)
     constructor(input: BitcoinInput) : this() {
