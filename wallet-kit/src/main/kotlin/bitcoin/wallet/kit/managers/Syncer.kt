@@ -22,7 +22,7 @@ class Syncer(realmFactory: RealmFactory, peerGroup: PeerGroup, network: NetworkP
     private val headerSyncer = HeaderSyncer(realmFactory, peerGroup, network)
     private val headerHandler = HeaderHandler(realmFactory, network)
     private val blockSyncer = BlockSyncer(realmFactory, peerGroup)
-    private val transactionHandler = TransactionHandler(realmFactory, TransactionProcessor(), ProgressSyncer())
+    private val transactionHandler = TransactionHandler(realmFactory, TransactionProcessor(realmFactory), ProgressSyncer())
     private val transactionSender = TransactionSender(realmFactory, peerGroup)
 
     enum class SyncStatus {

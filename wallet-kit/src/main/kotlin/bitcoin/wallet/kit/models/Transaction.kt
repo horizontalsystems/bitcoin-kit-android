@@ -21,7 +21,7 @@ import java.io.IOException
  *  Variable    TxOuts          Outputs
  *  4 bytes     LockTime        Transaction lock time
  */
-open class Transaction() : RealmObject() {
+open class Transaction : RealmObject {
 
     /**
      * int32_t, transaction data format version (signed)
@@ -62,6 +62,8 @@ open class Transaction() : RealmObject() {
         HashUtils.doubleSha256(toByteArray())
     }
 
+    var processed: Boolean = false
+
     var block: Block? = null
 
     @PrimaryKey
@@ -87,8 +89,10 @@ open class Transaction() : RealmObject() {
             statusInt = value?.ordinal
         }
 
+    constructor()
+
     @Throws(IOException::class)
-    constructor(input: BitcoinInput) : this() {
+    constructor(input: BitcoinInput) {
         version = input.readInt()
 
         val txInCount = input.readVarInt() // do not store count
