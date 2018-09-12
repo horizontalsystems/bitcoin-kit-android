@@ -74,19 +74,12 @@ open class Transaction : RealmObject {
     }
 
     // To store enum field value in Realm we need int representation
-    private var statusInt: Int? = null
+    private var statusInt: Int = Status.RELAYED.ordinal
 
-    var status: Status?
-        get() {
-            statusInt.let { tmpStatusInt ->
-                return when (tmpStatusInt) {
-                    null -> null
-                    else -> Status.values()[tmpStatusInt]
-                }
-            }
-        }
+    var status: Status
+        get() = Status.values()[statusInt]
         set(value) {
-            statusInt = value?.ordinal
+            statusInt = value.ordinal
         }
 
     constructor()
