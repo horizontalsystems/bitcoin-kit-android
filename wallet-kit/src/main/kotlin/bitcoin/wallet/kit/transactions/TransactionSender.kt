@@ -13,10 +13,11 @@ class TransactionSender(private val realmFactory: RealmFactory, private val peer
         }
     }
 
-    private fun run() {
-        val realm = realmFactory.realm
-
-        val nonSentTransactions = realm.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW.ordinal).findAll()
+    fun run() {
+        val nonSentTransactions = realmFactory.realm
+                .where(Transaction::class.java)
+                .equalTo("statusInt", Transaction.Status.NEW.ordinal)
+                .findAll()
 
         nonSentTransactions.forEach {
             peerGroup.relay(it)
