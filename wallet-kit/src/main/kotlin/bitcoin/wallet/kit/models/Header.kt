@@ -25,15 +25,12 @@ open class Header : RealmObject {
     var version: Int = 0
 
     // The hash value of the previous block this particular block references
-    // @JsonSerialize(using = HashSerializer::class)
     var prevHash: ByteArray = byteArrayOf()
 
     // The reference to a Merkle tree collection which is a hash of all transactions related to this block
-    // @JsonSerialize(using = HashSerializer::class)
     var merkleHash: ByteArray = byteArrayOf()
 
     // Uint32, A timestamp recording when this block was created (Will overflow in 2106)
-    // @JsonSerialize(using = TimestampSerializer::class)
     var timestamp: Long = 0
 
     // Uint32, The calculated difficulty target being used for this block

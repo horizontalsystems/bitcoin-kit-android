@@ -19,7 +19,6 @@ open class TxOut : RealmObject {
     /**
      * int64, Transaction Value
      */
-    // @JsonSerialize(using = SatoshiSerializer::class)
     var value: Long = 0
 
     /**

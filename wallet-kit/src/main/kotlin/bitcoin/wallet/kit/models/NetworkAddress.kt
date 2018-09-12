@@ -3,10 +3,7 @@ package bitcoin.wallet.kit.models
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
-import bitcoin.walllet.kit.serializer.IPv6Serializer
-import bitcoin.walllet.kit.serializer.TimestampSerializer
 import bitcoin.walllet.kit.utils.NetworkUtils
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.IOException
 import java.net.InetAddress
 
@@ -23,7 +20,6 @@ import java.net.InetAddress
 class NetworkAddress {
 
     // Uint32, the Time (version >= 31402). Not present in version message.
-    @JsonSerialize(using = TimestampSerializer::class)
     var time: Long = 0
 
     // Uint64, same service(s) listed in version
@@ -31,7 +27,6 @@ class NetworkAddress {
 
     // 16 bytes IPv6 address. Network byte order. The IPv4 address is 12 bytes
     // 00 00 00 00 00 00 00 00 00 00 FF FF, followed by the 4 bytes of the IPv4 address
-    @JsonSerialize(using = IPv6Serializer::class)
     lateinit var address: ByteArray
 
     // Uint16, port number
