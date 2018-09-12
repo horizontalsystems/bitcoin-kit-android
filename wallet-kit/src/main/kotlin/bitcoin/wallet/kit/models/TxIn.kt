@@ -21,7 +21,6 @@ open class TxIn : RealmObject {
 
     var previousOutput: OutPoint? = null
 
-    // @JsonSerialize(using = HexSerializer::class)
     var sigScript: ByteArray = byteArrayOf()
 
     /**

@@ -2,8 +2,6 @@ package bitcoin.wallet.kit.models
 
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
-import bitcoin.walllet.kit.serializer.HashSerializer
-import com.fasterxml.jackson.databind.annotation.JsonSerialize
 import java.io.IOException
 
 /**
@@ -20,7 +18,6 @@ class InventoryItem {
     var type: Int = 0
 
     // 32-bytes hash
-    @JsonSerialize(using = HashSerializer::class)
     lateinit var hash: ByteArray
 
     constructor()
