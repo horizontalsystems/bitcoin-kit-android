@@ -2,8 +2,9 @@ package bitcoin.wallet.kit.hdwallet
 
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.hdwallet.HDKey
+import io.realm.RealmObject
 
-class PublicKey() {
+class PublicKey() : RealmObject() {
 
     var index = 0
     var external = true

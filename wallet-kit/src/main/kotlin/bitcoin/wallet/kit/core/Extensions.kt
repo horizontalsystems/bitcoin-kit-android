@@ -6,6 +6,7 @@ fun ByteArray.toHexString(): String {
     }
 }
 
+@Throws(NumberFormatException::class)
 fun String.hexStringToByteArray(): ByteArray {
     return ByteArray(this.length / 2) {
         this.substring(it * 2, it * 2 + 2).toInt(16).toByte()
