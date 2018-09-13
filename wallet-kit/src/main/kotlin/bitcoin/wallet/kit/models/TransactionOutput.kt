@@ -9,13 +9,13 @@ import java.io.IOException
 /**
  * Transaction output
  *
- *  Size        Field               Description
- *  ====        =====               ===========
- *  8 bytes     TxOutValue          Value expressed in Satoshis (0.00000001 BTC)
- *  VarInt      TxOutScriptLength   Script length
- *  Variable    TxOutScript         Script
+ *  Size        Field                Description
+ *  ====        =====                ===========
+ *  8 bytes     OutputValue          Value expressed in Satoshis (0.00000001 BTC)
+ *  VarInt      OutputScriptLength   Script length
+ *  Variable    OutputScript         Script
  */
-open class TxOut : RealmObject {
+open class TransactionOutput : RealmObject {
 
     /**
      * int64, Transaction Value

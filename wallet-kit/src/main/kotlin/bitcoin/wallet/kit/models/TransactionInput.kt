@@ -9,15 +9,15 @@ import java.io.IOException
 /**
  * Transaction input
  *
- *  Size        Field               Description
- *  ===         =====               ===========
- *  32 bytes    TxOutHash           Double SHA-256 hash of the transaction containing the output to be used by this input
- *  4 bytes     TxOutIndex          Index of the output within the transaction
- *  VarInt      TxInScriptLength    Script length
- *  Variable    TxInScript          Script
- *  4 bytes     TxInSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
+ *  Size        Field                Description
+ *  ===         =====                ===========
+ *  32 bytes    OutputHash           Double SHA-256 hash of the transaction containing the output to be used by this input
+ *  4 bytes     OutputIndex          Index of the output within the transaction
+ *  VarInt      InputScriptLength    Script length
+ *  Variable    InputScript          Script
+ *  4 bytes     InputSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
  */
-open class TxIn : RealmObject {
+open class TransactionInput : RealmObject {
 
     var previousOutput: OutPoint? = null
 
