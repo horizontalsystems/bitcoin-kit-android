@@ -17,16 +17,11 @@ import java.io.IOException
  */
 open class TransactionOutput : RealmObject {
 
-    /**
-     * int64, Transaction Value
-     */
+    // Output value
     var value: Long = 0
 
-    /**
-     * uchar[], Usually contains the public key as a Bitcoin script setting up
-     * conditions to claim this output.
-     */
-    var pkScript: ByteArray = byteArrayOf()
+    // Output script used for authenticating that the redeemer is allowed to spend this output.
+    var lockingScript: ByteArray = byteArrayOf()
 
     var publicKey: PublicKey? = null
 
@@ -35,15 +30,15 @@ open class TransactionOutput : RealmObject {
     @Throws(IOException::class)
     constructor(input: BitcoinInput) {
         value = input.readLong()
-        val scriptLength = input.readVarInt()
-        pkScript = input.readBytes(scriptLength.toInt())
+        val scriptLength = input.readVarInt() // do not store
+        lockingScript = input.readBytes(scriptLength.toInt())
     }
 
     fun toByteArray(): ByteArray {
         return BitcoinOutput()
                 .writeLong(value)
-                .writeVarInt(pkScript.size.toLong())
-                .write(pkScript)
+                .writeVarInt(lockingScript.size.toLong())
+                .write(lockingScript)
                 .toByteArray()
     }
 }

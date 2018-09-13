@@ -23,40 +23,19 @@ import java.io.IOException
  */
 open class Transaction : RealmObject {
 
-    /**
-     * int32_t, transaction data format version (signed)
-     */
+    // Transaction version
     var version: Int = 0
 
-    /**
-     * a list of 1 or more transaction inputs or sources for coins
-     */
+    // List of transaction inputs
     var inputs = RealmList<TransactionInput>()
 
-    /**
-     * a list of 1 or more transaction outputs or destinations for coins
-     */
+    // List of transaction outputs
     var outputs = RealmList<TransactionOutput>()
 
-    /**
-     * uint32_t, the block number or timestamp at which this transaction is
-     * unlocked:
-     *
-     * 0 Not locked
-     *
-     * < 500000000 Block number at which this transaction is unlocked
-     *
-     * >= 500000000 UNIX timestamp at which this transaction is unlocked
-     *
-     * If all transaction inputs have final (0xffffffff) sequence numbers then
-     * lockTime is irrelevant. Otherwise, the transaction may not be added to a
-     * block until after lockTime (see NLockTime).
-     */
+    // Transaction lock time
     var lockTime: Long = 0
 
-    /**
-     * Get transaction hash (actually calculate the hash of transaction data).
-     */
+    // Get transaction hash (actually calculate the hash of transaction data).
     @delegate:Ignore
     val txHash: ByteArray by lazy {
         HashUtils.doubleSha256(toByteArray())

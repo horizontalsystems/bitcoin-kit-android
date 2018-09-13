@@ -2,7 +2,6 @@ package bitcoin.wallet.kit.models
 
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
-import bitcoin.walllet.kit.utils.BytesUtils
 import io.realm.RealmObject
 import java.io.IOException
 
@@ -19,19 +18,14 @@ import java.io.IOException
  */
 open class TransactionInput : RealmObject {
 
+    // The transaction output connected to this input
     var previousOutput: OutPoint? = null
 
+    // Input script
     var sigScript: ByteArray = byteArrayOf()
 
-    /**
-     * uint32, Transaction version as defined by the sender. Intended for
-     * "replacement" of transactions when information is updated before
-     * inclusion into a block.
-     */
+    // Input sequence number
     var sequence: Long = 0
-
-    val isCoinbase: Boolean
-        get() = (previousOutput?.hash != null && BytesUtils.isZeros(previousOutput?.hash))
 
     constructor()
 
