@@ -4,19 +4,17 @@ import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.hdwallet.HDKey
 import io.realm.RealmObject
 
-class PublicKey() : RealmObject() {
+open class PublicKey() : RealmObject() {
 
     var index = 0
     var external = true
     var address = ""
 
-    lateinit var network: NetworkParameters
-    lateinit var publicKey: ByteArray
-    lateinit var publicKeyHash: ByteArray
+    var publicKey: ByteArray = byteArrayOf()
+    var publicKeyHash: ByteArray = byteArrayOf()
 
     constructor(index: Int, external: Boolean, key: HDKey, network: NetworkParameters) : this() {
         this.index = index
-        this.network = network
         this.external = external
         this.publicKey = key.pubKey
         this.publicKeyHash = key.pubKeyHash
