@@ -3,7 +3,7 @@ package bitcoin.wallet.kit.hdwallet
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.hdwallet.HDKey
 
-class HDWallet(private val seed: ByteArray, private val networkParams: NetworkParameters) {
+class HDWallet(private val seed: ByteArray, private val networkParams: NetworkParameters, val gapLimit: Int = 20) {
 
     private var hdKeychain: HDKeychain = HDKeychain(seed, networkParams)
 
@@ -31,6 +31,10 @@ class HDWallet(private val seed: ByteArray, private val networkParams: NetworkPa
     // Software needs to discover all used accounts after importing the seed from an external source. Such an algorithm is described in "Account discovery" chapter.
     private var account: Int = 0
 
+
+    fun publicKey(index: Int, external: Boolean): PublicKey {
+        return PublicKey(index = index, external = external, key = privateKey(index = index, chain = if (external) 0 else 1), network = networkParams)
+    }
 
     fun receiveAddress(index: Int): PublicKey {
         return PublicKey(index = index, external = true, key = privateKey(index = index, chain = 0), network = networkParams)
