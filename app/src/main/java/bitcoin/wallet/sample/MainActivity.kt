@@ -12,6 +12,9 @@ class MainActivity : AppCompatActivity() {
         // Run wallet kit
         WalletKit.init(this)
 
+        val walletKit = WalletKit(listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano"))
+        walletKit.start()
+
         setContentView(R.layout.activity_main)
     }
 }
