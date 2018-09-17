@@ -3,11 +3,14 @@ package bitcoin.wallet.kit.hdwallet
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.hdwallet.HDKey
 import io.realm.RealmObject
+import io.realm.annotations.PrimaryKey
 
 open class PublicKey() : RealmObject() {
 
     var index = 0
     var external = true
+
+    @PrimaryKey
     var address = ""
 
     var publicKey: ByteArray = byteArrayOf()
