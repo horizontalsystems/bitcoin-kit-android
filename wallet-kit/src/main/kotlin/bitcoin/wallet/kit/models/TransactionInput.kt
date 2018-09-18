@@ -17,9 +17,11 @@ import java.io.IOException
  *  4 bytes     InputSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
  */
 open class TransactionInput : RealmObject {
+    // The hash of the referenced transaction
+    var previousOutputTxHash: ByteArray = byteArrayOf()
 
-    // The transaction output connected to this input
-    var previousOutput: OutPoint? = null
+    // The index of the specific output in the transaction
+    var previousOutputIndex: Long = 0
 
     // Input script
     var sigScript: ByteArray = byteArrayOf()
@@ -31,7 +33,8 @@ open class TransactionInput : RealmObject {
 
     @Throws(IOException::class)
     constructor(input: BitcoinInput) {
-        this.previousOutput = OutPoint(input)
+        previousOutputTxHash = input.readBytes(32)
+        previousOutputIndex = input.readUnsignedInt()
         val sigScriptLength = input.readVarInt()
         sigScript = input.readBytes(sigScriptLength.toInt())
         sequence = input.readUnsignedInt()
@@ -39,7 +42,8 @@ open class TransactionInput : RealmObject {
 
     fun toByteArray(): ByteArray {
         return BitcoinOutput()
-                .write(previousOutput?.toByteArray())
+                .write(previousOutputTxHash)
+                .writeUnsignedInt(previousOutputIndex)
                 .writeVarInt(sigScript.size.toLong())
                 .write(sigScript)
                 .writeUnsignedInt(sequence)
