@@ -12,8 +12,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import bitcoin.walllet.kit.crypto.Digest;
 
-//import org.bouncycastle.jcajce.provider.digest.RIPEMD160;
-
 public class HashUtils {
 
     static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
@@ -22,15 +20,7 @@ public class HashUtils {
      * Get RipeMD160 hash.
      */
     public static byte[] ripeMd160(byte[] input) {
-        // MessageDigest digest = new RIPEMD160.Digest();
-        // digest.update(input);
-        // return digest.digest();
-
         return Digest.SHA256RIPEMD160(input);
-
-        // MessageDigest d = new RIPEMD160Digest();
-        // d.update(input, 0, input.length);
-        // return d;
     }
 
     /**

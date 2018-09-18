@@ -2,10 +2,14 @@ package bitcoin.wallet.kit.scripts
 
 import bitcoin.wallet.kit.core.toHexString
 
-class ScriptChunk(private val opcode: Int, val data: ByteArray? = null, val startLocationInScript: Int = -1) {
+class ScriptChunk(val opcode: Int, val data: ByteArray? = null, val startLocationInScript: Int = -1) {
+
+    fun equalsOpCode(opcode: Int): Boolean {
+        return opcode == this.opcode
+    }
 
     // If this chunk is a single byte of non-pushdata content
-    private fun isOpCode(): Boolean {
+    fun isOpCode(): Boolean {
         return opcode > OP_PUSHDATA4
     }
 
@@ -22,7 +26,7 @@ class ScriptChunk(private val opcode: Int, val data: ByteArray? = null, val star
                     .append("]")
         } else {
             // Small num
-            buf.append(Script.decodeFromOpN(opcode))
+            buf.append(ScriptParser.decodeFromOpN(opcode))
         }
 
         return buf.toString()
