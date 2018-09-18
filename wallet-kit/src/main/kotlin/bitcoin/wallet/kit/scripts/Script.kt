@@ -1,8 +1,13 @@
 package bitcoin.wallet.kit.scripts
 
-import bitcoin.walllet.kit.utils.HashUtils
+import bitcoin.walllet.kit.hdwallet.Utils
 
-enum class ScriptType { P2PKH, P2PK, P2SH, UNKNOWN }
+object ScriptType {
+    const val P2PKH = 1 // pay to pubkey hash (aka pay to address)
+    const val P2PK = 2  // pay to pubkey
+    const val P2SH = 3  // pay to script hash
+    const val UNKNOWN = 0
+}
 
 class Script(bytes: ByteArray) {
     var chunks = listOf<ScriptChunk>()
@@ -19,14 +24,14 @@ class Script(bytes: ByteArray) {
         if (ScriptParser.isP2PKH(this))
             return chunks[2].data
         if (ScriptParser.isP2PK(this))
-            return HashUtils.ripeMd160(chunks[0].data)
+            return Utils.sha256Hash160(chunks[0].data)
         if (ScriptParser.isP2SH(this))
             return chunks[1].data
 
         return null
     }
 
-    fun getScriptType(): ScriptType {
+    fun getScriptType(): Int {
         if (ScriptParser.isP2PKH(this))
             return ScriptType.P2PKH
         if (ScriptParser.isP2PK(this))

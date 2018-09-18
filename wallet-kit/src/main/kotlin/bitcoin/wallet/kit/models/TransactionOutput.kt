@@ -23,7 +23,13 @@ open class TransactionOutput : RealmObject {
     // Output script used for authenticating that the redeemer is allowed to spend this output.
     var lockingScript: ByteArray = byteArrayOf()
 
+    // Output transaction index
+    var index: Int = 0
+
     var publicKey: PublicKey? = null
+    var scriptType: Int = 0
+    var keyHash: ByteArray? = null
+    var address: String? = ""
 
     constructor()
 
