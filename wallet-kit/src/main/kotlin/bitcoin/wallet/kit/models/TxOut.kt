@@ -1,5 +1,6 @@
 package bitcoin.wallet.kit.models
 
+import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
 import io.realm.RealmObject
@@ -26,6 +27,8 @@ open class TxOut : RealmObject {
      * conditions to claim this output.
      */
     var pkScript: ByteArray = byteArrayOf()
+
+    var publicKey: PublicKey? = null
 
     constructor()
 

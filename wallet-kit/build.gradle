@@ -50,6 +50,7 @@ dependencies {
     // Android Instrumentation Test
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.19.1'
+    androidTestImplementation 'com.nhaarman:mockito-kotlin-kt1.1:1.6.0'
 }
 
 repositories {

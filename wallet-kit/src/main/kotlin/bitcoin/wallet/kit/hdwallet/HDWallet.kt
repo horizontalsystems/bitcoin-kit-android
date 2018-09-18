@@ -5,6 +5,10 @@ import bitcoin.walllet.kit.hdwallet.HDKey
 
 class HDWallet(private val seed: ByteArray, private val networkParams: NetworkParameters, val gapLimit: Int = 20) {
 
+    enum class Chain {
+        EXTERNAL, INTERNAL
+    }
+
     private var hdKeychain: HDKeychain = HDKeychain(seed, networkParams)
 
 
@@ -36,11 +40,11 @@ class HDWallet(private val seed: ByteArray, private val networkParams: NetworkPa
         return PublicKey(index = index, external = external, key = privateKey(index = index, chain = if (external) 0 else 1), network = networkParams)
     }
 
-    fun receiveAddress(index: Int): PublicKey {
+    fun receivePublicKey(index: Int): PublicKey {
         return PublicKey(index = index, external = true, key = privateKey(index = index, chain = 0), network = networkParams)
     }
 
-    fun changeAddress(index: Int): PublicKey {
+    fun changePublicKey(index: Int): PublicKey {
         return PublicKey(index = index, external = false, key = privateKey(index = index, chain = 1), network = networkParams)
     }
 
