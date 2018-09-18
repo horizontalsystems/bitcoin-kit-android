@@ -5,6 +5,10 @@ import bitcoin.walllet.kit.hdwallet.HDKey
 
 class HDWallet(private val seed: ByteArray, private val networkParams: NetworkParameters, val gapLimit: Int = 20) {
 
+    enum class Chain {
+        EXTERNAL, INTERNAL
+    }
+
     private var hdKeychain: HDKeychain = HDKeychain(seed, networkParams)
 
 
