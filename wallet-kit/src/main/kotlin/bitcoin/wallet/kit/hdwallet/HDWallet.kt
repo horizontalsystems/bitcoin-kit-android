@@ -36,11 +36,11 @@ class HDWallet(private val seed: ByteArray, private val networkParams: NetworkPa
         return PublicKey(index = index, external = external, key = privateKey(index = index, chain = if (external) 0 else 1), network = networkParams)
     }
 
-    fun receiveAddress(index: Int): PublicKey {
+    fun receivePublicKey(index: Int): PublicKey {
         return PublicKey(index = index, external = true, key = privateKey(index = index, chain = 0), network = networkParams)
     }
 
-    fun changeAddress(index: Int): PublicKey {
+    fun changePublicKey(index: Int): PublicKey {
         return PublicKey(index = index, external = false, key = privateKey(index = index, chain = 1), network = networkParams)
     }
 
