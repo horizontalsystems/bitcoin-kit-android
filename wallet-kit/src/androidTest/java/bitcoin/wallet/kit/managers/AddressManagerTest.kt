@@ -4,7 +4,7 @@ import bitcoin.wallet.kit.Factories
 import bitcoin.wallet.kit.TestUtils.whenever
 import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.PublicKey
-import bitcoin.wallet.kit.models.TxOut
+import bitcoin.wallet.kit.models.TransactionOutput
 import bitcoin.wallet.kit.network.PeerGroup
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.check
@@ -185,7 +185,7 @@ class AddressManagerTest {
             keyIndexes.forEach {index ->
                 val publicKey = it.copyToRealm(createPublicKey(false, index))
 
-                it.copyToRealm(TxOut().apply {
+                it.copyToRealm(TransactionOutput().apply {
                     this.publicKey = publicKey
                 })
             }
@@ -205,7 +205,7 @@ class AddressManagerTest {
             keyIndexes.forEach {index ->
                 val publicKey = it.copyToRealm(createPublicKey(true, index))
 
-                it.copyToRealm(TxOut().apply {
+                it.copyToRealm(TransactionOutput().apply {
                     this.publicKey = publicKey
                 })
             }

@@ -21,6 +21,8 @@ import org.spongycastle.crypto.digests.SHA512Digest;
 import org.spongycastle.crypto.macs.HMac;
 import org.spongycastle.crypto.params.KeyParameter;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -228,6 +230,28 @@ public class Utils {
                 (((long) bytes[offset++] & 0x00FFL) << 16) |
                 (((long) bytes[offset++] & 0x00FFL) << 8) |
                 ((long) bytes[offset] & 0x00FFL);
+    }
+
+    /** Parse 2 bytes from the stream as unsigned 16-bit integer in little endian format. */
+    public static int readUint16FromStream(InputStream is) {
+        try {
+            return (is.read() & 0xff) |
+                    ((is.read() & 0xff) << 8);
+        } catch (IOException x) {
+            throw new RuntimeException(x);
+        }
+    }
+
+    /** Parse 4 bytes from the stream as unsigned 32-bit integer in little endian format. */
+    public static long readUint32FromStream(InputStream is) {
+        try {
+            return (is.read() & 0xffl) |
+                    ((is.read() & 0xffl) << 8) |
+                    ((is.read() & 0xffl) << 16) |
+                    ((is.read() & 0xffl) << 24);
+        } catch (IOException x) {
+            throw new RuntimeException(x);
+        }
     }
 
 }

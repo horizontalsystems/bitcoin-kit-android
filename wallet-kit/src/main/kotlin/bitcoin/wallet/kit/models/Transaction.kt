@@ -15,48 +15,27 @@ import java.io.IOException
  *  Size        Field           Description
  *  ====        =====           ===========
  *  4 bytes     Version         Transaction version
- *  VarInt      TxInsCount      Number of inputs
- *  Variable    TxIns           Inputs
- *  VarInt      TxOutsCount     Number of outputs
- *  Variable    TxOuts          Outputs
+ *  VarInt      InputsCount     Number of inputs
+ *  Variable    Inputs          Inputs
+ *  VarInt      OutputsCount    Number of outputs
+ *  Variable    Outputs         Outputs
  *  4 bytes     LockTime        Transaction lock time
  */
 open class Transaction : RealmObject {
 
-    /**
-     * int32_t, transaction data format version (signed)
-     */
+    // Transaction version
     var version: Int = 0
 
-    /**
-     * a list of 1 or more transaction inputs or sources for coins
-     */
-    var txIns = RealmList<TxIn>()
+    // List of transaction inputs
+    var inputs = RealmList<TransactionInput>()
 
-    /**
-     * a list of 1 or more transaction outputs or destinations for coins
-     */
-    var txOuts = RealmList<TxOut>()
+    // List of transaction outputs
+    var outputs = RealmList<TransactionOutput>()
 
-    /**
-     * uint32_t, the block number or timestamp at which this transaction is
-     * unlocked:
-     *
-     * 0 Not locked
-     *
-     * < 500000000 Block number at which this transaction is unlocked
-     *
-     * >= 500000000 UNIX timestamp at which this transaction is unlocked
-     *
-     * If all TxIn inputs have final (0xffffffff) sequence numbers then
-     * lockTime is irrelevant. Otherwise, the transaction may not be added to a
-     * block until after lockTime (see NLockTime).
-     */
+    // Transaction lock time
     var lockTime: Long = 0
 
-    /**
-     * Get transaction hash (actually calculate the hash of transaction data).
-     */
+    // Get transaction hash (actually calculate the hash of transaction data).
     @delegate:Ignore
     val txHash: ByteArray by lazy {
         HashUtils.doubleSha256(toByteArray())
@@ -88,14 +67,14 @@ open class Transaction : RealmObject {
     constructor(input: BitcoinInput) {
         version = input.readInt()
 
-        val txInCount = input.readVarInt() // do not store count
-        repeat(txInCount.toInt()) {
-            txIns.add(TxIn(input))
+        val inputCount = input.readVarInt() // do not store count
+        repeat(inputCount.toInt()) {
+            inputs.add(TransactionInput(input))
         }
 
-        val txOutCount = input.readVarInt() // do not store count
-        repeat(txOutCount.toInt()) {
-            txOuts.add(TxOut(input))
+        val outputCount = input.readVarInt() // do not store count
+        repeat(outputCount.toInt()) {
+            outputs.add(TransactionOutput(input))
         }
 
         lockTime = input.readUnsignedInt()
@@ -103,24 +82,24 @@ open class Transaction : RealmObject {
 
     fun toByteArray(): ByteArray {
         val buffer = BitcoinOutput()
-        buffer.writeInt(version).writeVarInt(txIns.size.toLong())
-        for (i in txIns.indices) {
-            buffer.write(txIns[i]?.toByteArray())
+        buffer.writeInt(version).writeVarInt(inputs.size.toLong())
+        for (i in inputs.indices) {
+            buffer.write(inputs[i]?.toByteArray())
         }
-        buffer.writeVarInt(txOuts.size.toLong())
-        for (i in txOuts.indices) {
-            buffer.write(txOuts[i]?.toByteArray())
+        buffer.writeVarInt(outputs.size.toLong())
+        for (i in outputs.indices) {
+            buffer.write(outputs[i]?.toByteArray())
         }
         buffer.writeUnsignedInt(lockTime)
         return buffer.toByteArray()
     }
 
-    fun getTxInCount(): Long {
-        return txIns.size.toLong()
+    fun getInputCount(): Long {
+        return inputs.size.toLong()
     }
 
-    fun getTxOutCount(): Long {
-        return txOuts.size.toLong()
+    fun getOutputCount(): Long {
+        return outputs.size.toLong()
     }
 
     // http://bitcoin.stackexchange.com/questions/3374/how-to-redeem-a-basic-tx

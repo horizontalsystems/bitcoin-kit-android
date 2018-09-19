@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.hdwallet
 
-import bitcoin.wallet.kit.models.TxOut
+import bitcoin.wallet.kit.models.TransactionOutput
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.hdwallet.HDKey
 import io.realm.RealmObject
@@ -20,7 +20,7 @@ open class PublicKey() : RealmObject() {
     var publicKeyHash: ByteArray = byteArrayOf()
 
     @LinkingObjects("publicKey")
-    val outputs: RealmResults<TxOut>? = null
+    val outputs: RealmResults<TransactionOutput>? = null
 
     constructor(index: Int, external: Boolean, key: HDKey, network: NetworkParameters) : this() {
         this.index = index
