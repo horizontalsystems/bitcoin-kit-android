@@ -42,5 +42,35 @@ class Script(bytes: ByteArray) {
         return ScriptType.UNKNOWN
     }
 
+    fun isCode(): Boolean {
+        for (chunk in chunks) {
+            if (chunk.opcode == -1)
+                return false
+
+            if (chunk.isOpcodeDisabled())
+                return false
+
+            if (chunk.opcode == OP_RESERVED || chunk.opcode == OP_NOP || chunk.opcode == OP_VER || chunk.opcode == OP_VERIF || chunk.opcode == OP_VERNOTIF || chunk.opcode == OP_RESERVED1 || chunk.opcode == OP_RESERVED2 || chunk.opcode == OP_NOP1)
+                return false
+
+            if (chunk.opcode > OP_CHECKSEQUENCEVERIFY)
+                return false
+        }
+
+        return true
+    }
+
+    fun isPushOnly(): Boolean {
+        for (chunk in chunks) {
+            if (chunk.opcode == -1)
+                return false
+
+            if (chunk.opcode > OP_16)
+                return false
+        }
+
+        return true
+    }
+
     override fun toString() = chunks.joinToString(" ")
 }

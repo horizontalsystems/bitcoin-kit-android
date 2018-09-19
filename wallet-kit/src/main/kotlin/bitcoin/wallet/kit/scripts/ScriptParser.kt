@@ -1,5 +1,6 @@
 package bitcoin.wallet.kit.scripts
 
+import bitcoin.walllet.kit.hdwallet.ECKey
 import bitcoin.walllet.kit.hdwallet.Utils
 import java.io.ByteArrayInputStream
 
@@ -65,6 +66,80 @@ object ScriptParser {
         }
 
         return chunks
+    }
+
+    fun isPKHashInput(script: Script): Boolean {
+        val chunks = script.chunks
+        if (chunks.size != 2)
+            return false
+        val sig = chunks[0].data
+        val key = chunks[1].data
+        if (key == null || sig == null)
+            return false
+
+        return sig.size in 9..73 && (key.size == 33 || key.size == 65)
+    }
+
+    fun isPubKeyInput(script: Script): Boolean {
+        val chunks = script.chunks
+        if (chunks.size != 1)
+            return false
+
+        val chunk0 = chunks[0].data
+        if (chunk0 == null)
+            return false
+
+        return chunk0.size in 9..73
+    }
+
+    fun isSHashInput(script: Script): Boolean {
+        val chunks = script.chunks
+        if (chunks.isEmpty())
+            return false
+
+        // Grab the raw redeem script
+        val redeemChunk = chunks.last()
+        if (redeemChunk.data == null)
+            return false
+
+        if (ECKey.isSignatureCanonical(redeemChunk.data))
+            return false
+        if (ECKey.isPubKeyCanonical(redeemChunk.data))
+            return false
+
+        val redeemScript = Script(redeemChunk.data)
+
+        if (!redeemScript.isCode())
+            return false
+
+        if (!redeemScript.isPushOnly())
+            return false
+
+        return true
+    }
+
+    fun isMultiSigInput(script: Script): Boolean {
+        val chunks = script.chunks
+        if (chunks.size < 2)
+            return false
+
+        if (!chunks[0].equalsOpCode(OP_0))
+            return false
+
+        if (chunks[1].isOpCode())
+            return false
+
+        val redeemChunk = chunks.last()
+        if (redeemChunk.data == null)
+            return false
+
+        val redeemScript = Script(redeemChunk.data)
+        val chunkLast = redeemScript.chunks.last()
+        if (chunkLast.equalsOpCode(OP_ENDIF)) {
+            // handle
+        }
+
+        return chunkLast.equalsOpCode(OP_CHECKSIG) || chunkLast.equalsOpCode(OP_CHECKSIGVERIFY) || chunkLast.equalsOpCode(OP_CHECKMULTISIGVERIFY) || chunkLast.equalsOpCode(OP_CHECKMULTISIG)
     }
 
     // Pay To PubKey Hash; OP_DUP OP_HASH160 <pubkey hash> OP_EQUALVERIFY OP_CHECKSIG
