@@ -255,134 +255,20 @@ object OpCodes {
             OP_NOP10 to "NOP10"
     )
 
-    private val opCodeNameMap = hashMapOf(
-            "0" to OP_0,
-            "PUSHDATA1" to OP_PUSHDATA1,
-            "PUSHDATA2" to OP_PUSHDATA2,
-            "PUSHDATA4" to OP_PUSHDATA4,
-            "1NEGATE" to OP_1NEGATE,
-            "RESERVED" to OP_RESERVED,
-            "1" to OP_1,
-            "2" to OP_2,
-            "3" to OP_3,
-            "4" to OP_4,
-            "5" to OP_5,
-            "6" to OP_6,
-            "7" to OP_7,
-            "8" to OP_8,
-            "9" to OP_9,
-            "10" to OP_10,
-            "11" to OP_11,
-            "12" to OP_12,
-            "13" to OP_13,
-            "14" to OP_14,
-            "15" to OP_15,
-            "16" to OP_16,
-            "NOP" to OP_NOP,
-            "VER" to OP_VER,
-            "IF" to OP_IF,
-            "NOTIF" to OP_NOTIF,
-            "VERIF" to OP_VERIF,
-            "VERNOTIF" to OP_VERNOTIF,
-            "ELSE" to OP_ELSE,
-            "ENDIF" to OP_ENDIF,
-            "VERIFY" to OP_VERIFY,
-            "RETURN" to OP_RETURN,
-            "TOALTSTACK" to OP_TOALTSTACK,
-            "FROMALTSTACK" to OP_FROMALTSTACK,
-            "2DROP" to OP_2DROP,
-            "2DUP" to OP_2DUP,
-            "3DUP" to OP_3DUP,
-            "2OVER" to OP_2OVER,
-            "2ROT" to OP_2ROT,
-            "2SWAP" to OP_2SWAP,
-            "IFDUP" to OP_IFDUP,
-            "DEPTH" to OP_DEPTH,
-            "DROP" to OP_DROP,
-            "DUP" to OP_DUP,
-            "NIP" to OP_NIP,
-            "OVER" to OP_OVER,
-            "PICK" to OP_PICK,
-            "ROLL" to OP_ROLL,
-            "ROT" to OP_ROT,
-            "SWAP" to OP_SWAP,
-            "TUCK" to OP_TUCK,
-            "CAT" to OP_CAT,
-            "SUBSTR" to OP_SUBSTR,
-            "LEFT" to OP_LEFT,
-            "RIGHT" to OP_RIGHT,
-            "SIZE" to OP_SIZE,
-            "INVERT" to OP_INVERT,
-            "AND" to OP_AND,
-            "OR" to OP_OR,
-            "XOR" to OP_XOR,
-            "EQUAL" to OP_EQUAL,
-            "EQUALVERIFY" to OP_EQUALVERIFY,
-            "RESERVED1" to OP_RESERVED1,
-            "RESERVED2" to OP_RESERVED2,
-            "1ADD" to OP_1ADD,
-            "1SUB" to OP_1SUB,
-            "2MUL" to OP_2MUL,
-            "2DIV" to OP_2DIV,
-            "NEGATE" to OP_NEGATE,
-            "ABS" to OP_ABS,
-            "NOT" to OP_NOT,
-            "0NOTEQUAL" to OP_0NOTEQUAL,
-            "ADD" to OP_ADD,
-            "SUB" to OP_SUB,
-            "MUL" to OP_MUL,
-            "DIV" to OP_DIV,
-            "MOD" to OP_MOD,
-            "LSHIFT" to OP_LSHIFT,
-            "RSHIFT" to OP_RSHIFT,
-            "BOOLAND" to OP_BOOLAND,
-            "BOOLOR" to OP_BOOLOR,
-            "NUMEQUAL" to OP_NUMEQUAL,
-            "NUMEQUALVERIFY" to OP_NUMEQUALVERIFY,
-            "NUMNOTEQUAL" to OP_NUMNOTEQUAL,
-            "LESSTHAN" to OP_LESSTHAN,
-            "GREATERTHAN" to OP_GREATERTHAN,
-            "LESSTHANOREQUAL" to OP_LESSTHANOREQUAL,
-            "GREATERTHANOREQUAL" to OP_GREATERTHANOREQUAL,
-            "MIN" to OP_MIN,
-            "MAX" to OP_MAX,
-            "WITHIN" to OP_WITHIN,
-            "RIPEMD160" to OP_RIPEMD160,
-            "SHA1" to OP_SHA1,
-            "SHA256" to OP_SHA256,
-            "HASH160" to OP_HASH160,
-            "HASH256" to OP_HASH256,
-            "CODESEPARATOR" to OP_CODESEPARATOR,
-            "CHECKSIG" to OP_CHECKSIG,
-            "CHECKSIGVERIFY" to OP_CHECKSIGVERIFY,
-            "CHECKMULTISIG" to OP_CHECKMULTISIG,
-            "CHECKMULTISIGVERIFY" to OP_CHECKMULTISIGVERIFY,
-            "NOP1" to OP_NOP1,
-            "CHECKLOCKTIMEVERIFY" to OP_CHECKLOCKTIMEVERIFY,
-            "CHECKSEQUENCEVERIFY" to OP_CHECKSEQUENCEVERIFY,
-            "NOP2" to OP_NOP2,
-            "NOP3" to OP_NOP3,
-            "NOP4" to OP_NOP4,
-            "NOP5" to OP_NOP5,
-            "NOP6" to OP_NOP6,
-            "NOP7" to OP_NOP7,
-            "NOP8" to OP_NOP8,
-            "NOP9" to OP_NOP9,
-            "NOP10" to OP_NOP10
-    )
+    private val opCodeNameMap = opCodeMap.entries.associateBy({ it.value }) { it.key }
 
     // Converts the given OpCode into a string (eg "0", "PUSHDATA", or "NON_OP(10)")
     fun getOpCodeName(opcode: Int): String {
-        return if (opCodeMap.containsKey(opcode)) opCodeMap[opcode]!! else "NON_OP($opcode)"
+        return opCodeMap[opcode] ?: "NON_OP($opcode)"
     }
 
     // Converts the given pushdata OpCode into a string (eg "PUSHDATA2", or "PUSHDATA(23)")
     fun getPushDataName(opcode: Int): String {
-        return if (opCodeMap.containsKey(opcode)) opCodeMap[opcode]!! else "PUSHDATA($opcode)"
+        return opCodeMap[opcode] ?: "PUSHDATA($opcode)"
     }
 
     // Converts the given OpCodeName into an int
     fun getOpCode(opCodeName: String): Int {
-        return if (opCodeNameMap.containsKey(opCodeName)) opCodeNameMap[opCodeName]!! else OP_INVALIDOPCODE
+        return opCodeNameMap[opCodeName] ?: OP_INVALIDOPCODE
     }
 }
