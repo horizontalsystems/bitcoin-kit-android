@@ -1,6 +1,7 @@
 package bitcoin.wallet.kit.network
 
 import bitcoin.wallet.kit.crypto.BloomFilter
+import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.InventoryItem
 import bitcoin.wallet.kit.models.MerkleBlock
@@ -189,5 +190,9 @@ class PeerGroup(private val peerManager: PeerManager, val network: NetworkParame
 
     override fun shouldRequest(inventory: InventoryItem): Boolean {
         return listener.shouldRequest(inventory)
+    }
+
+    fun addPublicKeyFilter(publicKey: PublicKey) {
+        // TODO("not implemented")
     }
 }
