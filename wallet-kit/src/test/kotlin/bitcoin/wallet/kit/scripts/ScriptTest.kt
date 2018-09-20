@@ -1,6 +1,7 @@
 package bitcoin.wallet.kit.scripts
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.network.TestNet
 import bitcoin.walllet.kit.hdwallet.Address
 import org.junit.Assert.assertEquals
@@ -58,5 +59,22 @@ class ScriptTest {
         script = Script("220020770718025d04d9b863c7e896f16f8499ffadca9e76c3f11e2164d052054ad9d9".hexStringToByteArray())
 
         assertTrue(script.isCode())
+    }
+
+    @Test
+    fun getPubKeyHashIn_PKH() {
+        val pk = "03b1ae868b76e84f8ae1cb3ad958653d8a23b444e8639c0c0f00e8de27541cb977"
+        script = Script("4830450221009b1fc7f43826c4c61bb0bc7c9f667c7383f728647563f19f75db6ca701f4326f02205bc4dd125ffe4e903a59c87ed4362abb86acbf2b1e6fd8021cfc6d4f8384b0e50121$pk".hexStringToByteArray())
+
+        assertEquals(pk, script.chunks[1].data?.toHexString())
+        assertEquals("50f9c5f3f6552f23bceb10761612bf3b9ff77a27", script.getPubKeyHashIn()?.toHexString())
+    }
+
+    @Test // tx: 761cc7102efe24f4353ae7dc816fbed5e15963d11ca93e36449d521bda21ac4d
+    fun getPubKeyHashIn_SH() {
+        script = Script("004830450221008c203a0881f75c731d9a3a2e6d2ffa37da7095b7dde61a9e7a906659219cd0fa02202677097ca7f7e164f73924fe8f84e1e6fc6611450efcda360ce771e98af9f73d0147304402201cba9b641483476f67a4cef08d7280f51de8d7615fcce76642d944dc07132a990220323d13175477bbf67c8c36fb243bec0e4c410bc9173a186d9f8e98ce3445363601475221025b64f7c63e30f315259393f64dcca269d18386997b1cc93da1388c4021e3ea8e210386d42d5d7027ac08ddcbb066e2140575091fe7dc1d202a008eb5e036725e975652ae".hexStringToByteArray())
+
+        val keyHash = script.getPubKeyHashIn()
+        assertEquals("aed6f804c63da80800892f8fd4cdbad0d3ad6d12", keyHash?.toHexString())
     }
 }
