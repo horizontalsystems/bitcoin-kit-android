@@ -34,6 +34,8 @@ class WalletKit(words: List<String>) {
             filters.insert(it.publicKey)
         }
 
+        realm.close()
+
         val peerManager = PeerManager(network)
 
         val peerGroup = PeerGroup(peerManager, network, 1)

@@ -25,5 +25,7 @@ class TransactionProcessor(private val realmFactory: RealmFactory, private val e
                 }
             }
         }
+
+        realm.close()
     }
 }

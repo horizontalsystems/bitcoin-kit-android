@@ -86,6 +86,8 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
             }
         }
 
+        realm.close()
+
         if (hasNewTransactions) {
             processor.enqueueRun()
         }
