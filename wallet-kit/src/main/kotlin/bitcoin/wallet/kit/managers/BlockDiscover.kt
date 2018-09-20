@@ -18,10 +18,7 @@ class BlockDiscover(private val hdWallet: HDWallet, private val apiManager: ApiM
                 .map { (publicKeys, blockResponses) ->
                     publicKeys to blockResponses.mapNotNull { blockResponse ->
                         try {
-                            Block().apply {
-                                headerHash = blockResponse.hash.hexStringToByteArray().reversedArray()
-                                height = blockResponse.height
-                            }
+                            Block(blockResponse.hash.hexStringToByteArray().reversedArray(), blockResponse.height)
                         } catch (e: NumberFormatException) {
                             null
                         }

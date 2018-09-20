@@ -2,12 +2,14 @@ package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.core.toHexString
+import bitcoin.wallet.kit.headers.BlockValidator
 import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.Transaction
+import io.realm.Sort
 
-class TransactionHandler(private val realmFactory: RealmFactory, private val processor: TransactionProcessor, private val progressSyncer: ProgressSyncer) {
+class TransactionHandler(private val realmFactory: RealmFactory, private val processor: TransactionProcessor, private val progressSyncer: ProgressSyncer, private val validator: BlockValidator = BlockValidator()) {
 
     fun handle(transactions: Array<Transaction>, header: Header) {
 
@@ -28,7 +30,7 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
             realm.executeTransaction {
 
                 if (existingBlock.header == null) {
-                    existingBlock.header = header
+                    existingBlock.header = it.copyToRealm(header)
                 }
 
                 transactions.forEach { transaction ->
@@ -51,14 +53,19 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
             }
 
         } else {
+            val previousBlock = realm.where(Block::class.java)
+                    .isNotNull("previousBlock")
+                    .sort("height", Sort.DESCENDING)
+                    .findFirst() ?: return
 
-            val block = Block().apply {
-                this.header = header
+            val block = Block(header, previousBlock).apply {
+                synced = true
             }
-            block.synced = true
+
+            validator.validate(block)
 
             realm.executeTransaction {
-                val blockManaged = it.copyFromRealm(block)
+                val blockManaged = it.copyToRealm(block)
 
                 transactions.forEach { transaction ->
                     val existingTransaction = realm.where(Transaction::class.java).equalTo("reversedHashHex", transaction.reversedHashHex).findFirst()

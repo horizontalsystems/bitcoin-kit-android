@@ -15,6 +15,7 @@ class BlockValidator {
 
     class InvalidBlock(error: ValidatorError) : Exception(error.toString())
 
+    @Throws(InvalidBlock::class)
     fun validate(block: Block) {
         validateHash(block)
 

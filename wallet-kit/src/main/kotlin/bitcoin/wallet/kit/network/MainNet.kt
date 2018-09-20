@@ -35,16 +35,15 @@ class MainNet : NetworkParameters() {
 
     override var paymentProtocolId: String = PAYMENT_PROTOCOL_ID_MAINNET
 
-    override val checkpointBlock = Block().apply {
-        height = 536256
-        header = Header().apply {
-            version = 536870912
-            prevHash = HashUtils.toBytesAsLittleEndian("00000000000000000000943de85f4495f053ff55f27d135edc61c27990c2eec5")
-            merkleHash = HashUtils.toBytesAsLittleEndian("167bf70981d49388d07881b1a448ff9b79cf2a32716e45c535345823d8cdd541")
-            timestamp = 1533980459
-            bits = 388763047
-            nonce = 1545867530
-        }
-    }
+    override val checkpointBlock = Block(
+            Header().apply {
+                version = 536870912
+                prevHash = HashUtils.toBytesAsLittleEndian("00000000000000000000943de85f4495f053ff55f27d135edc61c27990c2eec5")
+                merkleHash = HashUtils.toBytesAsLittleEndian("167bf70981d49388d07881b1a448ff9b79cf2a32716e45c535345823d8cdd541")
+                timestamp = 1533980459
+                bits = 388763047
+                nonce = 1545867530
+            },
+            536256)
 
 }

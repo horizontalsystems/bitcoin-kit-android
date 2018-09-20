@@ -15,35 +15,39 @@ import io.realm.annotations.PrimaryKey
  *  VarInt      TxCount         Number of transactions in the block
  *  Variable    Transactions    The transactions in the block
  */
-open class Block : RealmObject() {
+open class Block() : RealmObject() {
+
     @PrimaryKey
     var reversedHeaderHashHex = ""
 
     var synced = false
     var height: Int = 0
     var header: Header? = null
-        set(value) {
-            field = value
-            value?.let {
-                headerHash = value.hash
-            }
-        }
-
     var headerHash: ByteArray = byteArrayOf()
-        set(value) {
-            field = value
-            reversedHeaderHashHex = HashUtils.toHexString(value.reversedArray())
-        }
-
     var previousBlock: Block? = null
-        set(value) {
-            field = value
-            value?.let {
-                height = value.height + 1
-            }
-        }
 
     @LinkingObjects("block")
     val transactions: RealmResults<Transaction>? = null
+
+    constructor(header: Header, previousBlock: Block) : this() {
+        this.header = header
+        this.headerHash = header.hash
+        this.reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
+        this.previousBlock = previousBlock
+        this.height = previousBlock.height + 1
+    }
+
+    constructor(header: Header, height: Int) : this() {
+        this.header = header
+        this.headerHash = header.hash
+        this.reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
+        this.height = height
+    }
+
+    constructor(headerHash: ByteArray, height: Int) : this() {
+        this.headerHash = headerHash
+        this.reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
+        this.height = height
+    }
 
 }

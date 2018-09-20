@@ -10,15 +10,9 @@ class BlockValidatorTest {
 
     @Test
     fun validate() {
-        val block1 = Block().apply {
-            height = 1
-            header = Fixtures.block1.header
-        }
+        val block1 = Block(Fixtures.block1.header!!, 1)
 
-        val block2 = Block().apply {
-            header = Fixtures.block2.header
-            previousBlock = block1
-        }
+        val block2 = Block(Fixtures.block2.header!!, block1)
 
         try {
             validator.validate(block2)
