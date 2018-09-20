@@ -9,9 +9,7 @@ import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.Transaction
 import io.realm.Sort
 
-class TransactionHandler(private val realmFactory: RealmFactory, private val processor: TransactionProcessor, private val progressSyncer: ProgressSyncer) {
-
-    private val validator = BlockValidator()
+class TransactionHandler(private val realmFactory: RealmFactory, private val processor: TransactionProcessor, private val progressSyncer: ProgressSyncer, private val validator: BlockValidator = BlockValidator()) {
 
     fun handle(transactions: Array<Transaction>, header: Header) {
 
@@ -32,7 +30,7 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
             realm.executeTransaction {
 
                 if (existingBlock.header == null) {
-                    existingBlock.header = header
+                    existingBlock.header = it.copyToRealm(header)
                 }
 
                 transactions.forEach { transaction ->
