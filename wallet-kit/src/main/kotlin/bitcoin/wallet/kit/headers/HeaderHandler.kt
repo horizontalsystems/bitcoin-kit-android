@@ -21,11 +21,7 @@ class HeaderHandler(private val realmFactory: RealmFactory, private val network:
 
         // validate chain
         headers.forEach { header ->
-            val block = Block().apply {
-                this.header = header
-                this.previousBlock = previousBlock
-                this.height = previousBlock.height + 1
-            }
+            val block = Block(header, previousBlock)
 
             validator.validate(block)
 

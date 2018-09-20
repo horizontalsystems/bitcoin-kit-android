@@ -55,14 +55,13 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
             }
 
         } else {
+            val previousBlock = realm.where(Block::class.java)
+                    .isNotNull("previousBlock")
+                    .sort("height", Sort.DESCENDING)
+                    .findFirst() ?: return
 
-            val block = Block().apply {
-                this.header = header
-                this.previousBlock = realm.where(Block::class.java)
-                        .isNotNull("previousBlock")
-                        .sort("height", Sort.DESCENDING)
-                        .findFirst()
-                this.synced = true
+            val block = Block(header, previousBlock).apply {
+                synced = true
             }
 
             validator.validate(block)
