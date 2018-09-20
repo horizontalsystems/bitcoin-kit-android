@@ -29,6 +29,8 @@ class AddressManager(private val realmFactory: RealmFactory, private val hdWalle
             realm.insert(internalKeys)
         }
 
+        realm.close()
+
         externalKeys.forEach {
             peerGroup.addPublicKeyFilter(it)
         }
@@ -91,6 +93,7 @@ class AddressManager(private val realmFactory: RealmFactory, private val hdWalle
             it.insert(newPublicKey)
         }
 
+        realm.close()
 
         peerGroup.addPublicKeyFilter(newPublicKey)
 

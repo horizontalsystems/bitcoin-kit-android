@@ -35,5 +35,7 @@ class HeaderSyncer(private val realmFactory: RealmFactory, private val peerGroup
         }
 
         peerGroup.requestHeaders(blocks.map { it.headerHash }.toTypedArray())
+
+        realm.close()
     }
 }

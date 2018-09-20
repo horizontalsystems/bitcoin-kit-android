@@ -38,6 +38,8 @@ class HeaderHandler(private val realmFactory: RealmFactory, private val network:
                 previousBlock = block
             }
         }
+
+        realm.close()
     }
 
 }

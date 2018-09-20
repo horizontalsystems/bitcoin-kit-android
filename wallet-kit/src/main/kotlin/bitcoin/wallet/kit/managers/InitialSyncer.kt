@@ -58,6 +58,8 @@ class InitialSyncer(
             it.insertOrUpdate(blocks)
         }
 
+        realm.close()
+
         stateManager.apiSynced = true
         peerGroup.start()
     }

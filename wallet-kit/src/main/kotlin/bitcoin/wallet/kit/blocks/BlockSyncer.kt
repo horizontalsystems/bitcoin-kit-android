@@ -19,6 +19,8 @@ class BlockSyncer(private val realmFactory: RealmFactory, val peerGroup: PeerGro
         val nonSyncedBlocks = realm.where(Block::class.java).equalTo("synced", false).findAll()
         val hashes = nonSyncedBlocks.map { it.headerHash }
 
+        realm.close()
+
         if (hashes.isNotEmpty()) {
             peerGroup.requestMerkleBlocks(hashes.toTypedArray())
         }
