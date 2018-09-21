@@ -152,13 +152,19 @@ public class ECKey {
      * @return                          TRUE if the key is canonical
      */
     public static boolean isPubKeyCanonical(byte[] pubKeyBytes) {
-        boolean isValid = false;
-        if (pubKeyBytes.length == 33 && (pubKeyBytes[0] == (byte)0x02 || pubKeyBytes[0] == (byte)0x03)) {
-            isValid = true;
-        } else if (pubKeyBytes.length == 65 && pubKeyBytes[0] == (byte)0x04) {
-            isValid = true;
-        }
-        return isValid;
+        if (pubKeyBytes.length < 33)
+            return false;
+        if (pubKeyBytes[0] == 0x04) {
+            // Uncompressed pubkey
+            if (pubKeyBytes.length != 65)
+                return false;
+        } else if (pubKeyBytes[0] == 0x02 || pubKeyBytes[0] == 0x03) {
+            // Compressed pubkey
+            if (pubKeyBytes.length != 33)
+                return false;
+        } else
+            return false;
+        return true;
     }
 
     /**

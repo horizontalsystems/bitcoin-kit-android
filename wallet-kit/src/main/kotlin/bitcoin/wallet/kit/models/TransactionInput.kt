@@ -29,6 +29,9 @@ open class TransactionInput : RealmObject {
     // Input sequence number
     var sequence: Long = 0
 
+    var keyHash: ByteArray? = null
+    var address: String? = ""
+
     constructor()
 
     @Throws(IOException::class)

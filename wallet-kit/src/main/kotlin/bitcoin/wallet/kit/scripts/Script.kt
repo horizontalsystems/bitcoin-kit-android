@@ -20,6 +20,15 @@ class Script(bytes: ByteArray) {
         creationTimeSeconds = 0
     }
 
+    fun getPubKeyHashIn(): ByteArray? {
+        if (ScriptParser.isPKHashInput(this))
+            return Utils.sha256Hash160(chunks[1].data)
+        if (ScriptParser.isSHashInput(this) || ScriptParser.isMultiSigInput(this))
+            return Utils.sha256Hash160(chunks.last().data)
+
+        return null
+    }
+
     fun getPubKeyHash(): ByteArray? {
         if (ScriptParser.isP2PKH(this))
             return chunks[2].data
@@ -32,14 +41,44 @@ class Script(bytes: ByteArray) {
     }
 
     fun getScriptType(): Int {
-        if (ScriptParser.isP2PKH(this))
+        if (ScriptParser.isP2PKH(this) || ScriptParser.isPKHashInput(this))
             return ScriptType.P2PKH
-        if (ScriptParser.isP2PK(this))
+        if (ScriptParser.isP2PK(this) || ScriptParser.isPubKeyInput(this))
             return ScriptType.P2PK
-        if (ScriptParser.isP2SH(this))
+        if (ScriptParser.isP2SH(this) || ScriptParser.isMultiSigInput(this))
             return ScriptType.P2SH
 
         return ScriptType.UNKNOWN
+    }
+
+    fun isCode(): Boolean {
+        for (chunk in chunks) {
+            if (chunk.opcode == -1)
+                return false
+
+            if (chunk.isOpcodeDisabled())
+                return false
+
+            if (chunk.opcode == OP_RESERVED || chunk.opcode == OP_NOP || chunk.opcode == OP_VER || chunk.opcode == OP_VERIF || chunk.opcode == OP_VERNOTIF || chunk.opcode == OP_RESERVED1 || chunk.opcode == OP_RESERVED2 || chunk.opcode == OP_NOP1)
+                return false
+
+            if (chunk.opcode > OP_CHECKSEQUENCEVERIFY)
+                return false
+        }
+
+        return true
+    }
+
+    fun isPushOnly(): Boolean {
+        for (chunk in chunks) {
+            if (chunk.opcode == -1)
+                return false
+
+            if (chunk.opcode > OP_16)
+                return false
+        }
+
+        return true
     }
 
     override fun toString() = chunks.joinToString(" ")

@@ -13,6 +13,24 @@ class ScriptChunk(val opcode: Int, val data: ByteArray? = null, val startLocatio
         return opcode > OP_PUSHDATA4
     }
 
+    fun isOpcodeDisabled(): Boolean {
+        return (opcode == OP_CAT ||
+                opcode == OP_SUBSTR ||
+                opcode == OP_LEFT ||
+                opcode == OP_RIGHT ||
+                opcode == OP_INVERT ||
+                opcode == OP_AND ||
+                opcode == OP_OR ||
+                opcode == OP_XOR ||
+                opcode == OP_2MUL ||
+                opcode == OP_2DIV ||
+                opcode == OP_MUL ||
+                opcode == OP_DIV ||
+                opcode == OP_MOD ||
+                opcode == OP_LSHIFT ||
+                opcode == OP_RSHIFT)
+    }
+
     override fun toString(): String {
         val buf = StringBuilder()
         if (isOpCode()) {
