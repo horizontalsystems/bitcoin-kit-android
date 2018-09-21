@@ -50,7 +50,7 @@ public class HashUtils {
     /**
      * Convert byte array (little endian) to hex string.
      */
-    public static String toHexStringAsLittleEndian(byte[] b) {
+    public static String toHexStringAsLE(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length << 2);
         for (int i = b.length - 1; i >= 0; i--) {
             byte x = b[i];
@@ -62,7 +62,7 @@ public class HashUtils {
         return sb.toString();
     }
 
-    public static byte[] toBytesAsLittleEndian(String hash) {
+    public static byte[] toBytesAsLE(String hash) {
         byte[] r = toBytes(hash);
         return Arrays.reverse(r);
     }

@@ -51,10 +51,10 @@ class GetBlocksMessage : Message {
     override fun toString(): String {
         val list = hashes
                 .take(10)
-                .map { hash -> HashUtils.toHexStringAsLittleEndian(hash) }
+                .map { hash -> HashUtils.toHexStringAsLE(hash) }
                 .joinToString()
 
-        return ("GetBlocksMessage(" + hashes.size + ": [" + list + "], hashStop=" + HashUtils.toHexStringAsLittleEndian(hashStop) + ")")
+        return ("GetBlocksMessage(" + hashes.size + ": [" + list + "], hashStop=" + HashUtils.toHexStringAsLE(hashStop) + ")")
     }
 
 }

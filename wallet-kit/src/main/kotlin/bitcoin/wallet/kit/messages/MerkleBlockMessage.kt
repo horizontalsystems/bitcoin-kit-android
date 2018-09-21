@@ -31,6 +31,6 @@ class MerkleBlockMessage() : Message("merkleblock") {
     }
 
     override fun toString(): String {
-        return "MerkleBlockMessage(blockHash=${HashUtils.toHexStringAsLittleEndian(merkleBlock.blockHash)}, hashesSize=${merkleBlock.hashes.size})"
+        return "MerkleBlockMessage(blockHash=${HashUtils.toHexStringAsLE(merkleBlock.blockHash)}, hashesSize=${merkleBlock.hashes.size})"
     }
 }
