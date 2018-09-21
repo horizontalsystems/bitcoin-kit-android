@@ -20,6 +20,7 @@ import java.util.Arrays;
 import bitcoin.wallet.kit.network.NetworkParameters;
 import bitcoin.walllet.kit.exceptions.AddressFormatException;
 import bitcoin.walllet.kit.utils.Base58Utils;
+import bitcoin.walllet.kit.utils.Utils;
 
 /**
  * An address is a 20-byte Hash160 of a public key or script.  The displayable form

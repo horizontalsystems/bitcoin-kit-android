@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package bitcoin.walllet.kit.hdwallet;
+package bitcoin.walllet.kit.utils;
 
 import org.spongycastle.crypto.digests.RIPEMD160Digest;
 import org.spongycastle.crypto.digests.SHA512Digest;

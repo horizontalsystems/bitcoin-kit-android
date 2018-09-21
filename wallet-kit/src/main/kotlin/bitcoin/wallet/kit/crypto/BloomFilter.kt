@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.crypto
 
-import bitcoin.walllet.kit.hdwallet.Utils
+import bitcoin.walllet.kit.utils.Utils
 import bitcoin.walllet.kit.io.BitcoinOutput
 import bitcoin.walllet.kit.crypto.MurmurHash3
 import java.lang.Double.valueOf

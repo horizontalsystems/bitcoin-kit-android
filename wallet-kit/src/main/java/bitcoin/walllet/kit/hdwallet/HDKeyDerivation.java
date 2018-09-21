@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import bitcoin.wallet.kit.network.NetworkParameters;
 import bitcoin.walllet.kit.exceptions.HDDerivationException;
+import bitcoin.walllet.kit.utils.Utils;
 
 /**
  * Hierarchical Deterministic key derivation (BIP 32)

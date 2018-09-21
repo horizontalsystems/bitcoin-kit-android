@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.headers
 
 import bitcoin.wallet.kit.models.Block
-import bitcoin.walllet.kit.hdwallet.Utils
+import bitcoin.walllet.kit.utils.Utils
 
 class DifficultyCalculator {
     private val maxTargetBits = Utils.decodeCompactBits(0x1d00ffffL)    // Maximum difficulty

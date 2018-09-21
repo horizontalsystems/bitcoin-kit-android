@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.utils
 
 import bitcoin.wallet.kit.exceptions.InvalidMerkleBlockException
-import bitcoin.walllet.kit.hdwallet.Utils
+import bitcoin.walllet.kit.utils.Utils
 
 class MerkleBranch(val txCount: Int, val hashes: Array<ByteArray>, val flags: ByteArray) {
     /** Bits used while traversing the tree  */

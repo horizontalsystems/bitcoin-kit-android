@@ -23,6 +23,7 @@ import java.util.List;
 
 import bitcoin.wallet.kit.network.NetworkParameters;
 import bitcoin.walllet.kit.utils.Base58Utils;
+import bitcoin.walllet.kit.utils.Utils;
 
 /**
  * A Hierarchical Deterministic key
