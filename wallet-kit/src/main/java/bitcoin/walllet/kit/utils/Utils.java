@@ -26,6 +26,8 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Random;
 
 /**
  * Static utility methods
@@ -34,8 +36,12 @@ public class Utils {
     /** Bit masks (Low-order bit is bit 0 and high-order bit is bit 7) */
     private static final int bitMask[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80};
 
+    /** Strong random number generator */
+    private static final Random rnd = new SecureRandom();
+
     /** Instance of a SHA-256 digest which we will use as needed */
     private static final MessageDigest digest;
+
     static {
         try {
             digest = MessageDigest.getInstance("SHA-256");
@@ -254,4 +260,13 @@ public class Utils {
         }
     }
 
+    /** Generate random long number */
+    public static long randomLong() {
+        return (long) (rnd.nextDouble() * Long.MAX_VALUE);
+    }
+
+    /** Generate random number */
+    public static int randomInt() {
+        return (int) (rnd.nextDouble() * Integer.MAX_VALUE);
+    }
 }
