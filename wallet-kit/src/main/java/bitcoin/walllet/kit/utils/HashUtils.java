@@ -3,25 +3,9 @@ package bitcoin.walllet.kit.utils;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.util.Arrays;
 
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
-import bitcoin.walllet.kit.crypto.Digest;
-
 public class HashUtils {
 
-    static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
-
-    /**
-     * Get RipeMD160 hash.
-     */
-    public static byte[] ripeMd160(byte[] input) {
-        return Digest.SHA256RIPEMD160(input);
-    }
+    private static final char[] HEX_CHARS = "0123456789abcdef".toCharArray();
 
     /**
      * Get SHA-256 hash.
@@ -66,7 +50,7 @@ public class HashUtils {
     /**
      * Convert byte array (little endian) to hex string.
      */
-    public static String toHexStringAsLittleEndian(byte[] b) {
+    public static String toHexStringAsLE(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length << 2);
         for (int i = b.length - 1; i >= 0; i--) {
             byte x = b[i];
@@ -78,7 +62,7 @@ public class HashUtils {
         return sb.toString();
     }
 
-    public static byte[] toBytesAsLittleEndian(String hash) {
+    public static byte[] toBytesAsLE(String hash) {
         byte[] r = toBytes(hash);
         return Arrays.reverse(r);
     }
@@ -97,39 +81,6 @@ public class HashUtils {
             data[i] = (byte) n;
         }
         return data;
-    }
-
-    public static String hmacSha1(String data, String key) {
-        SecretKeySpec signingKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA1");
-        Mac mac = null;
-        try {
-            mac = Mac.getInstance("HmacSHA1");
-            mac.init(signingKey);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
-        }
-        byte[] rawHmac = mac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        return rawHmac.toString(); // remove
-        // return Base64.getEncoder().encodeToString(rawHmac);
-    }
-
-    /**
-     * Get Hmac-SHA512 of data using specified key.
-     *
-     * @param data Bytes of data.
-     * @param key  String as key.
-     * @return Raw bytes (64) of Hmac-SHA512.
-     */
-    public static byte[] hmacSha512(byte[] data, String key) {
-        SecretKeySpec signingKey = new SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
-        Mac mac = null;
-        try {
-            mac = Mac.getInstance("HmacSHA512");
-            mac.init(signingKey);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
-        }
-        return mac.doFinal(data);
     }
 
     static int char2int(char ch) {

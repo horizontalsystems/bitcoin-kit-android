@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.scripts
 
 import bitcoin.walllet.kit.hdwallet.ECKey
-import bitcoin.walllet.kit.hdwallet.Utils
+import bitcoin.walllet.kit.utils.Utils
 import java.io.ByteArrayInputStream
 
 object ScriptParser {

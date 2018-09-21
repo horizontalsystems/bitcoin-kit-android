@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.scripts
 
-import bitcoin.walllet.kit.hdwallet.Utils
+import bitcoin.walllet.kit.utils.Utils
 
 object ScriptType {
     const val P2PKH = 1 // pay to pubkey hash (aka pay to address)

@@ -33,6 +33,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 import bitcoin.wallet.kit.network.NetworkParameters;
+import bitcoin.walllet.kit.utils.Utils;
 
 /**
  * ECKey supports elliptic curve cryptographic operations using a public/private

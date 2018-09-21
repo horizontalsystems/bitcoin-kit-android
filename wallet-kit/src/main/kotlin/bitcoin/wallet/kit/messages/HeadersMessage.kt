@@ -34,6 +34,6 @@ class HeadersMessage() : Message("headers") {
     }
 
     override fun toString(): String {
-        return "HeadersMessage(${headers.size}:[${headers.joinToString { HashUtils.toHexStringAsLittleEndian(it.hash) }}])"
+        return "HeadersMessage(${headers.size}:[${headers.joinToString { HashUtils.toHexStringAsLE(it.hash) }}])"
     }
 }

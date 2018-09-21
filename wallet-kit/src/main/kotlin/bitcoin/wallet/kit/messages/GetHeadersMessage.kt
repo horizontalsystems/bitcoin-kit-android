@@ -52,9 +52,9 @@ class GetHeadersMessage : Message {
     override fun toString(): String {
         val list = hashes
                 .take(10)
-                .map { hash -> HashUtils.toHexStringAsLittleEndian(hash) }
+                .map { hash -> HashUtils.toHexStringAsLE(hash) }
                 .joinToString()
 
-        return ("GetHeadersMessage(" + hashes.size + ": [" + list + "], hashStop=" + HashUtils.toHexStringAsLittleEndian(hashStop) + ")")
+        return ("GetHeadersMessage(" + hashes.size + ": [" + list + "], hashStop=" + HashUtils.toHexStringAsLE(hashStop) + ")")
     }
 }

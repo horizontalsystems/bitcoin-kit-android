@@ -50,7 +50,7 @@ class InvMessage : Message {
     fun getBlockHashesAsString(): Array<String> {
         return inventory
                 .filter { iv -> iv.type == InventoryItem.MSG_BLOCK }
-                .map { iv -> HashUtils.toHexStringAsLittleEndian(iv.hash) }
+                .map { iv -> HashUtils.toHexStringAsLE(iv.hash) }
                 .toTypedArray()
     }
 
@@ -65,7 +65,7 @@ class InvMessage : Message {
 
     override fun toString(): String {
         val invList = inventory.take(10)
-                .map { inv -> inv.type.toString() + ":" + HashUtils.toHexStringAsLittleEndian(inv.hash) }
+                .map { inv -> inv.type.toString() + ":" + HashUtils.toHexStringAsLE(inv.hash) }
                 .toTypedArray()
                 .joinToString()
 

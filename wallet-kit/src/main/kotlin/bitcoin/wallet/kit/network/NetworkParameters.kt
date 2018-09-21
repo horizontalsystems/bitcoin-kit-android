@@ -68,7 +68,7 @@ abstract class NetworkParameters {
      * Hash bytes as "00000000...0000"
      */
     val zeroHashBytes = HashUtils
-            .toBytesAsLittleEndian("0000000000000000000000000000000000000000000000000000000000000000")
+            .toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
     abstract val checkpointBlock: Block
 
