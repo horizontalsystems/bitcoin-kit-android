@@ -18,8 +18,8 @@ package bitcoin.walllet.kit.hdwallet;
 import java.util.Arrays;
 
 import bitcoin.wallet.kit.network.NetworkParameters;
+import bitcoin.walllet.kit.crypto.Base58;
 import bitcoin.walllet.kit.exceptions.AddressFormatException;
-import bitcoin.walllet.kit.utils.Base58Utils;
 import bitcoin.walllet.kit.utils.Utils;
 
 /**
@@ -193,7 +193,7 @@ public class Address {
         System.arraycopy(hash, 0, addressBytes, 1, hash.length);
         byte[] digest = Utils.doubleDigest(addressBytes, 0, hash.length+1);
         System.arraycopy(digest, 0, addressBytes, hash.length+1, 4);
-        return Base58Utils.encode(addressBytes);
+        return Base58.encode(addressBytes);
     }
 
     /**

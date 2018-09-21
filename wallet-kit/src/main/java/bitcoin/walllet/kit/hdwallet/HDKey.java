@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import bitcoin.wallet.kit.network.NetworkParameters;
-import bitcoin.walllet.kit.utils.Base58Utils;
+import bitcoin.walllet.kit.crypto.Base58;
 import bitcoin.walllet.kit.utils.Utils;
 
 /**
@@ -231,7 +231,7 @@ public class HDKey extends ECKey {
      * @return Base58-encoded string
      */
     public String serializePrivKeyToString() {
-        return Base58Utils.encode(addChecksum(serializeKey(false)));
+        return Base58.encode(addChecksum(serializeKey(false)));
     }
 
     /**
@@ -249,7 +249,7 @@ public class HDKey extends ECKey {
      * @return Base58-encoded string
      */
     public String serializePubKeyToString() {
-        return Base58Utils.encode(addChecksum(serializeKey(true)));
+        return Base58.encode(addChecksum(serializeKey(true)));
     }
 
     /**
