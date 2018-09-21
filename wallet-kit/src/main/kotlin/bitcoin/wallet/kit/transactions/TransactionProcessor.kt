@@ -2,8 +2,13 @@ package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.models.Transaction
+import bitcoin.wallet.kit.network.NetworkParameters
 
-class TransactionProcessor(private val realmFactory: RealmFactory, private val extractor: TransactionExtractor = TransactionExtractor(), private val linker: TransactionLinker = TransactionLinker()) {
+class TransactionProcessor(
+        private val realmFactory: RealmFactory,
+        private val network: NetworkParameters,
+        private val extractor: TransactionExtractor = TransactionExtractor(network),
+        private val linker: TransactionLinker = TransactionLinker()) {
 
     fun enqueueRun() {
         // TODO implement with queue

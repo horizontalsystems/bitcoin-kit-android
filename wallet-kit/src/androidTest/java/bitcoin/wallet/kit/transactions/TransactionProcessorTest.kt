@@ -3,6 +3,7 @@ package bitcoin.wallet.kit.transactions
 import bitcoin.wallet.kit.Factories
 import bitcoin.wallet.kit.TestUtils
 import bitcoin.wallet.kit.models.Transaction
+import bitcoin.wallet.kit.network.TestNet
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -21,7 +22,7 @@ class TransactionProcessorTest {
 
     @Before
     fun setup() {
-        processor = TransactionProcessor(realmFactory, extractor, linker)
+        processor = TransactionProcessor(realmFactory, TestNet(), extractor, linker)
     }
 
     @After
