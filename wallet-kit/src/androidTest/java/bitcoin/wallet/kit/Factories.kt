@@ -1,9 +1,10 @@
 package bitcoin.wallet.kit
 
 import android.support.test.InstrumentationRegistry
-import bitcoin.wallet.kit.TestUtils.whenever
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.transactions.TransactionLinker
+import com.nhaarman.mockito_kotlin.doAnswer
+import com.nhaarman.mockito_kotlin.whenever
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import org.mockito.Mock
@@ -26,6 +27,6 @@ class Factories {
                 .modules(WalletKitModule())
                 .build()
 
-        whenever(realmFactory.realm).thenReturn(Realm.getInstance(configuration))
+        doAnswer { Realm.getInstance(configuration) }.whenever(realmFactory).realm
     }
 }
