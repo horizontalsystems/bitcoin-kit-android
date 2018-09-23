@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.transactions
 
-import bitcoin.wallet.kit.Factories
+import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.PeerGroup
 import org.junit.After
@@ -10,7 +10,7 @@ import org.mockito.Mockito.*
 
 class TransactionSenderTest {
 
-    private val factory = Factories()
+    private val factory = RealmFactoryMock()
     private val realmFactory = factory.realmFactory
     private var realm = realmFactory.realm
     private val peerGroup = mock(PeerGroup::class.java)

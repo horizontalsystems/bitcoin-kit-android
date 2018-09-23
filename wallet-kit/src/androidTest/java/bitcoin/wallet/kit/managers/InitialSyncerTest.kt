@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.managers
 
-import bitcoin.wallet.kit.Factories
+import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.network.PeerGroup
@@ -15,7 +15,7 @@ import org.mockito.Mockito.*
 
 class InitialSyncerTest {
 
-    private val factories = Factories()
+    private val factories = RealmFactoryMock()
     private val blockDiscover = mock(BlockDiscover::class.java)
 
     private val stateManager = mock(StateManager::class.java)

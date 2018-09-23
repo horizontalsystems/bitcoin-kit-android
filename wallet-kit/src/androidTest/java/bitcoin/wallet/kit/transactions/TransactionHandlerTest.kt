@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.transactions
 
-import bitcoin.wallet.kit.Factories
+import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.headers.BlockValidator
 import bitcoin.wallet.kit.managers.ProgressSyncer
@@ -21,7 +21,7 @@ import org.mockito.Mockito.mock
 
 class TransactionHandlerTest {
 
-    private val factory = Factories()
+    private val factory = RealmFactoryMock()
     private val realmFactory = factory.realmFactory
     private var realm = realmFactory.realm
     private var transactionProcessor = mock(TransactionProcessor::class.java)

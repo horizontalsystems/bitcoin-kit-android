@@ -1,15 +1,18 @@
 package bitcoin.wallet.kit.managers
 
-import bitcoin.wallet.kit.MockFactory
+import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.headers.HeaderHandler
 import bitcoin.wallet.kit.headers.HeaderSyncer
 import bitcoin.wallet.kit.models.Header
+import bitcoin.wallet.kit.network.PeerGroup
+import bitcoin.wallet.kit.network.TestNet
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
@@ -20,9 +23,11 @@ import java.util.logging.Logger
 
 class SyncerTest {
 
-    private val factory = MockFactory()
-    private val headerSyncer = factory.headerSyncer
-    private val headerHandler = factory.headerHandler
+    private val headerSyncer = mock(HeaderSyncer::class.java)
+    private val headerHandler = mock(HeaderHandler::class.java)
+    private val realmFactory = mock(RealmFactory::class.java)
+    private val peerGroup = mock(PeerGroup::class.java)
+    private val network = mock(TestNet::class.java)
 
     lateinit var syncer: Syncer
 
@@ -40,7 +45,7 @@ class SyncerTest {
                 .withAnyArguments()
                 .thenReturn(headerHandler)
 
-        syncer = Syncer(factory.realmFactory, factory.peerGroup, factory.network)
+        syncer = Syncer(realmFactory, peerGroup, network)
     }
 
     @Test
