@@ -40,7 +40,7 @@ class PeerTest {
     private val versionMessage_successful = "F9BEB4D976657273696F6E000000000066000000600C82817F1101000D04000000000000D1DC845B00000000000000000000000000000000000000000000FFFFD4707C069ACD0D040000000000000000000000000000000000000000000000002A13586EB0756F44102F5361746F7368693A302E31362E322FE838080001"
 
     fun getMessageFromHex(hex: String): Message {
-        val versionMessageRaw = TestHelper.hexToByteArray(hex)
+        val versionMessageRaw = hex.hexStringToByteArray()
         val bitcoinInput = BitcoinInput(versionMessageRaw)
         val parsedMsg = Message.Builder.parseMessage<Message>(bitcoinInput, network)
         return parsedMsg

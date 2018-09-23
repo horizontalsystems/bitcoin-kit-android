@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.message
 
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.messages.TransactionMessage
-import helpers.TestHelper
 import junit.framework.Assert
 import org.junit.Test
 
@@ -16,7 +16,7 @@ class TransactionMessageTest {
         val message = TransactionMessage(data)
         val transaction = message.transaction
 
-        Assert.assertEquals(expectedTransactionHex, TestHelper.byteArrayToHex(transaction.txHash))
+        Assert.assertEquals(expectedTransactionHex, transaction.txHash.toHexString())
     }
 
 }
