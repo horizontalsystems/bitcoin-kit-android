@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.message
 
-import bitcoin.wallet.kit.TestHelper
 import bitcoin.wallet.kit.messages.TransactionMessage
+import helpers.TestHelper
 import junit.framework.Assert
 import org.junit.Test
 

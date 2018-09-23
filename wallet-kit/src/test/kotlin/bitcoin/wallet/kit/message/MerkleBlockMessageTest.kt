@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.message
 
-import bitcoin.wallet.kit.TestHelper
 import bitcoin.wallet.kit.messages.MerkleBlockMessage
+import helpers.TestHelper
 import org.junit.Assert
 import org.junit.Test
 

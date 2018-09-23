@@ -1,4 +1,4 @@
-package bitcoin.wallet.kit
+package helpers
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.models.*

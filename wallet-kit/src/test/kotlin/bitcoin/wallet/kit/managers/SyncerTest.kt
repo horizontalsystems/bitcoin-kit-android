@@ -1,12 +1,12 @@
 package bitcoin.wallet.kit.managers
 
-import bitcoin.wallet.kit.Fixtures
 import bitcoin.wallet.kit.MockFactory
 import bitcoin.wallet.kit.headers.HeaderHandler
 import bitcoin.wallet.kit.headers.HeaderSyncer
 import bitcoin.wallet.kit.models.Header
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
+import helpers.Fixtures
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith

@@ -1,10 +1,10 @@
 package bitcoin.wallet.kit.transactions
 
-import bitcoin.wallet.kit.Fixtures
 import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.TestNet
 import bitcoin.wallet.kit.scripts.ScriptType
+import helpers.Fixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before

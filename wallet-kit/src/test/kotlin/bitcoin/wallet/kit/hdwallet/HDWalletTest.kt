@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.hdwallet
 
-import bitcoin.wallet.kit.TestHelper
+import helpers.TestHelper
 import bitcoin.wallet.kit.network.MainNet
 import bitcoin.wallet.kit.network.TestNet
 import org.junit.Assert

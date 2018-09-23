@@ -1,4 +1,4 @@
-package bitcoin.wallet.kit
+package helpers
 
 object TestHelper {
 

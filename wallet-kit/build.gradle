@@ -25,6 +25,11 @@ android {
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
         test.java.srcDirs += 'src/test/kotlin'
+
+        // Sharing code between UI & unit tests
+        def sharedTestDir = 'src/testHelpers/kotlin'
+        test.java.srcDirs += sharedTestDir
+        androidTest.java.srcDirs += sharedTestDir
     }
 }
 

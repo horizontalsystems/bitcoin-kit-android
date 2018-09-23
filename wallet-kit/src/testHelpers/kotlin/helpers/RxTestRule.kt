@@ -1,9 +1,9 @@
-package bitcoin.wallet.kit
+package helpers
 
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers
 
-object RxBaseTest {
+object RxTestRule {
 
     fun setup() {
         //https://medium.com/@fabioCollini/testing-asynchronous-rxjava-code-using-mockito-8ad831a16877
