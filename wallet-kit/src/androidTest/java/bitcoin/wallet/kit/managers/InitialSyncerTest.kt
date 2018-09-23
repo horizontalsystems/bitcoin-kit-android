@@ -1,10 +1,10 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.Factories
-import bitcoin.wallet.kit.TestUtils.whenever
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.network.PeerGroup
+import com.nhaarman.mockito_kotlin.whenever
 import helpers.RxTestRule
 import io.reactivex.Observable
 import org.junit.After

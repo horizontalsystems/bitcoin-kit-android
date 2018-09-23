@@ -1,9 +1,9 @@
 package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.Factories
-import bitcoin.wallet.kit.TestUtils
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.TestNet
+import com.nhaarman.mockito_kotlin.any
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -61,7 +61,7 @@ class TransactionProcessorTest {
     @Test
     fun run_withoutTransaction() {
         processor.enqueueRun()
-        verify(extractor, never()).extract(TestUtils.any())
-        verify(linker, never()).handle(TestUtils.any())
+        verify(extractor, never()).extract(any())
+        verify(linker, never()).handle(any())
     }
 }

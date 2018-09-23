@@ -1,7 +1,6 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.Factories
-import bitcoin.wallet.kit.TestUtils.whenever
 import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.TransactionOutput
@@ -9,6 +8,7 @@ import bitcoin.wallet.kit.network.PeerGroup
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.check
 import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
+import com.nhaarman.mockito_kotlin.whenever
 import junit.framework.Assert
 import org.junit.After
 import org.junit.Before

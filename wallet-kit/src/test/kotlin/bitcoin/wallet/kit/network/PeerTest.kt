@@ -10,7 +10,6 @@ import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.walllet.kit.io.BitcoinInput
 import com.nhaarman.mockito_kotlin.*
-import helpers.TestHelper
 import io.realm.Realm
 import io.realm.RealmConfiguration
 import io.realm.internal.RealmCore
