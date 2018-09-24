@@ -7,7 +7,6 @@ import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.Ignore
 import io.realm.annotations.PrimaryKey
-import java.io.IOException
 
 /**
  * Transaction
@@ -59,34 +58,32 @@ open class Transaction : RealmObject {
     var isMine = false
 
     constructor()
-
-    @Throws(IOException::class)
     constructor(input: BitcoinInput) {
         version = input.readInt()
 
-        val inputCount = input.readVarInt() // do not store count
-        repeat(inputCount.toInt()) {
-            inputs.add(TransactionInput(input))
-        }
+        // inputs
+        val inputCount = input.readVarInt()
+        repeat(inputCount.toInt()) { inputs.add(TransactionInput(input)) }
 
-        val outputCount = input.readVarInt() // do not store count
-        repeat(outputCount.toInt()) {
-            outputs.add(TransactionOutput(input))
-        }
+        // outputs
+        val outputCount = input.readVarInt()
+        repeat(outputCount.toInt()) { outputs.add(TransactionOutput(input)) }
 
         lockTime = input.readUnsignedInt()
     }
 
     fun toByteArray(): ByteArray {
         val buffer = BitcoinOutput()
-        buffer.writeInt(version).writeVarInt(inputs.size.toLong())
-        for (i in inputs.indices) {
-            buffer.write(inputs[i]?.toByteArray())
-        }
+        buffer.writeInt(version)
+
+        // inputs
+        buffer.writeVarInt(inputs.size.toLong())
+        inputs.forEach { buffer.write(it.toByteArray()) }
+
+        // outputs
         buffer.writeVarInt(outputs.size.toLong())
-        for (i in outputs.indices) {
-            buffer.write(outputs[i]?.toByteArray())
-        }
+        outputs.forEach { buffer.write(it.toByteArray()) }
+
         buffer.writeUnsignedInt(lockTime)
         return buffer.toByteArray()
     }
