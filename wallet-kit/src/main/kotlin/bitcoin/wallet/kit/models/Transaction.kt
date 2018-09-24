@@ -20,7 +20,6 @@ import io.realm.annotations.PrimaryKey
  *  4 bytes     LockTime        Transaction lock time
  */
 open class Transaction : RealmObject {
-
     // Transaction version
     var version: Int = 0
 
@@ -33,22 +32,12 @@ open class Transaction : RealmObject {
     // Transaction lock time
     var lockTime: Long = 0
 
-    var txHash: ByteArray = byteArrayOf()
-
-    var processed: Boolean = false
-
-    var block: Block? = null
-
     @PrimaryKey
-    var reversedHashHex = ""
-
-    object Status {
-        const val NEW = 1
-        const val RELAYED = 2
-        const val INVALID = 3
-    }
-
+    var hashHexReversed = ""
+    var hash: ByteArray = byteArrayOf()
     var status: Int = Status.RELAYED
+    var block: Block? = null
+    var processed: Boolean = false
 
     var isMine = false
 
@@ -66,7 +55,9 @@ open class Transaction : RealmObject {
 
         lockTime = input.readUnsignedInt()
 
-        txHash = HashUtils.doubleSha256(toByteArray())
+        // Internal fields
+        hash = HashUtils.doubleSha256(toByteArray())
+        hashHexReversed = HashUtils.toHexStringAsLE(hash)
     }
 
     fun toByteArray(): ByteArray {
@@ -85,18 +76,9 @@ open class Transaction : RealmObject {
         return buffer.toByteArray()
     }
 
-    fun getInputCount(): Long {
-        return inputs.size.toLong()
-    }
-
-    fun getOutputCount(): Long {
-        return outputs.size.toLong()
-    }
-
-    // http://bitcoin.stackexchange.com/questions/3374/how-to-redeem-a-basic-tx
-    fun validate() {
-        val output = BitcoinOutput()
-        output.writeInt(version)
-        // TODO: implement
+    object Status {
+        const val NEW = 1
+        const val RELAYED = 2
+        const val INVALID = 3
     }
 }

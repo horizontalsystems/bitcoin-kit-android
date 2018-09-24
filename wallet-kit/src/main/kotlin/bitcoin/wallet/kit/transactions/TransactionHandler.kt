@@ -34,7 +34,7 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
                 }
 
                 transactions.forEach { transaction ->
-                    val existingTransaction = realm.where(Transaction::class.java).equalTo("reversedHashHex", transaction.reversedHashHex).findFirst()
+                    val existingTransaction = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
 
                     if (existingTransaction != null) {
                         existingTransaction.block = existingBlock
@@ -68,7 +68,7 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
                 val blockManaged = it.copyToRealm(block)
 
                 transactions.forEach { transaction ->
-                    val existingTransaction = realm.where(Transaction::class.java).equalTo("reversedHashHex", transaction.reversedHashHex).findFirst()
+                    val existingTransaction = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
 
                     if (existingTransaction != null) {
                         existingTransaction.block = blockManaged

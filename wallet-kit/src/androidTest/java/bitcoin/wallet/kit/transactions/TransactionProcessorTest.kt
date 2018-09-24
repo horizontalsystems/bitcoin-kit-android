@@ -37,12 +37,12 @@ class TransactionProcessorTest {
         realm.beginTransaction()
 
         val transaction1 = realm.copyToRealm(Transaction().apply {
-            reversedHashHex = "1"
+            hashHexReversed = "1"
             processed = true
         })
 
         val transaction2 = realm.copyToRealm(Transaction().apply {
-            reversedHashHex = "2"
+            hashHexReversed = "2"
             processed = false
         })
 
