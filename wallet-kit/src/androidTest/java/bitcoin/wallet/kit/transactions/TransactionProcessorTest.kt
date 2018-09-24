@@ -1,9 +1,9 @@
 package bitcoin.wallet.kit.transactions
 
-import bitcoin.wallet.kit.Factories
-import bitcoin.wallet.kit.TestUtils
+import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.TestNet
+import com.nhaarman.mockito_kotlin.any
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -12,10 +12,10 @@ import org.mockito.Mockito.*
 
 class TransactionProcessorTest {
 
-    private val factory = Factories()
+    private val factory = RealmFactoryMock()
     private val realmFactory = factory.realmFactory
     private var realm = realmFactory.realm
-    private val linker = factory.transactionLinker
+    private val linker = mock(TransactionLinker::class.java)
     private val extractor = mock(TransactionExtractor::class.java)
 
     lateinit var processor: TransactionProcessor
@@ -61,7 +61,7 @@ class TransactionProcessorTest {
     @Test
     fun run_withoutTransaction() {
         processor.enqueueRun()
-        verify(extractor, never()).extract(TestUtils.any())
-        verify(linker, never()).handle(TestUtils.any())
+        verify(extractor, never()).extract(any())
+        verify(linker, never()).handle(any())
     }
 }

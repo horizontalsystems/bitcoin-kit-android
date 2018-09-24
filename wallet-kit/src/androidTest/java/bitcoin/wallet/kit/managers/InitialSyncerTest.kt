@@ -1,11 +1,11 @@
 package bitcoin.wallet.kit.managers
 
-import bitcoin.wallet.kit.Factories
-import bitcoin.wallet.kit.RxBaseTest
-import bitcoin.wallet.kit.TestUtils.whenever
+import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.network.PeerGroup
+import com.nhaarman.mockito_kotlin.whenever
+import helpers.RxTestRule
 import io.reactivex.Observable
 import org.junit.After
 import org.junit.Assert
@@ -15,7 +15,7 @@ import org.mockito.Mockito.*
 
 class InitialSyncerTest {
 
-    private val factories = Factories()
+    private val factories = RealmFactoryMock()
     private val blockDiscover = mock(BlockDiscover::class.java)
 
     private val stateManager = mock(StateManager::class.java)
@@ -26,7 +26,7 @@ class InitialSyncerTest {
 
     @Before
     fun setup() {
-        RxBaseTest.setup()
+        RxTestRule.setup()
 
         initialSyncer = InitialSyncer(factories.realmFactory, blockDiscover, stateManager, peerGroup)
     }

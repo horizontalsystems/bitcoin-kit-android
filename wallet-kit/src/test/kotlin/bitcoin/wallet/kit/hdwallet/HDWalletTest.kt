@@ -1,6 +1,7 @@
 package bitcoin.wallet.kit.hdwallet
 
-import bitcoin.wallet.kit.TestHelper
+import bitcoin.wallet.kit.core.hexStringToByteArray
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.network.MainNet
 import bitcoin.wallet.kit.network.TestNet
 import org.junit.Assert
@@ -8,7 +9,7 @@ import org.junit.Test
 
 class HDWalletTest {
 
-    private val seed = TestHelper.hexToByteArray("6908630f564bd3ca9efb521e72da86727fc78285b15decedb44f40b02474502ed6844958b29465246a618b1b56b4bdffacd1de8b324159e0f7f594c611b0519d")
+    private val seed = "6908630f564bd3ca9efb521e72da86727fc78285b15decedb44f40b02474502ed6844958b29465246a618b1b56b4bdffacd1de8b324159e0f7f594c611b0519d".hexStringToByteArray()
     private val hdWalletMainNet = HDWallet(seed, MainNet())
     private val hdWalletTestNet = HDWallet(seed, TestNet())
 
@@ -30,14 +31,14 @@ class HDWalletTest {
     fun receiveAddress_correctPublicKey_mainNet() {
         val publicKey = hdWalletMainNet.receivePublicKey(0)
         val expectedPublicKey = "031f4e92f8d1f78d8a149863415690b2c2845fcae3be009f9d55595e4edc00e2ea"
-        Assert.assertEquals(expectedPublicKey, TestHelper.byteArrayToHex(publicKey.publicKey))
+        Assert.assertEquals(expectedPublicKey, publicKey.publicKey.toHexString())
     }
 
     @Test
     fun receiveAddress_correctPublicKey_testNet() {
         val publicKey = hdWalletTestNet.receivePublicKey(0)
         val expectedPublicKey = "035e028c6d6b0f18d31d699957f219e75415c2f5dea979f3f4771e11954ec77c13"
-        Assert.assertEquals(expectedPublicKey, TestHelper.byteArrayToHex(publicKey.publicKey))
+        Assert.assertEquals(expectedPublicKey, publicKey.publicKey.toHexString())
     }
 
     @Test
@@ -58,7 +59,7 @@ class HDWalletTest {
     fun changeAddress_correctPublicKey() {
         val publicKey = hdWalletMainNet.changePublicKey(0)
         val expectedPublicKey = "0301aeeb78a8ee9201659fcbe8d78e73205e7b26e0e46608e2a661aabe87822ce5"
-        Assert.assertEquals(expectedPublicKey, TestHelper.byteArrayToHex(publicKey.publicKey))
+        Assert.assertEquals(expectedPublicKey, publicKey.publicKey.toHexString())
     }
 
 }

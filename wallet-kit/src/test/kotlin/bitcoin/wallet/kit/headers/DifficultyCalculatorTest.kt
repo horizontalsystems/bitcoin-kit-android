@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.headers
 
-import bitcoin.wallet.kit.Fixtures
+import helpers.Fixtures
 import junit.framework.Assert
 import org.junit.Test
 

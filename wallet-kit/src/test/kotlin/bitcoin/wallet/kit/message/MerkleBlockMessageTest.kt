@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.message
 
-import bitcoin.wallet.kit.TestHelper
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.messages.MerkleBlockMessage
 import org.junit.Assert
 import org.junit.Test
@@ -26,7 +26,7 @@ class MerkleBlockMessageTest {
         val message = MerkleBlockMessage(data)
         val merkleBlock = message.merkleBlock
 
-        Assert.assertEquals(expectedBlockHash, TestHelper.byteArrayToHex(merkleBlock.blockHash))
+        Assert.assertEquals(expectedBlockHash, merkleBlock.blockHash.toHexString())
         Assert.assertArrayEquals(expectedTransactionHashes, merkleBlock.associatedTransactionHexes.toTypedArray())
     }
 

@@ -1,7 +1,6 @@
 package bitcoin.wallet.kit.managers
 
-import bitcoin.wallet.kit.Factories
-import bitcoin.wallet.kit.TestUtils.whenever
+import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.TransactionOutput
@@ -9,6 +8,7 @@ import bitcoin.wallet.kit.network.PeerGroup
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.check
 import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
+import com.nhaarman.mockito_kotlin.whenever
 import junit.framework.Assert
 import org.junit.After
 import org.junit.Before
@@ -19,11 +19,11 @@ import org.mockito.Mockito.verify
 
 class AddressManagerTest {
 
-    private val factories = Factories()
+    private val factory = RealmFactoryMock()
 
     private val peerGroup = Mockito.mock(PeerGroup::class.java)
     private val hdWallet = Mockito.mock(HDWallet::class.java)
-    private val realm = factories.realmFactory.realm
+    private val realm = factory.realmFactory.realm
 
     private lateinit var addressManager: AddressManager
 
@@ -36,7 +36,7 @@ class AddressManagerTest {
             createPublicKey(false, it.getArgument(0))
         }
 
-        addressManager = AddressManager(factories.realmFactory, hdWallet, peerGroup)
+        addressManager = AddressManager(factory.realmFactory, hdWallet, peerGroup)
     }
 
     @After
