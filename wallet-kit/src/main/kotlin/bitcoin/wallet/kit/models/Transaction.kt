@@ -48,18 +48,13 @@ open class Transaction : RealmObject {
     @PrimaryKey
     var reversedHashHex = ""
 
-    enum class Status {
-        NEW, RELAYED, INVALID
+    object Status {
+        const val NEW = 1
+        const val RELAYED = 2
+        const val INVALID = 3
     }
 
-    // To store enum field value in Realm we need int representation
-    private var statusInt: Int = Status.RELAYED.ordinal
-
-    var status: Status
-        get() = Status.values()[statusInt]
-        set(value) {
-            statusInt = value.ordinal
-        }
+    var status: Int = Status.RELAYED
 
     var isMine = false
 
