@@ -5,7 +5,6 @@ import bitcoin.walllet.kit.io.BitcoinOutput
 import bitcoin.walllet.kit.utils.HashUtils
 import io.realm.RealmList
 import io.realm.RealmObject
-import io.realm.annotations.Ignore
 import io.realm.annotations.PrimaryKey
 
 /**
@@ -34,11 +33,7 @@ open class Transaction : RealmObject {
     // Transaction lock time
     var lockTime: Long = 0
 
-    // Get transaction hash (actually calculate the hash of transaction data).
-    @delegate:Ignore
-    val txHash: ByteArray by lazy {
-        HashUtils.doubleSha256(toByteArray())
-    }
+    var txHash: ByteArray = byteArrayOf()
 
     var processed: Boolean = false
 
@@ -70,6 +65,8 @@ open class Transaction : RealmObject {
         repeat(outputCount.toInt()) { outputs.add(TransactionOutput(input)) }
 
         lockTime = input.readUnsignedInt()
+
+        txHash = HashUtils.doubleSha256(toByteArray())
     }
 
     fun toByteArray(): ByteArray {
