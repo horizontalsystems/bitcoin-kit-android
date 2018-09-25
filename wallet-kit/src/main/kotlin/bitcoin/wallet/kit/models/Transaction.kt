@@ -61,6 +61,8 @@ open class Transaction : RealmObject {
             statusInt = value.ordinal
         }
 
+    var isMine = false
+
     constructor()
 
     @Throws(IOException::class)
