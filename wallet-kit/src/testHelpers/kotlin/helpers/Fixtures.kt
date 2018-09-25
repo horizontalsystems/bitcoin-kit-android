@@ -75,7 +75,7 @@ object Fixtures {
         version = 1
         lockTime = 0
         inputs.add(TransactionInput().apply {
-            previousOutputTxHash = "093f5f5c5e57ae2ae9728147547e183e2ef5c9e6e879a78bee6ceb59db2b4797".hexStringToByteArray()
+            previousOutputHash = "093f5f5c5e57ae2ae9728147547e183e2ef5c9e6e879a78bee6ceb59db2b4797".hexStringToByteArray()
             previousOutputIndex = 1
             sigScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexStringToByteArray()
             sequence = 4294967295
@@ -101,7 +101,7 @@ object Fixtures {
         version = 1
         lockTime = 0
         inputs.add(TransactionInput().apply {
-            previousOutputTxHash = "b6f0ede9cc38cdbceb91936619f89b648bb912f4c42773567037ea5de164873d".hexStringToByteArray()
+            previousOutputHash = "b6f0ede9cc38cdbceb91936619f89b648bb912f4c42773567037ea5de164873d".hexStringToByteArray()
             previousOutputIndex = 1
             sigScript = "004830450221008c203a0881f75c731d9a3a2e6d2ffa37da7095b7dde61a9e7a906659219cd0fa02202677097ca7f7e164f73924fe8f84e1e6fc6611450efcda360ce771e98af9f73d0147304402201cba9b641483476f67a4cef08d7280f51de8d7615fcce76642d944dc07132a990220323d13175477bbf67c8c36fb243bec0e4c410bc9173a186d9f8e98ce3445363601475221025b64f7c63e30f315259393f64dcca269d18386997b1cc93da1388c4021e3ea8e210386d42d5d7027ac08ddcbb066e2140575091fe7dc1d202a008eb5e036725e975652ae".hexStringToByteArray()
             sequence = 4294967295
@@ -127,7 +127,7 @@ object Fixtures {
         version = 1
         lockTime = 0
         inputs.add(TransactionInput().apply {
-            previousOutputTxHash = "978530798f3979322351c190856d17b9e9e7e470c5be4ce87a60bd7a9f7756ac".hexStringToByteArray()
+            previousOutputHash = "978530798f3979322351c190856d17b9e9e7e470c5be4ce87a60bd7a9f7756ac".hexStringToByteArray()
             previousOutputIndex = 0
             sigScript = "473044022003f9d150b4e291de2825af19dbe1846cc80caf3535d7e9fa03743b2ad019cc47022073294e520c508f702e3ad7a085ecce4a4b311d43faa1e6eb685ec78c002e795d01".hexStringToByteArray()
             sequence = 4294967295

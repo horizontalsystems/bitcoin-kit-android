@@ -18,7 +18,7 @@ import java.io.IOException
  */
 open class TransactionInput : RealmObject {
     // The hash of the referenced transaction
-    var previousOutputTxHash: ByteArray = byteArrayOf()
+    var previousOutputHash: ByteArray = byteArrayOf()
 
     // The index of the specific output in the transaction
     var previousOutputIndex: Long = 0
@@ -37,7 +37,7 @@ open class TransactionInput : RealmObject {
 
     @Throws(IOException::class)
     constructor(input: BitcoinInput) {
-        previousOutputTxHash = input.readBytes(32)
+        previousOutputHash = input.readBytes(32)
         previousOutputIndex = input.readUnsignedInt()
         val sigScriptLength = input.readVarInt()
         sigScript = input.readBytes(sigScriptLength.toInt())
@@ -46,7 +46,7 @@ open class TransactionInput : RealmObject {
 
     fun toByteArray(): ByteArray {
         return BitcoinOutput()
-                .write(previousOutputTxHash)
+                .write(previousOutputHash)
                 .writeUnsignedInt(previousOutputIndex)
                 .writeVarInt(sigScript.size.toLong())
                 .write(sigScript)
