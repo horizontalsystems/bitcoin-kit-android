@@ -94,6 +94,8 @@ object Fixtures {
             lockingScript = "76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexStringToByteArray()
             scriptType = ScriptType.UNKNOWN
         })
+
+        setTxHashes(this)
     }
 
     // P2SH: TestNet tx => 761cc7102efe24f4353ae7dc816fbed5e15963d11ca93e36449d521bda21ac4d
@@ -120,6 +122,8 @@ object Fixtures {
             lockingScript = "a914aed6f804c63da80800892f8fd4cdbad0d3ad6d1287".hexStringToByteArray()
             scriptType = ScriptType.UNKNOWN
         })
+
+        setTxHashes(this)
     }
 
     // P2PK: TestNet tx => 75b84cb54351866cb5248158735e801d9b2c56592633157ba10d08affa2ffbab
@@ -146,5 +150,12 @@ object Fixtures {
             lockingScript = "410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3ac".hexStringToByteArray()
             scriptType = ScriptType.UNKNOWN
         })
+
+        setTxHashes(this)
+    }
+
+    private fun setTxHashes(tx: Transaction) {
+        tx.hash = HashUtils.doubleSha256(tx.toByteArray())
+        tx.hashHexReversed = HashUtils.toHexStringAsLE(tx.hash)
     }
 }

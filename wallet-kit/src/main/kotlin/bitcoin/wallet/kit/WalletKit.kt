@@ -177,7 +177,7 @@ class WalletKit(words: List<String>) {
         val amount = totalMineOutput - totalMineInput
 
         return TransactionInfo(
-                transaction.reversedHashHex,
+                transaction.hashHexReversed,
                 fromAddresses,
                 toAddresses,
                 amount,

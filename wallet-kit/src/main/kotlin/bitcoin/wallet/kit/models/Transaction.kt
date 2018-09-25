@@ -37,9 +37,8 @@ open class Transaction : RealmObject {
     var hash: ByteArray = byteArrayOf()
     var status: Int = Status.RELAYED
     var block: Block? = null
-    var processed: Boolean = false
-
     var isMine = false
+    var processed = false
 
     constructor()
     constructor(input: BitcoinInput) {

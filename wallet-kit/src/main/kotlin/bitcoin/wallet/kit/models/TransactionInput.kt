@@ -3,7 +3,8 @@ package bitcoin.wallet.kit.models
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
 import io.realm.RealmObject
-import java.io.IOException
+import io.realm.RealmResults
+import io.realm.annotations.LinkingObjects
 
 /**
  * Transaction input
@@ -29,13 +30,18 @@ open class TransactionInput : RealmObject {
     // Input sequence number
     var sequence: Long = 0
 
+    // Internal fields
+    var previousOutput: TransactionOutput? = null
+    var previousOutputHexReversed = ""
     var keyHash: ByteArray? = null
     var address: String? = ""
-    var previousOutput: TransactionOutput? = null
+
+    @LinkingObjects("inputs")
+    val transactions: RealmResults<Transaction>? = null
+    val transaction: Transaction?
+        get() = transactions?.first()
 
     constructor()
-
-    @Throws(IOException::class)
     constructor(input: BitcoinInput) {
         previousOutputHash = input.readBytes(32)
         previousOutputIndex = input.readUnsignedInt()

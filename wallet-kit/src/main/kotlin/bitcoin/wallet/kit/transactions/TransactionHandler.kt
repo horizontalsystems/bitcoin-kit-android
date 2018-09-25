@@ -20,7 +20,8 @@ class TransactionHandler(private val realmFactory: RealmFactory, private val pro
         var hasNewTransactions = false
         var hasNewSyncedBlocks = false
 
-        val existingBlock = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", reversedHashHex).findFirst()
+        val existingBlock = realm.where(Block::class.java)
+                .equalTo("reversedHeaderHashHex", reversedHashHex).findFirst()
 
         if (existingBlock != null) {
             if (existingBlock.synced) {

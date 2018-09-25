@@ -25,7 +25,7 @@ class TransactionProcessor(
             realm.executeTransaction {
                 transactions.forEach { transaction ->
                     extractor.extract(transaction)
-                    linker.handle(transaction)
+                    linker.handle(transaction, it)
                     transaction.processed = true
                 }
             }
