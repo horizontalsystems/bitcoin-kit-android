@@ -31,6 +31,7 @@ open class TransactionInput : RealmObject {
 
     var keyHash: ByteArray? = null
     var address: String? = ""
+    var previousOutput: TransactionOutput? = null
 
     constructor()
 
