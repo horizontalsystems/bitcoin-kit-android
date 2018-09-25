@@ -33,14 +33,14 @@ class TransactionSenderTest {
     fun run_relayOnlyNewTransactions() {
 
         realm.beginTransaction()
-        realm.insert(Transaction().apply { reversedHashHex = "1" })
+        realm.insert(Transaction().apply { hashHexReversed = "1" })
         realm.insert(Transaction().apply {
-            reversedHashHex = "2"
+            hashHexReversed = "2"
             status = Transaction.Status.INVALID
         })
 
         val transaction = realm.copyToRealm(Transaction().apply {
-            reversedHashHex = "3"
+            hashHexReversed = "3"
             status = Transaction.Status.NEW
         })
 

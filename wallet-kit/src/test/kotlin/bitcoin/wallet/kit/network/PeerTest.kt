@@ -186,7 +186,7 @@ class PeerTest {
         val txMessage = mock(TransactionMessage::class.java)
 
         whenever(txMessage.transaction).thenReturn(transaction)
-        whenever(transaction.txHash).thenReturn(txHash.hexStringToByteArray())
+        whenever(transaction.hash).thenReturn(txHash.hexStringToByteArray())
         whenever(merkleBlock.associatedTransactions).thenReturn(mutableListOf(transaction))
 
         peer.onMessage(txMessage)
@@ -286,7 +286,7 @@ class PeerTest {
         val transaction = mock(Transaction::class.java)
         val txHash = "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1".toByteArray()
 
-        whenever(transaction.txHash).thenReturn(txHash)
+        whenever(transaction.hash).thenReturn(txHash)
 
         peer.relay(transaction)
 
@@ -307,7 +307,7 @@ class PeerTest {
         val transaction = mock(Transaction::class.java)
         val txHash = "0000000000000005ed683decf91ff610c7710d03bb3f618d121d47cbcb1bc1e1".toByteArray()
 
-        whenever(transaction.txHash).thenReturn(txHash)
+        whenever(transaction.hash).thenReturn(txHash)
 
         peer.relay(transaction)
 

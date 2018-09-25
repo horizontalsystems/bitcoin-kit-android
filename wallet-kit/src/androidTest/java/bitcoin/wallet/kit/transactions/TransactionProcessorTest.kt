@@ -37,12 +37,12 @@ class TransactionProcessorTest {
         realm.beginTransaction()
 
         val transaction1 = realm.copyToRealm(Transaction().apply {
-            reversedHashHex = "1"
+            hashHexReversed = "1"
             processed = true
         })
 
         val transaction2 = realm.copyToRealm(Transaction().apply {
-            reversedHashHex = "2"
+            hashHexReversed = "2"
             processed = false
         })
 
@@ -52,8 +52,8 @@ class TransactionProcessorTest {
         verify(extractor).extract(transaction2)
         verify(extractor, never()).extract(transaction1)
 
-        verify(linker).handle(transaction2)
-        verify(linker, never()).handle(transaction1)
+        verify(linker).handle(transaction2, realm)
+        verify(linker, never()).handle(transaction1, realm)
 
         Assert.assertEquals(transaction2.processed, true)
     }
@@ -62,6 +62,6 @@ class TransactionProcessorTest {
     fun run_withoutTransaction() {
         processor.enqueueRun()
         verify(extractor, never()).extract(any())
-        verify(linker, never()).handle(any())
+        verify(linker, never()).handle(any(), any())
     }
 }

@@ -16,9 +16,8 @@ class TransactionSender(private val realmFactory: RealmFactory, private val peer
     fun run() {
         val realm = realmFactory.realm
 
-        val nonSentTransactions = realm
-                .where(Transaction::class.java)
-                .equalTo("statusInt", Transaction.Status.NEW.ordinal)
+        val nonSentTransactions = realm.where(Transaction::class.java)
+                .equalTo("status", Transaction.Status.NEW)
                 .findAll()
 
         nonSentTransactions.forEach {

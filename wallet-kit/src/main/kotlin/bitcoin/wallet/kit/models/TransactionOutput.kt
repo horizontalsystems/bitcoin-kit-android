@@ -37,8 +37,6 @@ open class TransactionOutput : RealmObject {
     val inputs: RealmResults<TransactionInput>? = null
 
     constructor()
-
-    @Throws(IOException::class)
     constructor(input: BitcoinInput) {
         value = input.readLong()
         val scriptLength = input.readVarInt() // do not store

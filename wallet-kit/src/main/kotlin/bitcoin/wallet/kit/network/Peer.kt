@@ -55,9 +55,9 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     }
 
     override fun relay(transaction: Transaction) {
-        relayedTransactions[transaction.txHash] = transaction
+        relayedTransactions[transaction.hash] = transaction
 
-        peerConnection.sendMessage(InvMessage(InventoryItem.MSG_TX, transaction.txHash))
+        peerConnection.sendMessage(InvMessage(InventoryItem.MSG_TX, transaction.hash))
     }
 
     override fun onMessage(message: Message) {
@@ -87,7 +87,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
             is TransactionMessage -> {
                 val transaction = message.transaction
 
-                val merkleBlock = requestedMerkleBlocks.values.filterNotNull().firstOrNull { it.associatedTransactionHexes.contains(transaction.txHash.toHexString()) }
+                val merkleBlock = requestedMerkleBlocks.values.filterNotNull().firstOrNull { it.associatedTransactionHexes.contains(transaction.hash.toHexString()) }
                 if (merkleBlock != null) {
                     merkleBlock.addTransaction(transaction)
                     if (merkleBlock.associatedTransactionHexes.size == merkleBlock.associatedTransactions.size) {
@@ -121,7 +121,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
                 message.inventory.filter { it.type == InventoryItem.MSG_TX }.forEach {
                     relayedTransactions[it.hash]?.let { tx ->
                         peerConnection.sendMessage(TransactionMessage(tx))
-                        relayedTransactions.remove(tx.txHash)
+                        relayedTransactions.remove(tx.hash)
                     }
                 }
             }

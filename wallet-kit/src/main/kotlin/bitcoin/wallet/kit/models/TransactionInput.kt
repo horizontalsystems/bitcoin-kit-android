@@ -3,7 +3,8 @@ package bitcoin.wallet.kit.models
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
 import io.realm.RealmObject
-import java.io.IOException
+import io.realm.RealmResults
+import io.realm.annotations.LinkingObjects
 
 /**
  * Transaction input
@@ -18,7 +19,7 @@ import java.io.IOException
  */
 open class TransactionInput : RealmObject {
     // The hash of the referenced transaction
-    var previousOutputTxHash: ByteArray = byteArrayOf()
+    var previousOutputHash: ByteArray = byteArrayOf()
 
     // The index of the specific output in the transaction
     var previousOutputIndex: Long = 0
@@ -29,15 +30,20 @@ open class TransactionInput : RealmObject {
     // Input sequence number
     var sequence: Long = 0
 
+    // Internal fields
+    var previousOutput: TransactionOutput? = null
+    var previousOutputHexReversed = ""
     var keyHash: ByteArray? = null
     var address: String? = ""
-    var previousOutput: TransactionOutput? = null
+
+    @LinkingObjects("inputs")
+    val transactions: RealmResults<Transaction>? = null
+    val transaction: Transaction?
+        get() = transactions?.first()
 
     constructor()
-
-    @Throws(IOException::class)
     constructor(input: BitcoinInput) {
-        previousOutputTxHash = input.readBytes(32)
+        previousOutputHash = input.readBytes(32)
         previousOutputIndex = input.readUnsignedInt()
         val sigScriptLength = input.readVarInt()
         sigScript = input.readBytes(sigScriptLength.toInt())
@@ -46,7 +52,7 @@ open class TransactionInput : RealmObject {
 
     fun toByteArray(): ByteArray {
         return BitcoinOutput()
-                .write(previousOutputTxHash)
+                .write(previousOutputHash)
                 .writeUnsignedInt(previousOutputIndex)
                 .writeVarInt(sigScript.size.toLong())
                 .write(sigScript)
