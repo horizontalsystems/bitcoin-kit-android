@@ -45,7 +45,7 @@ class BlockValidator {
     private fun validateDifficultyTransition(block: Block) {
         var lastCheckPointBlock = block
 
-        for (i in 0..2015) {
+        for (i in 0 until 2016) {
             val tmpBlock = lastCheckPointBlock.previousBlock
             if (tmpBlock != null) {
                 lastCheckPointBlock = tmpBlock
