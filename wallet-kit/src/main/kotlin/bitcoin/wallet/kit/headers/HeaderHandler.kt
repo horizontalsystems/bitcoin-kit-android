@@ -7,7 +7,6 @@ import bitcoin.wallet.kit.network.NetworkParameters
 import io.realm.Sort
 
 class HeaderHandler(private val realmFactory: RealmFactory, private val network: NetworkParameters) {
-    private val validator = BlockValidator()
 
     @Throws
     fun handle(headers: Array<Header>) {
@@ -23,7 +22,7 @@ class HeaderHandler(private val realmFactory: RealmFactory, private val network:
         headers.forEach { header ->
             val block = Block(header, previousBlock)
 
-            validator.validate(block)
+            network.validate(block)
 
             val existingBlock = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex).findFirst()
             if (existingBlock == null) {

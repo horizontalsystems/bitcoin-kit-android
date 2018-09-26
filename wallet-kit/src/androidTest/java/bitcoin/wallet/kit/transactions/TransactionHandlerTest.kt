@@ -24,7 +24,7 @@ class TransactionHandlerTest {
 
     private val factory = RealmFactoryMock()
     private val realmFactory = factory.realmFactory
-    private val network = MainNet()
+    private val network = mock(MainNet::class.java)
     private var realm = realmFactory.realm
     private var transactionProcessor = mock(TransactionProcessor::class.java)
     private var progressSyncer = mock(ProgressSyncer::class.java)
@@ -53,7 +53,7 @@ class TransactionHandlerTest {
 
     @Before
     fun setup() {
-        transactionHandler = TransactionHandler(realmFactory, network, transactionProcessor, progressSyncer, blockValidator)
+        transactionHandler = TransactionHandler(realmFactory, network, transactionProcessor, progressSyncer)
     }
 
     @After
@@ -122,7 +122,7 @@ class TransactionHandlerTest {
         realm.insert(Block(testHeader2, TestNet().checkpointBlock))
         realm.commitTransaction()
 
-        whenever(blockValidator.validate(any())).thenThrow(BlockValidator.InvalidBlock(BlockValidator.ValidatorError.WrongPreviousHeaderHash))
+        whenever(network.validate(any())).thenThrow(BlockValidator.InvalidBlock(BlockValidator.ValidatorError.WrongPreviousHeaderHash))
 
         try {
             transactionHandler.handle(arrayOf(), testHeader)
@@ -140,7 +140,7 @@ class TransactionHandlerTest {
 
         transactionHandler.handle(arrayOf(), testHeader)
 
-        verifyNoMoreInteractions(blockValidator)
+        verifyNoMoreInteractions(network)
         verifyNoMoreInteractions(transactionProcessor)
         verifyNoMoreInteractions(progressSyncer)
     }

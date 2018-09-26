@@ -72,6 +72,8 @@ abstract class NetworkParameters {
 
     abstract val checkpointBlock: Block
 
+    abstract fun validate(block: Block)
+
     fun magicAsUInt32ByteArray(): ByteArray {
         val magic = packetMagic
         val bytes = ByteArray(4)

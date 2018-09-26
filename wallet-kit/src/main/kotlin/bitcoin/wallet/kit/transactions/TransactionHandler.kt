@@ -2,7 +2,6 @@ package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.headers.BlockValidator
 import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
@@ -14,8 +13,7 @@ class TransactionHandler(
         private val realmFactory: RealmFactory,
         private val network: NetworkParameters,
         private val processor: TransactionProcessor = TransactionProcessor(realmFactory, network),
-        private val progressSyncer: ProgressSyncer = ProgressSyncer(),
-        private val validator: BlockValidator = BlockValidator()) {
+        private val progressSyncer: ProgressSyncer = ProgressSyncer()) {
 
     fun handle(transactions: Array<Transaction>, header: Header) {
 
@@ -69,7 +67,7 @@ class TransactionHandler(
                 synced = true
             }
 
-            validator.validate(block)
+            network.validate(block)
 
             realm.executeTransaction {
                 val blockManaged = it.copyToRealm(block)

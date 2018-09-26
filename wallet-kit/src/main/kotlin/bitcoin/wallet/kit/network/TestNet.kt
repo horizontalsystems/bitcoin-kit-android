@@ -43,4 +43,7 @@ open class TestNet : NetworkParameters() {
             },
             1380960)
 
+    override fun validate(block: Block) {
+        TODO("not implemented")
+    }
 }
