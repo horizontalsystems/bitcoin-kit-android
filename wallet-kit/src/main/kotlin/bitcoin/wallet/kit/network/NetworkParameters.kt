@@ -73,18 +73,12 @@ abstract class NetworkParameters {
     abstract val checkpointBlock: Block
 
     fun magicAsUInt32ByteArray(): ByteArray {
-        return longToUInt32ByteArray(packetMagic)
+        val magic = packetMagic
+        val bytes = ByteArray(4)
+        bytes[3] = (magic and 0xFFFF).toByte()
+        bytes[2] = ((magic ushr 8) and 0xFFFF).toByte()
+        bytes[1] = ((magic ushr 16) and 0xFFFF).toByte()
+        bytes[0] = ((magic ushr 24) and 0xFFFF).toByte()
+        return bytes
     }
-
-    companion object {
-        fun longToUInt32ByteArray(value: Long): ByteArray {
-            val bytes = ByteArray(4)
-            bytes[3] = (value and 0xFFFF).toByte()
-            bytes[2] = ((value ushr 8) and 0xFFFF).toByte()
-            bytes[1] = ((value ushr 16) and 0xFFFF).toByte()
-            bytes[0] = ((value ushr 24) and 0xFFFF).toByte()
-            return bytes
-        }
-    }
-
 }
