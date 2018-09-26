@@ -7,6 +7,7 @@ import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.Transaction
+import bitcoin.wallet.kit.network.MainNet
 import bitcoin.wallet.kit.network.TestNet
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.verify
@@ -23,6 +24,7 @@ class TransactionHandlerTest {
 
     private val factory = RealmFactoryMock()
     private val realmFactory = factory.realmFactory
+    private val network = MainNet()
     private var realm = realmFactory.realm
     private var transactionProcessor = mock(TransactionProcessor::class.java)
     private var progressSyncer = mock(ProgressSyncer::class.java)
@@ -51,7 +53,7 @@ class TransactionHandlerTest {
 
     @Before
     fun setup() {
-        transactionHandler = TransactionHandler(realmFactory, transactionProcessor, progressSyncer, blockValidator)
+        transactionHandler = TransactionHandler(realmFactory, network, transactionProcessor, progressSyncer, blockValidator)
     }
 
     @After

@@ -7,9 +7,15 @@ import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.Transaction
+import bitcoin.wallet.kit.network.NetworkParameters
 import io.realm.Sort
 
-class TransactionHandler(private val realmFactory: RealmFactory, private val processor: TransactionProcessor, private val progressSyncer: ProgressSyncer, private val validator: BlockValidator = BlockValidator()) {
+class TransactionHandler(
+        private val realmFactory: RealmFactory,
+        private val network: NetworkParameters,
+        private val processor: TransactionProcessor = TransactionProcessor(realmFactory, network),
+        private val progressSyncer: ProgressSyncer = ProgressSyncer(),
+        private val validator: BlockValidator = BlockValidator()) {
 
     fun handle(transactions: Array<Transaction>, header: Header) {
 
