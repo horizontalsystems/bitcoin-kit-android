@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/navigation_home"
+        android:title="Balance" />
+
+    <item
+        android:id="@+id/navigation_transactions"
+        android:title="Transactions" />
+
+    <item
+        android:id="@+id/navigation_send_receive"
+        android:title="Send/Receive" />
+
+</menu>
