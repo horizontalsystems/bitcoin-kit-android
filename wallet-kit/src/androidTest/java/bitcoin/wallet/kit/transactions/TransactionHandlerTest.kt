@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.RealmFactoryMock
+import bitcoin.wallet.kit.blocks.BlockValidatorException
 import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.headers.BlockValidator
 import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
@@ -13,9 +13,9 @@ import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
 import com.nhaarman.mockito_kotlin.whenever
-import junit.framework.Assert.fail
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -28,7 +28,6 @@ class TransactionHandlerTest {
     private var realm = realmFactory.realm
     private var transactionProcessor = mock(TransactionProcessor::class.java)
     private var progressSyncer = mock(ProgressSyncer::class.java)
-    private var blockValidator = mock(BlockValidator::class.java)
 
     private lateinit var transactionHandler: TransactionHandler
 
@@ -122,12 +121,15 @@ class TransactionHandlerTest {
         realm.insert(Block(testHeader2, TestNet().checkpointBlock))
         realm.commitTransaction()
 
-        whenever(network.validate(any())).thenThrow(BlockValidator.InvalidBlock(BlockValidator.ValidatorError.WrongPreviousHeaderHash))
+        whenever(network.validate(any(), any()))
+                .thenThrow(BlockValidatorException.WrongPreviousHeader())
 
         try {
             transactionHandler.handle(arrayOf(), testHeader)
-            fail("Expected an BlockValidator.InvalidBlock to be thrown")
-        } catch (e: BlockValidator.InvalidBlock) { }
+            fail("Expected an BlockValidatorException.WrongPreviousHeader to be thrown")
+        } catch (e: BlockValidatorException.WrongPreviousHeader) {
+        }
+
 
         Assert.assertEquals(0, realm.where(Block::class.java).equalTo("headerHash", testHeader.hash).count())
 
