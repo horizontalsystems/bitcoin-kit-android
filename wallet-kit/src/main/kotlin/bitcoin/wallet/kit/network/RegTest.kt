@@ -1,11 +1,11 @@
 package bitcoin.wallet.kit.network
 
+import bitcoin.wallet.kit.blocks.BlockValidator
 import bitcoin.wallet.kit.models.Block
 
 class RegTest : TestNet() {
 
     override var id: String = ID_REGTEST
-
     override var port: Int = 18444
 
     override var dnsSeeds: Array<String> = arrayOf(
@@ -15,8 +15,9 @@ class RegTest : TestNet() {
             "blocknode04.grouvi.org"
     )
 
-    override var paymentProtocolId: String = PAYMENT_PROTOCOL_ID_REGTEST
-
     override val checkpointBlock = Block()
 
+    override fun validate(block: Block, previousBlock: Block) {
+        BlockValidator.validateHeader(block, previousBlock)
+    }
 }

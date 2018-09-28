@@ -11,7 +11,6 @@ import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.wallet.kit.transactions.TransactionHandler
-import bitcoin.wallet.kit.transactions.TransactionProcessor
 import bitcoin.wallet.kit.transactions.TransactionSender
 import bitcoin.walllet.kit.io.BitcoinInput
 import java.util.logging.Level
@@ -22,7 +21,7 @@ class Syncer(realmFactory: RealmFactory, peerGroup: PeerGroup, network: NetworkP
     private val headerSyncer = HeaderSyncer(realmFactory, peerGroup, network)
     private val headerHandler = HeaderHandler(realmFactory, network)
     private val blockSyncer = BlockSyncer(realmFactory, peerGroup)
-    private val transactionHandler = TransactionHandler(realmFactory, TransactionProcessor(realmFactory, network), ProgressSyncer())
+    private val transactionHandler = TransactionHandler(realmFactory, network)
     private val transactionSender = TransactionSender(realmFactory, peerGroup)
 
     enum class SyncStatus {
