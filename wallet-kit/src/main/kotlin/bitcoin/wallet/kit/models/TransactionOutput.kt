@@ -6,7 +6,6 @@ import bitcoin.walllet.kit.io.BitcoinOutput
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.annotations.LinkingObjects
-import java.io.IOException
 
 /**
  * Transaction output
@@ -31,7 +30,7 @@ open class TransactionOutput : RealmObject {
     var publicKey: PublicKey? = null
     var scriptType: Int = 0
     var keyHash: ByteArray? = null
-    var address: String? = ""
+    var address: String? = null
 
     @LinkingObjects("previousOutput")
     val inputs: RealmResults<TransactionInput>? = null
