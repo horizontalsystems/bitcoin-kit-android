@@ -129,6 +129,9 @@ object ScriptParser {
         if (chunks[1].isOpCode())
             return false
 
+        if (isSHashInput(script))
+            return false
+
         val redeemChunk = chunks.last()
         if (redeemChunk.data == null)
             return false
