@@ -35,6 +35,22 @@ class ScriptParserTest {
         assertEquals(ScriptType.P2SH, script.getScriptType())
     }
 
+    @Test // OP_0 32 0xa99d08fbec6958f4d4a3776c3728ec448934d25fe1142054b8b68bac866dfc3a
+    fun isPayToWitnessSHash() {
+        script = Script("0020a99d08fbec6958f4d4a3776c3728ec448934d25fe1142054b8b68bac866dfc3a".hexStringToByteArray())
+
+        assertTrue(ScriptParser.isP2WSH(script))
+        assertEquals(ScriptType.P2WSH, script.getScriptType())
+    }
+
+    @Test // OP_0 20 0x799d283e7f92af1dd242bf4eea513c6efd117de2
+    fun isPayToWitnessPubkeyhash() {
+        script = Script("0014799d283e7f92af1dd242bf4eea513c6efd117de2".hexStringToByteArray())
+
+        assertTrue(ScriptParser.isP2WPKH(script))
+        assertEquals(ScriptType.P2WPKH, script.getScriptType())
+    }
+
     @Test // PUSHDATA(33)[0378e9dc79ff921df6c3f94d440fb011c65ed03586b1dd01c317934a4f00f251e6] CHECKSIG
     fun isPayToPubKey() {
         script = Script("210378e9dc79ff921df6c3f94d440fb011c65ed03586b1dd01c317934a4f00f251e6ac".hexStringToByteArray())
