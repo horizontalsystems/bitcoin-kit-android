@@ -1,6 +1,7 @@
 package helpers
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
+import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.*
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.walllet.kit.utils.HashUtils
@@ -153,6 +154,45 @@ object Fixtures {
 
         setTxHashes(this)
     }
+
+    //transaction in regtest
+    val transactionP2PKH_ForSignatureTest: Transaction
+        get() {
+            val ownPubKey = PublicKey().apply {
+                this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
+                this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexStringToByteArray()
+            }
+
+            val previousOutput = TransactionOutput().apply {
+                value = 4_999_900_000
+                index = 0
+                lockingScript = "76a914e4de5d630c5cacd7af96418a8f35c411c8ff3c0688ac".hexStringToByteArray()
+                scriptType = ScriptType.P2PKH
+                this.publicKey = ownPubKey
+                this.keyHash = ownPubKey.publicKeyHash
+            }
+
+            val transaction = Transaction(1, 0)
+
+            val payInput = TransactionInput().apply {
+                previousOutputHexReversed = "f296d7192200cd926369d1a8a88c0339c140149602651c2cc2ed5116368eb79c"
+                previousOutputHash = "f296d7192200cd926369d1a8a88c0339c140149602651c2cc2ed5116368eb79c".hexStringToByteArray().reversedArray()
+                this.previousOutput = previousOutput
+                sequence = 4294967295
+            }
+
+            val payOutput = TransactionOutput().apply {
+                value = 4_999_800_000
+                index = 0
+                lockingScript = "76a914e4de5d630c5cacd7af96418a8f35c411c8ff3c0688ac".hexStringToByteArray()
+                scriptType = ScriptType.P2PKH
+            }
+
+            transaction.inputs.add(payInput)
+            transaction.outputs.add(payOutput)
+
+            return transaction
+        }
 
     private fun setTxHashes(tx: Transaction) {
         tx.hash = HashUtils.doubleSha256(tx.toByteArray())

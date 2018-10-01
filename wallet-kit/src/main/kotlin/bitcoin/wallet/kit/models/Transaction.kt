@@ -41,6 +41,12 @@ open class Transaction : RealmObject {
     var processed = false
 
     constructor()
+
+    constructor(version: Int, lockTime: Long) {
+        this.version = version
+        this.lockTime = lockTime
+    }
+
     constructor(input: BitcoinInput) {
         version = input.readInt()
 
@@ -66,6 +72,24 @@ open class Transaction : RealmObject {
         // inputs
         buffer.writeVarInt(inputs.size.toLong())
         inputs.forEach { buffer.write(it.toByteArray()) }
+
+        // outputs
+        buffer.writeVarInt(outputs.size.toLong())
+        outputs.forEach { buffer.write(it.toByteArray()) }
+
+        buffer.writeUnsignedInt(lockTime)
+        return buffer.toByteArray()
+    }
+
+    fun toSignatureByteArray(inputIndex: Int): ByteArray {
+        val buffer = BitcoinOutput()
+        buffer.writeInt(version)
+
+        // inputs
+        buffer.writeVarInt(inputs.size.toLong())
+        inputs.forEachIndexed { index, input ->
+            buffer.write(input.toSignatureByteArray(index == inputIndex))
+        }
 
         // outputs
         buffer.writeVarInt(outputs.size.toLong())

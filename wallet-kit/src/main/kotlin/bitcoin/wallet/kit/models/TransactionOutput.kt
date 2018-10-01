@@ -35,6 +35,11 @@ open class TransactionOutput : RealmObject {
     @LinkingObjects("previousOutput")
     val inputs: RealmResults<TransactionInput>? = null
 
+    @LinkingObjects("outputs")
+    val transactions: RealmResults<Transaction>? = null
+    val transaction: Transaction?
+        get() = transactions?.first()
+
     constructor()
     constructor(input: BitcoinInput) {
         value = input.readLong()

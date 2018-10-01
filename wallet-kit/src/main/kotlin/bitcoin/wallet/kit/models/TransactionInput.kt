@@ -60,7 +60,27 @@ open class TransactionInput : RealmObject {
                 .toByteArray()
     }
 
+    fun toSignatureByteArray(forCurrentInputSignature: Boolean): ByteArray {
+        val output = BitcoinOutput()
+                .write(previousOutputHash)
+                .writeUnsignedInt(previousOutputIndex)
+
+        if (forCurrentInputSignature) {
+            val prevOutput = checkNotNull(previousOutput) {
+                throw IllegalStateException("No previous output")
+            }
+
+            output.writeVarInt(prevOutput.lockingScript.size.toLong())
+                  .write(prevOutput.lockingScript)
+        } else {
+            output.writeVarInt(0L)
+        }
+
+        return output.writeUnsignedInt(sequence).toByteArray()
+    }
+
     fun validate() {
         // throw new ValidateException("Verify signature failed.");
     }
+
 }

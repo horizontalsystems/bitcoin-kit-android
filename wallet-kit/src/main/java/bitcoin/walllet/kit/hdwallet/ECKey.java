@@ -18,12 +18,15 @@ package bitcoin.walllet.kit.hdwallet;
 
 import org.spongycastle.asn1.x9.X9ECParameters;
 import org.spongycastle.crypto.AsymmetricCipherKeyPair;
+import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.crypto.ec.CustomNamedCurves;
 import org.spongycastle.crypto.generators.ECKeyPairGenerator;
 import org.spongycastle.crypto.params.ECDomainParameters;
 import org.spongycastle.crypto.params.ECKeyGenerationParameters;
 import org.spongycastle.crypto.params.ECPrivateKeyParameters;
 import org.spongycastle.crypto.params.ECPublicKeyParameters;
+import org.spongycastle.crypto.signers.ECDSASigner;
+import org.spongycastle.crypto.signers.HMacDSAKCalculator;
 import org.spongycastle.math.ec.ECFieldElement;
 import org.spongycastle.math.ec.ECPoint;
 import org.spongycastle.math.ec.custom.sec.SecP256K1Curve;
@@ -34,6 +37,8 @@ import java.util.Arrays;
 
 import bitcoin.wallet.kit.hdwallet.Address;
 import bitcoin.wallet.kit.network.NetworkParameters;
+import bitcoin.walllet.kit.crypto.ECDSASignature;
+import bitcoin.walllet.kit.exceptions.ECException;
 import bitcoin.walllet.kit.utils.Utils;
 
 /**
@@ -351,6 +356,34 @@ public class ECKey {
      */
     public boolean isCompressed() {
         return isCompressed;
+    }
+
+    public byte[] createSignature(byte[] contents) throws ECException {
+        if (privKey == null)
+            throw new IllegalStateException("No private key available");
+        //
+        // Get the double SHA-256 hash of the signed contents
+        //
+        byte[] contentsHash = Utils.doubleDigest(contents);
+        //
+        // Create the signature
+        //
+        BigInteger[] sigs;
+        try {
+            ECDSASigner signer = new ECDSASigner(new HMacDSAKCalculator(new SHA256Digest()));
+            ECPrivateKeyParameters privKeyParams = new ECPrivateKeyParameters(privKey, ecParams);
+            signer.init(true, privKeyParams);
+            sigs = signer.generateSignature(contentsHash);
+        } catch (RuntimeException exc) {
+            throw new ECException("Exception while creating signature", exc);
+        }
+        //
+        // Create a canonical signature by adjusting the S component to be less than or equal to
+        // half the curve order.
+        //
+        if (sigs[1].compareTo(HALF_CURVE_ORDER) > 0)
+            sigs[1] = ecParams.getN().subtract(sigs[1]);
+        return new ECDSASignature(sigs[0], sigs[1]).encodeToDER();
     }
 
     /**
