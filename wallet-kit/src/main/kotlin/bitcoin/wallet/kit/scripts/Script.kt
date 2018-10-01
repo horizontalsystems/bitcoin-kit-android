@@ -16,7 +16,12 @@ class Script(bytes: ByteArray) {
     private var creationTimeSeconds: Long
 
     init {
-        chunks = ScriptParser.parseChunks(bytes)
+        chunks = try {
+            ScriptParser.parseChunks(bytes)
+        } catch (e: Exception) {
+            listOf()
+        }
+
         creationTimeSeconds = 0
     }
 
