@@ -44,6 +44,22 @@ class ScriptTest {
     }
 
     @Test
+    fun getPubKeyHash_P2WPKH() {
+        script = Script("0014799d283e7f92af1dd242bf4eea513c6efd117de2".hexStringToByteArray())
+
+        assertEquals(ScriptType.P2WPKH, script.getScriptType())
+        assertEquals("0[] PUSHDATA(20)[799d283e7f92af1dd242bf4eea513c6efd117de2]", script.toString())
+    }
+
+    @Test
+    fun getPubKeyHash_P2WSH() {
+        script = Script("0020a99d08fbec6958f4d4a3776c3728ec448934d25fe1142054b8b68bac866dfc3a".hexStringToByteArray())
+
+        assertEquals(ScriptType.P2WSH, script.getScriptType())
+        assertEquals("0[] PUSHDATA(32)[a99d08fbec6958f4d4a3776c3728ec448934d25fe1142054b8b68bac866dfc3a]", script.toString())
+    }
+
+    @Test
     fun getPubKeyHash_P2SH() {
         script = Script("a9144b60b6bcf50bf637fe66c3da5c11524cb3ab971187".hexStringToByteArray())
 

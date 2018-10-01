@@ -203,15 +203,12 @@ object ScriptParser {
         return true
     }
 
+
     fun isP2WSH(script: Script): Boolean {
-        val chunks = script.chunks
-        if (chunks.size != 2)
+        if (!isPayToWitnessHash(script))
             return false
 
-        if (!chunks[0].equalsOpCode(OP_0))
-            return false
-
-        val chunk1data = chunks[1].data ?: return false
+        val chunk1data = script.chunks[1].data ?: return false
         if (chunk1data.size != WITNESS_SH_LENGTH)
             return false
 
@@ -219,6 +216,17 @@ object ScriptParser {
     }
 
     fun isP2WPKH(script: Script): Boolean {
+        if (!isPayToWitnessHash(script))
+            return false
+
+        val chunk1data = script.chunks[1].data ?: return false
+        if (chunk1data.size != WITNESS_PKH_LENGTH)
+            return false
+
+        return true
+    }
+
+    fun isPayToWitnessHash(script: Script): Boolean {
         val chunks = script.chunks
         if (chunks.size != 2)
             return false
@@ -227,7 +235,7 @@ object ScriptParser {
             return false
 
         val chunk1data = chunks[1].data ?: return false
-        if (chunk1data.size != WITNESS_PKH_LENGTH)
+        if (chunk1data.size != WITNESS_PKH_LENGTH && chunk1data.size != WITNESS_SH_LENGTH)
             return false
 
         return true

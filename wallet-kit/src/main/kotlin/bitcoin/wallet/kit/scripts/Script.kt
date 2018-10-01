@@ -43,6 +43,8 @@ class Script(bytes: ByteArray) {
             return Utils.sha256Hash160(chunks[0].data)
         if (ScriptParser.isP2SH(this))
             return chunks[1].data
+        if (ScriptParser.isPayToWitnessHash(this))
+            return chunks[1].data
 
         return null
     }
