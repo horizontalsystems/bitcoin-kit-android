@@ -96,7 +96,7 @@ object Fixtures {
             scriptType = ScriptType.UNKNOWN
         })
 
-        setTxHashes(this)
+        setHashes()
     }
 
     // P2SH: TestNet tx => 761cc7102efe24f4353ae7dc816fbed5e15963d11ca93e36449d521bda21ac4d
@@ -124,7 +124,7 @@ object Fixtures {
             scriptType = ScriptType.UNKNOWN
         })
 
-        setTxHashes(this)
+        setHashes()
     }
 
     // P2PK: TestNet tx => 75b84cb54351866cb5248158735e801d9b2c56592633157ba10d08affa2ffbab
@@ -152,16 +152,19 @@ object Fixtures {
             scriptType = ScriptType.UNKNOWN
         })
 
-        setTxHashes(this)
+        setHashes()
+    }
+
+    //test public key
+    val publicKey = PublicKey().apply {
+        this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
+        this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexStringToByteArray()
     }
 
     //transaction in regtest
     val transactionP2PKH_ForSignatureTest: Transaction
         get() {
-            val ownPubKey = PublicKey().apply {
-                this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
-                this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexStringToByteArray()
-            }
+            val ownPubKey = publicKey
 
             val previousOutput = TransactionOutput().apply {
                 value = 4_999_900_000
@@ -194,8 +197,4 @@ object Fixtures {
             return transaction
         }
 
-    private fun setTxHashes(tx: Transaction) {
-        tx.hash = HashUtils.doubleSha256(tx.toByteArray())
-        tx.hashHexReversed = HashUtils.toHexStringAsLE(tx.hash)
-    }
 }

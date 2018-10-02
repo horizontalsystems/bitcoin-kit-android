@@ -60,9 +60,7 @@ open class Transaction : RealmObject {
 
         lockTime = input.readUnsignedInt()
 
-        // Internal fields
-        hash = HashUtils.doubleSha256(toByteArray())
-        hashHexReversed = HashUtils.toHexStringAsLE(hash)
+        setHashes()
     }
 
     fun toByteArray(): ByteArray {
@@ -97,6 +95,11 @@ open class Transaction : RealmObject {
 
         buffer.writeUnsignedInt(lockTime)
         return buffer.toByteArray()
+    }
+
+    fun setHashes() {
+        hash = HashUtils.doubleSha256(toByteArray())
+        hashHexReversed = HashUtils.toHexStringAsLE(hash)
     }
 
     object Status {

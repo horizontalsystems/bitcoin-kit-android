@@ -1,6 +1,5 @@
 package bitcoin.walllet.kit.hdwallet
 
-import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.transactions.builder.InputSigner
 import helpers.Fixtures
@@ -19,7 +18,7 @@ class ECKeyTest {
 
     @Before
     fun setUp() {
-        publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
+        publicKey = Fixtures.publicKey.publicKey
         privateKey = BigInteger("4ee8efccaa04495d5d3ab0f847952fcff43ffc0459bd87981b6be485b92f8d64", 16)
         dataToSign = Fixtures.transactionP2PKH_ForSignatureTest.toSignatureByteArray(0) + byteArrayOf(InputSigner.SIGHASH_ALL, 0, 0, 0)
     }
