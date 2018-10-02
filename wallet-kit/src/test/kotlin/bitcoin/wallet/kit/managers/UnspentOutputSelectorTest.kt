@@ -47,7 +47,7 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun testExactlyValueReceiverPay() {
-        val selectedOutputs = unspentOutputSelector.select(value = 400_000, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
+        val selectedOutputs = unspentOutputSelector.select(value = 400_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
 
         Assert.assertEquals(listOf(outputs[2]), selectedOutputs.outputs)
         Assert.assertEquals(400_000, selectedOutputs.totalValue)
@@ -57,7 +57,7 @@ class UnspentOutputSelectorTest {
     @Test
     fun testExactlyValueSenderPay() {
         val fee = (10 + 149 + 29) * 600 // transaction + 1 input + 1 output
-        val selectedOutputs = unspentOutputSelector.select(value = 339_950 - fee, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
+        val selectedOutputs = unspentOutputSelector.select(value = 339_950 - fee, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
 
         Assert.assertEquals(listOf(outputs[2]), selectedOutputs.outputs)
         Assert.assertEquals(400_000, selectedOutputs.totalValue)
@@ -66,7 +66,7 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun testTotalValueReceiverPay() {
-        val selectedOutputs = unspentOutputSelector.select(value = 700_000, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
+        val selectedOutputs = unspentOutputSelector.select(value = 700_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
 
         Assert.assertEquals(listOf(outputs[0], outputs[1], outputs[2]), selectedOutputs.outputs)
         Assert.assertEquals(700_000, selectedOutputs.totalValue)
@@ -75,7 +75,7 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun testTotalValueSenderPay() {
-        val selectedOutputs = unspentOutputSelector.select(value = 700_000, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
+        val selectedOutputs = unspentOutputSelector.select(value = 700_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
 
         Assert.assertEquals(listOf(outputs[0], outputs[1], outputs[2], outputs[3]), selectedOutputs.outputs)
         Assert.assertEquals(1_500_000, selectedOutputs.totalValue)
@@ -84,17 +84,17 @@ class UnspentOutputSelectorTest {
 
     @Test(expected = UnspentOutputSelector.InsufficientUnspentOutputs::class)
     fun testNotEnoughErrorReceiverPay() {
-        unspentOutputSelector.select(value = 3_100_100, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
+        unspentOutputSelector.select(value = 3_100_100, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
     }
 
     @Test(expected = UnspentOutputSelector.InsufficientUnspentOutputs::class)
     fun testNotEnoughErrorSenderPay() {
-        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
+        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
     }
 
     @Test(expected = UnspentOutputSelector.EmptyUnspentOutputs::class)
     fun testEmptyOutputsError() {
-        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, scriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = listOf())
+        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = listOf())
     }
 
 }

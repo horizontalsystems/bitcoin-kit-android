@@ -9,14 +9,14 @@ class UnspentOutputSelector(private val txSizeCalculator: TransactionSizeCalcula
     class EmptyUnspentOutputs : Exception()
     class InsufficientUnspentOutputs : Exception()
 
-    fun select(value: Int, feeRate: Int, scriptType: Int, senderPay: Boolean, unspentOutputs: List<TransactionOutput>): SelectedUnspentOutputInfo {
+    fun select(value: Int, feeRate: Int, outputScriptType: Int, senderPay: Boolean, unspentOutputs: List<TransactionOutput>): SelectedUnspentOutputInfo {
 
         if (unspentOutputs.isEmpty()) {
             throw EmptyUnspentOutputs()
         }
 
         val selected = mutableListOf<TransactionOutput>()
-        var calculatedFee = (txSizeCalculator.emptyTxSize + txSizeCalculator.outputSize(scriptType)) * feeRate
+        var calculatedFee = (txSizeCalculator.emptyTxSize + txSizeCalculator.outputSize(outputScriptType)) * feeRate
         val dust = txSizeCalculator.inputSize(ScriptType.P2PKH) * feeRate
 
         // try to find 1 unspent output with exactly matching value
