@@ -2,7 +2,9 @@ package bitcoin.wallet.kit.hdwallet
 
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.crypto.Base58
+import bitcoin.walllet.kit.exceptions.AddressFormatException
 import bitcoin.walllet.kit.utils.Utils
+import java.util.*
 
 class Address {
     enum class Type {
@@ -10,14 +12,33 @@ class Address {
         P2SH   // Pay to script hash
     }
 
-    private val type: Type
-    private val hash: ByteArray
+    val type: Type
+    val hash: ByteArray
     private val network: NetworkParameters
 
     constructor(type: Type, hash: ByteArray, network: NetworkParameters) {
         this.type = type
         this.hash = hash
         this.network = network
+    }
+
+    constructor(address: String, network: NetworkParameters) {
+        val data = Base58.decodeChecked(address)
+        if (data.size != 20 + 1) {
+            throw AddressFormatException("Address length is not 20 bytes")
+        }
+
+        this.network = network
+        this.type = getType(data[0].toInt() and 0xff)
+        this.hash = Arrays.copyOfRange(data, 1, data.size)
+    }
+
+    private fun getType(version: Int): Type {
+        if (version == network.scriptAddressHeader) {
+            return Type.P2SH
+        }
+
+        return Type.P2PKH
     }
 
     // Returns the address as a Base58-encoded string with a 1-byte version and a 4-byte checksum
