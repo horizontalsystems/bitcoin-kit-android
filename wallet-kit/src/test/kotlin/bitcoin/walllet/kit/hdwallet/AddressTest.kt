@@ -68,4 +68,12 @@ class AddressTest {
         assertEquals("2NBFNJTktNa7GZusGbDbGKRZTxdK9VVez3n", addr.toString())
     }
 
+    @Test
+    fun p2wpkh_string() {
+        text = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        addr = Address(text, mainNet)
+
+        assertEquals(Address.Type.WITNESS, addr.type)
+        assertEquals(text, addr.toString())
+    }
 }
