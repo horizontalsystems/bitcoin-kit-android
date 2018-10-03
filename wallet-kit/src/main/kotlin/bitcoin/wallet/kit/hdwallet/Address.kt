@@ -24,6 +24,11 @@ class Address {
         this.type = type
         this.hash = hash
         this.network = network
+
+        // convert pubkey to program
+        if (type == Type.WITNESS) {
+            this.hash = byteArrayOf(0) + Bech32.convertBits(hash, 8, 5, true)
+        }
     }
 
     constructor(address: String, network: NetworkParameters) {
