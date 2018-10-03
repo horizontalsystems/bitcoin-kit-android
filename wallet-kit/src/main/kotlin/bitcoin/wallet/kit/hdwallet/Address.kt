@@ -1,6 +1,8 @@
 package bitcoin.wallet.kit.hdwallet
 
 import bitcoin.wallet.kit.network.NetworkParameters
+import bitcoin.wallet.kit.scripts.ScriptParser
+import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.walllet.kit.crypto.Base58
 import bitcoin.walllet.kit.crypto.Bech32
 import bitcoin.walllet.kit.exceptions.AddressFormatException
@@ -26,6 +28,13 @@ class Address {
             Type.P2SH -> network.addressVersion
             Type.P2PKH -> network.addressVersion
             Type.WITNESS -> hash[0].toInt() and 0xff
+        }
+
+    val scriptType: Int
+        get() = when (type) {
+            Type.P2PKH -> ScriptType.P2PKH
+            Type.P2SH -> ScriptType.P2SH
+            Type.WITNESS -> if (hash.size == ScriptParser.WITNESS_PKH_LENGTH) ScriptType.P2WPKH else ScriptType.P2WSH
         }
 
     constructor(type: Type, hash: ByteArray, network: NetworkParameters) {
