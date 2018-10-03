@@ -5,8 +5,10 @@ import bitcoin.walllet.kit.utils.Utils
 import java.io.ByteArrayInputStream
 
 object ScriptParser {
-
+    private const val WITNESS_PKH_LENGTH = 20
+    private const val WITNESS_SH_LENGTH = 32
     private const val ADDRESS_LENGTH = 20
+
     private val standardScriptChunks = arrayOf(
             ScriptChunk(OP_DUP, null, 0),
             ScriptChunk(OP_HASH160, null, 1),
@@ -196,6 +198,44 @@ object ScriptParser {
         if (chunk1data.size != ADDRESS_LENGTH)
             return false
         if (!chunks[2].equalsOpCode(OP_EQUAL))
+            return false
+
+        return true
+    }
+
+
+    fun isP2WSH(script: Script): Boolean {
+        if (!isPayToWitnessHash(script))
+            return false
+
+        val chunk1data = script.chunks[1].data ?: return false
+        if (chunk1data.size != WITNESS_SH_LENGTH)
+            return false
+
+        return true
+    }
+
+    fun isP2WPKH(script: Script): Boolean {
+        if (!isPayToWitnessHash(script))
+            return false
+
+        val chunk1data = script.chunks[1].data ?: return false
+        if (chunk1data.size != WITNESS_PKH_LENGTH)
+            return false
+
+        return true
+    }
+
+    fun isPayToWitnessHash(script: Script): Boolean {
+        val chunks = script.chunks
+        if (chunks.size != 2)
+            return false
+
+        if (!chunks[0].equalsOpCode(OP_0))
+            return false
+
+        val chunk1data = chunks[1].data ?: return false
+        if (chunk1data.size != WITNESS_PKH_LENGTH && chunk1data.size != WITNESS_SH_LENGTH)
             return false
 
         return true

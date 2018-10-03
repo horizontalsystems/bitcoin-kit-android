@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Arrays;
 
+import bitcoin.wallet.kit.hdwallet.Address;
 import bitcoin.wallet.kit.network.NetworkParameters;
 import bitcoin.walllet.kit.utils.Utils;
 
@@ -313,7 +314,7 @@ public class ECKey {
      * @return                          Address
      */
     public Address toAddress(NetworkParameters networkParameters) {
-        return new Address(getPubKeyHash(), label, networkParameters);
+        return new Address(Address.Type.P2PKH, getPubKeyHash(), networkParameters);
     }
 
     /**

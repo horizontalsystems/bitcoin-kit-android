@@ -36,6 +36,7 @@ abstract class NetworkParameters {
     abstract var scriptAddressHeader: Int
     abstract var coinType: Int
     abstract var dnsSeeds: Array<String>
+    abstract var addressSegwitHrp: String
 
     abstract val checkpointBlock: Block
     abstract fun validate(block: Block, previousBlock: Block)
