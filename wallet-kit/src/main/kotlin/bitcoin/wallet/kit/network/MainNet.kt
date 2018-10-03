@@ -13,9 +13,9 @@ class MainNet : NetworkParameters() {
     override var packetMagic: Long = 0xf9beb4d9L
     override var bip32HeaderPub: Int = 0x0488B21E   // The 4 byte header that serializes in base58 to "xpub".
     override var bip32HeaderPriv: Int = 0x0488ADE4  // The 4 byte header that serializes in base58 to "xprv"
-    override var addressHeader: Int = 0
+    override var addressVersion: Int = 0
     override var addressSegwitHrp: String = "bc"
-    override var scriptAddressHeader: Int = 5
+    override var addressScriptVersion: Int = 5
     override var coinType: Int = 0
 
     override var dnsSeeds: Array<String> = arrayOf(

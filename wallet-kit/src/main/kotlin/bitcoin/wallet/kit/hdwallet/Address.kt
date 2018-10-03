@@ -65,9 +65,9 @@ class Address {
     }
 
     private fun getType(version: Int): Type {
-        if (version == network.addressHeader) {
+        if (version == network.addressVersion) {
             return Type.P2PKH
-        } else if (version == network.scriptAddressHeader) {
+        } else if (version == network.addressScriptVersion) {
             return Type.P2SH
         }
 
@@ -105,9 +105,9 @@ class Address {
 
         val addressBytes = ByteArray(1 + hash.size + 4)
         if (type == Type.P2PKH) {
-            addressBytes[0] = network.addressHeader.toByte()
+            addressBytes[0] = network.addressVersion.toByte()
         } else {
-            addressBytes[0] = network.scriptAddressHeader.toByte()
+            addressBytes[0] = network.addressScriptVersion.toByte()
         }
 
         System.arraycopy(hash, 0, addressBytes, 1, hash.size)

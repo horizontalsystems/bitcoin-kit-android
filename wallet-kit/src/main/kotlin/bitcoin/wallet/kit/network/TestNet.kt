@@ -16,9 +16,9 @@ open class TestNet : NetworkParameters() {
     override var packetMagic: Long = 0x0b110907
     override var bip32HeaderPub: Int = 0x043587CF
     override var bip32HeaderPriv: Int = 0x04358394
-    override var addressHeader: Int = 111
+    override var addressVersion: Int = 111
     override var addressSegwitHrp: String = "tb"
-    override var scriptAddressHeader: Int = 196
+    override var addressScriptVersion: Int = 196
     override var coinType: Int = 1
 
     override var dnsSeeds: Array<String> = arrayOf(
