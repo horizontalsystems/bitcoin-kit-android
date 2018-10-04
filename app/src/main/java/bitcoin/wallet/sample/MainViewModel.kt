@@ -44,6 +44,10 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
         walletKit.start()
     }
 
+    fun receiveAddress(): String {
+        return walletKit.receiveAddress()
+    }
+
     override fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
         transactions.value = walletKit.transactions.asReversed()
     }

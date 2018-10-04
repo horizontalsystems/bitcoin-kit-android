@@ -123,6 +123,10 @@ class WalletKit(words: List<String>) {
         transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
     }
 
+    fun receiveAddress(): String {
+        return addressManager.receiveAddress()
+    }
+
     private fun getRealmConfig(): RealmConfiguration {
         return RealmConfiguration.Builder()
                 .name("kit")
