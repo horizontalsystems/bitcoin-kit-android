@@ -12,6 +12,8 @@ import bitcoin.wallet.kit.network.MainNet
 import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.wallet.kit.network.PeerManager
 import bitcoin.wallet.kit.scripts.ScriptType
+import bitcoin.wallet.kit.transactions.TransactionCreator
+import bitcoin.wallet.kit.transactions.builder.TransactionBuilder
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
 import io.realm.RealmConfiguration
@@ -42,6 +44,10 @@ class WalletKit(words: List<String>) {
         get() = transactionOutputRealmResults.filter { it.inputs?.size ?: 0 == 0 }.map { it.value }.sum()
 
     private val initialSyncer: InitialSyncer
+    private val addressManager: AddressManager
+    private val transactionCreator: TransactionCreator
+    private val transactionBuilder: TransactionBuilder
+
     private val transactionRealmResults: RealmResults<Transaction>
 
     // we use transactionOutputRealmResults instead of unspentOutputRealmResults
@@ -75,6 +81,10 @@ class WalletKit(words: List<String>) {
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, peerGroup)
 
+        addressManager = AddressManager(realmFactory, wallet, peerGroup)
+        transactionBuilder = TransactionBuilder(realmFactory, network, wallet)
+        transactionCreator = TransactionCreator(realmFactory, network, transactionBuilder, peerGroup, addressManager)
+
         transactionRealmResults = realm.where(Transaction::class.java)
                 .equalTo("isMine", true)
                 .findAll()
@@ -103,6 +113,14 @@ class WalletKit(words: List<String>) {
 
     fun start() {
         initialSyncer.sync()
+    }
+
+    fun send(address: String, value: Int) {
+        transactionCreator.create(address, value)
+    }
+
+    fun fee(value: Int, address: String? = null, senderPay: Boolean = true) {
+        transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
     }
 
     private fun getRealmConfig(): RealmConfiguration {

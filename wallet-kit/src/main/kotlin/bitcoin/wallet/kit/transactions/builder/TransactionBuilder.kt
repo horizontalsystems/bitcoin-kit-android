@@ -1,6 +1,8 @@
 package bitcoin.wallet.kit.transactions.builder
 
+import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.hdwallet.Address
+import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.UnspentOutputProvider
 import bitcoin.wallet.kit.managers.UnspentOutputSelector
@@ -18,6 +20,9 @@ class TransactionBuilder(private val networkParameters: NetworkParameters,
                          private val scriptBuilder: ScriptBuilder,
                          private val transactionSizeCalculator: TransactionSizeCalculator,
                          private val inputSigner: InputSigner) {
+
+    constructor(realmFactory: RealmFactory, networkParameters: NetworkParameters, wallet: HDWallet)
+            : this(networkParameters, UnspentOutputSelector(TransactionSizeCalculator()), UnspentOutputProvider(realmFactory), ScriptBuilder(), TransactionSizeCalculator(), InputSigner(wallet))
 
     fun fee(value: Int, feeRate: Int, senderPay: Boolean, address: String? = null): Int {
         val outputType = if (address == null) ScriptType.P2PKH else Address(address, networkParameters).scriptType
