@@ -77,15 +77,18 @@ class AddressTest {
 
         assertEquals(Address.Type.WITNESS, addr.type)
         assertEquals(text, addr.toString())
+        assertEquals(hash.toHexString(), addr.program?.toHexString())
     }
 
     @Test
     fun p2wpkh_string() {
         text = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        hash = "751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
         addr = Address(text, mainNet)
 
         assertEquals(Address.Type.WITNESS, addr.type)
         assertEquals(text, addr.toString())
+        assertEquals(hash.toHexString(), addr.program?.toHexString())
     }
 
     @Test
@@ -97,15 +100,18 @@ class AddressTest {
 
         assertEquals(Address.Type.WITNESS, addr.type)
         assertEquals(text, addr.toString())
+        assertEquals(hash.toHexString(), addr.program?.toHexString())
     }
 
     @Test
     fun p2wsh_string() {
         text = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
+        hash = "1863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262".hexStringToByteArray()
         addr = Address(text, mainNet)
 
         assertEquals(Address.Type.WITNESS, addr.type)
         assertEquals(text, addr.toString())
+        assertEquals(hash.toHexString(), addr.program?.toHexString())
     }
 
     @Test
