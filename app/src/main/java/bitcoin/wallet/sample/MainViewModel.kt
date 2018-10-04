@@ -26,7 +26,7 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
 
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
-        walletKit = WalletKit(words)
+        walletKit = WalletKit(words, WalletKit.NetworkType.TestNet)
 
         walletKit.listener = this
 
