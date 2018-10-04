@@ -4,7 +4,6 @@ import bitcoin.wallet.kit.messages.Message
 import bitcoin.wallet.kit.messages.VersionMessage
 import bitcoin.walllet.kit.io.BitcoinInput
 import java.io.IOException
-import java.lang.Exception
 import java.net.ConnectException
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -29,11 +28,6 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
     @Volatile
     private var isRunning = false
 
-    @Volatile
-    private var timeout: Long = 0
-    private val isTimeout: Boolean
-        get() = System.currentTimeMillis() > this.timeout
-
     // initialize:
     init {
         isDaemon = true
@@ -50,17 +44,11 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
             val output = socket.getOutputStream()
 
             logger.info("Socket $host connected.")
-            setTimeout(60000)
 
             // add version message to send automatically:
             sendMessage(VersionMessage(0, socket.inetAddress, network))
             // loop:
             while (isRunning) {
-                if (isTimeout) {
-                    logger.info("Timeout!")
-                    break
-                }
-
                 // try get message to send:
                 val msg = sendingQueue.poll(1, TimeUnit.SECONDS)
                 if (isRunning && msg != null) {
@@ -71,10 +59,12 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
 
                 // try receive message:
                 if (isRunning && input.available() > 0) {
-                    val inputStream = BitcoinInput(input)
-                    val parsedMsg = Message.Builder.parseMessage<Message>(inputStream, network)
-                    logger.info("<= $parsedMsg")
-                    listener.onMessage(parsedMsg)
+                    while (input.available() > 0) {
+                        val inputStream = BitcoinInput(input)
+                        val parsedMsg = Message.Builder.parseMessage<Message>(inputStream, network)
+                        logger.info("<= $parsedMsg")
+                        listener.onMessage(parsedMsg)
+                    }
                 }
             }
 
@@ -110,10 +100,6 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
 
     fun sendMessage(message: Message) {
         sendingQueue.add(message)
-    }
-
-    fun setTimeout(timeoutInMillis: Long) {
-        timeout = System.currentTimeMillis() + timeoutInMillis
     }
 
 }
