@@ -62,7 +62,6 @@ class PeerGroup(private val peerManager: PeerManager, val network: NetworkParame
         if (ip != null) {
             logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this)
-            peerMap[ip] = peer
             peer.start()
         } else {
             logger.info("No peers found yet.")
@@ -143,6 +142,8 @@ class PeerGroup(private val peerManager: PeerManager, val network: NetworkParame
     }
 
     override fun connected(peer: Peer) {
+        peerMap[peer.host] = peer
+
         bloomFilter?.let {
             peer.setBloomFilter(it)
         }
