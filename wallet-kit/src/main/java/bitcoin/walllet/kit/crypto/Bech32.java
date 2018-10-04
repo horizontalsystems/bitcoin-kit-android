@@ -149,32 +149,30 @@ public class Bech32 {
     }
 
     /** General power-of-2 base conversion */
-    public static byte[] convertBits(byte[] data, int fromBits, int toBits, boolean pad) throws AddressFormatException {
+    public static byte[] convertBits(final byte[] data, final int start, final int size, final int fromBits, final int toBits, final boolean pad) throws AddressFormatException {
         int acc = 0;
         int bits = 0;
-        int maxv = (1 << toBits) - 1;
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        for (int i = 0; i < data.length; i++) {
-            int value = data[i] & 0xff;
+        ByteArrayOutputStream out = new ByteArrayOutputStream(64);
+        final int maxv = (1 << toBits) - 1;
+        final int max_acc = (1 << (fromBits + toBits - 1)) - 1;
+        for (int i = 0; i < size; i++) {
+            int value = data[i + start] & 0xff;
             if ((value >>> fromBits) != 0) {
                 throw new AddressFormatException("Invalid data range: data[" + i + "]=" + value + " (fromBits=" + fromBits + ")");
             }
-            acc = (acc << fromBits) | value;
+            acc = ((acc << fromBits) | value) & max_acc;
             bits += fromBits;
             while (bits >= toBits) {
                 bits -= toBits;
-                output.write((acc >>> bits) & maxv);
+                out.write((acc >>> bits) & maxv);
             }
         }
         if (pad) {
-            if (bits > 0) {
-                output.write((acc << (toBits - bits)) & maxv);
-            }
-        } else if (bits >= fromBits) {
-            throw new AddressFormatException("Illegal zero padding");
-        } else if (((acc << (toBits - bits)) & maxv) != 0) {
-            throw new AddressFormatException("Non-zero padding");
+            if (bits > 0)
+                out.write((acc << (toBits - bits)) & maxv);
+        } else if (bits >= fromBits || ((acc << (toBits - bits)) & maxv) != 0) {
+            throw new AddressFormatException("Could not convert bits, invalid padding");
         }
-        return output.toByteArray();
+        return out.toByteArray();
     }
 }

@@ -14,6 +14,8 @@ class Address {
         WITNESS // Pay to witness hash
     }
 
+    var program: ByteArray? = null
+
     lateinit var type: Type
     lateinit var hash: ByteArray
 
@@ -31,9 +33,10 @@ class Address {
         this.hash = hash
         this.network = network
 
-        // convert pubkey to program
+        // convert program to pubkey
         if (type == Type.WITNESS) {
-            this.hash = byteArrayOf(0) + Bech32.convertBits(hash, 8, 5, true)
+            this.program = hash
+            this.hash = byteArrayOf(0) + Bech32.convertBits(hash, 0, hash.size, 8, 5, true)
         }
     }
 
@@ -68,6 +71,7 @@ class Address {
 
         type = Type.WITNESS
         hash = decoded.data
+        program = Bech32.convertBits(hash, 1, hash.size - 1, 5, 8, false)
     }
 
     private fun getType(version: Int): Type {
