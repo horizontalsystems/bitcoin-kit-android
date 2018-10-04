@@ -7,7 +7,6 @@ import bitcoin.walllet.kit.exceptions.AddressFormatException
 import bitcoin.walllet.kit.utils.Utils
 import java.util.*
 
-
 class Address {
     enum class Type {
         P2PKH,  // Pay to public key hash
@@ -19,6 +18,13 @@ class Address {
     lateinit var hash: ByteArray
 
     private val network: NetworkParameters
+
+    val version: Int
+        get() = when (type) {
+            Type.P2SH -> network.addressVersion
+            Type.P2PKH -> network.addressVersion
+            Type.WITNESS -> hash[0].toInt() and 0xff
+        }
 
     constructor(type: Type, hash: ByteArray, network: NetworkParameters) {
         this.type = type

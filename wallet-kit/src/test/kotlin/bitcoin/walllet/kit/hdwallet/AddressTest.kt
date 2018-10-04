@@ -107,4 +107,28 @@ class AddressTest {
         assertEquals(Address.Type.WITNESS, addr.type)
         assertEquals(text, addr.toString())
     }
+
+    @Test
+    fun p2pkh_version() {
+        addr = Address("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", mainNet)
+        assertEquals(mainNet.addressVersion, addr.version)
+        addr = Address("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", testNet)
+        assertEquals(testNet.addressVersion, addr.version)
+    }
+
+    @Test
+    fun p2sh_version() {
+        addr = Address("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", mainNet)
+        assertEquals(mainNet.addressVersion, addr.version)
+        addr = Address("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", testNet)
+        assertEquals(testNet.addressVersion, addr.version)
+    }
+
+    @Test
+    fun p2wsh_version() {
+        addr = Address("bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3", mainNet)
+        assertEquals(0, addr.version)
+        addr = Address("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", testNet)
+        assertEquals(0, addr.version)
+    }
 }
