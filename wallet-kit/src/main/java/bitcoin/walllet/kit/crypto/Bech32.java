@@ -16,6 +16,7 @@
 
 package bitcoin.walllet.kit.crypto;
 
+import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -145,5 +146,35 @@ public class Bech32 {
         String hrp = str.substring(0, pos).toLowerCase(Locale.ROOT);
         if (!verifyChecksum(hrp, values)) throw new AddressFormatException("Invalid checksum");
         return new Bech32Data(hrp, Arrays.copyOfRange(values, 0, values.length - 6));
+    }
+
+    /** General power-of-2 base conversion */
+    public static byte[] convertBits(byte[] data, int fromBits, int toBits, boolean pad) throws AddressFormatException {
+        int acc = 0;
+        int bits = 0;
+        int maxv = (1 << toBits) - 1;
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        for (int i = 0; i < data.length; i++) {
+            int value = data[i] & 0xff;
+            if ((value >>> fromBits) != 0) {
+                throw new AddressFormatException("Invalid data range: data[" + i + "]=" + value + " (fromBits=" + fromBits + ")");
+            }
+            acc = (acc << fromBits) | value;
+            bits += fromBits;
+            while (bits >= toBits) {
+                bits -= toBits;
+                output.write((acc >>> bits) & maxv);
+            }
+        }
+        if (pad) {
+            if (bits > 0) {
+                output.write((acc << (toBits - bits)) & maxv);
+            }
+        } else if (bits >= fromBits) {
+            throw new AddressFormatException("Illegal zero padding");
+        } else if (((acc << (toBits - bits)) & maxv) != 0) {
+            throw new AddressFormatException("Non-zero padding");
+        }
+        return output.toByteArray();
     }
 }

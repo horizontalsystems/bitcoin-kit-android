@@ -7,7 +7,6 @@ import bitcoin.walllet.kit.exceptions.AddressFormatException
 import bitcoin.walllet.kit.utils.Utils
 import java.util.*
 
-
 class Address {
     enum class Type {
         P2PKH,  // Pay to public key hash
@@ -20,10 +19,22 @@ class Address {
 
     private val network: NetworkParameters
 
+    val version: Int
+        get() = when (type) {
+            Type.P2SH -> network.addressVersion
+            Type.P2PKH -> network.addressVersion
+            Type.WITNESS -> hash[0].toInt() and 0xff
+        }
+
     constructor(type: Type, hash: ByteArray, network: NetworkParameters) {
         this.type = type
         this.hash = hash
         this.network = network
+
+        // convert pubkey to program
+        if (type == Type.WITNESS) {
+            this.hash = byteArrayOf(0) + Bech32.convertBits(hash, 8, 5, true)
+        }
     }
 
     constructor(address: String, network: NetworkParameters) {
@@ -60,9 +71,9 @@ class Address {
     }
 
     private fun getType(version: Int): Type {
-        if (version == network.addressHeader) {
+        if (version == network.addressVersion) {
             return Type.P2PKH
-        } else if (version == network.scriptAddressHeader) {
+        } else if (version == network.addressScriptVersion) {
             return Type.P2SH
         }
 
@@ -100,9 +111,9 @@ class Address {
 
         val addressBytes = ByteArray(1 + hash.size + 4)
         if (type == Type.P2PKH) {
-            addressBytes[0] = network.addressHeader.toByte()
+            addressBytes[0] = network.addressVersion.toByte()
         } else {
-            addressBytes[0] = network.scriptAddressHeader.toByte()
+            addressBytes[0] = network.addressScriptVersion.toByte()
         }
 
         System.arraycopy(hash, 0, addressBytes, 1, hash.size)

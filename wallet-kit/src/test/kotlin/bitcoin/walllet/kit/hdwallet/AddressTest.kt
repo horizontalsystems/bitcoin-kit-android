@@ -69,11 +69,66 @@ class AddressTest {
     }
 
     @Test
+    fun p2wpkh() {
+        text = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
+        hash = "751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
+
+        addr = Address(Address.Type.WITNESS, hash, mainNet)
+
+        assertEquals(Address.Type.WITNESS, addr.type)
+        assertEquals(text, addr.toString())
+    }
+
+    @Test
     fun p2wpkh_string() {
         text = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
         addr = Address(text, mainNet)
 
         assertEquals(Address.Type.WITNESS, addr.type)
         assertEquals(text, addr.toString())
+    }
+
+    @Test
+    fun p2wsh() {
+        text = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
+        hash = "1863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262".hexStringToByteArray()
+
+        addr = Address(Address.Type.WITNESS, hash, mainNet)
+
+        assertEquals(Address.Type.WITNESS, addr.type)
+        assertEquals(text, addr.toString())
+    }
+
+    @Test
+    fun p2wsh_string() {
+        text = "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"
+        addr = Address(text, mainNet)
+
+        assertEquals(Address.Type.WITNESS, addr.type)
+        assertEquals(text, addr.toString())
+    }
+
+    @Test
+    fun p2pkh_version() {
+        addr = Address("17kzeh4N8g49GFvdDzSf8PjaPfyoD1MndL", mainNet)
+        assertEquals(mainNet.addressVersion, addr.version)
+        addr = Address("n4eA2nbYqErp7H6jebchxAN59DmNpksexv", testNet)
+        assertEquals(testNet.addressVersion, addr.version)
+    }
+
+    @Test
+    fun p2sh_version() {
+        addr = Address("35b9vsyH1KoFT5a5KtrKusaCcPLkiSo1tU", mainNet)
+        assertEquals(mainNet.addressVersion, addr.version)
+        addr = Address("2MuVSxtfivPKJe93EC1Tb9UhJtGhsoWEHCe", testNet)
+        assertEquals(testNet.addressVersion, addr.version)
+    }
+
+    @Test
+    fun p2wsh_version() {
+        addr = Address("bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3", mainNet)
+        assertEquals(0, addr.version)
+        addr = Address("tb1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3q0sl5k7", testNet)
+        assertEquals(0, addr.version)
     }
 }

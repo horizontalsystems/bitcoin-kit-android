@@ -32,11 +32,11 @@ abstract class NetworkParameters {
     abstract var packetMagic: Long
     abstract var bip32HeaderPub: Int
     abstract var bip32HeaderPriv: Int
-    abstract var addressHeader: Int
-    abstract var scriptAddressHeader: Int
     abstract var coinType: Int
     abstract var dnsSeeds: Array<String>
+    abstract var addressVersion: Int
     abstract var addressSegwitHrp: String
+    abstract var addressScriptVersion: Int
 
     abstract val checkpointBlock: Block
     abstract fun validate(block: Block, previousBlock: Block)
