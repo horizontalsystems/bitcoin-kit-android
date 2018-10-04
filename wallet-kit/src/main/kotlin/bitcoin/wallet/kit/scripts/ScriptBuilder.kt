@@ -14,9 +14,11 @@ class ScriptBuilder {
         val data = mutableListOf<ByteArray>()
 
         if (address.type == Address.Type.WITNESS) {
-            data.add(byteArrayOf(0x00)) //TODO take VERSION from address object
+            data.add(byteArrayOf(address.version.toByte()))
+            data.add(address.program ?: throw WitnessProgramMissing())
+        } else {
+            data.add(address.hash)
         }
-        data.add(address.hash)
 
         return when (address.type) {
             Address.Type.P2PKH -> p2pkhStart + OpCodes.push(data[0]) + p2pkhEnd
@@ -34,6 +36,6 @@ class ScriptBuilder {
     }
 
     open class ScriptBuilderException : Exception()
-    class UnknownType : ScriptBuilderException()
+    class WitnessProgramMissing : ScriptBuilderException()
 
 }

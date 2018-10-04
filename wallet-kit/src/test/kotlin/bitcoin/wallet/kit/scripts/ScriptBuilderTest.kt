@@ -64,4 +64,13 @@ class ScriptBuilderTest {
         Assert.assertEquals(expectedScript, resultScript.toHexString())
     }
 
+    @Test(expected = ScriptBuilder.WitnessProgramMissing::class)
+    fun testP2PKH_WitnessProgramMissing() {
+        val address = Address(Address.Type.WITNESS, "751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray(), networkParameters)
+
+        address.program = null
+
+        scriptBuilder.lockingScript(address)
+    }
+
 }
