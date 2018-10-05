@@ -12,10 +12,11 @@ class ApiManager(private val url: String) {
             val blocksList = ArrayList<BlockResponse>()
             val addressPath = "${address.substring(0, 3)}/${address.substring(3, 6)}/${address.substring(6)}"
             try {
-                val jsonResponse = getAsJsonObject("$url/btc-regtest/address/$addressPath/index.json")
-                for (block in jsonResponse["blocks"].asArray()) {
-                    val blockObject = block.asObject()
-                    blocksList.add(BlockResponse(blockObject["hash"].asString(), blockObject["height"].asInt()))
+                getAsJsonObject("$url/btc-regtest/address/$addressPath/index.json")?.let { jsonResponse ->
+                    for (block in jsonResponse["blocks"].asArray()) {
+                        val blockObject = block.asObject()
+                        blocksList.add(BlockResponse(blockObject["hash"].asString(), blockObject["height"].asInt()))
+                    }
                 }
                 subscriber.onNext(blocksList)
                 subscriber.onComplete()
@@ -25,12 +26,16 @@ class ApiManager(private val url: String) {
         }
     }
 
-    private fun getAsJsonObject(url: String): JsonObject {
-        return URL(url).openConnection().apply {
-            connectTimeout = 500
-            setRequestProperty("Accept", "application/json")
-        }.getInputStream().use {
-            Json.parse(it.bufferedReader()).asObject()
+    private fun getAsJsonObject(url: String): JsonObject? {
+        return try {
+            URL(url).openConnection().apply {
+                connectTimeout = 500
+                setRequestProperty("Accept", "application/json")
+            }.getInputStream().use {
+                Json.parse(it.bufferedReader()).asObject()
+            }
+        } catch (ex: Exception) {
+            null
         }
     }
 
