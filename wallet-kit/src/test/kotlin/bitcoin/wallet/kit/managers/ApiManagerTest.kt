@@ -8,9 +8,9 @@ import org.junit.runner.RunWith
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
+import java.io.FileNotFoundException
 import java.net.URL
 import java.net.URLConnection
-import java.net.UnknownHostException
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(ApiManager::class, URL::class)
@@ -54,9 +54,9 @@ class ApiManagerTest {
     @Test
     fun getBlockHashes_onError() {
         val address = "mgST3vt11R2HSHqHbtNRgDFdLo8QG2VqzR"
-        whenever(urlConnection.getInputStream()).thenThrow(UnknownHostException())
+        whenever(urlConnection.getInputStream()).thenThrow(FileNotFoundException())
         apiManager.getBlockHashes(address).test()
-                .assertFailure (UnknownHostException::class.java)
+                .assertValue { blocksList -> blocksList.isEmpty() }
     }
 
 }
