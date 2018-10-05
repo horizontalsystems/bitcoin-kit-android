@@ -96,37 +96,6 @@ class PeerGroupTest {
     }
 
     @Test
-    fun requestBlocks_two_peer() {
-        // we should be able to set field instead of stubbing value
-        whenever(peer.isFree).thenReturn(true, false)
-        whenever(peer2.isFree).thenReturn(true)
-
-        peerGroup.start()
-        peerGroup.connected(peer)
-
-        Thread.sleep(2001L) // wait for second peer connection
-
-        val hashes = arrayOf(
-                byteArrayOf(1),
-                byteArrayOf(2),
-                byteArrayOf(3),
-                byteArrayOf(4),
-                byteArrayOf(5),
-                byteArrayOf(6),
-                byteArrayOf(7),
-                byteArrayOf(8),
-                byteArrayOf(9),
-                byteArrayOf(10),
-                byteArrayOf(11),
-                byteArrayOf(12))
-
-        peerGroup.requestMerkleBlocks(hashes)
-
-        verify(peer).requestMerkleBlocks(hashes.copyOfRange(0, 10))
-        verify(peer2).requestMerkleBlocks(hashes.copyOfRange(10, 12))
-    }
-
-    @Test
     fun connected_onReady() {
         peerGroup.connected(peer)
         verify(peerGroupListener).onReady()
@@ -209,22 +178,6 @@ class PeerGroupTest {
 //        peerGroup.relay(transaction)
 //        verify(peer).relay(transaction)
 //        verify(peer2).relay(transaction)
-    }
-
-    @Test
-    fun requestHeaders_switchPeer() {
-        val hashes = arrayOf<ByteArray>()
-
-        peerGroup.start()
-        Thread.sleep(2010L)
-        peerGroup.connected(peer)
-
-        whenever(peer.isFree).thenReturn(false)
-        whenever(peer2.isFree).thenReturn(true)
-
-        peerGroup.requestHeaders(hashes, true)
-
-        verify(peer2).requestHeaders(hashes)
     }
 
 }
