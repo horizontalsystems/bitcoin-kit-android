@@ -14,7 +14,6 @@ import bitcoin.wallet.kit.transactions.TransactionCreator
 import bitcoin.wallet.kit.transactions.builder.TransactionBuilder
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.annotations.RealmModule
 
@@ -56,7 +55,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
     private val blockRealmResults: RealmResults<Block>
 
     init {
-        val realmFactory = RealmFactory(getRealmConfig())
+        val realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
 
         val network = when (networkType) {
@@ -130,14 +129,6 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
     fun receiveAddress(): String {
         return addressManager.receiveAddress()
-    }
-
-    private fun getRealmConfig(): RealmConfiguration {
-        return RealmConfiguration.Builder()
-                .name("kit")
-                .deleteRealmIfMigrationNeeded()
-                .modules(WalletKitModule())
-                .build()
     }
 
     private fun handleTransactions(collection: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
