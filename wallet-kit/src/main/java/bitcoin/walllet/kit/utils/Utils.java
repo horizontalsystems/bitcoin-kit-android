@@ -260,6 +260,10 @@ public class Utils {
         }
     }
 
+    public static byte[] intToByteArray(int value) {
+        return new byte[]{(byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value};
+    }
+
     /** Generate random long number */
     public static long randomLong() {
         return (long) (rnd.nextDouble() * Long.MAX_VALUE);

@@ -1,5 +1,7 @@
 package bitcoin.wallet.kit.scripts
 
+import bitcoin.walllet.kit.utils.Utils
+
 // push value
 const val OP_0 = 0x00 // push empty vector
 const val OP_FALSE = OP_0
@@ -271,4 +273,30 @@ object OpCodes {
     fun getOpCode(opCodeName: String): Int {
         return opCodeNameMap[opCodeName] ?: OP_INVALIDOPCODE
     }
+
+    fun push(value: Int) = when (value) {
+        0 -> byteArrayOf(0)
+        in 1..6 -> byteArrayOf()
+        else -> byteArrayOf((value + 0x50).toByte())
+    }
+
+    fun push(data: ByteArray): ByteArray {
+        val length = data.size
+        val bytes = when (length) {
+            in 0x00..0x4b -> byteArrayOf(length.toByte())
+            in 0x4c..0xff -> byteArrayOf(OP_PUSHDATA1.toByte(), length.toByte())
+            in 0x0100..0xffff -> {
+                val lengthBytes = Utils.intToByteArray(length)
+                val length16InLE = byteArrayOf(lengthBytes[3], lengthBytes[2])
+                byteArrayOf(OP_PUSHDATA2.toByte()) + length16InLE
+            }
+            in 0x10000..0xffffffff -> {
+                val lengthBytesInLE = Utils.intToByteArray(length).reversedArray()
+                byteArrayOf(OP_PUSHDATA2.toByte()) + lengthBytesInLE
+            }
+            else -> byteArrayOf()
+        }
+        return bytes + data
+    }
+
 }

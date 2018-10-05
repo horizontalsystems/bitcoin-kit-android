@@ -48,7 +48,7 @@ class HDWallet(private val seed: ByteArray, private val networkParams: NetworkPa
         return PublicKey(index = index, external = false, key = privateKey(index = index, chain = 1), network = networkParams)
     }
 
-    private fun privateKey(index: Int, chain: Int): HDKey {
+    fun privateKey(index: Int, chain: Int): HDKey {
         return privateKey(path = "m/$purpose'/${networkParams.coinType}'/$account'/$chain/$index")
     }
 

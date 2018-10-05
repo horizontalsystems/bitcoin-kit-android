@@ -5,9 +5,9 @@ import bitcoin.walllet.kit.utils.Utils
 import java.io.ByteArrayInputStream
 
 object ScriptParser {
-    private const val WITNESS_PKH_LENGTH = 20
-    private const val WITNESS_SH_LENGTH = 32
-    private const val ADDRESS_LENGTH = 20
+    const val WITNESS_PKH_LENGTH = 20
+    const val WITNESS_SH_LENGTH = 32
+    const val ADDRESS_LENGTH = 20
 
     private val standardScriptChunks = arrayOf(
             ScriptChunk(OP_DUP, null, 0),
