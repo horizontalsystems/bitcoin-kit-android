@@ -26,7 +26,7 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
 
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
-        walletKit = WalletKit(words)
+        walletKit = WalletKit(words, WalletKit.NetworkType.TestNet)
 
         walletKit.listener = this
 
@@ -42,6 +42,14 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
         started = true
 
         walletKit.start()
+    }
+
+    fun receiveAddress(): String {
+        return walletKit.receiveAddress()
+    }
+
+    fun send(address: String, amount: Int) {
+        walletKit.send(address, amount)
     }
 
     override fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {

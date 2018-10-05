@@ -8,22 +8,19 @@ import bitcoin.wallet.kit.hdwallet.Mnemonic
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.*
 import bitcoin.wallet.kit.models.*
-import bitcoin.wallet.kit.network.MainNet
-import bitcoin.wallet.kit.network.PeerGroup
-import bitcoin.wallet.kit.network.PeerManager
+import bitcoin.wallet.kit.network.*
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionCreator
 import bitcoin.wallet.kit.transactions.builder.TransactionBuilder
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
-import io.realm.RealmConfiguration
 import io.realm.RealmResults
 import io.realm.annotations.RealmModule
 
 @RealmModule(library = true, allClasses = true)
 class WalletKitModule
 
-class WalletKit(words: List<String>) {
+class WalletKit(words: List<String>, networkType: NetworkType) {
 
     interface Listener {
         fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -31,6 +28,8 @@ class WalletKit(words: List<String>) {
         fun lastBlockHeightUpdated(walletKit: WalletKit, lastBlockHeight: Int)
         fun progressUpdated(walletKit: WalletKit, progress: Double)
     }
+
+    enum class NetworkType { MainNet, TestNet, RegTest }
 
     var listener: Listener? = null
 
@@ -56,10 +55,15 @@ class WalletKit(words: List<String>) {
     private val blockRealmResults: RealmResults<Block>
 
     init {
-        val realmFactory = RealmFactory(getRealmConfig())
+        val realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
 
-        val network = MainNet()
+        val network = when (networkType) {
+            NetworkType.MainNet -> MainNet()
+            NetworkType.TestNet -> TestNet()
+            NetworkType.RegTest -> RegTest()
+        }
+
         val wallet = HDWallet(Mnemonic().toSeed(words), network)
         val pubKeys = realm.where(PublicKey::class.java).findAll()
         val filters = BloomFilter(pubKeys.size)
@@ -123,12 +127,8 @@ class WalletKit(words: List<String>) {
         transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
     }
 
-    private fun getRealmConfig(): RealmConfiguration {
-        return RealmConfiguration.Builder()
-                .name("kit")
-                .deleteRealmIfMigrationNeeded()
-                .modules(WalletKitModule())
-                .build()
+    fun receiveAddress(): String {
+        return addressManager.receiveAddress()
     }
 
     private fun handleTransactions(collection: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
