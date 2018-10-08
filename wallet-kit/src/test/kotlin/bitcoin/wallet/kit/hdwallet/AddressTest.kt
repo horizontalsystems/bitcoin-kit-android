@@ -1,8 +1,7 @@
-package bitcoin.walllet.kit.hdwallet
+package bitcoin.wallet.kit.hdwallet
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.hdwallet.Address
 import bitcoin.wallet.kit.network.MainNet
 import bitcoin.wallet.kit.network.TestNet
 import org.junit.Assert.assertEquals
