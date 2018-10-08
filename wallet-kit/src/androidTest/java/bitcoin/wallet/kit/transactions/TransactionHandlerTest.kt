@@ -52,7 +52,7 @@ class TransactionHandlerTest {
 
     @Before
     fun setup() {
-        transactionHandler = TransactionHandler(realmFactory, network, transactionProcessor, progressSyncer)
+        transactionHandler = TransactionHandler(realmFactory, transactionProcessor, network, progressSyncer)
     }
 
     @After

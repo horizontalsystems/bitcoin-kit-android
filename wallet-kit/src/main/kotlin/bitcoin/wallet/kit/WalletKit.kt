@@ -11,6 +11,7 @@ import bitcoin.wallet.kit.models.*
 import bitcoin.wallet.kit.network.*
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionCreator
+import bitcoin.wallet.kit.transactions.TransactionProcessor
 import bitcoin.wallet.kit.transactions.builder.TransactionBuilder
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
@@ -76,7 +77,10 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
         val peerGroup = PeerGroup(peerManager, network, 1)
         peerGroup.setBloomFilter(filters)
-        peerGroup.listener = Syncer(realmFactory, peerGroup, network)
+
+        addressManager = AddressManager(realmFactory, wallet, peerGroup)
+        val transactionProcessor = TransactionProcessor(realmFactory, addressManager, network)
+        peerGroup.listener = Syncer(realmFactory, peerGroup, transactionProcessor, network)
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
         val stateManager = StateManager(realmFactory)
@@ -85,9 +89,8 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, peerGroup)
 
-        addressManager = AddressManager(realmFactory, wallet, peerGroup)
         transactionBuilder = TransactionBuilder(realmFactory, network, wallet)
-        transactionCreator = TransactionCreator(realmFactory, network, transactionBuilder, peerGroup, addressManager)
+        transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
 
         transactionRealmResults = realm.where(Transaction::class.java)
                 .equalTo("isMine", true)

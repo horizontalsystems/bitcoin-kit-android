@@ -122,16 +122,16 @@ class Address {
             return Bech32.encode(network.addressSegwitHrp, hash)
         }
 
-        val addressBytes = ByteArray(1 + hash.size + 4)
+        var addressBytes = byteArrayOf(version.toByte())
         if (type == Type.P2PKH) {
             addressBytes[0] = network.addressVersion.toByte()
         } else {
             addressBytes[0] = network.addressScriptVersion.toByte()
         }
 
-        System.arraycopy(hash, 0, addressBytes, 1, hash.size)
-        val digest = Utils.doubleDigest(addressBytes, 0, hash.size + 1)
-        System.arraycopy(digest, 0, addressBytes, hash.size + 1, 4)
+        addressBytes += hash
+        val checksum = Utils.doubleDigest(addressBytes)
+        addressBytes += Arrays.copyOfRange(checksum, 0, 4)
 
         return Base58.encode(addressBytes)
     }

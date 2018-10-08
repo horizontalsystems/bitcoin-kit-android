@@ -6,6 +6,7 @@ import bitcoin.wallet.kit.headers.HeaderSyncer
 import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.wallet.kit.network.TestNet
+import bitcoin.wallet.kit.transactions.TransactionProcessor
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
@@ -23,6 +24,7 @@ import java.util.logging.Logger
 
 class SyncerTest {
 
+    private val transactionProcessor = mock(TransactionProcessor::class.java)
     private val headerSyncer = mock(HeaderSyncer::class.java)
     private val headerHandler = mock(HeaderHandler::class.java)
     private val realmFactory = mock(RealmFactory::class.java)
@@ -45,7 +47,7 @@ class SyncerTest {
                 .withAnyArguments()
                 .thenReturn(headerHandler)
 
-        syncer = Syncer(realmFactory, peerGroup, network)
+        syncer = Syncer(realmFactory, peerGroup, transactionProcessor, network)
     }
 
     @Test

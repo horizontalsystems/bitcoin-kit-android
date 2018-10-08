@@ -1,9 +1,9 @@
 package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.RealmFactoryMock
+import bitcoin.wallet.kit.managers.AddressManager
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.TestNet
-import com.nhaarman.mockito_kotlin.any
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -17,12 +17,13 @@ class TransactionProcessorTest {
     private var realm = realmFactory.realm
     private val linker = mock(TransactionLinker::class.java)
     private val extractor = mock(TransactionExtractor::class.java)
+    private val addressManager = mock(AddressManager::class.java)
 
     lateinit var processor: TransactionProcessor
 
     @Before
     fun setup() {
-        processor = TransactionProcessor(realmFactory, TestNet(), extractor, linker)
+        processor = TransactionProcessor(realmFactory, addressManager, TestNet(), extractor, linker)
     }
 
     @After
@@ -49,11 +50,13 @@ class TransactionProcessorTest {
         realm.commitTransaction()
 
         processor.enqueueRun()
+
         verify(extractor).extract(transaction2)
         verify(extractor, never()).extract(transaction1)
 
         verify(linker).handle(transaction2, realm)
         verify(linker, never()).handle(transaction1, realm)
+        verify(addressManager).generateKeys()
 
         Assert.assertEquals(transaction2.processed, true)
     }
@@ -61,7 +64,9 @@ class TransactionProcessorTest {
     @Test
     fun run_withoutTransaction() {
         processor.enqueueRun()
-        verify(extractor, never()).extract(any())
-        verify(linker, never()).handle(any(), any())
+
+        verifyZeroInteractions(extractor)
+        verifyZeroInteractions(linker)
+        verifyZeroInteractions(addressManager)
     }
 }

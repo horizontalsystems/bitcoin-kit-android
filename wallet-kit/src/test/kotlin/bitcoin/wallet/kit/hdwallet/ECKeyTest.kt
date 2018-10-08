@@ -1,7 +1,8 @@
-package bitcoin.walllet.kit.hdwallet
+package bitcoin.wallet.kit.hdwallet
 
 import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.transactions.builder.InputSigner
+import bitcoin.walllet.kit.hdwallet.ECKey
 import helpers.Fixtures
 import junit.framework.Assert
 import org.junit.Before
