@@ -11,8 +11,8 @@ import io.realm.Sort
 
 class TransactionHandler(
         private val realmFactory: RealmFactory,
+        private val processor: TransactionProcessor,
         private val network: NetworkParameters,
-        private val processor: TransactionProcessor = TransactionProcessor(realmFactory, network),
         private val progressSyncer: ProgressSyncer = ProgressSyncer()) {
 
     fun handle(transactions: Array<Transaction>, header: Header) {
