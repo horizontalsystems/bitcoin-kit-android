@@ -3,6 +3,7 @@ package bitcoin.wallet.kit
 import android.content.Context
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.crypto.BloomFilter
+import bitcoin.wallet.kit.hdwallet.Address
 import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.Mnemonic
 import bitcoin.wallet.kit.hdwallet.PublicKey
@@ -13,6 +14,7 @@ import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionCreator
 import bitcoin.wallet.kit.transactions.TransactionProcessor
 import bitcoin.wallet.kit.transactions.builder.TransactionBuilder
+import bitcoin.walllet.kit.exceptions.AddressFormatException
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
 import io.realm.RealmResults
@@ -55,11 +57,14 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
     private val transactionOutputRealmResults: RealmResults<TransactionOutput>
     private val blockRealmResults: RealmResults<Block>
 
+    private val network: NetworkParameters
+    private val realmFactory: RealmFactory
+
     init {
-        val realmFactory = RealmFactory(networkType.name)
+        realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
 
-        val network = when (networkType) {
+        network = when (networkType) {
             NetworkType.MainNet -> MainNet()
             NetworkType.TestNet -> TestNet()
             NetworkType.RegTest -> RegTest()
@@ -132,6 +137,19 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
     fun receiveAddress(): String {
         return addressManager.receiveAddress()
+    }
+
+    @Throws(AddressFormatException::class)
+    fun validateAddress(address: String) {
+        Address(address, network)
+    }
+
+    fun clear() {
+        val realm = realmFactory.realm
+        realm.executeTransaction {
+            it.deleteAll()
+        }
+        realm.close()
     }
 
     private fun handleTransactions(collection: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
