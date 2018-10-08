@@ -2,6 +2,7 @@ package bitcoin.wallet.kit.network
 
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
+import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.utils.HashUtils
 import helpers.Fixtures
 import org.junit.Assert.assertEquals
@@ -10,6 +11,19 @@ import org.junit.Test
 
 class MainNetTest {
     private val network = MainNet()
+
+    @Test
+    fun packetMagic() {
+        val stream = BitcoinInput(byteArrayOf(
+                0xf9.toByte(),
+                0xbe.toByte(),
+                0xb4.toByte(),
+                0xd9.toByte()
+        ))
+
+        val magic = stream.readUnsignedInt()
+        assertEquals(magic, network.magic)
+    }
 
     @Test
     fun validateDifficulty() {

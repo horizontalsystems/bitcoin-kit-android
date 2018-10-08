@@ -7,13 +7,12 @@ import bitcoin.wallet.kit.models.Header
 import bitcoin.walllet.kit.utils.HashUtils
 
 open class TestNet : NetworkParameters() {
-    // private val diffDate = Date(1329264000000L)   // February 16th 2012
-    private val diffDate = 1329264000L   // February 16th 2012
+    private val diffDate = 1329264000L // February 16th 2012
 
     override var id: String = ID_TESTNET
     override var port: Int = 18333
 
-    override var packetMagic: Long = 0x0b110907
+    override var magic: Long = 0x0709110B
     override var bip32HeaderPub: Int = 0x043587CF
     override var bip32HeaderPriv: Int = 0x04358394
     override var addressVersion: Int = 111

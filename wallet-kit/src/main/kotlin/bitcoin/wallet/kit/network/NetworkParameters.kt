@@ -28,8 +28,7 @@ abstract class NetworkParameters {
     abstract var id: String
     abstract var port: Int
 
-    // Indicates message origin network and is used to seek to the next message when stream state is unknown.
-    abstract var packetMagic: Long
+    abstract var magic: Long
     abstract var bip32HeaderPub: Int
     abstract var bip32HeaderPriv: Int
     abstract var coinType: Int
@@ -40,16 +39,6 @@ abstract class NetworkParameters {
 
     abstract val checkpointBlock: Block
     abstract fun validate(block: Block, previousBlock: Block)
-
-    fun magicAsUInt32ByteArray(): ByteArray {
-        val magic = packetMagic
-        val bytes = ByteArray(4)
-        bytes[3] = (magic and 0xFFFF).toByte()
-        bytes[2] = ((magic ushr 8) and 0xFFFF).toByte()
-        bytes[1] = ((magic ushr 16) and 0xFFFF).toByte()
-        bytes[0] = ((magic ushr 24) and 0xFFFF).toByte()
-        return bytes
-    }
 
     fun isDifficultyTransitionEdge(height: Int): Boolean {
         return (height % heightInterval == 0L)
