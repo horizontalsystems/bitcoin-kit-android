@@ -73,11 +73,13 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
             filters.insert(it.publicKey)
         }
 
-        val transactionProcessor = TransactionProcessor(realmFactory, network)
         val peerManager = PeerManager(network)
 
         val peerGroup = PeerGroup(peerManager, network, 1)
         peerGroup.setBloomFilter(filters)
+
+        addressManager = AddressManager(realmFactory, wallet, peerGroup)
+        val transactionProcessor = TransactionProcessor(realmFactory, addressManager, network)
         peerGroup.listener = Syncer(realmFactory, peerGroup, transactionProcessor, network)
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
@@ -87,7 +89,6 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, peerGroup)
 
-        addressManager = AddressManager(realmFactory, wallet, peerGroup)
         transactionBuilder = TransactionBuilder(realmFactory, network, wallet)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
 
