@@ -28,7 +28,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
     interface Listener {
         fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
         fun balanceUpdated(walletKit: WalletKit, balance: Long)
-        fun lastBlockHeightUpdated(walletKit: WalletKit, lastBlockHeight: Int)
+        fun lastBlockInfoUpdated(walletKit: WalletKit, lastBlockInfo: BlockInfo)
         fun progressUpdated(walletKit: WalletKit, progress: Double)
     }
 
@@ -173,8 +173,9 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
     private fun handleBlocks(collection: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == OrderedCollectionChangeSet.State.UPDATE
                 && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
-            collection.lastOrNull()?.height?.let { height ->
-                listener?.lastBlockHeightUpdated(this, height)
+            collection.lastOrNull()?.let { block ->
+                listener?.lastBlockInfoUpdated(this,
+                        BlockInfo(block.reversedHeaderHashHex, block.height, block.header?.timestamp))
             }
         }
     }

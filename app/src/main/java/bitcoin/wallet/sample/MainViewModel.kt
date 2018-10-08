@@ -3,6 +3,7 @@ package bitcoin.wallet.sample
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import bitcoin.wallet.kit.WalletKit
+import bitcoin.wallet.kit.models.BlockInfo
 import bitcoin.wallet.kit.models.TransactionInfo
 
 class MainViewModel : ViewModel(), WalletKit.Listener {
@@ -60,8 +61,8 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
         this.balance.value = balance
     }
 
-    override fun lastBlockHeightUpdated(walletKit: WalletKit, lastBlockHeight: Int) {
-        this.lastBlockHeight.value = lastBlockHeight
+    override fun lastBlockInfoUpdated(walletKit: WalletKit, lastBlockInfo: BlockInfo) {
+        this.lastBlockHeight.value = lastBlockInfo.height
     }
 
     override fun progressUpdated(walletKit: WalletKit, progress: Double) {
