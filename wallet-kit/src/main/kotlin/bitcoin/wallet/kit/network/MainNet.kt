@@ -7,7 +7,6 @@ import bitcoin.walllet.kit.utils.HashUtils
 
 class MainNet : NetworkParameters() {
 
-    override var id: String = ID_MAINNET
     override var port: Int = 8333
 
     override var magic: Long = 0xd9b4bef9L

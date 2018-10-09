@@ -9,11 +9,6 @@ import bitcoin.walllet.kit.utils.HashUtils
 /** Network-specific parameters */
 abstract class NetworkParameters {
 
-    // The strings returned by getId() for networks
-    val ID_MAINNET = "org.bitcoin.production"
-    val ID_TESTNET = "org.bitcoin.test"
-    val ID_REGTEST = "org.bitcoin.regtest"
-
     val protocolVersion = 70014
     val bloomFilter = 70000
     val networkServices = 1L
@@ -25,7 +20,6 @@ abstract class NetworkParameters {
     val targetSpacing = 10 * 60                         // 10 minutes per block.
     var heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
-    abstract var id: String
     abstract var port: Int
 
     abstract var magic: Long

@@ -9,7 +9,6 @@ import bitcoin.walllet.kit.utils.HashUtils
 open class TestNet : NetworkParameters() {
     private val diffDate = 1329264000L // February 16th 2012
 
-    override var id: String = ID_TESTNET
     override var port: Int = 18333
 
     override var magic: Long = 0x0709110B

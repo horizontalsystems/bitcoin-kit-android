@@ -5,7 +5,6 @@ import bitcoin.wallet.kit.models.Block
 
 class RegTest : TestNet() {
 
-    override var id: String = ID_REGTEST
     override var port: Int = 18444
 
     override var dnsSeeds: Array<String> = arrayOf(
