@@ -3,8 +3,8 @@ package bitcoin.wallet.kit.network
 import bitcoin.wallet.kit.blocks.BlockValidator
 import bitcoin.wallet.kit.blocks.BlockValidatorException
 import bitcoin.wallet.kit.models.Block
+import bitcoin.walllet.kit.crypto.CompactBits
 import bitcoin.walllet.kit.utils.HashUtils
-import bitcoin.walllet.kit.utils.Utils
 
 /** Network-specific parameters */
 abstract class NetworkParameters {
@@ -20,10 +20,10 @@ abstract class NetworkParameters {
     val serviceFullNode = 1L
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
-    val maxTargetBits = Utils.decodeCompactBits(0x1d00ffffL)    // Maximum difficulty
-    val targetTimespan: Long = 14 * 24 * 60 * 60                        // 2 weeks per difficulty cycle, on average.
-    val targetSpacing = 10 * 60                                         // 10 minutes per block.
-    var heightInterval = targetTimespan / targetSpacing                 // 2016 blocks
+    val maxTargetBits = CompactBits.decode(0x1d00ffffL) // Maximum difficulty
+    val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
+    val targetSpacing = 10 * 60                         // 10 minutes per block.
+    var heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
     abstract var id: String
     abstract var port: Int
@@ -65,7 +65,7 @@ abstract class NetworkParameters {
         if (timespan > targetTimespan * 4)
             timespan = targetTimespan * 4
 
-        var newTarget = Utils.decodeCompactBits(blockHeader.bits)
+        var newTarget = CompactBits.decode(blockHeader.bits)
         newTarget = newTarget.multiply(timespan.toBigInteger())
         newTarget = newTarget.divide(targetTimespan.toBigInteger())
 
@@ -74,7 +74,7 @@ abstract class NetworkParameters {
             newTarget = maxTargetBits
         }
 
-        val newTargetCompact = Utils.encodeCompactBits(newTarget)
+        val newTargetCompact = CompactBits.encode(newTarget)
         if (newTargetCompact != block.header?.bits) {
             throw BlockValidatorException.NotDifficultyTransitionEqualBits()
         }
