@@ -5,7 +5,7 @@ import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
 import bitcoin.walllet.kit.utils.HashUtils
 
-open class TestNet : NetworkParameters() {
+class TestNet : NetworkParameters() {
 
     override var port: Int = 18333
 
@@ -35,17 +35,9 @@ open class TestNet : NetworkParameters() {
     }
 
     override val checkpointBlock = Block(blockHeader, 1380960)
+    override val blockValidator = TestnetValidator(this)
 
-    override val validator = TestnetValidator(this)
-
-    override fun validate(block: Block, previousBlock: Block) {
-        validator.validateHeader(block, previousBlock)
-
-        if (validator.isDifficultyTransitionEdge(block.height)) {
-            validator.checkDifficultyTransitions(block)
-        } else {
-            validator.validateBits(block, previousBlock)
-        }
+    override fun validateBlock(block: Block, previousBlock: Block) {
+        blockValidator.validate(block, previousBlock)
     }
-
 }

@@ -5,6 +5,17 @@ import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.crypto.CompactBits
 
 open class MainnetValidator(val network: NetworkParameters) : BlockValidator(network) {
+
+    override fun validate(block: Block, previousBlock: Block) {
+        validateHeader(block, previousBlock)
+
+        if (isDifficultyTransitionEdge(block.height)) {
+            checkDifficultyTransitions(block)
+        } else {
+            validateBits(block, previousBlock)
+        }
+    }
+
     open fun checkDifficultyTransitions(block: Block) {
         val lastCheckPointBlock = getLastCheckPointBlock(block)
 

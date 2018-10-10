@@ -32,23 +32,13 @@ class TestNetTest {
     }
 
     @Test
-    fun validate_headers() {
+    fun validate() {
         val block1 = Fixtures.checkpointBlock2
         val blockPrev = block1.previousBlock!!
 
-        network.validate(block1, blockPrev)
+        network.validateBlock(block1, blockPrev)
 
-        verify(validator).validateBits(any(), any())
-    }
-
-    @Test
-    fun validate_bits() {
-        val block1 = Fixtures.checkpointBlock2
-        val blockPrev = block1.previousBlock!!
-
-        network.validate(block1, blockPrev)
-
-        verify(validator).validateHeader(any(), any())
+        verify(validator).validate(any(), any())
     }
 
     @Test
@@ -58,7 +48,7 @@ class TestNetTest {
 
         whenever(validator.isDifficultyTransitionEdge(block1.height)).thenReturn(true)
 
-        network.validate(block1, blockPrev)
+        network.validateBlock(block1, blockPrev)
 
         verify(validator).checkDifficultyTransitions(any())
     }

@@ -5,6 +5,8 @@ import bitcoin.wallet.kit.network.NetworkParameters
 
 abstract class BlockValidator(private val network: NetworkParameters) {
 
+    abstract fun validate(block: Block, previousBlock: Block)
+
     fun validateHeader(block: Block, previousBlock: Block) {
         val blockHeader = checkNotNull(block.header) {
             throw BlockValidatorException.NoHeader()

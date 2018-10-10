@@ -6,6 +6,16 @@ import bitcoin.wallet.kit.network.NetworkParameters
 class TestnetValidator(network: NetworkParameters) : MainnetValidator(network) {
     private val diffDate = 1329264000L // February 16th 2012
 
+    override fun validate(block: Block, previousBlock: Block) {
+        validateHeader(block, previousBlock)
+
+        if (isDifficultyTransitionEdge(block.height)) {
+            checkDifficultyTransitions(block)
+        } else {
+            validateBits(block, previousBlock)
+        }
+    }
+
     override fun checkDifficultyTransitions(block: Block) {
         var previousBlock = checkNotNull(block.previousBlock) { throw BlockValidatorException.NoPreviousBlock() }
         val previousBlockHeader = checkNotNull(previousBlock.header) {

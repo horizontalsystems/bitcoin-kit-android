@@ -121,7 +121,7 @@ class TransactionHandlerTest {
         realm.insert(Block(testHeader2, TestNet().checkpointBlock))
         realm.commitTransaction()
 
-        whenever(network.validate(any(), any()))
+        whenever(network.validateBlock(any(), any()))
                 .thenThrow(BlockValidatorException.WrongPreviousHeader())
 
         try {

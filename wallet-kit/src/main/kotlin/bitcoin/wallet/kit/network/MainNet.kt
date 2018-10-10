@@ -38,16 +38,9 @@ class MainNet : NetworkParameters() {
     }
 
     override val checkpointBlock = Block(blockHeader, 536256)
+    override val blockValidator = MainnetValidator(this)
 
-    override val validator = MainnetValidator(this)
-
-    override fun validate(block: Block, previousBlock: Block) {
-        validator.validateHeader(block, previousBlock)
-
-        if (validator.isDifficultyTransitionEdge(block.height)) {
-            validator.checkDifficultyTransitions(block)
-        } else {
-            validator.validateBits(block, previousBlock)
-        }
+    override fun validateBlock(block: Block, previousBlock: Block) {
+        blockValidator.validate(block, previousBlock)
     }
 }

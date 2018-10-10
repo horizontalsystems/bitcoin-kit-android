@@ -31,7 +31,7 @@ abstract class NetworkParameters {
     abstract var addressScriptVersion: Int
 
     abstract val checkpointBlock: Block
-    abstract val validator: BlockValidator
-    abstract fun validate(block: Block, previousBlock: Block)
+    abstract val blockValidator: BlockValidator
+    abstract fun validateBlock(block: Block, previousBlock: Block)
 
 }
