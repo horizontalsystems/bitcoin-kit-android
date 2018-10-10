@@ -1,6 +1,5 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.blocks.BlockValidator
 import bitcoin.wallet.kit.models.Block
 
 class RegTest : TestNet() {
@@ -17,6 +16,6 @@ class RegTest : TestNet() {
     override val checkpointBlock = Block()
 
     override fun validate(block: Block, previousBlock: Block) {
-        BlockValidator.validateHeader(block, previousBlock)
+        validator.validateHeader(block, previousBlock)
     }
 }

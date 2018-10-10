@@ -1,14 +1,24 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.blocks.BlockValidator
-import bitcoin.wallet.kit.blocks.BlockValidatorException
+import bitcoin.wallet.kit.blocks.validators.BlockValidator
+import bitcoin.wallet.kit.blocks.validators.BlockValidatorException
+import bitcoin.wallet.kit.blocks.validators.MainnetValidator
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
 import helpers.Fixtures
+import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
 
 class BlockValidatorTest {
+    private val network = MainNet()
+    private lateinit var validator: BlockValidator
+
+    @Before
+    fun setup() {
+        validator = MainnetValidator(network)
+    }
 
     @Test
     fun validateHeader() {
@@ -16,7 +26,7 @@ class BlockValidatorTest {
         val block2 = Block(Fixtures.block2.header!!, block1)
 
         try {
-            BlockValidator.validateHeader(block2, block1)
+            validator.validateHeader(block2, block1)
         } catch (e: BlockValidatorException) {
             fail("Header validation failed with: ${e.message}")
         }
@@ -25,7 +35,7 @@ class BlockValidatorTest {
     @Test
     fun validateHeader_invalidHeader() {
         try {
-            BlockValidator.validateHeader(Block(), Block())
+            validator.validateHeader(Block(), Block())
             fail("Expected exception: NoHeader")
         } catch (e: BlockValidatorException.NoHeader) {
         }
@@ -34,7 +44,7 @@ class BlockValidatorTest {
         val block2 = Block(Fixtures.block2.header!!, block1)
 
         try {
-            BlockValidator.validateHeader(block2, block1)
+            validator.validateHeader(block2, block1)
             fail("Expected exception: WrongPreviousHeader")
         } catch (e: BlockValidatorException.WrongPreviousHeader) {
         }
@@ -46,7 +56,7 @@ class BlockValidatorTest {
         val block2 = Block(Fixtures.block2.header!!, block1)
 
         try {
-            BlockValidator.validateBits(block2, block1)
+            validator.validateBits(block2, block1)
         } catch (e: BlockValidatorException) {
             fail("Bits validation failed with: ${e.message}")
         }
@@ -55,7 +65,7 @@ class BlockValidatorTest {
     @Test
     fun validateHeader_invalidBits() {
         try {
-            BlockValidator.validateBits(Block(), Block())
+            validator.validateBits(Block(), Block())
             fail("Expected exception: NoHeader")
         } catch (e: BlockValidatorException.NoHeader) {
         }
@@ -64,11 +74,18 @@ class BlockValidatorTest {
         val block2 = Block(Fixtures.block2.header!!, Block())
 
         try {
-            BlockValidator.validateBits(block2, block1)
+            validator.validateBits(block2, block1)
             fail("Expected exception: NotEqualBits")
         } catch (e: BlockValidatorException.NotEqualBits) {
 
         }
     }
 
+    @Test
+    fun difficultyTransitionPoint() {
+        assertEquals(validator.isDifficultyTransitionEdge(0), true)
+        assertEquals(validator.isDifficultyTransitionEdge(2015), false)
+        assertEquals(validator.isDifficultyTransitionEdge(2016), true)
+        assertEquals(validator.isDifficultyTransitionEdge(4032), true)
+    }
 }

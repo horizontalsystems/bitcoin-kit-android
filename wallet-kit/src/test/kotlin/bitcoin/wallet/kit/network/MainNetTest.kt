@@ -1,16 +1,37 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.models.Block
-import bitcoin.wallet.kit.models.Header
+import bitcoin.wallet.kit.blocks.validators.MainnetValidator
 import bitcoin.walllet.kit.io.BitcoinInput
-import bitcoin.walllet.kit.utils.HashUtils
+import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import org.junit.Assert.assertEquals
-import org.junit.Assert.fail
+import org.junit.Before
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
+import org.powermock.api.mockito.PowerMockito
+import org.powermock.core.classloader.annotations.PrepareForTest
+import org.powermock.modules.junit4.PowerMockRunner
+
+@RunWith(PowerMockRunner::class)
+@PrepareForTest(MainNet::class)
 
 class MainNetTest {
-    private val network = MainNet()
+
+    private val validator = mock(MainnetValidator::class.java)
+    private lateinit var network: MainNet
+
+    @Before
+    fun setup() {
+        PowerMockito
+                .whenNew(MainnetValidator::class.java)
+                .withAnyArguments()
+                .thenReturn(validator)
+
+        network = MainNet()
+    }
 
     @Test
     fun packetMagic() {
@@ -26,46 +47,35 @@ class MainNetTest {
     }
 
     @Test
-    fun validateDifficulty() {
-        val check1 = Fixtures.checkpointBlock1
+    fun validate_headers() {
+        val block1 = Fixtures.checkpointBlock2
+        val blockPrev = block1.previousBlock!!
 
-        var checkPrev = check1
-        val prevsHead = Header().apply {
-            version = 536870912
-            prevHash = HashUtils.toBytesAsLE("000000000000000000124a73e879fd66a1b29d1b4b3f1a81de3cbcbe579e21a8")
-            merkleHash = HashUtils.toBytesAsLE("7904930640df999005df3b57f9c6f542088af33c3d773dcec2939f55ced359b8")
-            timestamp = 1535129301
-            bits = 388763047
-            nonce = 59591417
-        }
+        network.validate(block1, blockPrev)
 
-        for (i in 1 until 2016) {
-            checkPrev = Block(prevsHead, checkPrev)
-        }
-
-        val check2Head = Header().apply {
-            version = 536870912
-            prevHash = HashUtils.toBytesAsLE("0000000000000000001d9d48d93793aaa85b5f6d17c176d4ef905c7e7112b1cf")
-            merkleHash = HashUtils.toBytesAsLE("3ad0fa0e8c100db5831ebea7cabf6addae2c372e6e1d84f6243555df5bbfa351")
-            timestamp = 1535129431
-            bits = 388618029
-            nonce = 2367954839
-        }
-
-        val check2 = Block(check2Head, checkPrev)
-
-        try {
-            network.validate(check2, checkPrev)
-        } catch (e: Exception) {
-            fail(e.message)
-        }
+        verify(validator).validateBits(any(), any())
     }
 
     @Test
-    fun difficultyTransitionPoint() {
-        assertEquals(network.isDifficultyTransitionEdge(0), true)
-        assertEquals(network.isDifficultyTransitionEdge(2015), false)
-        assertEquals(network.isDifficultyTransitionEdge(2016), true)
-        assertEquals(network.isDifficultyTransitionEdge(4032), true)
+    fun validate_bits() {
+        val block1 = Fixtures.checkpointBlock2
+        val blockPrev = block1.previousBlock!!
+
+        network.validate(block1, blockPrev)
+
+        verify(validator).validateHeader(any(), any())
     }
+
+    @Test
+    fun validate_difficultyTransitions() {
+        val block1 = Fixtures.checkpointBlock2
+        val blockPrev = block1.previousBlock!!
+
+        whenever(validator.isDifficultyTransitionEdge(block1.height)).thenReturn(true)
+
+        network.validate(block1, blockPrev)
+
+        verify(validator).checkDifficultyTransitions(any())
+    }
+
 }

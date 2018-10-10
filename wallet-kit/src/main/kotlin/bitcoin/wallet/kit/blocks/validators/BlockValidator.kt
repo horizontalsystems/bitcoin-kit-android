@@ -1,8 +1,9 @@
-package bitcoin.wallet.kit.blocks
+package bitcoin.wallet.kit.blocks.validators
 
 import bitcoin.wallet.kit.models.Block
+import bitcoin.wallet.kit.network.NetworkParameters
 
-object BlockValidator {
+abstract class BlockValidator(private val network: NetworkParameters) {
 
     fun validateHeader(block: Block, previousBlock: Block) {
         val blockHeader = checkNotNull(block.header) {
@@ -25,21 +26,10 @@ object BlockValidator {
             throw BlockValidatorException.NotEqualBits()
     }
 
-    fun getLastCheckPointBlock(block: Block): Block {
-        var lastCheckPointBlock = block
-
-        for (i in 0 until 2016) {
-            val prev = lastCheckPointBlock.previousBlock
-            if (prev != null) {
-                lastCheckPointBlock = prev
-            } else throw when (i) {
-                2015 -> BlockValidatorException.NoCheckpointBlock()
-                else -> BlockValidatorException.NoPreviousBlock()
-            }
-        }
-
-        return lastCheckPointBlock
+    fun isDifficultyTransitionEdge(height: Int): Boolean {
+        return (height % network.heightInterval == 0L)
     }
+
 }
 
 open class BlockValidatorException(msg: String) : RuntimeException(msg) {

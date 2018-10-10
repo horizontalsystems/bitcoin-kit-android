@@ -1,7 +1,6 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.blocks.BlockValidator
-import bitcoin.wallet.kit.blocks.BlockValidatorException
+import bitcoin.wallet.kit.blocks.validators.BlockValidator
 import bitcoin.wallet.kit.models.Block
 import bitcoin.walllet.kit.crypto.CompactBits
 import bitcoin.walllet.kit.utils.HashUtils
@@ -32,45 +31,7 @@ abstract class NetworkParameters {
     abstract var addressScriptVersion: Int
 
     abstract val checkpointBlock: Block
+    abstract val validator: BlockValidator
     abstract fun validate(block: Block, previousBlock: Block)
 
-    fun isDifficultyTransitionEdge(height: Int): Boolean {
-        return (height % heightInterval == 0L)
-    }
-
-    open fun checkDifficultyTransitions(block: Block) {
-        val lastCheckPointBlock = BlockValidator.getLastCheckPointBlock(block)
-
-        val previousBlock = checkNotNull(block.previousBlock) {
-            throw BlockValidatorException.NoPreviousBlock()
-        }
-
-        val blockHeader = previousBlock.header
-        val lastCheckPointBlockHeader = lastCheckPointBlock.header
-
-        if (blockHeader == null || lastCheckPointBlockHeader == null) {
-            throw BlockValidatorException.NoHeader()
-        }
-
-        // Limit the adjustment step
-        var timespan = blockHeader.timestamp - lastCheckPointBlockHeader.timestamp
-        if (timespan < targetTimespan / 4)
-            timespan = targetTimespan / 4
-        if (timespan > targetTimespan * 4)
-            timespan = targetTimespan * 4
-
-        var newTarget = CompactBits.decode(blockHeader.bits)
-        newTarget = newTarget.multiply(timespan.toBigInteger())
-        newTarget = newTarget.divide(targetTimespan.toBigInteger())
-
-        // Difficulty hit proof of work limit: newTarget.toString(16)
-        if (newTarget > maxTargetBits) {
-            newTarget = maxTargetBits
-        }
-
-        val newTargetCompact = CompactBits.encode(newTarget)
-        if (newTargetCompact != block.header?.bits) {
-            throw BlockValidatorException.NotDifficultyTransitionEqualBits()
-        }
-    }
 }

@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.RealmFactoryMock
-import bitcoin.wallet.kit.blocks.BlockValidatorException
+import bitcoin.wallet.kit.blocks.validators.BlockValidatorException
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
