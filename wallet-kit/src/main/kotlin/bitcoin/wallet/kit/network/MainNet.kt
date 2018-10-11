@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.blocks.validators.MainnetValidator
+import bitcoin.wallet.kit.blocks.validators.BlockValidator
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.Header
 import bitcoin.walllet.kit.utils.HashUtils
@@ -38,7 +38,7 @@ class MainNet : NetworkParameters() {
     }
 
     override val checkpointBlock = Block(blockHeader, 536256)
-    override val blockValidator = MainnetValidator(this)
+    override val blockValidator = BlockValidator(this)
 
     override fun validateBlock(block: Block, previousBlock: Block) {
         blockValidator.validate(block, previousBlock)

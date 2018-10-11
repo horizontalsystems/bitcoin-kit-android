@@ -1,10 +1,9 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.blocks.validators.MainnetValidator
+import bitcoin.wallet.kit.blocks.validators.BlockValidator
 import bitcoin.walllet.kit.io.BitcoinInput
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -20,13 +19,13 @@ import org.powermock.modules.junit4.PowerMockRunner
 
 class MainNetTest {
 
-    private val validator = mock(MainnetValidator::class.java)
+    private val validator = mock(BlockValidator::class.java)
     private lateinit var network: MainNet
 
     @Before
     fun setup() {
         PowerMockito
-                .whenNew(MainnetValidator::class.java)
+                .whenNew(BlockValidator::class.java)
                 .withAnyArguments()
                 .thenReturn(validator)
 
@@ -47,25 +46,13 @@ class MainNetTest {
     }
 
     @Test
-    fun validate() {
+    fun validateBlock() {
         val block1 = Fixtures.checkpointBlock2
         val blockPrev = block1.previousBlock!!
 
         network.validateBlock(block1, blockPrev)
 
         verify(validator).validate(any(), any())
-    }
-
-    @Test
-    fun validate_difficultyTransitions() {
-        val block1 = Fixtures.checkpointBlock2
-        val blockPrev = block1.previousBlock!!
-
-        whenever(validator.isDifficultyTransitionEdge(block1.height)).thenReturn(true)
-
-        network.validateBlock(block1, blockPrev)
-
-        verify(validator).checkDifficultyTransitions(any())
     }
 
 }

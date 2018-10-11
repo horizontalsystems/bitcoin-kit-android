@@ -3,18 +3,8 @@ package bitcoin.wallet.kit.blocks.validators
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.network.NetworkParameters
 
-class TestnetValidator(network: NetworkParameters) : MainnetValidator(network) {
+class TestnetValidator(private val network: NetworkParameters) : BlockValidator(network) {
     private val diffDate = 1329264000L // February 16th 2012
-
-    override fun validate(block: Block, previousBlock: Block) {
-        validateHeader(block, previousBlock)
-
-        if (isDifficultyTransitionEdge(block.height)) {
-            checkDifficultyTransitions(block)
-        } else {
-            validateBits(block, previousBlock)
-        }
-    }
 
     override fun checkDifficultyTransitions(block: Block) {
         var previousBlock = checkNotNull(block.previousBlock) { throw BlockValidatorException.NoPreviousBlock() }
