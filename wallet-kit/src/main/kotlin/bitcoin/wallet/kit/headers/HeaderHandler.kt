@@ -22,7 +22,7 @@ class HeaderHandler(private val realmFactory: RealmFactory, private val network:
         headers.forEach { header ->
             val block = Block(header, previousBlock)
 
-            network.validate(block, previousBlock)
+            network.validateBlock(block, previousBlock)
 
             val existingBlock = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex).findFirst()
             if (existingBlock == null) {

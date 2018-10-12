@@ -67,7 +67,7 @@ class TransactionHandler(
                 synced = true
             }
 
-            network.validate(block, previousBlock)
+            network.validateBlock(block, previousBlock)
 
             realm.executeTransaction {
                 val blockManaged = it.copyToRealm(block)

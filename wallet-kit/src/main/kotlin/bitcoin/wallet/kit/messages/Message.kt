@@ -12,20 +12,16 @@ import java.util.logging.Logger
 
 abstract class Message(cmd: String) {
 
-    private var command: ByteArray
-
-    init {
-        command = getCommandBytes(cmd)
-    }
+    private var command: ByteArray = getCommandBytes(cmd)
 
     fun toByteArray(network: NetworkParameters): ByteArray {
         val payload = getPayload()
         return BitcoinOutput()
-                .write(network.magicAsUInt32ByteArray())   // magic
-                .write(command)                     // command: char[12]
-                .writeInt(payload.size)             // length: uint32_t
-                .write(getCheckSum(payload))        // checksum: uint32_t
-                .write(payload)                     // payload:
+                .writeInt32(network.magic)      // magic
+                .write(command)                 // command: char[12]
+                .writeInt(payload.size)         // length: uint32_t
+                .write(getCheckSum(payload))    // checksum: uint32_t
+                .write(payload)                 // payload:
                 .toByteArray()
     }
 
@@ -65,9 +61,9 @@ abstract class Message(cmd: String) {
          * Parse stream as message.
          */
         @Throws(IOException::class)
-        fun <T : Message> parseMessage(input: BitcoinInput, networkParameters: NetworkParameters): T {
-            val magicAsBytesArray = input.readBytes(4)
-            if (!Arrays.equals(magicAsBytesArray, networkParameters.magicAsUInt32ByteArray())) {
+        fun <T : Message> parseMessage(input: BitcoinInput, network: NetworkParameters): T {
+            val magic = input.readUnsignedInt()
+            if (magic != network.magic) {
                 throw BitcoinException("Bad magic.")
             }
 

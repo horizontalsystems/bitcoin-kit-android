@@ -1,33 +1,33 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.blocks.validators.TestnetValidator
+import bitcoin.wallet.kit.blocks.validators.BitcoinCashValidator
 import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.verify
 import helpers.Fixtures
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
 @RunWith(PowerMockRunner::class)
-@PrepareForTest(TestNet::class)
+@PrepareForTest(MainNetBitcoinCash::class)
 
-class TestNetTest {
+class MainNetBitcoinCashTest {
+    private val blockValidator = mock(BitcoinCashValidator::class.java)
 
-    private val validator = Mockito.mock(TestnetValidator::class.java)
-    private lateinit var network: TestNet
+    lateinit var network: MainNetBitcoinCash
 
     @Before
     fun setup() {
         PowerMockito
-                .whenNew(TestnetValidator::class.java)
+                .whenNew(BitcoinCashValidator::class.java)
                 .withAnyArguments()
-                .thenReturn(validator)
+                .thenReturn(blockValidator)
 
-        network = TestNet()
+        network = MainNetBitcoinCash()
     }
 
     @Test
@@ -37,7 +37,7 @@ class TestNetTest {
 
         network.validateBlock(block1, blockPrev)
 
-        verify(validator).validate(any(), any())
+        verify(blockValidator).validate(any(), any())
     }
 
 }

@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.RealmFactoryMock
-import bitcoin.wallet.kit.blocks.BlockValidatorException
+import bitcoin.wallet.kit.blocks.validators.BlockValidatorException
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.managers.ProgressSyncer
 import bitcoin.wallet.kit.models.Block
@@ -121,7 +121,7 @@ class TransactionHandlerTest {
         realm.insert(Block(testHeader2, TestNet().checkpointBlock))
         realm.commitTransaction()
 
-        whenever(network.validate(any(), any()))
+        whenever(network.validateBlock(any(), any()))
                 .thenThrow(BlockValidatorException.WrongPreviousHeader())
 
         try {
