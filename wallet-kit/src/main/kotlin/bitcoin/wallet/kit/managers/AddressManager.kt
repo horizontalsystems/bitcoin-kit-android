@@ -1,12 +1,18 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.core.RealmFactory
-import bitcoin.wallet.kit.hdwallet.HDWallet
+import bitcoin.wallet.kit.core.changePublicKey
+import bitcoin.wallet.kit.core.receivePublicKey
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.network.PeerGroup
+import bitcoin.wallet.kit.utils.AddressConverter
+import io.horizontalsystems.hdwalletkit.HDWallet
 import io.realm.Realm
 
-class AddressManager(private val realmFactory: RealmFactory, private val hdWallet: HDWallet, private val peerGroup: PeerGroup) {
+class AddressManager(private val realmFactory: RealmFactory,
+                     private val hdWallet: HDWallet,
+                     private val peerGroup: PeerGroup,
+                     private val addressConverter: AddressConverter) {
 
     @Throws
     fun changePublicKey(): PublicKey {
@@ -15,7 +21,7 @@ class AddressManager(private val realmFactory: RealmFactory, private val hdWalle
 
     @Throws
     fun receiveAddress(): String {
-        return getPublicKey(HDWallet.Chain.EXTERNAL).address
+        return addressConverter.convert(getPublicKey(HDWallet.Chain.EXTERNAL).publicKey).toString()
     }
 
     @Throws

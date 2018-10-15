@@ -1,5 +1,6 @@
 package bitcoin.wallet.kit.transactions
 
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.models.TransactionInput
@@ -31,7 +32,7 @@ class TransactionLinker {
         transaction.outputs.forEach { output ->
             output.keyHash?.let {
                 val pubKey = realm.where(PublicKey::class.java)
-                        .equalTo("publicKeyHash", output.keyHash)
+                        .equalTo("publicKeyHash", output.keyHash?.toHexString())
                         .findFirst()
 
                 if (pubKey != null) {

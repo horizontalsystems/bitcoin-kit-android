@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.transactions.builder
 
-import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.scripts.ScriptType
+import io.horizontalsystems.hdwalletkit.HDWallet
 
 class InputSigner(private val hdWallet: HDWallet) {
 

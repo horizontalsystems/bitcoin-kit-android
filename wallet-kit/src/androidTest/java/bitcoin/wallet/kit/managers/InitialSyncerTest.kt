@@ -52,12 +52,12 @@ class InitialSyncerTest {
         val externalPublicKey1 = PublicKey().apply {
             external = true
             index = 555
-            address = "e555"
+            publicKeyHash = "e555"
         }
         val internalPublicKey1 = PublicKey().apply {
             external = false
             index = 123
-            address = "e123"
+            publicKeyHash = "e123"
         }
 
         var blockIndex = 0

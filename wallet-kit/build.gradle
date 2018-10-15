@@ -47,6 +47,8 @@ dependencies {
 
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
+    implementation 'com.github.horizontalsystems:hd-wallet-kit-android:master-SNAPSHOT'
+
     // Test helpers
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.22.0'

@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.transactions.builder
 
 import bitcoin.wallet.kit.core.RealmFactory
+import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.UnspentOutputProvider
 import bitcoin.wallet.kit.managers.UnspentOutputSelector
@@ -13,6 +13,7 @@ import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.scripts.ScriptBuilder
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionSizeCalculator
+import io.horizontalsystems.hdwalletkit.HDWallet
 
 class TransactionBuilder(private val networkParameters: NetworkParameters,
                          private val unspentOutputsSelector: UnspentOutputSelector,
@@ -77,7 +78,7 @@ class TransactionBuilder(private val networkParameters: NetworkParameters,
         transaction.outputs[0]?.value = receivedValue.toLong()
 
         if (selectedOutputsInfo.totalValue > sentValue + transactionSizeCalculator.outputSize(scripType = changeScriptType) * feeRate) {
-            val changeAddress = Address(Address.Type.P2PKH, changePubKey.publicKeyHash, networkParameters)
+            val changeAddress = Address(Address.Type.P2PKH, changePubKey.publicKeyHash.hexStringToByteArray(), networkParameters)
             val changeOutput = TransactionOutput().apply {
                 this.value = selectedOutputsInfo.totalValue - sentValue
                 this.index = 1

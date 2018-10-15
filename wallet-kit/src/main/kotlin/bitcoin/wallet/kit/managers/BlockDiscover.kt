@@ -1,13 +1,18 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.hdwallet.HDWallet
+import bitcoin.wallet.kit.core.publicKey
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.network.NetworkParameters
+import bitcoin.wallet.kit.utils.AddressConverter
+import io.horizontalsystems.hdwalletkit.HDWallet
 import io.reactivex.Observable
 
-class BlockDiscover(private val hdWallet: HDWallet, private val apiManager: ApiManager, network: NetworkParameters) {
+class BlockDiscover(private val hdWallet: HDWallet,
+                    private val apiManager: ApiManager,
+                    network: NetworkParameters,
+                    private val addressConverter: AddressConverter) {
 
     private val maxHeight: Int = network.checkpointBlock.height
     private val gapLimit = hdWallet.gapLimit
@@ -31,7 +36,7 @@ class BlockDiscover(private val hdWallet: HDWallet, private val apiManager: ApiM
             val publicKey = hdWallet.publicKey(index, external)
 
             apiManager
-                    .getBlockHashes(publicKey.address)
+                    .getBlockHashes(addressConverter.convert(publicKey.publicKey).toString())
                     .flatMap { blockResponses ->
 
                         allKeys.add(publicKey)

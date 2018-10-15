@@ -4,8 +4,6 @@ import android.content.Context
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.HDWallet
-import bitcoin.wallet.kit.hdwallet.Mnemonic
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.*
 import bitcoin.wallet.kit.models.*
@@ -14,7 +12,10 @@ import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionCreator
 import bitcoin.wallet.kit.transactions.TransactionProcessor
 import bitcoin.wallet.kit.transactions.builder.TransactionBuilder
+import bitcoin.wallet.kit.utils.AddressConverter
 import bitcoin.walllet.kit.exceptions.AddressFormatException
+import io.horizontalsystems.hdwalletkit.HDWallet
+import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
 import io.realm.RealmResults
@@ -70,7 +71,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
             NetworkType.RegTest -> RegTest()
         }
 
-        val wallet = HDWallet(Mnemonic().toSeed(words), network)
+        val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
         val pubKeys = realm.where(PublicKey::class.java).findAll()
         val filters = BloomFilter(pubKeys.size)
 
@@ -83,14 +84,16 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         val peerGroup = PeerGroup(peerManager, network, 1)
         peerGroup.setBloomFilter(filters)
 
-        addressManager = AddressManager(realmFactory, wallet, peerGroup)
+        val addressConverter = AddressConverter(network)
+
+        addressManager = AddressManager(realmFactory, wallet, peerGroup, addressConverter)
         val transactionProcessor = TransactionProcessor(realmFactory, addressManager, network)
         peerGroup.listener = Syncer(realmFactory, peerGroup, transactionProcessor, network)
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
         val stateManager = StateManager(realmFactory)
 
-        val blockDiscover = BlockDiscover(wallet, apiManager, network)
+        val blockDiscover = BlockDiscover(wallet, apiManager, network, addressConverter)
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, peerGroup)
 
