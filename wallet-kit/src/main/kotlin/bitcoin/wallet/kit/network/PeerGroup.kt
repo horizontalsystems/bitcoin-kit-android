@@ -13,7 +13,6 @@ import bitcoin.wallet.kit.network.PeerTask.GetMerkleBlocksTask
 import bitcoin.wallet.kit.network.PeerTask.PeerTask
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import java.util.concurrent.locks.ReentrantLock
 import java.util.logging.Logger
 
 class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: BloomFilterManager, val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener {
@@ -25,8 +24,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
     //    @Volatile???
     private var syncPeer: Peer? = null
-
-    private var syncPeerLock = ReentrantLock()
 
     @Volatile
     private var running = false
@@ -81,41 +78,38 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             peer.filterLoad(it)
         }
 
-        syncPeerQueue.execute {
-            assignNextSyncPeer()
-        }
+        assignNextSyncPeer()
     }
 
     private fun assignNextSyncPeer() {
         if (syncPeer != null) return
 
-        peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
-            syncPeer = nonSyncedPeer
-            downloadBlockchain()
+        syncPeerQueue.execute {
+            peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
+                syncPeer = nonSyncedPeer
+                downloadBlockchain()
+            }
         }
     }
 
     private fun downloadBlockchain() {
-        Log.e("AAA", "Started syncing peer ${syncPeer?.host}")
-        synchronized(syncPeerLock) {
-            bloomFilterManager.getUpdatedBloomFilter()?.let { bloomFilter ->
-                peerMap.values.forEach { peer ->
-                    peer.filterLoad(bloomFilter)
-                }
+        bloomFilterManager.getUpdatedBloomFilter()?.let { bloomFilter ->
+            peerMap.values.forEach { peer ->
+                peer.filterLoad(bloomFilter)
             }
+        }
 
-            blockSyncer?.getBlockHashes()?.let { blockHashes ->
-                if (blockHashes.isEmpty()) {
-                    syncPeer?.synced = syncPeer?.blockHashesSynced ?: false
-                } else {
-                    syncPeer?.addTask(GetMerkleBlocksTask(blockHashes))
-                }
+        blockSyncer?.getBlockHashes()?.let { blockHashes ->
+            if (blockHashes.isEmpty()) {
+                syncPeer?.synced = syncPeer?.blockHashesSynced ?: false
+            } else {
+                syncPeer?.addTask(GetMerkleBlocksTask(blockHashes))
             }
+        }
 
-            if (syncPeer?.blockHashesSynced != true) {
-                blockSyncer?.getBlockLocatorHashes()?.let { blockLocatorHashes ->
-                    syncPeer?.addTask(GetBlockHashesTask(blockLocatorHashes))
-                }
+        if (syncPeer?.blockHashesSynced != true) {
+            blockSyncer?.getBlockLocatorHashes()?.let { blockLocatorHashes ->
+                syncPeer?.addTask(GetBlockHashesTask(blockLocatorHashes))
             }
         }
 
@@ -161,10 +155,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         if (blockHashes.isNotEmpty() && peer.synced) {
             peer.synced = false
             peer.blockHashesSynced = false
-
-            if (syncPeer == null) {
-                assignNextSyncPeer()
-            }
+            assignNextSyncPeer()
         }
 
         val transactionHashes = inventoryItems.filter { it.type == InventoryItem.MSG_TX }.map { it.hash }
@@ -185,9 +176,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             }
             is GetMerkleBlocksTask -> {
                 try {
-                    synchronized(syncPeerLock) {
-                        blockSyncer?.handleMerkleBlocks(task.merkleBlocks)
-                    }
+                    blockSyncer?.handleMerkleBlocks(task.merkleBlocks)
                 } catch (e: InvalidMerkleBlockException) {
                     peer.close()
                     TODO("wait for peer to disconnect?")
