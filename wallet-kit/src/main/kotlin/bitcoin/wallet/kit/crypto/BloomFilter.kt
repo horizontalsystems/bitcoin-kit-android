@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.crypto
 
-import bitcoin.walllet.kit.utils.Utils
-import bitcoin.walllet.kit.io.BitcoinOutput
 import bitcoin.walllet.kit.crypto.MurmurHash3
+import bitcoin.walllet.kit.io.BitcoinOutput
+import bitcoin.walllet.kit.utils.Utils
 import java.lang.Double.valueOf
 
 /**
@@ -16,7 +16,7 @@ import java.lang.Double.valueOf
  *   4 bytes    nTweak          Random value to add to the hash seed
  *   1 byte     nFlags          Filter update flags
  */
-class BloomFilter(elements: Int) {
+class BloomFilter(elements: List<ByteArray>) {
 
     /** Filter data  */
     private val filter: ByteArray
@@ -38,13 +38,17 @@ class BloomFilter(elements: Int) {
         //
         // Allocate the filter array
         //
-        val size = Math.min((-1 / Math.pow(Math.log(2.0), 2.0) * elements.toDouble() * Math.log(falsePositiveRate)).toInt(),
+        val size = Math.min((-1 / Math.pow(Math.log(2.0), 2.0) * elements.size.toDouble() * Math.log(falsePositiveRate)).toInt(),
                 MAX_FILTER_SIZE * 8) / 8
         filter = ByteArray(if (size <= 0) 1 else size)
         //
         // Optimal number of hash functions for a given filter size and element count.
         //
-        nHashFuncs = Math.min((filter.size * 8 / elements.toDouble() * Math.log(2.0)).toInt(), MAX_HASH_FUNCS)
+        nHashFuncs = Math.min((filter.size * 8 / elements.size.toDouble() * Math.log(2.0)).toInt(), MAX_HASH_FUNCS)
+
+        elements.forEach {
+            insert(it)
+        }
     }
 
     /**
@@ -52,7 +56,7 @@ class BloomFilter(elements: Int) {
      *
      * @param   bytes    Object to insert
      */
-    fun insert(bytes: ByteArray) {
+    private fun insert(bytes: ByteArray) {
         for (i in 0 until nHashFuncs) {
             Utils.setBitLE(filter, MurmurHash3.hash(filter, nTweak, i, bytes))
         }

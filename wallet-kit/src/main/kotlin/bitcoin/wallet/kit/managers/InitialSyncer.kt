@@ -3,6 +3,8 @@ package bitcoin.wallet.kit.managers
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.PublicKey
+import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.BlockHash
 import bitcoin.wallet.kit.network.PeerGroup
 import io.reactivex.Observable
 import io.reactivex.Scheduler
@@ -14,6 +16,7 @@ class InitialSyncer(
         private val realmFactory: RealmFactory,
         private val blockDiscover: BlockDiscover,
         private val stateManager: StateManager,
+        private val addressManager: AddressManager,
         private val peerGroup: PeerGroup,
         private val scheduler: Scheduler = Schedulers.io()) {
 
@@ -26,7 +29,7 @@ class InitialSyncer(
             val internalObservable = blockDiscover.fetchFromApi(false)
 
             val disposable = Observable
-                    .zip(externalObservable, internalObservable, BiFunction<Pair<List<PublicKey>, List<Block>>, Pair<List<PublicKey>, List<Block>>, Pair<List<PublicKey>, List<Block>>> { external, internal ->
+                    .zip(externalObservable, internalObservable, BiFunction<Pair<List<PublicKey>, List<BlockHash>>, Pair<List<PublicKey>, List<BlockHash>>, Pair<List<PublicKey>, List<BlockHash>>> { external, internal ->
                         val (externalKeys, externalBlocks) = external
                         val (internalKeys, internalBlocks) = internal
 
@@ -34,8 +37,8 @@ class InitialSyncer(
                     })
                     .subscribeOn(scheduler)
                     .subscribe(
-                            { (keys, blocks) ->
-                                handle(keys, blocks)
+                            { (keys, blockHashes) ->
+                                handle(keys, blockHashes)
                             },
                             {
                                 print("Initial Sync Error: $it")
@@ -49,14 +52,15 @@ class InitialSyncer(
     }
 
     @Throws
-    private fun handle(keys: List<PublicKey>, blocks: List<Block>) {
+    private fun handle(keys: List<PublicKey>, blockHashes: List<BlockHash>) {
 
         val realm = realmFactory.realm
 
         realm.executeTransaction {
-            it.insertOrUpdate(keys)
-            it.insertOrUpdate(blocks)
+            it.insertOrUpdate(blockHashes)
         }
+
+        addressManager.addKeys(keys)
 
         realm.close()
 

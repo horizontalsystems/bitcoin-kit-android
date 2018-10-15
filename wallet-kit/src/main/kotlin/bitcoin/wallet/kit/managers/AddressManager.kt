@@ -8,10 +8,12 @@ import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.wallet.kit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.realm.Realm
+import io.realm.Sort
 
 class AddressManager(private val realmFactory: RealmFactory,
                      private val hdWallet: HDWallet,
                      private val peerGroup: PeerGroup,
+                     private val bloomFilterManager: BloomFilterManager
                      private val addressConverter: AddressConverter) {
 
     @Throws
@@ -24,54 +26,66 @@ class AddressManager(private val realmFactory: RealmFactory,
         return addressConverter.convert(getPublicKey(HDWallet.Chain.EXTERNAL).publicKey).toString()
     }
 
-    @Throws
-    fun generateKeys() {
-        val realm = realmFactory.realm
-        val externalKeys = generateKeys(true, realm)
-        val internalKeys = generateKeys(false, realm)
-
-        realm.executeTransaction {
-            realm.insert(externalKeys)
-            realm.insert(internalKeys)
-        }
-
-        realm.close()
-
-        externalKeys.forEach {
-            peerGroup.addPublicKeyFilter(it)
-        }
-
-        internalKeys.forEach {
-            peerGroup.addPublicKeyFilter(it)
-        }
+    fun fillGap(afterExtKey: PublicKey? = null, afterIntKey: PublicKey? = null) {
+        fillGap(true, afterExtKey)
+        fillGap(false, afterIntKey)
     }
 
-    @Throws
-    private fun generateKeys(external: Boolean, realm: Realm): List<PublicKey> {
+    fun addKeys(keys: List<PublicKey>) {
+        val realm = realmFactory.realm
+
+        realm.executeTransaction {
+            realm.insertOrUpdate(keys)
+        }
+
+        keys.forEach { key ->
+            bloomFilterManager.add(key)
+        }
+
+    }
+
+    fun gapShiftsOn(key: PublicKey, realm: Realm): Boolean {
+        return gapKeysCount(key, key.external, realm) < hdWallet.gapLimit
+    }
+
+    private fun fillGap(external: Boolean, afterKey: PublicKey?) {
+        val realm = realmFactory.realm
+        val gapKeysCount = gapKeysCount(afterKey, external, realm)
         val keys = mutableListOf<PublicKey>()
-        val existingKeys = realm.where(PublicKey::class.java)
-                .equalTo("external", external)
-                .sort("index")
-                .findAll()
+        if (gapKeysCount < hdWallet.gapLimit) {
+            val lastIndex = realm.where(PublicKey::class.java).equalTo("external", external)
+                    .sort("index", Sort.DESCENDING)
+                    .findFirst()?.index ?: -1
 
-        val existingFreshKeys = existingKeys.filter { it.outputs?.size ?: 0 == 0 }
-
-        if (existingFreshKeys.size < hdWallet.gapLimit) {
-            val lastIndex = existingKeys.lastOrNull()?.index ?: -1
-
-            repeat(hdWallet.gapLimit - existingFreshKeys.size) {
-                val keyIndexToGenerate = lastIndex + it + 1
-
-                val newPublicKey = when {
-                    external -> hdWallet.receivePublicKey(keyIndexToGenerate)
-                    else -> hdWallet.changePublicKey(keyIndexToGenerate)
-                }
-
-                keys.add(newPublicKey)
+            for (i in 1..hdWallet.gapLimit - gapKeysCount) {
+                val publicKey = hdWallet.publicKey(lastIndex + i, external)
+                keys.add(publicKey)
             }
         }
 
-        return keys
+        addKeys(keys)
+    }
+
+    private fun gapKeysCount(afterKey: PublicKey?, external: Boolean, realm: Realm): Int {
+        val publicKeys = realm.where(PublicKey::class.java).equalTo("external", external)
+
+        val gapKeysCount: Long
+
+        var lastUsedKey = publicKeys.sort("index").findAll().lastOrNull { it.outputs?.size ?: 0 > 0 }
+
+        if (lastUsedKey != null) {
+
+            if (afterKey != null && lastUsedKey.index < afterKey.index) {
+                lastUsedKey = afterKey
+            }
+
+            gapKeysCount = publicKeys.greaterThan("index", lastUsedKey.index).count()
+
+        } else {
+            gapKeysCount = publicKeys.count()
+        }
+
+        return gapKeysCount.toInt()
     }
 
     @Throws
@@ -101,7 +115,7 @@ class AddressManager(private val realmFactory: RealmFactory,
 
         realm.close()
 
-        peerGroup.addPublicKeyFilter(newPublicKey)
+        bloomFilterManager.add(newPublicKey)
 
         return newPublicKey
     }

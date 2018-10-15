@@ -17,7 +17,7 @@ import bitcoin.walllet.kit.utils.HashUtils
  *  VarInt      FlagsCount      Number of bytes of flag bits
  *  Variable    Flags           Flag bits packed 8 per byte, least significant bit first
  */
-class MerkleBlock(input: BitcoinInput) {
+class MerkleBlock() {
 
     lateinit var header: Header
     var hashes: Array<ByteArray> = arrayOf()
@@ -29,13 +29,20 @@ class MerkleBlock(input: BitcoinInput) {
         HashUtils.doubleSha256(header.toByteArray())
     }
 
+    val reversedHeaderHashHex: String by lazy {
+        HashUtils.toHexString(blockHash.reversedArray())
+    }
+
     var txCount: Int = 0
     private var hashCount: Long = 0L
-    private var flagsCount: Long
+    private var flagsCount: Long = 0L
 
     private val MAX_BLOCK_SIZE: Int = 1000000
 
-    init {
+    val complete: Boolean
+        get() = associatedTransactionHexes.size == associatedTransactions.size
+
+    constructor(input: BitcoinInput) : this() {
         header = Header(input)
 
         txCount = input.readInt()

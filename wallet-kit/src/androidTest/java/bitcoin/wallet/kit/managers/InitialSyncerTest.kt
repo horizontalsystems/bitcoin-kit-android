@@ -3,7 +3,9 @@ package bitcoin.wallet.kit.managers
 import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.PublicKey
+import bitcoin.wallet.kit.models.BlockHash
 import bitcoin.wallet.kit.network.PeerGroup
+import com.nhaarman.mockito_kotlin.check
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.RxTestRule
 import io.reactivex.Observable
@@ -20,6 +22,7 @@ class InitialSyncerTest {
 
     private val stateManager = mock(StateManager::class.java)
     private val peerGroup = mock(PeerGroup::class.java)
+    private val addressManager = mock(AddressManager::class.java)
     private val realm = factories.realmFactory.realm
 
     private lateinit var initialSyncer: InitialSyncer
@@ -28,7 +31,7 @@ class InitialSyncerTest {
     fun setup() {
         RxTestRule.setup()
 
-        initialSyncer = InitialSyncer(factories.realmFactory, blockDiscover, stateManager, peerGroup)
+        initialSyncer = InitialSyncer(factories.realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
     }
 
     @After
@@ -62,16 +65,16 @@ class InitialSyncerTest {
 
         var blockIndex = 0
 
-        val blockExternal1 = Block().apply {
+        val blockExternal1 = BlockHash().apply {
             reversedHeaderHashHex = blockIndex++.toString()
         }
-        val blockExternal2 = Block().apply {
+        val blockExternal2 = BlockHash().apply {
             reversedHeaderHashHex = blockIndex++.toString()
         }
-        val blockInternal1 = Block().apply {
+        val blockInternal1 = BlockHash().apply {
             reversedHeaderHashHex = blockIndex++.toString()
         }
-        val blockInternal2 = Block().apply {
+        val blockInternal2 = BlockHash().apply {
             reversedHeaderHashHex = blockIndex++.toString()
         }
 
@@ -87,13 +90,12 @@ class InitialSyncerTest {
 
         verify(stateManager).apiSynced = true
         verify(peerGroup).start()
+        verify(addressManager).addKeys(check { actualPublicKeys ->
+            Assert.assertTrue(containsKey(actualPublicKeys, externalPublicKey1))
+            Assert.assertTrue(containsKey(actualPublicKeys, internalPublicKey1))
+        })
 
-        val actualPublicKeys = realm.where(PublicKey::class.java).findAll()
-
-        Assert.assertTrue(containsKey(actualPublicKeys, externalPublicKey1))
-        Assert.assertTrue(containsKey(actualPublicKeys, internalPublicKey1))
-
-        val actualBlocks = realm.where(Block::class.java).findAll()
+        val actualBlocks = realm.where(BlockHash::class.java).findAll()
 
         Assert.assertTrue(containsBlock(actualBlocks, blockExternal1))
         Assert.assertTrue(containsBlock(actualBlocks, blockExternal2))
@@ -120,7 +122,7 @@ class InitialSyncerTest {
     private fun containsKey(keys: List<PublicKey>, key: PublicKey) =
             keys.any { it.external == key.external && it.index == key.index }
 
-    private fun containsBlock(blocks: List<Block>, block: Block) =
+    private fun containsBlock(blocks: List<BlockHash>, block: BlockHash) =
             blocks.any { it.reversedHeaderHashHex == block.reversedHeaderHashHex }
 
 }

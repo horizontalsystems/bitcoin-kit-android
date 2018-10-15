@@ -4,6 +4,8 @@ import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.publicKey
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.PublicKey
+import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.BlockHash
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -18,12 +20,12 @@ class BlockDiscover(private val hdWallet: HDWallet,
     private val gapLimit = hdWallet.gapLimit
 
     @Throws
-    fun fetchFromApi(external: Boolean): Observable<Pair<List<PublicKey>, List<Block>>> {
+    fun fetchFromApi(external: Boolean): Observable<Pair<List<PublicKey>, List<BlockHash>>> {
         return requestApiRecursive(external)
                 .map { (publicKeys, blockResponses) ->
                     publicKeys to blockResponses.mapNotNull { blockResponse ->
                         try {
-                            Block(blockResponse.hash.hexStringToByteArray().reversedArray(), blockResponse.height)
+                            BlockHash(blockResponse.hash.hexStringToByteArray().reversedArray(), blockResponse.height)
                         } catch (e: NumberFormatException) {
                             null
                         }
