@@ -14,7 +14,7 @@ import java.io.IOException
  */
 class PongMessage : Message {
 
-    private var nonce: Long = 0
+    var nonce: Long = 0
 
     constructor(nonce: Long) : super("pong") {
         this.nonce = nonce
