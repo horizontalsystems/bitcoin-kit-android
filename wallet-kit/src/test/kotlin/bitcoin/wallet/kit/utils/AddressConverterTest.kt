@@ -4,6 +4,9 @@ import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.hdwallet.Address
 import bitcoin.wallet.kit.hdwallet.AddressType
 import bitcoin.wallet.kit.network.MainNet
+import bitcoin.wallet.kit.network.MainNetBitcoinCash
+import bitcoin.wallet.kit.network.TestNet
+import bitcoin.wallet.kit.network.TestNetBitcoinCash
 import bitcoin.wallet.kit.scripts.ScriptType
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
@@ -23,8 +26,49 @@ class AddressConverterTest {
         addressString = "1MirQ9bwyQcGVJPwKUgapu5ouK2E2Ey4gX"
         address = converter.convert(bytes, ScriptType.P2PKH)
 
-        assertEquals(AddressType.P2PKH, address.type)
         assertEquals(addressString, address.string)
+        assertEquals(AddressType.P2PKH, address.type)
+
+        // TestNet
+        converter = AddressConverter(TestNet())
+
+        bytes = "78b316a08647d5b77283e512d3603f1f1c8de68f".hexStringToByteArray()
+        addressString = "mrX9vMRYLfVy1BnZbc5gZjuyaqH3ZW2ZHz"
+        address = converter.convert(bytes, ScriptType.P2PKH)
+
+        assertEquals(addressString, address.string)
+        assertEquals(AddressType.P2PKH, address.type)
+    }
+
+    @Test
+    fun p2pkh_cash() {
+        converter = AddressConverter(MainNetBitcoinCash())
+
+        bytes = "F5BF48B397DAE70BE82B3CCA4793F8EB2B6CDAC9".hexStringToByteArray()
+        addressString = "bitcoincash:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2"
+        address = converter.convert(bytes, ScriptType.P2PKH)
+
+        assertEquals(addressString, address.string)
+
+        // TestNet
+        converter = AddressConverter(TestNetBitcoinCash())
+
+        bytes = "F5BF48B397DAE70BE82B3CCA4793F8EB2B6CDAC9".hexStringToByteArray()
+        addressString = "bchtest:pr6m7j9njldwwzlg9v7v53unlr4jkmx6eyvwc0uz5t"
+        address = converter.convert(bytes, ScriptType.P2SH)
+
+        assertEquals(addressString, address.string)
+    }
+
+    @Test
+    fun p2pkh_cashString() {
+        converter = AddressConverter(MainNetBitcoinCash())
+
+        bytes = "f5bf48b397dae70be82b3cca4793f8eb2b6cdac9".hexStringToByteArray()
+        addressString = "bitcoincash:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2"
+        address = converter.convert(addressString)
+
+        assertArrayEquals(bytes, address.hash)
     }
 
     @Test

@@ -25,18 +25,27 @@ abstract class Address {
 
 class LegacyAddress(addressString: String, bytes: ByteArray, type: AddressType) : Address() {
     init {
-        this.string = addressString
-        this.hash = bytes
         this.type = type
+        this.hash = bytes
+        this.string = addressString
     }
 }
 
-class SegWitAddress(addressString: String, program: ByteArray) : Address() {
+class SegWitAddress(addressString: String, program: ByteArray, type: AddressType) : Address() {
     val version: Int = 0
 
     init {
-        this.type = AddressType.WITNESS
-        this.string = addressString
+        this.type = type
         this.hash = program
+        this.string = addressString
+    }
+}
+
+class CashAddress(addressString: String, program: ByteArray, type: AddressType) : Address() {
+
+    init {
+        this.type = type
+        this.hash = program
+        this.string = addressString
     }
 }

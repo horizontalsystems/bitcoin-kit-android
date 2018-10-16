@@ -3,7 +3,9 @@ package bitcoin.wallet.kit.utils
 import bitcoin.wallet.kit.hdwallet.Address
 import bitcoin.wallet.kit.hdwallet.AddressType
 import bitcoin.wallet.kit.hdwallet.LegacyAddress
+import bitcoin.wallet.kit.network.MainNetBitcoinCash
 import bitcoin.wallet.kit.network.NetworkParameters
+import bitcoin.wallet.kit.network.TestNetBitcoinCash
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.walllet.kit.crypto.Base58
 import bitcoin.walllet.kit.exceptions.AddressFormatException
@@ -11,7 +13,12 @@ import bitcoin.walllet.kit.utils.Utils
 import java.util.*
 
 class AddressConverter(private val network: NetworkParameters) {
-    private val bech32 = SegwitAddressConverter()
+    private val bech32 = when (network) {
+        is MainNetBitcoinCash,
+        is TestNetBitcoinCash -> CashAddressConverter()
+        // MainNet, TestNet, RegTest
+        else -> SegwitAddressConverter()
+    }
 
     fun convert(addressString: String): Address {
         return try {
@@ -32,18 +39,18 @@ class AddressConverter(private val network: NetworkParameters) {
         }
     }
 
-    fun convert(bytes: ByteArray, type: Int = ScriptType.P2PKH): Address {
+    fun convert(bytes: ByteArray, scriptType: Int = ScriptType.P2PKH): Address {
 
-        if (type == ScriptType.P2WSH || type == ScriptType.P2WPKH) try {
-            return bech32.convert(network.addressSegwitHrp, bytes)
-        } catch (e: Exception) {
+        try {
+            return bech32.convert(network.addressSegwitHrp, bytes, scriptType)
+        } catch (e: AddressFormatException) {
             // ignore and try to convert to legacy address
         }
 
         val addressType: AddressType
         val addressVersion: Int
 
-        when (type) {
+        when (scriptType) {
             ScriptType.P2PK,
             ScriptType.P2PKH -> {
                 addressType = AddressType.P2PKH
@@ -54,7 +61,7 @@ class AddressConverter(private val network: NetworkParameters) {
                 addressVersion = network.addressScriptVersion
             }
 
-            else -> throw AddressConverterException.UnknownAddressType()
+            else -> throw AddressFormatException("Unknown Address Type")
         }
 
         val addressBytes = byteArrayOf(addressVersion.toByte()) + bytes
@@ -66,8 +73,3 @@ class AddressConverter(private val network: NetworkParameters) {
         return LegacyAddress(addressString, bytes, addressType)
     }
 }
-
-open class AddressConverterException(message: String) : Exception(message) {
-    class UnknownAddressType : AddressConverterException("Unknown Address Type")
-}
-

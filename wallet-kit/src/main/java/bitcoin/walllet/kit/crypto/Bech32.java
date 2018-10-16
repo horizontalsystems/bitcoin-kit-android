@@ -63,34 +63,34 @@ public class Bech32 {
         return c;
     }
 
-    /** Expand a HRP for use in checksum computation. */
-    private static byte[] expandHrp(final String hrp) {
-        int hrpLength = hrp.length();
-        byte ret[] = new byte[hrpLength * 2 + 1];
-        for (int i = 0; i < hrpLength; ++i) {
-            int c = hrp.charAt(i) & 0x7f; // Limit to standard 7-bit ASCII
+    /** Expand a address prefix for use in checksum computation. */
+    private static byte[] expandPrefix(final String prefix) {
+        int prefixLength = prefix.length();
+        byte ret[] = new byte[prefixLength * 2 + 1];
+        for (int i = 0; i < prefixLength; ++i) {
+            int c = prefix.charAt(i) & 0x7f; // Limit to standard 7-bit ASCII
             ret[i] = (byte) ((c >>> 5) & 0x07);
-            ret[i + hrpLength + 1] = (byte) (c & 0x1f);
+            ret[i + prefixLength + 1] = (byte) (c & 0x1f);
         }
-        ret[hrpLength] = 0;
+        ret[prefixLength] = 0;
         return ret;
     }
 
     /** Verify a checksum. */
-    private static boolean verifyChecksum(final String hrp, final byte[] values) {
-        byte[] hrpExpanded = expandHrp(hrp);
-        byte[] combined = new byte[hrpExpanded.length + values.length];
-        System.arraycopy(hrpExpanded, 0, combined, 0, hrpExpanded.length);
-        System.arraycopy(values, 0, combined, hrpExpanded.length, values.length);
+    private static boolean verifyChecksum(final String prefix, final byte[] values) {
+        byte[] prefixExpanded = expandPrefix(prefix);
+        byte[] combined = new byte[prefixExpanded.length + values.length];
+        System.arraycopy(prefixExpanded, 0, combined, 0, prefixExpanded.length);
+        System.arraycopy(values, 0, combined, prefixExpanded.length, values.length);
         return polymod(combined) == 1;
     }
 
     /** Create a checksum. */
-    private static byte[] createChecksum(final String hrp, final byte[] values)  {
-        byte[] hrpExpanded = expandHrp(hrp);
-        byte[] enc = new byte[hrpExpanded.length + values.length + 6];
-        System.arraycopy(hrpExpanded, 0, enc, 0, hrpExpanded.length);
-        System.arraycopy(values, 0, enc, hrpExpanded.length, values.length);
+    private static byte[] createChecksum(final String prefix, final byte[] values) {
+        byte[] prefixExpanded = expandPrefix(prefix);
+        byte[] enc = new byte[prefixExpanded.length + values.length + 6];
+        System.arraycopy(prefixExpanded, 0, enc, 0, prefixExpanded.length);
+        System.arraycopy(values, 0, enc, prefixExpanded.length, values.length);
         int mod = polymod(enc) ^ 1;
         byte[] ret = new byte[6];
         for (int i = 0; i < 6; ++i) {
@@ -105,16 +105,16 @@ public class Bech32 {
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(String hrp, final byte[] values) throws AddressFormatException {
-        if (hrp.length() < 1) throw new AddressFormatException("Human-readable part is too short");
-        if (hrp.length() > 83) throw new AddressFormatException("Human-readable part is too long");
-        hrp = hrp.toLowerCase(Locale.ROOT);
-        byte[] checksum = createChecksum(hrp, values);
+    public static String encode(String prefix, final byte[] values) throws AddressFormatException {
+        if (prefix.length() < 1) throw new AddressFormatException("Human-readable part is too short");
+        if (prefix.length() > 83) throw new AddressFormatException("Human-readable part is too long");
+        prefix = prefix.toLowerCase(Locale.ROOT);
+        byte[] checksum = createChecksum(prefix, values);
         byte[] combined = new byte[values.length + checksum.length];
         System.arraycopy(values, 0, combined, 0, values.length);
         System.arraycopy(checksum, 0, combined, values.length, checksum.length);
-        StringBuilder sb = new StringBuilder(hrp.length() + 1 + combined.length);
-        sb.append(hrp);
+        StringBuilder sb = new StringBuilder(prefix.length() + 1 + combined.length);
+        sb.append(prefix);
         sb.append('1');
         for (byte b : combined) {
             sb.append(CHARSET.charAt(b));
@@ -143,9 +143,9 @@ public class Bech32 {
             if (CHARSET_REV[c] == -1) throw new AddressFormatException("Characters out of range");
             values[i] = CHARSET_REV[c];
         }
-        String hrp = str.substring(0, pos).toLowerCase(Locale.ROOT);
-        if (!verifyChecksum(hrp, values)) throw new AddressFormatException("Invalid checksum");
-        return new Bech32Data(hrp, Arrays.copyOfRange(values, 0, values.length - 6));
+        String prefix = str.substring(0, pos).toLowerCase(Locale.ROOT);
+        if (!verifyChecksum(prefix, values)) throw new AddressFormatException("Invalid checksum");
+        return new Bech32Data(prefix, Arrays.copyOfRange(values, 0, values.length - 6));
     }
 
     /** General power-of-2 base conversion */
