@@ -79,14 +79,6 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         }
 
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
-        val pubKeys = realm.where(PublicKey::class.java).findAll()
-        val filters = BloomFilter(pubKeys.size)
-
-        pubKeys.forEach {
-            filters.insert(it.publicKey)
-        }
-
-        val wallet = HDWallet(Mnemonic().toSeed(words), network)
         val peerManager = PeerManager(network)
 
         val pubKeys = realm.where(PublicKey::class.java).findAll()
@@ -97,6 +89,9 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         val transactionProcessor = TransactionProcessor(realmFactory, addressManager, addressConverter)
         peerGroup.listener = Syncer(realmFactory, peerGroup, transactionProcessor, network)
         addressManager = AddressManager(realmFactory, wallet, bloomFilterManager)
+        val addressConverter = AddressConverter(network)
+
+        addressManager = AddressManager(realmFactory, wallet, bloomFilterManager, addressConverter)
         val transactionProcessor = TransactionProcessor(realmFactory, addressManager, network)
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)

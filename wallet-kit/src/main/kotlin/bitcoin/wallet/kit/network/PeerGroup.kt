@@ -4,6 +4,7 @@ import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.models.*
 import android.util.Log
 import bitcoin.wallet.kit.blocks.BlockSyncer
+import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.exceptions.InvalidMerkleBlockException
 import bitcoin.wallet.kit.managers.BloomFilterManager
 import bitcoin.wallet.kit.models.InventoryItem
@@ -15,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
-class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: BloomFilterManager, val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener {
+class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: BloomFilterManager, val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     var blockSyncer: BlockSyncer? = null
 
@@ -27,6 +28,10 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
     @Volatile
     private var running = false
+
+    init {
+        bloomFilterManager.listener = this
+    }
 
     override fun run() {
         running = true
@@ -93,12 +98,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     private fun downloadBlockchain() {
-        bloomFilterManager.getUpdatedBloomFilter()?.let { bloomFilter ->
-            peerMap.values.forEach { peer ->
-                peer.filterLoad(bloomFilter)
-            }
-        }
-
         blockSyncer?.getBlockHashes()?.let { blockHashes ->
             if (blockHashes.isEmpty()) {
                 syncPeer?.synced = syncPeer?.blockHashesSynced ?: false
@@ -186,4 +185,11 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             else -> throw Exception("Task not handled: ${task}")
         }
     }
+
+    override fun onFilterUpdated(bloomFilter: BloomFilter) {
+        peerMap.values.forEach { peer ->
+            peer.filterLoad(bloomFilter)
+        }
+    }
+
 }

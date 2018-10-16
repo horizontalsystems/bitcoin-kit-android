@@ -5,6 +5,11 @@ import bitcoin.wallet.kit.hdwallet.PublicKey
 
 class BloomFilterManager(elements: List<ByteArray>) {
 
+    interface Listener {
+        fun onFilterUpdated(bloomFilter: BloomFilter)
+    }
+
+    var listener: Listener? = null
     var bloomFilter: BloomFilter? = null
     private val elements = elements.toMutableList()
 
@@ -16,20 +21,19 @@ class BloomFilterManager(elements: List<ByteArray>) {
         }
     }
 
-    fun getUpdatedBloomFilter(): BloomFilter? = when {
-        updated -> {
-            updated = false
-            bloomFilter
+    fun add(keys: List<PublicKey>) {
+        keys.forEach { key ->
+            if (elements.any { it.contentEquals(key.publicKeyHash) }) {
+                elements.add(key.publicKeyHash)
+                elements.add(key.publicKey)
+                elements.add(key.scriptHashP2WPKH)
+            }
         }
-        else -> null
-    }
 
-    fun add(key: PublicKey) {
-        elements.add(key.publicKeyHash)
-        elements.add(key.publicKey)
-
-        bloomFilter = BloomFilter(elements)
-        updated = true
+        BloomFilter(elements).let {
+            bloomFilter = it
+            listener?.onFilterUpdated(it)
+        }
     }
 
 }

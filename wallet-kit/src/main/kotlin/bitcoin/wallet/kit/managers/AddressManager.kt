@@ -2,9 +2,11 @@ package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.core.changePublicKey
+import bitcoin.wallet.kit.core.publicKey
 import bitcoin.wallet.kit.core.receivePublicKey
 import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.network.PeerGroup
+import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.realm.Realm
@@ -12,8 +14,7 @@ import io.realm.Sort
 
 class AddressManager(private val realmFactory: RealmFactory,
                      private val hdWallet: HDWallet,
-                     private val peerGroup: PeerGroup,
-                     private val bloomFilterManager: BloomFilterManager
+                     private val bloomFilterManager: BloomFilterManager,
                      private val addressConverter: AddressConverter) {
 
     @Throws
@@ -38,10 +39,7 @@ class AddressManager(private val realmFactory: RealmFactory,
             realm.insertOrUpdate(keys)
         }
 
-        keys.forEach { key ->
-            bloomFilterManager.add(key)
-        }
-
+        bloomFilterManager.add(keys)
     }
 
     fun gapShiftsOn(key: PublicKey, realm: Realm): Boolean {
@@ -115,7 +113,7 @@ class AddressManager(private val realmFactory: RealmFactory,
 
         realm.close()
 
-        bloomFilterManager.add(newPublicKey)
+        bloomFilterManager.add(listOf(newPublicKey))
 
         return newPublicKey
     }
