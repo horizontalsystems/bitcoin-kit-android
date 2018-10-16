@@ -159,6 +159,7 @@ object Fixtures {
     val publicKey = PublicKey().apply {
         this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
         this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexStringToByteArray()
+        this.publicKeyHex = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06"
     }
 
     //transaction in regtest

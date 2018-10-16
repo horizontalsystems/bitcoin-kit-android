@@ -2,12 +2,12 @@ package bitcoin.wallet.kit.transactions.builder
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.hdwallet.HDWallet
 import bitcoin.wallet.kit.scripts.ScriptType
-import bitcoin.walllet.kit.hdwallet.HDKey
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
+import io.horizontalsystems.hdwalletkit.HDKey
+import io.horizontalsystems.hdwalletkit.HDWallet
 import junit.framework.Assert
 import org.junit.Before
 import org.junit.Test

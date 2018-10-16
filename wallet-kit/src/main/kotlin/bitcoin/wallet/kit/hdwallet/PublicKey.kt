@@ -1,8 +1,7 @@
 package bitcoin.wallet.kit.hdwallet
 
+import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.models.TransactionOutput
-import bitcoin.wallet.kit.network.NetworkParameters
-import bitcoin.walllet.kit.hdwallet.HDKey
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.annotations.LinkingObjects
@@ -14,19 +13,19 @@ open class PublicKey() : RealmObject() {
     var external = true
 
     @PrimaryKey
-    var address = ""
-
-    var publicKey: ByteArray = byteArrayOf()
+    var publicKeyHex = ""
     var publicKeyHash: ByteArray = byteArrayOf()
+    var publicKey: ByteArray = byteArrayOf()
 
     @LinkingObjects("publicKey")
     val outputs: RealmResults<TransactionOutput>? = null
 
-    constructor(index: Int, external: Boolean, key: HDKey, network: NetworkParameters) : this() {
+    constructor(index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) : this() {
         this.index = index
         this.external = external
-        this.publicKey = key.pubKey
-        this.publicKeyHash = key.pubKeyHash
-        this.address = key.toAddress(network).toString()
+        this.publicKey = publicKey
+        this.publicKeyHash = publicKeyHash
+        this.publicKeyHex = publicKeyHash.toHexString()
     }
+
 }
