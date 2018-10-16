@@ -4,6 +4,7 @@ import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.TestNet
 import bitcoin.wallet.kit.scripts.ScriptType
+import bitcoin.wallet.kit.utils.AddressConverter
 import helpers.Fixtures
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -16,7 +17,8 @@ class TransactionExtractorTest {
 
     @Before
     fun setup() {
-        extractor = TransactionExtractor(TestNet())
+        val addressConverter = AddressConverter(TestNet())
+        extractor = TransactionExtractor(addressConverter)
     }
 
     @Test

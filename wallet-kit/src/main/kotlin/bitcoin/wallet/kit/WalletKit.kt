@@ -3,7 +3,6 @@ package bitcoin.wallet.kit
 import android.content.Context
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.hdwallet.Address
 import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.*
 import bitcoin.wallet.kit.models.*
@@ -61,6 +60,8 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
     private val network: NetworkParameters
     private val realmFactory: RealmFactory
 
+    private var addressConverter: AddressConverter
+
     init {
         realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
@@ -84,10 +85,9 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         val peerGroup = PeerGroup(peerManager, network, 1)
         peerGroup.setBloomFilter(filters)
 
-        val addressConverter = AddressConverter(network)
-
+        addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, peerGroup, addressConverter)
-        val transactionProcessor = TransactionProcessor(realmFactory, addressManager, network)
+        val transactionProcessor = TransactionProcessor(realmFactory, addressManager, addressConverter)
         peerGroup.listener = Syncer(realmFactory, peerGroup, transactionProcessor, network)
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
@@ -97,7 +97,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, peerGroup)
 
-        transactionBuilder = TransactionBuilder(realmFactory, network, wallet)
+        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
 
         transactionRealmResults = realm.where(Transaction::class.java)
@@ -144,7 +144,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
     @Throws(AddressFormatException::class)
     fun validateAddress(address: String) {
-        Address(address, network)
+        addressConverter.convert(address)
     }
 
     fun clear() {

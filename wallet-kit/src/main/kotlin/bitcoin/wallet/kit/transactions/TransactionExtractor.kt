@@ -1,12 +1,10 @@
 package bitcoin.wallet.kit.transactions
 
 import bitcoin.wallet.kit.models.Transaction
-import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.scripts.Script
-import bitcoin.wallet.kit.scripts.ScriptType
-import bitcoin.wallet.kit.hdwallet.Address
+import bitcoin.wallet.kit.utils.AddressConverter
 
-class TransactionExtractor(private val network: NetworkParameters) {
+class TransactionExtractor(private val addressConverter: AddressConverter) {
 
     fun extract(transaction: Transaction) {
         transaction.outputs.forEach { output ->
@@ -30,10 +28,6 @@ class TransactionExtractor(private val network: NetworkParameters) {
     }
 
     private fun getAddress(hash: ByteArray, scriptType: Int): String {
-        var addressType = Address.Type.P2PKH
-        if (scriptType == ScriptType.P2SH)
-            addressType = Address.Type.P2SH
-
-        return Address(addressType, hash, network).toString()
+        return addressConverter.convert(hash, scriptType).string
     }
 }

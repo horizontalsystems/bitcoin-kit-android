@@ -3,13 +3,13 @@ package bitcoin.wallet.kit.transactions
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.managers.AddressManager
 import bitcoin.wallet.kit.models.Transaction
-import bitcoin.wallet.kit.network.NetworkParameters
+import bitcoin.wallet.kit.utils.AddressConverter
 
 class TransactionProcessor(
         private val realmFactory: RealmFactory,
         private val addressManager: AddressManager,
-        private val network: NetworkParameters,
-        private val extractor: TransactionExtractor = TransactionExtractor(network),
+        private val addressConverter: AddressConverter,
+        private val extractor: TransactionExtractor = TransactionExtractor(addressConverter),
         private val linker: TransactionLinker = TransactionLinker()) {
 
     fun enqueueRun() {
