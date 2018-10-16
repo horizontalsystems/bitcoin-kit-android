@@ -32,7 +32,8 @@ class TransactionLinkerTest {
 
         transactionP2PK = realm.copyToRealm(Fixtures.transactionP2PK)
         pubKey = realm.copyToRealm(PublicKey().apply {
-            publicKeyHash = pubKeyHash.toHexString()
+            publicKeyHash = pubKeyHash
+            publicKeyHex = pubKeyHash.toHexString()
         })
 
         realm.commitTransaction()

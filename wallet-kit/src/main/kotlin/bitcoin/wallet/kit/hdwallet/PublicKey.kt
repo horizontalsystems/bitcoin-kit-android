@@ -10,13 +10,12 @@ import io.realm.annotations.PrimaryKey
 open class PublicKey() : RealmObject() {
 
     var index = 0
-
     var external = true
 
-    var publicKey: ByteArray = byteArrayOf()
-
     @PrimaryKey
-    var publicKeyHash = ""
+    var publicKeyHex = ""
+    var publicKeyHash: ByteArray = byteArrayOf()
+    var publicKey: ByteArray = byteArrayOf()
 
     @LinkingObjects("publicKey")
     val outputs: RealmResults<TransactionOutput>? = null
@@ -25,7 +24,8 @@ open class PublicKey() : RealmObject() {
         this.index = index
         this.external = external
         this.publicKey = publicKey
-        this.publicKeyHash = publicKeyHash.toHexString()
+        this.publicKeyHash = publicKeyHash
+        this.publicKeyHex = publicKeyHash.toHexString()
     }
 
 }

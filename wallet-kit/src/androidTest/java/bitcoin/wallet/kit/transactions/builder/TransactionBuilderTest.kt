@@ -46,7 +46,8 @@ class TransactionBuilderTest {
     private val toAddressP2SH = "2MyQWMrsLsqAMSUeusduAzN6pWuH2V27ykE"
     private val feeRate = 5406
     private val changePubKey = PublicKey().apply {
-        publicKeyHash = "563e1365e6567bb0115a5158bfc94fe834067fd6"
+        publicKeyHash = "563e1365e6567bb0115a5158bfc94fe834067fd6".hexStringToByteArray()
+        publicKeyHex = "563e1365e6567bb0115a5158bfc94fe834067fd6"
     }
     private val fee = 1_032_655
     private val unlockingScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexStringToByteArray()
@@ -96,7 +97,7 @@ class TransactionBuilderTest {
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
         assertEquals(txValue.toLong(), transaction.outputs[0]?.value)
 
-        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash?.toHexString())
+        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
         assertEquals(unspentOutputs.outputs[0].value - txValue.toLong() - fee, transaction.outputs[1]?.value)
     }
 
@@ -115,7 +116,7 @@ class TransactionBuilderTest {
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
         assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
 
-        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash?.toHexString())
+        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
         assertEquals(unspentOutputs.outputs[0].value - txValue, transaction.outputs[1]?.value)
     }
 
@@ -134,7 +135,7 @@ class TransactionBuilderTest {
         assertEquals(toAddressP2SH, transaction.outputs[0]?.address)
         assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
 
-        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash?.toHexString())
+        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
         assertEquals(unspentOutputs.outputs[0].value - txValue, transaction.outputs[1]?.value)
     }
 

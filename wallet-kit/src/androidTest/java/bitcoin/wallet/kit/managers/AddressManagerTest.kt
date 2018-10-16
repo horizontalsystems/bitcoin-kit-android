@@ -182,7 +182,8 @@ class AddressManagerTest {
             this.external = external
             this.index = index
             this.publicKey = byteArrayOf(index.toByte())
-            this.publicKeyHash = "aa$index${if (external) 0 else 1}"
+            this.publicKeyHex = "aa$index${if (external) 0 else 1}"
+            this.publicKeyHash = "aa$index${if (external) 0 else 1}".hexStringToByteArray()
         }
     }
 
