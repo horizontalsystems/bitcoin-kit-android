@@ -1,10 +1,8 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.core.RealmFactory
-import bitcoin.wallet.kit.models.Block
-import bitcoin.wallet.kit.models.PublicKey
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.BlockHash
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.network.PeerGroup
 import io.reactivex.Observable
 import io.reactivex.Scheduler

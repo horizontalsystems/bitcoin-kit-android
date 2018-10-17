@@ -4,9 +4,6 @@ import android.content.Context
 import bitcoin.wallet.kit.blocks.BlockSyncer
 import bitcoin.wallet.kit.blocks.BlockchainBuilder
 import bitcoin.wallet.kit.core.RealmFactory
-import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.*
 import bitcoin.wallet.kit.models.*
 import bitcoin.wallet.kit.network.*
@@ -85,18 +82,11 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         val bloomFilterManager = BloomFilterManager(pubKeys.map { it.publicKey }, realmFactory)
 
         addressConverter = AddressConverter(network)
-        addressManager = AddressManager(realmFactory, wallet, peerGroup, addressConverter)
+        addressManager = AddressManager(realmFactory, wallet, bloomFilterManager, addressConverter)
         val transactionProcessor = TransactionProcessor(realmFactory, addressManager, addressConverter)
-        peerGroup.listener = Syncer(realmFactory, peerGroup, transactionProcessor, network)
-        addressManager = AddressManager(realmFactory, wallet, bloomFilterManager)
         val addressConverter = AddressConverter(network)
 
-        addressManager = AddressManager(realmFactory, wallet, bloomFilterManager, addressConverter)
-        val transactionProcessor = TransactionProcessor(realmFactory, addressManager, network)
-
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
-
-
         peerGroup.blockSyncer = BlockSyncer(realmFactory, BlockchainBuilder(network), transactionProcessor, addressManager, network)
 
 

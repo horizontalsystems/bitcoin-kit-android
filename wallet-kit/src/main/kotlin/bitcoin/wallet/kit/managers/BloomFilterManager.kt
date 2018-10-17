@@ -2,7 +2,7 @@ package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.TransactionOutput
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.walllet.kit.utils.Utils
@@ -15,7 +15,6 @@ class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: Re
 
     var listener: Listener? = null
     var bloomFilter: BloomFilter? = null
-    private val elements = elements.toMutableList()
 
     init {
         if (elements.isNotEmpty()) {

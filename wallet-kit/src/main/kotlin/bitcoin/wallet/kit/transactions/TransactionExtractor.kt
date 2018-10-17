@@ -1,11 +1,9 @@
 package bitcoin.wallet.kit.transactions
 
-import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.scripts.Script
 import bitcoin.wallet.kit.utils.AddressConverter
-import bitcoin.wallet.kit.scripts.ScriptType
 import io.realm.Realm
 
 class TransactionExtractor(private val addressConverter: AddressConverter) {

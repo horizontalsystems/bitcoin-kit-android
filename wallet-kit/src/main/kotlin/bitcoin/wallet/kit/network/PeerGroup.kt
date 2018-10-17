@@ -1,8 +1,5 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.models.*
-import android.util.Log
 import bitcoin.wallet.kit.blocks.BlockSyncer
 import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.managers.BloomFilterManager
