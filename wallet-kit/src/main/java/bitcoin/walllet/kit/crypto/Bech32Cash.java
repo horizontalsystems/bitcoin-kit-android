@@ -3,31 +3,7 @@ package bitcoin.walllet.kit.crypto;
 
 import bitcoin.walllet.kit.exceptions.AddressFormatException;
 
-public class CashBech32 {
-    /** The Bech32 character set for encoding. */
-    private final static String CHARSET = "qpzry9x8gf2tvdw0s3jn54khce6mua7l";
-
-    /** The Bech32 character set for decoding. */
-    private static final byte[] CHARSET_REV = {
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-            -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-            15, -1, 10, 17, 21, 20, 26, 30,  7,  5, -1, -1, -1, -1, -1, -1,
-            -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
-            1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1,
-            -1, 29, -1, 24, 13, 25,  9,  8, 23, -1, 18, 22, 31, 27, 19, -1,
-            1,  0,  3, 16, 11, 28, 12, 14,  6,  4,  2, -1, -1, -1, -1, -1
-    };
-
-    public static class Bech32Data {
-        public final String hrp;
-        public final byte[] data;
-
-        private Bech32Data(final String hrp, final byte[] data) {
-            this.hrp = hrp;
-            this.data = data;
-        }
-    }
+public class Bech32Cash extends Bech32 {
 
     /**
      * This function will compute what 8 5-bit values to XOR into the last 8 input

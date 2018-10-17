@@ -5,8 +5,8 @@ import bitcoin.wallet.kit.hdwallet.AddressType
 import bitcoin.wallet.kit.hdwallet.CashAddress
 import bitcoin.wallet.kit.hdwallet.SegWitAddress
 import bitcoin.wallet.kit.scripts.ScriptType
-import bitcoin.walllet.kit.crypto.Bech32
-import bitcoin.walllet.kit.crypto.CashBech32
+import bitcoin.walllet.kit.crypto.Bech32Segwit
+import bitcoin.walllet.kit.crypto.Bech32Cash
 import bitcoin.walllet.kit.exceptions.AddressFormatException
 import java.util.*
 
@@ -17,14 +17,14 @@ abstract class Bech32AddressConverter {
 
 class SegwitAddressConverter : Bech32AddressConverter() {
     override fun convert(hrp: String, addressString: String): SegWitAddress {
-        val decoded = Bech32.decode(addressString)
+        val decoded = Bech32Segwit.decode(addressString)
         if (decoded.hrp != hrp) {
             throw AddressFormatException("Address HRP ${decoded.hrp} is not correct")
         }
 
         val payload = decoded.data
-        val string = Bech32.encode(hrp, payload)
-        val program = Bech32.convertBits(payload, 1, payload.size - 1, 5, 8, false)
+        val string = Bech32Segwit.encode(hrp, payload)
+        val program = Bech32Segwit.convertBits(payload, 1, payload.size - 1, 5, 8, false)
 
         return SegWitAddress(string, program, AddressType.WITNESS)
     }
@@ -37,8 +37,8 @@ class SegwitAddressConverter : Bech32AddressConverter() {
         }
 
         val version = byteArrayOf(0)
-        val bytes = version + Bech32.convertBits(program, 0, program.size, 8, 5, true)
-        val string = Bech32.encode(hrp, bytes)
+        val bytes = version + Bech32Segwit.convertBits(program, 0, program.size, 8, 5, true)
+        val string = Bech32Segwit.encode(hrp, bytes)
 
         return SegWitAddress(string, program, addressType)
     }
@@ -47,7 +47,7 @@ class SegwitAddressConverter : Bech32AddressConverter() {
 class CashAddressConverter : Bech32AddressConverter() {
     override fun convert(hrp: String, addressString: String): CashAddress {
 
-        val decoded = CashBech32.decode(addressString, hrp)
+        val decoded = Bech32Cash.decode(addressString, hrp)
         if (decoded.hrp != hrp) {
             throw AddressFormatException("Invalid prefix for network: ${decoded.hrp} != $hrp (expected)")
         }
@@ -64,7 +64,7 @@ class CashAddressConverter : Bech32AddressConverter() {
         }
 
         val data = ByteArray(payload.size * 5 / 8)
-        CashBech32.convertBits(data, payload, 5, 8, false)
+        Bech32Cash.convertBits(data, payload, 5, 8, false)
 
         // Decode type and size from the version.
         val version = data[0].toInt()
@@ -120,9 +120,9 @@ class CashAddressConverter : Bech32AddressConverter() {
         // the next multiple-of-5 that would fit all the data.
 
         val addressBytes = ByteArray(((payloadSize + 1) * 8 + 4) / 5)
-        CashBech32.convertBits(addressBytes, data, 8, 5, true)
+        Bech32Cash.convertBits(addressBytes, data, 8, 5, true)
 
-        val addressString = CashBech32.encode(hrp, addressBytes)
+        val addressString = Bech32Cash.encode(hrp, addressBytes)
 
         return CashAddress(addressString, program, addressType)
     }
