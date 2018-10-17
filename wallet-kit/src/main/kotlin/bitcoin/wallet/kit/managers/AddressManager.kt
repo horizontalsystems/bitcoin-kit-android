@@ -25,9 +25,9 @@ class AddressManager(private val realmFactory: RealmFactory,
         return addressConverter.convert(getPublicKey(HDWallet.Chain.EXTERNAL).publicKey).toString()
     }
 
-    fun fillGap(afterExtKey: PublicKey? = null, afterIntKey: PublicKey? = null) {
-        fillGap(true, afterExtKey)
-        fillGap(false, afterIntKey)
+    fun fillGap() {
+        fillGap(true)
+        fillGap(false)
     }
 
     fun addKeys(keys: List<PublicKey>) {
@@ -43,12 +43,12 @@ class AddressManager(private val realmFactory: RealmFactory,
     }
 
     fun gapShifts(realm: Realm): Boolean {
-        return gapKeysCount(null, true, realm) < hdWallet.gapLimit || gapKeysCount(null, false, realm) < hdWallet.gapLimit
+        return gapKeysCount(true, realm) < hdWallet.gapLimit || gapKeysCount(false, realm) < hdWallet.gapLimit
     }
 
-    private fun fillGap(external: Boolean, afterKey: PublicKey?) {
+    private fun fillGap(external: Boolean) {
         val realm = realmFactory.realm
-        val gapKeysCount = gapKeysCount(afterKey, external, realm)
+        val gapKeysCount = gapKeysCount(external, realm)
         val keys = mutableListOf<PublicKey>()
         if (gapKeysCount < hdWallet.gapLimit) {
             val lastIndex = realm.where(PublicKey::class.java).equalTo("external", external)
@@ -64,26 +64,14 @@ class AddressManager(private val realmFactory: RealmFactory,
         addKeys(keys)
     }
 
-    private fun gapKeysCount(afterKey: PublicKey?, external: Boolean, realm: Realm): Int {
+    private fun gapKeysCount(external: Boolean, realm: Realm): Int {
         val publicKeys = realm.where(PublicKey::class.java).equalTo("external", external)
+        val lastUsedKey = publicKeys.sort("index").findAll().lastOrNull { it.outputs?.size ?: 0 > 0 }
 
-        val gapKeysCount: Long
-
-        var lastUsedKey = publicKeys.sort("index").findAll().lastOrNull { it.outputs?.size ?: 0 > 0 }
-
-        if (lastUsedKey != null) {
-
-            if (afterKey != null && lastUsedKey.index < afterKey.index) {
-                lastUsedKey = afterKey
-            }
-
-            gapKeysCount = publicKeys.greaterThan("index", lastUsedKey.index).count()
-
-        } else {
-            gapKeysCount = publicKeys.count()
+        return when (lastUsedKey) {
+            null -> publicKeys.count().toInt()
+            else -> publicKeys.greaterThan("index", lastUsedKey.index).count().toInt()
         }
-
-        return gapKeysCount.toInt()
     }
 
     @Throws
