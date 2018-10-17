@@ -1,6 +1,8 @@
 package bitcoin.wallet.kit.scripts
 
-import bitcoin.wallet.kit.hdwallet.Address
+import bitcoin.wallet.kit.models.Address
+import bitcoin.wallet.kit.models.AddressType
+import bitcoin.wallet.kit.models.SegWitAddress
 
 class ScriptBuilder {
 
@@ -13,17 +15,17 @@ class ScriptBuilder {
     fun lockingScript(address: Address): ByteArray {
         val data = mutableListOf<ByteArray>()
 
-        if (address.type == Address.Type.WITNESS) {
+        if (address is SegWitAddress) {
             data.add(byteArrayOf(address.version.toByte()))
-            data.add(address.program ?: throw WitnessProgramMissing())
+            data.add(address.hash)
         } else {
             data.add(address.hash)
         }
 
         return when (address.type) {
-            Address.Type.P2PKH -> p2pkhStart + OpCodes.push(data[0]) + p2pkhEnd
-            Address.Type.P2SH -> p2pshStart + OpCodes.push(data[0]) + p2pshEnd
-            Address.Type.WITNESS -> OpCodes.push(data[0][0].toInt()) + OpCodes.push(data[1])
+            AddressType.P2PKH -> p2pkhStart + OpCodes.push(data[0]) + p2pkhEnd
+            AddressType.P2SH -> p2pshStart + OpCodes.push(data[0]) + p2pshEnd
+            AddressType.WITNESS -> OpCodes.push(data[0][0].toInt()) + OpCodes.push(data[1])
         }
     }
 
@@ -34,8 +36,5 @@ class ScriptBuilder {
         }
         return unlockingScript
     }
-
-    open class ScriptBuilderException : Exception()
-    class WitnessProgramMissing : ScriptBuilderException()
 
 }

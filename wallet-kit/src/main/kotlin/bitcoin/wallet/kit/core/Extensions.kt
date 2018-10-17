@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.core
 
-import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.PublicKey
 import io.horizontalsystems.hdwalletkit.HDPublicKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 

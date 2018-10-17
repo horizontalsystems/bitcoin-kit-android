@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.RealmFactoryMock
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Block
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.network.PeerGroup
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.RxTestRule

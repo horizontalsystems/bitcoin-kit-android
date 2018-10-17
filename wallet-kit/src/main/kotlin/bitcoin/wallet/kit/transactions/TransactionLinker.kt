@@ -1,6 +1,6 @@
 package bitcoin.wallet.kit.transactions
 
-import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.models.TransactionInput
 import io.realm.Realm

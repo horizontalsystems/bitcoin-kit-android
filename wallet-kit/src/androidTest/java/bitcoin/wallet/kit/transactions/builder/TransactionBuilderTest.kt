@@ -3,15 +3,16 @@ package bitcoin.wallet.kit.transactions.builder
 import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.SelectedUnspentOutputInfo
 import bitcoin.wallet.kit.managers.UnspentOutputProvider
 import bitcoin.wallet.kit.managers.UnspentOutputSelector
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.scripts.ScriptBuilder
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionSizeCalculator
+import bitcoin.wallet.kit.utils.AddressConverter
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.whenever
@@ -28,7 +29,7 @@ class TransactionBuilderTest {
     private val factory = RealmFactoryMock()
     private lateinit var realm: Realm
 
-    private val networkParameters = mock(NetworkParameters::class.java)
+    private val network = mock(NetworkParameters::class.java)
     private val unspentOutputSelector = mock(UnspentOutputSelector::class.java)
     private val unspentOutputProvider = mock(UnspentOutputProvider::class.java)
     private val scriptBuilder = mock(ScriptBuilder::class.java)
@@ -39,7 +40,8 @@ class TransactionBuilderTest {
     private lateinit var previousTransaction: Transaction
     private lateinit var unspentOutputs: SelectedUnspentOutputInfo
 
-    private val transactionBuilder = TransactionBuilder(networkParameters, unspentOutputSelector, unspentOutputProvider, scriptBuilder, transactionSizeCalculator, inputSigner)
+    private val addressConverter = AddressConverter(network)
+    private val transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, transactionSizeCalculator, inputSigner)
 
     private val txValue = 93_417_732
     private val toAddressP2PKH = "mmLB5DvGbsb4krT9PJ7WrKmv8DkyvNx1ne"
@@ -62,8 +64,9 @@ class TransactionBuilderTest {
 
         realm.commitTransaction()
 
-        whenever(networkParameters.addressVersion).thenReturn(111)
-        whenever(networkParameters.addressScriptVersion).thenReturn(196)
+        whenever(network.addressSegwitHrp).thenReturn("bc")
+        whenever(network.addressVersion).thenReturn(111)
+        whenever(network.addressScriptVersion).thenReturn(196)
 
         unspentOutputs = SelectedUnspentOutputInfo(listOf(previousTransaction.outputs[0]!!), previousTransaction.outputs[0]!!.value, fee)
 

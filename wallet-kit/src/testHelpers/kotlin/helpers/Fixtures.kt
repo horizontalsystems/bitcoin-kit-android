@@ -1,7 +1,6 @@
 package helpers
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.*
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.walllet.kit.utils.HashUtils

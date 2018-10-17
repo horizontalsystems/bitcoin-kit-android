@@ -2,8 +2,8 @@ package bitcoin.wallet.kit.scripts
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.hdwallet.Address
 import bitcoin.wallet.kit.network.TestNet
+import bitcoin.wallet.kit.utils.AddressConverter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -11,6 +11,7 @@ import org.junit.Test
 class ScriptTest {
     private val sigScript = "47304402202b4da291cc39faf8433911988f9f49fc5c995812ca2f94db61468839c228c3e90220628bff3ff32ec95825092fa051cba28558a981fcf59ce184b14f2e215e69106701410414b38f4be3bb9fa0f4f32b74af07152b2f2f630bc02122a491137b6c523e46f18a0d5034418966f93dfc37cc3739ef7b2007213a302b7fba161557f4ad644a1c"
     private val network = TestNet()
+    private val addressConverter = AddressConverter(network)
 
     lateinit var script: Script
 
@@ -28,8 +29,8 @@ class ScriptTest {
         assertEquals(ScriptType.P2PKH, script.getScriptType())
         assertEquals("DUP HASH160 PUSHDATA(20)[33e81a941e64cda12c6a299ed322ddbdd03f8d0e] EQUALVERIFY CHECKSIG", script.toString())
 
-        val address = Address(Address.Type.P2PKH, script.getPubKeyHash()!!, network)
-        assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", address.toString())
+        val address = addressConverter.convert(script.getPubKeyHash()!!, ScriptType.P2PKH)
+        assertEquals("mkFQohBpy2HDXrCwyMrYL5RtfrmeiuuPY2", address.string)
     }
 
     @Test
@@ -39,8 +40,8 @@ class ScriptTest {
         assertEquals(ScriptType.P2PK, script.getScriptType())
         assertEquals("PUSHDATA(33)[0378e9dc79ff921df6c3f94d440fb011c65ed03586b1dd01c317934a4f00f251e6] CHECKSIG", script.toString())
 
-        val address = Address(Address.Type.P2PKH, script.getPubKeyHash()!!, network)
-        assertEquals("mv25Sgz24fMQFQHD5QNmLaRTGDmztV3xsK", address.toString())
+        val address = addressConverter.convert(script.getPubKeyHash()!!, ScriptType.P2PKH)
+        assertEquals("mv25Sgz24fMQFQHD5QNmLaRTGDmztV3xsK", address.string)
     }
 
     @Test
@@ -66,8 +67,8 @@ class ScriptTest {
         assertEquals(ScriptType.P2SH, script.getScriptType())
         assertEquals("HASH160 PUSHDATA(20)[4b60b6bcf50bf637fe66c3da5c11524cb3ab9711] EQUAL", script.toString())
 
-        val address = Address(Address.Type.P2SH, script.getPubKeyHash()!!, network)
-        assertEquals("2Mz7nXTwYSLNUeVpDkNbLpsXFeWsB9vJyf5", address.toString())
+        val address = addressConverter.convert(script.getPubKeyHash()!!, ScriptType.P2SH)
+        assertEquals("2Mz7nXTwYSLNUeVpDkNbLpsXFeWsB9vJyf5", address.string)
     }
 
     @Test
