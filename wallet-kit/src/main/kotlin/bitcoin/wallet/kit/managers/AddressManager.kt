@@ -26,8 +26,12 @@ class AddressManager(private val realmFactory: RealmFactory,
     }
 
     fun fillGap() {
-        fillGap(true)
-        fillGap(false)
+        val realm = realmFactory.realm
+
+        fillGap(true, realm)
+        fillGap(false, realm)
+
+        realm.close()
     }
 
     fun addKeys(keys: List<PublicKey>) {
@@ -39,6 +43,8 @@ class AddressManager(private val realmFactory: RealmFactory,
             realm.insertOrUpdate(keys)
         }
 
+        realm.close()
+
         bloomFilterManager.regenerateBloomFilter()
     }
 
@@ -46,8 +52,7 @@ class AddressManager(private val realmFactory: RealmFactory,
         return gapKeysCount(true, realm) < hdWallet.gapLimit || gapKeysCount(false, realm) < hdWallet.gapLimit
     }
 
-    private fun fillGap(external: Boolean) {
-        val realm = realmFactory.realm
+    private fun fillGap(external: Boolean, realm: Realm) {
         val gapKeysCount = gapKeysCount(external, realm)
         val keys = mutableListOf<PublicKey>()
         if (gapKeysCount < hdWallet.gapLimit) {

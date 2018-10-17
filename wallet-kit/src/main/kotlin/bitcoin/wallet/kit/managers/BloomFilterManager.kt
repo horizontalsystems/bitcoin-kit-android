@@ -55,6 +55,8 @@ class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: Re
                 }
             }
         }
+
+        realm.close()
     }
 
 }
