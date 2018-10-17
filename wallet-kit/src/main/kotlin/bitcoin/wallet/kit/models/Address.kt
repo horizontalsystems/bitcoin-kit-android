@@ -1,4 +1,4 @@
-package bitcoin.wallet.kit.hdwallet
+package bitcoin.wallet.kit.models
 
 import bitcoin.wallet.kit.scripts.ScriptParser
 import bitcoin.wallet.kit.scripts.ScriptType

@@ -1,7 +1,7 @@
 package bitcoin.wallet.kit.utils
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.hdwallet.Address
+import bitcoin.wallet.kit.models.Address
 import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.walllet.kit.exceptions.AddressFormatException
 import org.junit.Assert.assertEquals

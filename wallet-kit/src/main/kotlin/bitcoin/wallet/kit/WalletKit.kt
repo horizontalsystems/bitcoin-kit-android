@@ -3,7 +3,6 @@ package bitcoin.wallet.kit
 import android.content.Context
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.*
 import bitcoin.wallet.kit.models.*
 import bitcoin.wallet.kit.network.*

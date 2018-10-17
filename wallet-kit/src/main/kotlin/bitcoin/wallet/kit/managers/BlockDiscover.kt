@@ -2,8 +2,8 @@ package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.publicKey
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.models.Block
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet

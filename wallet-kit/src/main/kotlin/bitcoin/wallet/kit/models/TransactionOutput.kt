@@ -1,6 +1,5 @@
 package bitcoin.wallet.kit.models
 
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
 import io.realm.RealmObject

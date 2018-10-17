@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.utils
 
-import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.AddressType
-import bitcoin.wallet.kit.hdwallet.LegacyAddress
+import bitcoin.wallet.kit.models.Address
+import bitcoin.wallet.kit.models.AddressType
+import bitcoin.wallet.kit.models.LegacyAddress
 import bitcoin.wallet.kit.network.MainNetBitcoinCash
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.network.TestNetBitcoinCash

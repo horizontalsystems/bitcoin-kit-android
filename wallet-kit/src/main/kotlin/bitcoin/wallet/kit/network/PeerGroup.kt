@@ -1,11 +1,7 @@
 package bitcoin.wallet.kit.network
 
 import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.hdwallet.PublicKey
-import bitcoin.wallet.kit.models.Header
-import bitcoin.wallet.kit.models.InventoryItem
-import bitcoin.wallet.kit.models.MerkleBlock
-import bitcoin.wallet.kit.models.Transaction
+import bitcoin.wallet.kit.models.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.logging.Logger

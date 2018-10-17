@@ -1,12 +1,12 @@
 package bitcoin.wallet.kit.utils
 
-import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.AddressType
-import bitcoin.wallet.kit.hdwallet.CashAddress
-import bitcoin.wallet.kit.hdwallet.SegWitAddress
+import bitcoin.wallet.kit.models.Address
+import bitcoin.wallet.kit.models.AddressType
+import bitcoin.wallet.kit.models.CashAddress
+import bitcoin.wallet.kit.models.SegWitAddress
 import bitcoin.wallet.kit.scripts.ScriptType
-import bitcoin.walllet.kit.crypto.Bech32Segwit
 import bitcoin.walllet.kit.crypto.Bech32Cash
+import bitcoin.walllet.kit.crypto.Bech32Segwit
 import bitcoin.walllet.kit.exceptions.AddressFormatException
 import java.util.*
 

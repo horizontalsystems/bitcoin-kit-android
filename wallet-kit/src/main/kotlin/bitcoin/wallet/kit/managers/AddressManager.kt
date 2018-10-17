@@ -3,7 +3,7 @@ package bitcoin.wallet.kit.managers
 import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.core.changePublicKey
 import bitcoin.wallet.kit.core.receivePublicKey
-import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.wallet.kit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet

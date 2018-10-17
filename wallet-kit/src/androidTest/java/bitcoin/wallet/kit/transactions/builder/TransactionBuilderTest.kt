@@ -3,10 +3,10 @@ package bitcoin.wallet.kit.transactions.builder
 import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.core.hexStringToByteArray
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.SelectedUnspentOutputInfo
 import bitcoin.wallet.kit.managers.UnspentOutputProvider
 import bitcoin.wallet.kit.managers.UnspentOutputSelector
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.wallet.kit.scripts.ScriptBuilder

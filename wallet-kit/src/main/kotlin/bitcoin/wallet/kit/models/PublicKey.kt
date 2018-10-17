@@ -1,7 +1,6 @@
-package bitcoin.wallet.kit.hdwallet
+package bitcoin.wallet.kit.models
 
 import bitcoin.wallet.kit.core.toHexString
-import bitcoin.wallet.kit.models.TransactionOutput
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.annotations.LinkingObjects

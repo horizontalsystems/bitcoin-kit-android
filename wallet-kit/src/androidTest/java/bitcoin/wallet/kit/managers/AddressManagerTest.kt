@@ -2,8 +2,8 @@ package bitcoin.wallet.kit.managers
 
 import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.PublicKey
+import bitcoin.wallet.kit.models.Address
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.TransactionOutput
 import bitcoin.wallet.kit.network.PeerGroup
 import bitcoin.wallet.kit.utils.AddressConverter

@@ -1,9 +1,9 @@
 package bitcoin.wallet.kit.transactions.builder
 
 import bitcoin.wallet.kit.core.RealmFactory
-import bitcoin.wallet.kit.hdwallet.PublicKey
 import bitcoin.wallet.kit.managers.UnspentOutputProvider
 import bitcoin.wallet.kit.managers.UnspentOutputSelector
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.models.TransactionInput
 import bitcoin.wallet.kit.models.TransactionOutput

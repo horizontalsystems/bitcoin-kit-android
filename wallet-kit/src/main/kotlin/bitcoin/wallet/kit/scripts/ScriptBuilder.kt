@@ -1,8 +1,8 @@
 package bitcoin.wallet.kit.scripts
 
-import bitcoin.wallet.kit.hdwallet.Address
-import bitcoin.wallet.kit.hdwallet.AddressType
-import bitcoin.wallet.kit.hdwallet.SegWitAddress
+import bitcoin.wallet.kit.models.Address
+import bitcoin.wallet.kit.models.AddressType
+import bitcoin.wallet.kit.models.SegWitAddress
 
 class ScriptBuilder {
 
