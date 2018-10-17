@@ -41,7 +41,7 @@ class AddressManager(private val realmFactory: RealmFactory,
             realm.insertOrUpdate(keys)
         }
 
-        bloomFilterManager.add(keys)
+        bloomFilterManager.regenerateBloomFilter()
     }
 
     fun gapShifts(realm: Realm): Boolean {
@@ -115,7 +115,7 @@ class AddressManager(private val realmFactory: RealmFactory,
 
         realm.close()
 
-        bloomFilterManager.add(listOf(newPublicKey))
+        bloomFilterManager.regenerateBloomFilter()
 
         return newPublicKey
     }

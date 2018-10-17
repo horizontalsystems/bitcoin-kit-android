@@ -4,6 +4,7 @@ import bitcoin.walllet.kit.crypto.MurmurHash3
 import bitcoin.walllet.kit.io.BitcoinOutput
 import bitcoin.walllet.kit.utils.Utils
 import java.lang.Double.valueOf
+import java.util.*
 
 /**
  * BloomFilter
@@ -28,7 +29,7 @@ class BloomFilter(elements: List<ByteArray>) {
     private val nTweak = valueOf(Math.random() * Long.MAX_VALUE).toLong()
 
     /** Filter update flags  */
-    private val nFlags = UPDATE_NONE
+    private val nFlags = UPDATE_P2PUBKEY_ONLY
 
     init {
         val falsePositiveRate = 0.00005
@@ -75,6 +76,19 @@ class BloomFilter(elements: List<ByteArray>) {
 
     override fun toString(): String {
         return "Bloom Filter of size ${filter.size} with $nHashFuncs hash functions."
+    }
+
+    override fun equals(other: Any?) = when (other) {
+        is BloomFilter -> filter.contentEquals(other.filter)
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        var result = Arrays.hashCode(filter)
+        result = 31 * result + nHashFuncs
+        result = 31 * result + nTweak.hashCode()
+        result = 31 * result + nFlags
+        return result
     }
 
     companion object {

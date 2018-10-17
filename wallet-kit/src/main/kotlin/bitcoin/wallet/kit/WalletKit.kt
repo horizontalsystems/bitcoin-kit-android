@@ -82,7 +82,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         val peerManager = PeerManager(network)
 
         val pubKeys = realm.where(PublicKey::class.java).findAll()
-        val bloomFilterManager = BloomFilterManager(pubKeys.map { it.publicKey })
+        val bloomFilterManager = BloomFilterManager(pubKeys.map { it.publicKey }, realmFactory)
 
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, peerGroup, addressConverter)
