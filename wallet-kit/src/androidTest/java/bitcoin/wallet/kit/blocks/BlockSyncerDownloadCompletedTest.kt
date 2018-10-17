@@ -67,7 +67,7 @@ class BlockSyncerDownloadCompletedTest {
             realm.insert(transaction)
         }
 
-        blockSyncer.merkleBlocksDownloadCompleted()
+        blockSyncer.clearNotFullBlocks()
 
         verify(addressManager).fillGap()
 

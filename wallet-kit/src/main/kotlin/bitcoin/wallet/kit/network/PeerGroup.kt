@@ -88,6 +88,9 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
         syncPeerQueue.execute {
             peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
+                blockSyncer?.clearNotFullBlocks()
+                blockSyncer?.clearBlockHashes()
+
                 syncPeer = nonSyncedPeer
                 downloadBlockchain()
             }
@@ -126,7 +129,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
         // it restores syncPeer on next connection
         if (syncPeer == peer) {
-            blockSyncer?.clearBlockHashes()
             syncPeer = null
             assignNextSyncPeer()
         }
@@ -172,7 +174,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
                 }
             }
             is GetMerkleBlocksTask -> {
-                blockSyncer?.merkleBlocksDownloadCompleted()
+                blockSyncer?.clearNotFullBlocks()
             }
             else -> throw Exception("Task not handled: ${task}")
         }

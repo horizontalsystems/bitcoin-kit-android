@@ -155,7 +155,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
     }
 
-    fun merkleBlocksDownloadCompleted() {
+    fun clearNotFullBlocks() {
         addressManager.fillGap()
 
         val realm = realmFactory.realm
