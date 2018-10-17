@@ -5,9 +5,9 @@ import bitcoin.wallet.kit.models.*
 import android.util.Log
 import bitcoin.wallet.kit.blocks.BlockSyncer
 import bitcoin.wallet.kit.crypto.BloomFilter
-import bitcoin.wallet.kit.exceptions.InvalidMerkleBlockException
 import bitcoin.wallet.kit.managers.BloomFilterManager
 import bitcoin.wallet.kit.models.InventoryItem
+import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.PeerTask.GetBlockHashesTask
 import bitcoin.wallet.kit.network.PeerTask.GetMerkleBlocksTask
@@ -131,6 +131,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         if (syncPeer == peer) {
             blockSyncer?.clearBlockHashes()
             syncPeer = null
+            assignNextSyncPeer()
         }
 
         peerMap.remove(peer.host)
@@ -174,15 +175,19 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
                 }
             }
             is GetMerkleBlocksTask -> {
-                try {
-                    blockSyncer?.handleMerkleBlocks(task.merkleBlocks)
-                } catch (e: InvalidMerkleBlockException) {
-                    peer.close()
-                    TODO("wait for peer to disconnect?")
-                    assignNextSyncPeer()
-                }
+                blockSyncer?.merkleBlocksDownloadCompleted()
             }
             else -> throw Exception("Task not handled: ${task}")
+        }
+    }
+
+    override fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock, fullBlock: Boolean) {
+        try {
+            blockSyncer?.handleMerkleBlock(merkleBlock, fullBlock)
+        } catch (e: BlockSyncer.Error.NextBlockNotFull) {
+            throw e
+        } catch (e: Exception) {
+            peer.close()
         }
     }
 

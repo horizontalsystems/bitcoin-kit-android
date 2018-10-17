@@ -33,6 +33,8 @@ class AddressManager(private val realmFactory: RealmFactory,
     }
 
     fun addKeys(keys: List<PublicKey>) {
+        if (keys.isEmpty()) return
+
         val realm = realmFactory.realm
 
         realm.executeTransaction {
@@ -42,8 +44,8 @@ class AddressManager(private val realmFactory: RealmFactory,
         bloomFilterManager.add(keys)
     }
 
-    fun gapShiftsOn(key: PublicKey, realm: Realm): Boolean {
-        return gapKeysCount(key, key.external, realm) < hdWallet.gapLimit
+    fun gapShifts(realm: Realm): Boolean {
+        return gapKeysCount(null, true, realm) < hdWallet.gapLimit || gapKeysCount(null, false, realm) < hdWallet.gapLimit
     }
 
     private fun fillGap(external: Boolean, afterKey: PublicKey?) {

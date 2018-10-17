@@ -13,8 +13,6 @@ class BloomFilterManager(elements: List<ByteArray>) {
     var bloomFilter: BloomFilter? = null
     private val elements = elements.toMutableList()
 
-    private var updated = false
-
     init {
         if (elements.isNotEmpty()) {
             bloomFilter = BloomFilter(elements)
@@ -23,7 +21,7 @@ class BloomFilterManager(elements: List<ByteArray>) {
 
     fun add(keys: List<PublicKey>) {
         keys.forEach { key ->
-            if (elements.any { it.contentEquals(key.publicKeyHash) }) {
+            if (elements.none { it.contentEquals(key.publicKeyHash) }) {
                 elements.add(key.publicKeyHash)
                 elements.add(key.publicKey)
                 elements.add(key.scriptHashP2WPKH)

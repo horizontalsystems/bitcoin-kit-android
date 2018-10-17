@@ -5,7 +5,9 @@ import bitcoin.wallet.kit.managers.AddressManager
 import bitcoin.wallet.kit.models.Block
 import bitcoin.wallet.kit.models.BlockHash
 import bitcoin.wallet.kit.models.MerkleBlock
+import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.NetworkParameters
+import bitcoin.wallet.kit.scripts.ScriptType
 import bitcoin.wallet.kit.transactions.TransactionProcessor
 import io.realm.Sort
 
@@ -104,57 +106,76 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
     }
 
-    @Throws
-    fun handleMerkleBlocks(merkleBlocks: List<MerkleBlock>) {
-        if (merkleBlocks.isEmpty()) return
-
+    @Throws(Error.NextBlockNotFull::class)
+    fun handleMerkleBlock(merkleBlock: MerkleBlock, fullBlock: Boolean) {
         val realm = realmFactory.realm
 
-        val blocks = blockchainBuilder.buildChain(merkleBlocks, realm)
+        val block = blockchainBuilder.connect(merkleBlock, realm)
 
-        val gapData = transactionProcessor.getGapData(merkleBlocks, realm)
+        var newUnspentOutput = false
 
         realm.executeTransaction {
-            var lastSavedBlock: Block? = null
+            val managedBlock = realm.copyToRealm(block)
 
-            for (merkleBlock in merkleBlocks) {
-                val block = blocks[merkleBlock.reversedHeaderHashHex] ?: continue
+            merkleBlock.associatedTransactions.forEach { transaction ->
+                transactionProcessor.process(transaction, realm)
+                if (transaction.isMine) {
+                    val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
 
-                lastSavedBlock?.let {
-                    block.previousBlock = it
-                }
-
-                val blockManaged = realm.copyToRealm(block)
-
-                merkleBlock.associatedTransactions.forEach { transaction ->
-                    transactionProcessor.link(transaction, realm)
-                    if (transaction.isMine) {
-                        transaction.block = blockManaged
+                    if (transactionInDB != null) {
+                        transactionInDB.status = Transaction.Status.RELAYED
+                        transactionInDB.block = managedBlock
+                    } else {
+                        transaction.block = managedBlock
                         realm.insert(transaction)
                     }
-                }
 
-                lastSavedBlock = blockManaged
-
-                if (merkleBlock == gapData.firstGapShiftMerkleBlock) {
-                    break
+                    if (fullBlock && !newUnspentOutput) {
+                        for (output in transaction.outputs) {
+                            if (output.scriptType == ScriptType.P2WPKH) {
+                                newUnspentOutput = true
+                            }
+                        }
+                    }
                 }
             }
 
-            lastSavedBlock?.let {
+            if (fullBlock) {
                 realm.where(BlockHash::class.java)
-                        .equalTo("reversedHeaderHashHex", lastSavedBlock.reversedHeaderHashHex)
+                        .equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex)
                         .findFirst()
-                        ?.let {
-                            realm.where(BlockHash::class.java)
-                                    .lessThanOrEqualTo("order", it.order)
-                                    .findAll()
-                                    .deleteAllFromRealm()
-                        }
+                        ?.deleteFromRealm()
             }
         }
 
-        addressManager.fillGap(gapData.lastUsedExternalKey, gapData.lastUsedInternalKey)
+        if (fullBlock && (addressManager.gapShifts(realm) || newUnspentOutput)) {
+            throw Error.NextBlockNotFull
+        }
+
+        realm.close()
+    }
+
+    fun merkleBlocksDownloadCompleted() {
+        addressManager.fillGap()
+
+        val realm = realmFactory.realm
+
+        val toDelete = realm.where(BlockHash::class.java).findAll().map { it.reversedHeaderHashHex }.toTypedArray()
+
+        realm.executeTransaction {
+            realm.where(Block::class.java).`in`("reversedHeaderHashHex", toDelete).findAll().let {blocksToDelete ->
+                blocksToDelete.forEach { block ->
+                    block.transactions?.let { transactions ->
+                        transactions.forEach { transaction ->
+                            transaction.inputs.deleteAllFromRealm()
+                            transaction.outputs.deleteAllFromRealm()
+                        }
+                        transactions.deleteAllFromRealm()
+                    }
+                }
+                blocksToDelete.deleteAllFromRealm()
+            }
+        }
 
         realm.close()
     }
@@ -169,6 +190,10 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
 
         return !blockExist
+    }
+
+    object Error {
+        object NextBlockNotFull : Exception()
     }
 
 }

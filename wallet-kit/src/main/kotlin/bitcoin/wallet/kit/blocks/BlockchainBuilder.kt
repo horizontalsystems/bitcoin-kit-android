@@ -8,24 +8,15 @@ import io.realm.Realm
 
 class BlockchainBuilder(private val network: NetworkParameters) {
 
-    fun buildChain(merkleBlocks: List<MerkleBlock>, realm: Realm): Map<String, Block> {
-        val merkleBlockFirst = merkleBlocks.first()
-
-        var parentBlock = realm.where(Block::class.java)
-                .equalTo("headerHash", merkleBlockFirst.header.prevHash)
+    fun connect(merkleBlock: MerkleBlock, realm: Realm): Block {
+        val parentBlock = realm.where(Block::class.java)
+                .equalTo("headerHash", merkleBlock.header.prevHash)
                 .findFirst() ?: throw BlockValidatorException.NoPreviousBlock()
 
-        val blocks = mutableMapOf<String, Block>()
+        val block = Block(merkleBlock.header, parentBlock)
+        network.validateBlock(block, parentBlock)
 
-        merkleBlocks.forEach { merkleBlock ->
-            val block = Block(merkleBlock.header, parentBlock)
-            network.validateBlock(block, parentBlock)
-            blocks[merkleBlock.reversedHeaderHashHex] = block
-
-            parentBlock = block
-        }
-
-        return blocks
+        return block
     }
 
 }

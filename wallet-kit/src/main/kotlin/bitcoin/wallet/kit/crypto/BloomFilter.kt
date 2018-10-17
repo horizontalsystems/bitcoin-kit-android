@@ -31,10 +31,7 @@ class BloomFilter(elements: List<ByteArray>) {
     private val nFlags = UPDATE_NONE
 
     init {
-        //
-        // We will use a false-positive rate of 0.0005 (0.05%)
-        //
-        val falsePositiveRate = 0.0005
+        val falsePositiveRate = 0.00005
         //
         // Allocate the filter array
         //

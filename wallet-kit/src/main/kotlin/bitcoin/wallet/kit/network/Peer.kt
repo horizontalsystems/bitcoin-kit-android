@@ -3,6 +3,7 @@ package bitcoin.wallet.kit.network
 import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.messages.*
 import bitcoin.wallet.kit.models.InventoryItem
+import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.network.PeerTask.IPeerTaskDelegate
 import bitcoin.wallet.kit.network.PeerTask.IPeerTaskRequester
@@ -19,6 +20,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         fun onReady(peer: Peer)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
         fun onTaskCompleted(peer: Peer, task: PeerTask)
+        fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock, fullBlock: Boolean)
     }
 
     private val peerConnection = PeerConnection(host, network, this)
@@ -111,6 +113,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     override fun disconnected(e: Exception?) {
         connected = false
         listener.disconnected(this, e)
+    }
+
+    override fun handleMerkleBlock(merkleBlock: MerkleBlock, fullBlock: Boolean) {
+        listener.handleMerkleBlock(this, merkleBlock, fullBlock)
     }
 
     override fun onTaskCompleted(task: PeerTask) {

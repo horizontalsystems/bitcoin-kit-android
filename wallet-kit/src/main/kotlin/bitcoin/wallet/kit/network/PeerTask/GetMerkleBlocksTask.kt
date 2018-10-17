@@ -1,5 +1,6 @@
 package bitcoin.wallet.kit.network.PeerTask
 
+import bitcoin.wallet.kit.blocks.BlockSyncer
 import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.models.InventoryItem
 import bitcoin.wallet.kit.models.MerkleBlock
@@ -7,9 +8,9 @@ import bitcoin.wallet.kit.models.Transaction
 
 class GetMerkleBlocksTask(hashes: List<ByteArray>) : PeerTask() {
 
-    var merkleBlocks = mutableListOf<MerkleBlock>()
     private var hashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
+    private var nextBlockFull = true
 
     override fun start() {
         val items = hashes.map { hash ->
@@ -52,7 +53,11 @@ class GetMerkleBlocksTask(hashes: List<ByteArray>) : PeerTask() {
             hashes.remove(it)
         }
 
-        merkleBlocks.add(merkleBlock)
+        try {
+            delegate?.handleMerkleBlock(merkleBlock, nextBlockFull)
+        } catch (e: BlockSyncer.Error.NextBlockNotFull) {
+            nextBlockFull = false
+        }
 
         if (hashes.isEmpty()) {
             delegate?.onTaskCompleted(this)
