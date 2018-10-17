@@ -6,40 +6,52 @@ import bitcoin.wallet.kit.network.NetworkParameters
 class TestnetValidator(private val network: NetworkParameters) : BlockValidator(network) {
     private val diffDate = 1329264000L // February 16th 2012
 
-    override fun checkDifficultyTransitions(block: Block) {
-        var previousBlock = checkNotNull(block.previousBlock) { throw BlockValidatorException.NoPreviousBlock() }
+    override fun validate(candidate: Block, previousBlock: Block) {
         val previousBlockHeader = checkNotNull(previousBlock.header) {
             throw BlockValidatorException.NoHeader()
         }
 
-        if (previousBlockHeader.timestamp > diffDate) {
-            val blockHeader = checkNotNull(block.header) {
-                throw BlockValidatorException.NoHeader()
-            }
+        validateHeader(candidate, previousBlock)
 
-            val timeDelta = blockHeader.timestamp - previousBlockHeader.timestamp
-            if (timeDelta >= 0 && timeDelta <= network.targetSpacing * 2) {
-                var cursor = block
-                var cursorHeader = checkNotNull(cursor.header)
+        if (isDifficultyTransitionEdge(candidate.height)) {
+            checkDifficultyTransitions(candidate)
+        } else if (previousBlockHeader.timestamp > diffDate) {
+            validateDifficulty(candidate, previousBlock)
+        } else {
+            validateBits(candidate, previousBlock)
+        }
+    }
 
+    private fun validateDifficulty(block: Block, previousBlock: Block) {
+        val previousBlockHeader = checkNotNull(previousBlock.header) {
+            throw BlockValidatorException.NoHeader()
+        }
 
-                while (cursor.height != 0 && (cursor.height % network.heightInterval.toInt()) != 0 && cursorHeader.bits == network.maxTargetBits.toLong()) {
-                    previousBlock = checkNotNull(cursor.previousBlock) {
-                        throw BlockValidatorException.NoPreviousBlock()
-                    }
+        val blockHeader = checkNotNull(block.header) {
+            throw BlockValidatorException.NoHeader()
+        }
 
-                    val header = checkNotNull(previousBlock.header) {
-                        throw BlockValidatorException.NoHeader()
-                    }
+        val timeDelta = blockHeader.timestamp - previousBlockHeader.timestamp
+        if (timeDelta >= 0 && timeDelta <= network.targetSpacing * 2) {
+            var cursor = block
+            var cursorHeader = checkNotNull(cursor.header)
 
-                    cursor = previousBlock
-                    cursorHeader = header
+            while (cursor.height != 0 && (cursor.height % network.heightInterval.toInt()) != 0 && cursorHeader.bits == network.maxTargetBits.toLong()) {
+                val prevBlock = checkNotNull(cursor.previousBlock) {
+                    throw BlockValidatorException.NoPreviousBlock()
                 }
 
-                if (cursorHeader.bits != blockHeader.bits) {
-                    BlockValidatorException.NotEqualBits()
+                val header = checkNotNull(prevBlock.header) {
+                    throw BlockValidatorException.NoHeader()
                 }
+
+                cursor = prevBlock
+                cursorHeader = header
             }
-        } else super.checkDifficultyTransitions(block)
+
+            if (cursorHeader.bits != blockHeader.bits) {
+                BlockValidatorException.NotEqualBits()
+            }
+        }
     }
 }
