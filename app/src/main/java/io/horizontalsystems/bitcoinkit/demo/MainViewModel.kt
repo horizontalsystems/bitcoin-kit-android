@@ -1,4 +1,4 @@
-package bitcoin.wallet.sample
+package io.horizontalsystems.bitcoinkit.demo
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel

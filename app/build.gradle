@@ -5,7 +5,7 @@ apply plugin: 'kotlin-android-extensions'
 android {
     compileSdkVersion 27
     defaultConfig {
-        applicationId "bitcoin.wallet.kit"
+        applicationId "io.horizontalsystems.bitcoinkit.demo"
         minSdkVersion 23
         targetSdkVersion 27
         versionCode 1

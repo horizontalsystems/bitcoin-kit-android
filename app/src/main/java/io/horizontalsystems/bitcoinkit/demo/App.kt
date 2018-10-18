@@ -1,4 +1,4 @@
-package bitcoin.wallet.sample
+package io.horizontalsystems.bitcoinkit.demo
 
 import android.app.Application
 import com.squareup.leakcanary.LeakCanary
