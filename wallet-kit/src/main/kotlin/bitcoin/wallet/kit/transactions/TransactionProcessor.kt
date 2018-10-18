@@ -4,6 +4,8 @@ import bitcoin.wallet.kit.core.RealmFactory
 import bitcoin.wallet.kit.managers.AddressManager
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.utils.AddressConverter
+import bitcoin.wallet.kit.network.NetworkParameters
+import io.realm.Realm
 
 class TransactionProcessor(
         private val realmFactory: RealmFactory,
@@ -26,15 +28,19 @@ class TransactionProcessor(
         if (transactions.isNotEmpty()) {
             realm.executeTransaction {
                 transactions.forEach { transaction ->
-                    extractor.extract(transaction)
-                    linker.handle(transaction, it)
-                    transaction.processed = true
+                    process(transaction, realm)
                 }
             }
 
-            addressManager.generateKeys()
+            addressManager.fillGap()
         }
 
         realm.close()
+    }
+
+    fun process(transaction: Transaction, realm: Realm) {
+        extractor.extract(transaction, realm)
+        linker.handle(transaction, realm)
+        transaction.processed = true
     }
 }

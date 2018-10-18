@@ -1,34 +1,38 @@
 package bitcoin.wallet.kit.network
 
-import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.core.toHexString
 import bitcoin.wallet.kit.crypto.BloomFilter
 import bitcoin.wallet.kit.messages.*
-import bitcoin.wallet.kit.models.Header
 import bitcoin.wallet.kit.models.InventoryItem
 import bitcoin.wallet.kit.models.MerkleBlock
 import bitcoin.wallet.kit.models.Transaction
-import java.lang.Exception
+import bitcoin.wallet.kit.network.PeerTask.IPeerTaskDelegate
+import bitcoin.wallet.kit.network.PeerTask.IPeerTaskRequester
+import bitcoin.wallet.kit.network.PeerTask.PeerTask
 import java.util.logging.Logger
 
-class Peer(val host: String, private val network: NetworkParameters, private val listener: Listener) : PeerInteraction, PeerConnection.Listener {
+class Peer(val host: String, private val network: NetworkParameters, private val listener: Listener) : PeerConnection.Listener, IPeerTaskDelegate, IPeerTaskRequester {
 
     private val logger = Logger.getLogger("Peer")
 
     interface Listener {
         fun connected(peer: Peer)
-        fun disconnected(peer: Peer, e: Exception?, incompleteMerkleBlocks: Array<ByteArray>)
-        fun onReceiveHeaders(headers: Array<Header>)
-        fun onReceiveMerkleBlock(merkleBlock: MerkleBlock)
-        fun onReceiveTransaction(transaction: Transaction)
-        fun shouldRequest(inventory: InventoryItem): Boolean
+        fun disconnected(peer: Peer, e: Exception?)
+        fun onReady(peer: Peer)
+        fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
+        fun onTaskCompleted(peer: Peer, task: PeerTask)
+        fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock, fullBlock: Boolean)
     }
 
-    var isFree = true
-
     private val peerConnection = PeerConnection(host, network, this)
-    private var requestedMerkleBlocks: MutableMap<String, MerkleBlock?> = mutableMapOf()
     private var relayedTransactions: MutableMap<ByteArray, Transaction> = mutableMapOf()
+
+    private var tasks = mutableListOf<PeerTask>()
+    var connected = false
+    var synced = false
+    var blockHashesSynced = false
+
+    val ready: Boolean
+        get() = connected && tasks.isEmpty()
 
     fun start() {
         peerConnection.start()
@@ -43,26 +47,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.sendMessage(FilterLoadMessage(filter))
     }
 
-    override fun requestHeaders(headerHashes: Array<ByteArray>, switchPeer: Boolean) {
-        peerConnection.sendMessage(GetHeadersMessage(headerHashes, network))
-    }
-
-    override fun requestMerkleBlocks(headerHashes: Array<ByteArray>) {
-        requestedMerkleBlocks.plusAssign(headerHashes.map { it.toHexString() to null }.toMap())
-
-        peerConnection.sendMessage(GetDataMessage(InventoryItem.MSG_FILTERED_BLOCK, headerHashes))
-        isFree = false
-    }
-
-    override fun relay(transaction: Transaction) {
-        relayedTransactions[transaction.hash] = transaction
-
-        peerConnection.sendMessage(InvMessage(InventoryItem.MSG_TX, transaction.hash))
-    }
-
     override fun onMessage(message: Message) {
         when (message) {
             is PingMessage -> peerConnection.sendMessage(PongMessage(message.nonce))
+            is PongMessage -> handlePongMessage(message)
             is VersionMessage -> {
                 val reason = reasonToClosePeer(message)
                 if (reason.isEmpty()) {
@@ -74,47 +62,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
                     close()
                 }
             }
-            is VerAckMessage -> listener.connected(this)
-            is HeadersMessage -> listener.onReceiveHeaders(message.headers)
-            is MerkleBlockMessage -> {
-                val merkleBlock = message.merkleBlock
-                requestedMerkleBlocks[merkleBlock.blockHash.toHexString()] = merkleBlock
-
-                if (merkleBlock.associatedTransactionHexes.isEmpty()) {
-                    merkleBlockCompleted(merkleBlock)
-                }
-            }
-            is TransactionMessage -> {
-                val transaction = message.transaction
-
-                val merkleBlock = requestedMerkleBlocks.values.filterNotNull().firstOrNull { it.associatedTransactionHexes.contains(transaction.hash.toHexString()) }
-                if (merkleBlock != null) {
-                    merkleBlock.addTransaction(transaction)
-                    if (merkleBlock.associatedTransactionHexes.size == merkleBlock.associatedTransactions.size) {
-                        merkleBlockCompleted(merkleBlock)
-                    }
-                } else {
-                    listener.onReceiveTransaction(transaction)
-                }
-            }
-            is InvMessage -> {
-                val inventoryToRequest = message.inventory
-                        .filter { listener.shouldRequest(it) }
-                        .map {
-                            if (it.type == InventoryItem.MSG_BLOCK) {
-                                InventoryItem().apply {
-                                    type = InventoryItem.MSG_FILTERED_BLOCK
-                                    hash = it.hash
-                                }
-                            } else {
-                                it
-                            }
-                        }
-                        .toTypedArray()
-
-                peerConnection.sendMessage(GetDataMessage(inventoryToRequest))
-            }
-
+            is VerAckMessage -> handleVerackMessage()
+            is MerkleBlockMessage -> handleMerkleBlockMessage(message)
+            is TransactionMessage -> handleTransactionMessage(message)
+            is InvMessage -> handleInvMessage(message)
             is GetDataMessage -> {
 
                 //handle relayed transactions
@@ -126,6 +77,12 @@ class Peer(val host: String, private val network: NetworkParameters, private val
                 }
             }
         }
+    }
+
+    private fun handleVerackMessage() {
+        connected = true
+
+        listener.connected(this)
     }
 
     private fun reasonToClosePeer(message: VersionMessage): String {
@@ -140,16 +97,91 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         return reason
     }
 
-    private fun merkleBlockCompleted(merkleBlock: MerkleBlock) {
-        listener.onReceiveMerkleBlock(merkleBlock)
-        requestedMerkleBlocks.minusAssign(merkleBlock.blockHash.toHexString())
-        if (requestedMerkleBlocks.isEmpty()) {
-            isFree = true
-        }
+    fun filterLoad(bloomFilter: BloomFilter) {
+        peerConnection.sendMessage(FilterLoadMessage(bloomFilter))
+    }
+
+    fun addTask(task: PeerTask) {
+        tasks.add(task)
+
+        task.delegate = this
+        task.requester = this
+
+        task.start()
     }
 
     override fun disconnected(e: Exception?) {
-        listener.disconnected(this, e, requestedMerkleBlocks.keys.map { it.hexStringToByteArray() }.toTypedArray())
+        connected = false
+        listener.disconnected(this, e)
+    }
+
+    override fun handleMerkleBlock(merkleBlock: MerkleBlock, fullBlock: Boolean) {
+        listener.handleMerkleBlock(this, merkleBlock, fullBlock)
+    }
+
+    override fun onTaskCompleted(task: PeerTask) {
+        tasks.firstOrNull { it == task }?.let { completedTask ->
+            tasks.remove(completedTask)
+            listener.onTaskCompleted(this, task)
+        }
+
+        if (tasks.isEmpty()) {
+            listener.onReady(this)
+        }
+    }
+
+    override fun getBlocks(hashes: List<ByteArray>) {
+        peerConnection.sendMessage(GetBlocksMessage(hashes, network))
+    }
+
+    override fun getData(items: List<InventoryItem>) {
+        peerConnection.sendMessage(GetDataMessage(items))
+    }
+
+    override fun ping(nonce: Long) {
+        peerConnection.sendMessage(PingMessage(nonce))
+    }
+
+    override fun sendTransactionInventory(hash: ByteArray) {
+        peerConnection.sendMessage(InvMessage(InventoryItem.MSG_TX, hash))
+    }
+
+    override fun send(transaction: Transaction) {
+        peerConnection.sendMessage(TransactionMessage(transaction))
+    }
+
+    private fun handleInvMessage(message: InvMessage) {
+        for (task in tasks) {
+            if (task.handleInventoryItems(message.inventory)) {
+                return
+            }
+        }
+
+        listener.onReceiveInventoryItems(this, message.inventory)
+    }
+
+    private fun handleMerkleBlockMessage(message: MerkleBlockMessage) {
+        for (task in tasks) {
+            if (task.handleMerkleBlock(message.merkleBlock)) {
+                return
+            }
+        }
+    }
+
+    private fun handleTransactionMessage(message: TransactionMessage) {
+        for (task in tasks) {
+            if (task.handleTransaction(message.transaction)) {
+                return
+            }
+        }
+    }
+
+    private fun handlePongMessage(message: PongMessage) {
+        for (task in tasks) {
+            if (task.handlePong(message.nonce)) {
+                return
+            }
+        }
     }
 
 }

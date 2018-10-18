@@ -4,6 +4,9 @@ import bitcoin.wallet.kit.RealmFactoryMock
 import bitcoin.wallet.kit.managers.AddressManager
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.utils.AddressConverter
+import bitcoin.wallet.kit.models.TransactionOutput
+import bitcoin.wallet.kit.network.MainNet
+import bitcoin.wallet.kit.network.TestNet
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -19,6 +22,7 @@ class TransactionProcessorTest {
     private val extractor = mock(TransactionExtractor::class.java)
     private val addressManager = mock(AddressManager::class.java)
     private val addressConverter = mock(AddressConverter::class.java)
+    private val network = MainNet()
 
     lateinit var processor: TransactionProcessor
 
@@ -52,12 +56,12 @@ class TransactionProcessorTest {
 
         processor.enqueueRun()
 
-        verify(extractor).extract(transaction2)
-        verify(extractor, never()).extract(transaction1)
+        verify(extractor).extract(transaction2, realm)
+        verify(extractor, never()).extract(transaction1, realm)
 
         verify(linker).handle(transaction2, realm)
         verify(linker, never()).handle(transaction1, realm)
-        verify(addressManager).generateKeys()
+        verify(addressManager).fillGap()
 
         Assert.assertEquals(transaction2.processed, true)
     }

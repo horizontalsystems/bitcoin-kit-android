@@ -20,7 +20,6 @@ open class Block() : RealmObject() {
     @PrimaryKey
     var reversedHeaderHashHex = ""
 
-    var synced = false
     var height: Int = 0
     var header: Header? = null
     var headerHash: ByteArray = byteArrayOf()

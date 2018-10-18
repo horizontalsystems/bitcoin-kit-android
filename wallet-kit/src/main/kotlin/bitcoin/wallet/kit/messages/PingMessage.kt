@@ -2,7 +2,6 @@ package bitcoin.wallet.kit.messages
 
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
-import bitcoin.walllet.kit.utils.Utils
 import java.io.ByteArrayInputStream
 import java.io.IOException
 
@@ -18,8 +17,8 @@ class PingMessage : Message {
     var nonce: Long = 0
         internal set
 
-    constructor() : super("ping") {
-        nonce = Utils.randomLong()
+    constructor(nonce: Long) : super("ping") {
+        this.nonce = nonce
     }
 
     @Throws(IOException::class)

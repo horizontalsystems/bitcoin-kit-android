@@ -17,24 +17,24 @@ import java.io.IOException
  */
 class InvMessage : Message {
 
-    lateinit var inventory: Array<InventoryItem>
+    lateinit var inventory: List<InventoryItem>
 
     constructor() : super("inv") {
-        inventory = arrayOf()
+        inventory = listOf()
     }
 
     constructor(type: Int, hash: ByteArray) : super("inv") {
         val inv = InventoryItem()
         inv.type = type
         inv.hash = hash
-        inventory = arrayOf(inv)
+        inventory = listOf(inv)
     }
 
     @Throws(IOException::class)
     constructor(payload: ByteArray) : super("inv") {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
             val count = input.readVarInt() // do not store count
-            inventory = Array(count.toInt()) {
+            inventory = List(count.toInt()) {
                 InventoryItem(input)
             }
         }

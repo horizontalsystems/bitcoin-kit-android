@@ -10,7 +10,7 @@ abstract class NetworkParameters {
 
     val protocolVersion = 70014
     val bloomFilter = 70000
-    val networkServices = 1L
+    val networkServices = 0L
     val serviceFullNode = 1L
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 

@@ -1,12 +1,14 @@
 package bitcoin.wallet.kit.transactions
 
+import bitcoin.wallet.kit.models.PublicKey
 import bitcoin.wallet.kit.models.Transaction
 import bitcoin.wallet.kit.scripts.Script
 import bitcoin.wallet.kit.utils.AddressConverter
+import io.realm.Realm
 
 class TransactionExtractor(private val addressConverter: AddressConverter) {
 
-    fun extract(transaction: Transaction) {
+    fun extract(transaction: Transaction, realm: Realm) {
         transaction.outputs.forEach { output ->
             val script = Script(output.lockingScript)
             val pkHash = script.getPubKeyHash()
@@ -14,6 +16,14 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
                 output.scriptType = script.getScriptType()
                 output.keyHash = pkHash
                 output.address = getAddress(pkHash, script.getScriptType())
+
+                realm.where(PublicKey::class.java)
+                        .equalTo("publicKeyHash", output.keyHash)
+                        .findFirst()
+                        ?.let { pubKey ->
+                            transaction.isMine = true
+                            output.publicKey = pubKey
+                        }
             }
         }
 

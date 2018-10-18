@@ -28,6 +28,11 @@ class InventoryItem {
         this.hash = input.readBytes(32)
     }
 
+    constructor(type: Int, hash: ByteArray) {
+        this.type = type
+        this.hash = hash
+    }
+
     fun toByteArray(): ByteArray {
         return BitcoinOutput().writeInt(this.type).write(this.hash).toByteArray()
     }

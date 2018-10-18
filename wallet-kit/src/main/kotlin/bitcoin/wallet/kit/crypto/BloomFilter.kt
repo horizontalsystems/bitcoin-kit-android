@@ -1,9 +1,10 @@
 package bitcoin.wallet.kit.crypto
 
-import bitcoin.walllet.kit.utils.Utils
-import bitcoin.walllet.kit.io.BitcoinOutput
 import bitcoin.walllet.kit.crypto.MurmurHash3
+import bitcoin.walllet.kit.io.BitcoinOutput
+import bitcoin.walllet.kit.utils.Utils
 import java.lang.Double.valueOf
+import java.util.*
 
 /**
  * BloomFilter
@@ -16,7 +17,7 @@ import java.lang.Double.valueOf
  *   4 bytes    nTweak          Random value to add to the hash seed
  *   1 byte     nFlags          Filter update flags
  */
-class BloomFilter(elements: Int) {
+class BloomFilter(elements: List<ByteArray>) {
 
     /** Filter data  */
     private val filter: ByteArray
@@ -28,23 +29,24 @@ class BloomFilter(elements: Int) {
     private val nTweak = valueOf(Math.random() * Long.MAX_VALUE).toLong()
 
     /** Filter update flags  */
-    private val nFlags = UPDATE_NONE
+    private val nFlags = UPDATE_P2PUBKEY_ONLY
 
     init {
-        //
-        // We will use a false-positive rate of 0.0005 (0.05%)
-        //
-        val falsePositiveRate = 0.0005
+        val falsePositiveRate = 0.00005
         //
         // Allocate the filter array
         //
-        val size = Math.min((-1 / Math.pow(Math.log(2.0), 2.0) * elements.toDouble() * Math.log(falsePositiveRate)).toInt(),
+        val size = Math.min((-1 / Math.pow(Math.log(2.0), 2.0) * elements.size.toDouble() * Math.log(falsePositiveRate)).toInt(),
                 MAX_FILTER_SIZE * 8) / 8
         filter = ByteArray(if (size <= 0) 1 else size)
         //
         // Optimal number of hash functions for a given filter size and element count.
         //
-        nHashFuncs = Math.min((filter.size * 8 / elements.toDouble() * Math.log(2.0)).toInt(), MAX_HASH_FUNCS)
+        nHashFuncs = Math.min((filter.size * 8 / elements.size.toDouble() * Math.log(2.0)).toInt(), MAX_HASH_FUNCS)
+
+        elements.forEach {
+            insert(it)
+        }
     }
 
     /**
@@ -52,7 +54,7 @@ class BloomFilter(elements: Int) {
      *
      * @param   bytes    Object to insert
      */
-    fun insert(bytes: ByteArray) {
+    private fun insert(bytes: ByteArray) {
         for (i in 0 until nHashFuncs) {
             Utils.setBitLE(filter, MurmurHash3.hash(filter, nTweak, i, bytes))
         }
@@ -74,6 +76,19 @@ class BloomFilter(elements: Int) {
 
     override fun toString(): String {
         return "Bloom Filter of size ${filter.size} with $nHashFuncs hash functions."
+    }
+
+    override fun equals(other: Any?) = when (other) {
+        is BloomFilter -> filter.contentEquals(other.filter)
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        var result = Arrays.hashCode(filter)
+        result = 31 * result + nHashFuncs
+        result = 31 * result + nTweak.hashCode()
+        result = 31 * result + nFlags
+        return result
     }
 
     companion object {

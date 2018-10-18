@@ -1,5 +1,6 @@
 package bitcoin.wallet.kit.messages
 
+import bitcoin.wallet.kit.network.NetworkParameters
 import bitcoin.walllet.kit.io.BitcoinInput
 import bitcoin.walllet.kit.io.BitcoinOutput
 import bitcoin.walllet.kit.utils.HashUtils
@@ -19,13 +20,13 @@ import java.io.IOException
 class GetBlocksMessage : Message {
 
     private var version: Int = 0                    // uint32
-    private lateinit var hashes: Array<ByteArray>   // byte[32]
+    private lateinit var hashes: List<ByteArray>   // byte[32]
     private lateinit var hashStop: ByteArray        // hash of the last desired block header; set to zero to get as many blocks as possible (2000)
 
-    constructor(firstHash: ByteArray, hashStop: ByteArray, version: Int) : super("getblocks") {
-        hashes = arrayOf(firstHash)
-        this.version = version
-        this.hashStop = hashStop
+    constructor(blockHashes: List<ByteArray>, networkParameters: NetworkParameters) : super("getblocks") {
+        hashes = blockHashes
+        version = networkParameters.protocolVersion
+        hashStop = networkParameters.zeroHashBytes
     }
 
     @Throws(IOException::class)
@@ -33,7 +34,7 @@ class GetBlocksMessage : Message {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
             version = input.readInt()
             val hashCount = input.readVarInt() // do not keep hash count
-            hashes = Array(hashCount.toInt()) { input.readBytes(32) }
+            hashes = List(hashCount.toInt()) { input.readBytes(32) }
             hashStop = input.readBytes(32)
         }
     }

@@ -16,14 +16,14 @@ import java.io.IOException
  */
 class GetDataMessage : Message {
 
-    lateinit var inventory: Array<InventoryItem> // byte[36]
+    lateinit var inventory: List<InventoryItem> // byte[36]
 
-    constructor(inventory: Array<InventoryItem>) : super("getdata") {
+    constructor(inventory: List<InventoryItem>) : super("getdata") {
         this.inventory = inventory
     }
 
     constructor(type: Int, hashes: Array<ByteArray>) : super("getdata") {
-        inventory = Array(hashes.size) { i ->
+        inventory = List(hashes.size) { i ->
             val iv = InventoryItem()
             iv.type = type
             iv.hash = hashes[i]
@@ -35,7 +35,7 @@ class GetDataMessage : Message {
     constructor(payload: ByteArray) : super("getdata") {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
             val count = input.readVarInt() // do not store count
-            inventory = Array(count.toInt()) {
+            inventory = List(count.toInt()) {
                 InventoryItem(input)
             }
         }

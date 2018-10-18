@@ -21,7 +21,7 @@ class RealmFactoryMock {
         Realm.init(context)
 
         val configuration = RealmConfiguration.Builder()
-                .inMemory()
+                .name("test-db")
                 .modules(WalletKitModule())
                 .build()
 
