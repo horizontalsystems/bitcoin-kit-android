@@ -84,15 +84,15 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     private fun assignNextSyncPeer() {
-        if (syncPeer != null) return
-
         syncPeerQueue.execute {
-            peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
-                blockSyncer?.clearNotFullBlocks()
-                blockSyncer?.clearBlockHashes()
+            if (syncPeer == null) {
+                peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
+                    blockSyncer?.clearNotFullBlocks()
+                    blockSyncer?.clearBlockHashes()
 
-                syncPeer = nonSyncedPeer
-                downloadBlockchain()
+                    syncPeer = nonSyncedPeer
+                    downloadBlockchain()
+                }
             }
         }
     }
