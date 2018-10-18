@@ -32,7 +32,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         fun progressUpdated(walletKit: WalletKit, progress: Double)
     }
 
-    enum class NetworkType { MainNet, TestNet, RegTest }
+    enum class NetworkType { MainNet, TestNet, RegTest, MainNetBitCash, TestNetBitCash }
 
     var listener: Listener? = null
 
@@ -71,7 +71,9 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
         network = when (networkType) {
             NetworkType.MainNet -> MainNet()
+            NetworkType.MainNetBitCash -> MainNetBitcoinCash()
             NetworkType.TestNet -> TestNet()
+            NetworkType.TestNetBitCash -> TestNetBitcoinCash()
             NetworkType.RegTest -> RegTest()
         }
 
