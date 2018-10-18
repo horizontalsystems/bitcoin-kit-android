@@ -9,7 +9,7 @@ class TestNetBitcoinCash : NetworkParameters() {
 
     override var port: Int = 18333
 
-    override var magic: Long = 0xf4e5f3f4
+    override var magic: Long = 0xf4f3e5f4
     override var bip32HeaderPub: Int = 0x043587cf
     override var bip32HeaderPriv: Int = 0x04358394
     override var addressVersion: Int = 111

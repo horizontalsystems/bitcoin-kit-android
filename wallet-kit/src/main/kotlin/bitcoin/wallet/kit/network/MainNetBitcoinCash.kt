@@ -9,7 +9,7 @@ class MainNetBitcoinCash : NetworkParameters() {
 
     override var port: Int = 8333
 
-    override var magic: Long = 0xe3e1f3e8L
+    override var magic: Long = 0xe8f3e1e3L
     override var bip32HeaderPub: Int = 0x0488b21e
     override var bip32HeaderPriv: Int = 0x0488ade4
     override var addressVersion: Int = 0
