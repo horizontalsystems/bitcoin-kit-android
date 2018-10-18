@@ -9,7 +9,7 @@ class MainNetBitcoinCash : NetworkParameters() {
 
     override var port: Int = 8333
 
-    override var magic: Long = 0xe3e1f3e8L
+    override var magic: Long = 0xe8f3e1e3L
     override var bip32HeaderPub: Int = 0x0488b21e
     override var bip32HeaderPriv: Int = 0x0488ade4
     override var addressVersion: Int = 0
@@ -23,7 +23,7 @@ class MainNetBitcoinCash : NetworkParameters() {
 
     private val blockHeader = Header().apply {
         version = 536870912
-        prevHash = HashUtils.toBytesAsLE("000000000000000000640772774c4c5c923397129370c8edf05c3792de1dcb4e")
+        prevHash = HashUtils.toBytesAsLE("000000000000000000655a3bd7efe6e1ec813ba81fb182c48beb29e8c491a62c")
         merkleHash = HashUtils.toBytesAsLE("254af3f28c30beac4fffaf6d64d2dabeb5bd5644462c53ec9504eda180b59cfa")
         timestamp = 1535105951
         bits = 0x180216f4
