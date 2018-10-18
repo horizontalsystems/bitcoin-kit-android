@@ -10,7 +10,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
-import bitcoin.wallet.kit.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
 
 class SendReceiveFragment : Fragment() {
 

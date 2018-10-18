@@ -10,7 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import bitcoin.wallet.kit.models.TransactionInfo
+import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 
 class TransactionsFragment : Fragment() {
 

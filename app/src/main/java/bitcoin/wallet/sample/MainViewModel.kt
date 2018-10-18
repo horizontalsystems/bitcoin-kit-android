@@ -2,9 +2,9 @@ package bitcoin.wallet.sample
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
-import bitcoin.wallet.kit.WalletKit
-import bitcoin.wallet.kit.models.BlockInfo
-import bitcoin.wallet.kit.models.TransactionInfo
+import io.horizontalsystems.bitcoinkit.WalletKit
+import io.horizontalsystems.bitcoinkit.models.BlockInfo
+import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 
 class MainViewModel : ViewModel(), WalletKit.Listener {
 

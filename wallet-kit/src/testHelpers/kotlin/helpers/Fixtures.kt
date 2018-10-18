@@ -1,9 +1,9 @@
 package helpers
 
-import bitcoin.wallet.kit.core.hexStringToByteArray
-import bitcoin.wallet.kit.models.*
-import bitcoin.wallet.kit.scripts.ScriptType
-import bitcoin.walllet.kit.utils.HashUtils
+import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
+import io.horizontalsystems.bitcoinkit.models.*
+import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
 object Fixtures {
 

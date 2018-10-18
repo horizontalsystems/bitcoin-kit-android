@@ -1,8 +1,8 @@
 package bitcoin.wallet.sample
 
 import android.app.Application
-import bitcoin.wallet.kit.WalletKit
 import com.squareup.leakcanary.LeakCanary
+import io.horizontalsystems.bitcoinkit.WalletKit
 
 class App : Application() {
 
