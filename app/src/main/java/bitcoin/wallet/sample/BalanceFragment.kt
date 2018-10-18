@@ -13,6 +13,7 @@ import android.widget.TextView
 class BalanceFragment : Fragment() {
 
     lateinit var viewModel: MainViewModel
+    lateinit var networkName: TextView
     lateinit var balanceValue: TextView
     lateinit var lastBlockValue: TextView
     lateinit var startButton: Button
@@ -51,6 +52,9 @@ class BalanceFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        networkName = view.findViewById(R.id.networkName)
+        networkName.text = viewModel.networkName
 
         balanceValue = view.findViewById(R.id.balanceValue)
         lastBlockValue = view.findViewById(R.id.lastBlockValue)

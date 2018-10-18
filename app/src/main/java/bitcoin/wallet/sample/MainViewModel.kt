@@ -16,6 +16,7 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
     val balance = MutableLiveData<Long>()
     val lastBlockHeight = MutableLiveData<Int>()
     val status = MutableLiveData<State>()
+    val networkName: String
 
     private var started = false
         set(value) {
@@ -27,12 +28,14 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
 
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
-        walletKit = WalletKit(words, WalletKit.NetworkType.TestNet)
+        val networkType = WalletKit.NetworkType.TestNet
 
+        walletKit = WalletKit(words, networkType)
         walletKit.listener = this
 
-        transactions.value = walletKit.transactions.asReversed()
+        networkName = networkType.name
         balance.value = walletKit.balance
+        transactions.value = walletKit.transactions.asReversed()
         lastBlockHeight.value = walletKit.lastBlockHeight
 
         started = false
