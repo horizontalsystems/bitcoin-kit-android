@@ -22,7 +22,7 @@ class AddressManager(private val realmFactory: RealmFactory,
 
     @Throws
     fun receiveAddress(): String {
-        return addressConverter.convert(getPublicKey(HDWallet.Chain.EXTERNAL).publicKey).toString()
+        return addressConverter.convert(getPublicKey(HDWallet.Chain.EXTERNAL).publicKey).string
     }
 
     fun fillGap() {
