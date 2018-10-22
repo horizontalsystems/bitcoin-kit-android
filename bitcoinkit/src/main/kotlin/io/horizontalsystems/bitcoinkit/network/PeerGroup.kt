@@ -31,6 +31,8 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     override fun run() {
+        blockSyncer?.prepareForDownload()
+
         running = true
         // loop:
         while (running) {
@@ -87,10 +89,8 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         syncPeerQueue.execute {
             if (syncPeer == null) {
                 peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
-                    blockSyncer?.clearNotFullBlocks()
-                    blockSyncer?.clearBlockHashes()
-
                     syncPeer = nonSyncedPeer
+                    blockSyncer?.downloadStarted()
                     downloadBlockchain()
                 }
             }
@@ -113,6 +113,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         }
 
         if (syncPeer?.synced == true) {
+            blockSyncer?.downloadCompleted()
             syncPeer = null
             assignNextSyncPeer()
         }
@@ -129,6 +130,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
         // it restores syncPeer on next connection
         if (syncPeer == peer) {
+            blockSyncer?.downloadFailed()
             syncPeer = null
             assignNextSyncPeer()
         }
@@ -174,17 +176,15 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
                 }
             }
             is GetMerkleBlocksTask -> {
-                blockSyncer?.clearNotFullBlocks()
+                blockSyncer?.downloadIterationCompleted()
             }
             else -> throw Exception("Task not handled: ${task}")
         }
     }
 
-    override fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock, fullBlock: Boolean) {
+    override fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock) {
         try {
-            blockSyncer?.handleMerkleBlock(merkleBlock, fullBlock)
-        } catch (e: BlockSyncer.Error.NextBlockNotFull) {
-            throw e
+            blockSyncer?.handleMerkleBlock(merkleBlock)
         } catch (e: Exception) {
             peer.close()
         }

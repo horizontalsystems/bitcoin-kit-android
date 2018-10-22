@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit
 
 import android.content.Context
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
-import io.horizontalsystems.bitcoinkit.blocks.BlockchainBuilder
+import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoinkit.managers.*
@@ -10,6 +10,8 @@ import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionCreator
+import io.horizontalsystems.bitcoinkit.transactions.TransactionExtractor
+import io.horizontalsystems.bitcoinkit.transactions.TransactionLinker
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
@@ -84,12 +86,16 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         val bloomFilterManager = BloomFilterManager(pubKeys.map { it.publicKey }, realmFactory)
 
         addressConverter = AddressConverter(network)
-        addressManager = AddressManager(realmFactory, wallet, bloomFilterManager, addressConverter)
-        val transactionProcessor = TransactionProcessor(realmFactory, addressManager, addressConverter)
+        addressManager = AddressManager(realmFactory, wallet, addressConverter)
+
+        val transactionExtractor = TransactionExtractor(addressConverter)
+        val transactionLinker = TransactionLinker()
+
+        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker)
         val addressConverter = AddressConverter(network)
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
-        peerGroup.blockSyncer = BlockSyncer(realmFactory, BlockchainBuilder(network), transactionProcessor, addressManager, network)
+        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, network)
 
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")

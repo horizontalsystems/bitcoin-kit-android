@@ -46,7 +46,7 @@ open class PeerTask {
 
 interface IPeerTaskDelegate {
     fun onTaskCompleted(task: PeerTask)
-    fun handleMerkleBlock(merkleBlock: MerkleBlock, fullBlock: Boolean)
+    fun handleMerkleBlock(merkleBlock: MerkleBlock)
 }
 
 interface IPeerTaskRequester {

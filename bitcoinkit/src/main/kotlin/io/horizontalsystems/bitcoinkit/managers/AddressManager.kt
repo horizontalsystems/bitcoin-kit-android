@@ -1,9 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
-import io.horizontalsystems.bitcoinkit.core.changePublicKey
 import io.horizontalsystems.bitcoinkit.core.publicKey
-import io.horizontalsystems.bitcoinkit.core.receivePublicKey
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -12,7 +10,6 @@ import io.realm.Sort
 
 class AddressManager(private val realmFactory: RealmFactory,
                      private val hdWallet: HDWallet,
-                     private val bloomFilterManager: BloomFilterManager,
                      private val addressConverter: AddressConverter) {
 
     @Throws
@@ -47,8 +44,6 @@ class AddressManager(private val realmFactory: RealmFactory,
         }
 
         realm.close()
-
-        bloomFilterManager.regenerateBloomFilter()
     }
 
     fun gapShifts(realm: Realm): Boolean {
@@ -90,28 +85,11 @@ class AddressManager(private val realmFactory: RealmFactory,
                 .sort("index")
                 .findAll()
 
-        val notUsedKey = existingKeys.find { it.outputs?.size == 0 }
+        return existingKeys.find { it.outputs?.size == 0 } ?: throw Error.NoUnusedPublicKey
+    }
 
-        if (notUsedKey != null) {
-            return notUsedKey
-        }
-
-        val newIndex = (existingKeys.lastOrNull()?.index ?: -1) + 1
-
-        val newPublicKey = when (chain) {
-            HDWallet.Chain.EXTERNAL -> hdWallet.receivePublicKey(newIndex)
-            else -> hdWallet.changePublicKey(newIndex)
-        }
-
-        realm.executeTransaction {
-            it.insert(newPublicKey)
-        }
-
-        realm.close()
-
-        bloomFilterManager.regenerateBloomFilter()
-
-        return newPublicKey
+    object Error {
+        object NoUnusedPublicKey : Exception()
     }
 
 }

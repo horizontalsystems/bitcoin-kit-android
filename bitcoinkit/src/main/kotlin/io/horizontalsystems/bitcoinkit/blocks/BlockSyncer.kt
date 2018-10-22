@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
+import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
@@ -12,10 +13,13 @@ import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Sort
 
 class BlockSyncer(private val realmFactory: RealmFactory,
-                  private val blockchainBuilder: BlockchainBuilder,
+                  private val blockchain: Blockchain,
                   private val transactionProcessor: TransactionProcessor,
                   private val addressManager: AddressManager,
+                  private val bloomFilterManager: BloomFilterManager,
                   private val network: NetworkParameters) {
+
+    private var needToRedownload = false
 
     init {
         val realm = realmFactory.realm
@@ -32,6 +36,39 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
     }
 
+    fun prepareForDownload() {
+        needToRedownload = false
+        addressManager.fillGap()
+
+        clearNotFullBlocks()
+        clearBlockHashes()
+
+        handleFork()
+
+        bloomFilterManager.regenerateBloomFilter()
+    }
+
+    fun downloadStarted() {
+    }
+
+    fun downloadIterationCompleted() {
+        needToRedownload = false
+        addressManager.fillGap()
+        bloomFilterManager.regenerateBloomFilter()
+    }
+
+    fun downloadCompleted() {
+        handleFork()
+    }
+
+    fun downloadFailed() {
+        prepareForDownload()
+    }
+
+    private fun handleFork() {
+        // todo
+    }
+
     fun getBlockHashes(): List<ByteArray> {
         val realm = realmFactory.realm
         val blockHashes = realm.where(BlockHash::class.java)
@@ -45,7 +82,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
     }
 
     // we need to clear block hashes when sync peer is disconnected
-    fun clearBlockHashes() {
+    private fun clearBlockHashes() {
         val realm = realmFactory.realm
 
         realm.executeTransaction {
@@ -106,41 +143,32 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
     }
 
-    @Throws(Error.NextBlockNotFull::class)
-    fun handleMerkleBlock(merkleBlock: MerkleBlock, fullBlock: Boolean) {
+    fun handleMerkleBlock(merkleBlock: MerkleBlock) {
         val realm = realmFactory.realm
 
-        val block = blockchainBuilder.connect(merkleBlock, realm)
-
-        var newUnspentOutput = false
-
         realm.executeTransaction {
-            val managedBlock = realm.copyToRealm(block)
+            val block = blockchain.connect(merkleBlock, realm)
 
-            merkleBlock.associatedTransactions.forEach { transaction ->
+            for (transaction in merkleBlock.associatedTransactions) {
+                val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
+
+                if (transactionInDB != null) {
+                    transactionInDB.status = Transaction.Status.RELAYED
+                    transactionInDB.block = block
+                    continue
+                }
+
                 transactionProcessor.process(transaction, realm)
+
                 if (transaction.isMine) {
-                    val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
+                    transaction.block = block
+                    realm.insert(transaction)
 
-                    if (transactionInDB != null) {
-                        transactionInDB.status = Transaction.Status.RELAYED
-                        transactionInDB.block = managedBlock
-                    } else {
-                        transaction.block = managedBlock
-                        realm.insert(transaction)
-                    }
-
-                    if (fullBlock && !newUnspentOutput) {
-                        for (output in transaction.outputs) {
-                            if (output.scriptType == ScriptType.P2WPKH) {
-                                newUnspentOutput = true
-                            }
-                        }
-                    }
+                    needToRedownload = needToRedownload || addressManager.gapShifts(realm) || transaction.outputs.any { output -> output.scriptType == ScriptType.P2PK || output.scriptType == ScriptType.P2WPKH }
                 }
             }
 
-            if (fullBlock) {
+            if (!needToRedownload) {
                 realm.where(BlockHash::class.java)
                         .equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex)
                         .findFirst()
@@ -148,16 +176,10 @@ class BlockSyncer(private val realmFactory: RealmFactory,
             }
         }
 
-        if (fullBlock && (addressManager.gapShifts(realm) || newUnspentOutput)) {
-            throw Error.NextBlockNotFull
-        }
-
         realm.close()
     }
 
-    fun clearNotFullBlocks() {
-        addressManager.fillGap()
-
+    private fun clearNotFullBlocks() {
         val realm = realmFactory.realm
 
         val toDelete = realm.where(BlockHash::class.java).findAll().map { it.reversedHeaderHashHex }.toTypedArray()
@@ -190,10 +212,6 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
 
         return !blockExist
-    }
-
-    object Error {
-        object NextBlockNotFull : Exception()
     }
 
 }
