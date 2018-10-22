@@ -58,13 +58,11 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
                 }
 
                 // try receive message:
-                if (isRunning && input.available() > 0) {
-                    while (input.available() > 0) {
-                        val inputStream = BitcoinInput(input)
-                        val parsedMsg = Message.Builder.parseMessage<Message>(inputStream, network)
-                        logger.info("<= $parsedMsg")
-                        listener.onMessage(parsedMsg)
-                    }
+                while (isRunning && input.available() > 0) {
+                    val inputStream = BitcoinInput(input)
+                    val parsedMsg = Message.Builder.parseMessage<Message>(inputStream, network)
+                    logger.info("<= $parsedMsg")
+                    listener.onMessage(parsedMsg)
                 }
             }
 
