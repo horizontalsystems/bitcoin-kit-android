@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
 import helpers.Fixtures
+import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.TestNet
@@ -12,6 +13,9 @@ import org.junit.Before
 import org.junit.Test
 
 class TransactionExtractorTest {
+    private val realmFactoryMock = RealmFactoryMock()
+    private val realm = realmFactoryMock.realmFactory.realm
+
     lateinit var transaction: Transaction
     lateinit var extractor: TransactionExtractor
 
@@ -29,7 +33,7 @@ class TransactionExtractorTest {
         assertNull(transaction.outputs[0]?.keyHash)
         assertNull(transaction.outputs[1]?.keyHash)
 
-        extractor.extract(transaction)
+        extractor.extract(transaction, realm)
 
         // output
         assertEquals(ScriptType.P2PKH, transaction.outputs[0]?.scriptType)
@@ -52,7 +56,7 @@ class TransactionExtractorTest {
         assertNull(transaction.outputs[0]?.keyHash)
         assertNull(transaction.outputs[1]?.keyHash)
 
-        extractor.extract(transaction)
+        extractor.extract(transaction, realm)
 
         // output
         assertEquals(ScriptType.P2SH, transaction.outputs[0]?.scriptType)
@@ -75,7 +79,7 @@ class TransactionExtractorTest {
         assertNull(transaction.outputs[0]?.keyHash)
         assertNull(transaction.outputs[1]?.keyHash)
 
-        extractor.extract(transaction)
+        extractor.extract(transaction, realm)
 
         assertEquals(ScriptType.P2PK, transaction.outputs[0]?.scriptType)
         assertEquals("fc916f213a3d7f1369313d5fa30f6168f9446a2d", transaction.outputs[0]?.keyHash?.toHexString())
