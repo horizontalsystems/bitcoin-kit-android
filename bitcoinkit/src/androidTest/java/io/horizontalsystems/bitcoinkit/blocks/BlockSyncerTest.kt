@@ -1,12 +1,13 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
+import com.nhaarman.mockito_kotlin.never
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
+import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.network.MainNet
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Realm
 import junit.framework.Assert
@@ -14,13 +15,14 @@ import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
 
-class BlockSyncerHandleMerkleBlockTest {
+class BlockSyncerTest {
     private val factories = RealmFactoryMock()
     private val realm = factories.realmFactory.realm
     private val network = MainNet()
-    private val blockchainBuilder = mock(BlockchainBuilder::class.java)
+    private val blockchain = mock(Blockchain::class.java)
     private val transactionProcessor = mock(TransactionProcessor::class.java)
     private val addressManager = mock(AddressManager::class.java)
+    private val bloomFilterManager = mock(BloomFilterManager::class.java)
 
     private lateinit var blockSyncer: BlockSyncer
 
@@ -35,11 +37,15 @@ class BlockSyncerHandleMerkleBlockTest {
             realm.deleteAll()
         }
 
-        blockSyncer = BlockSyncer(factories.realmFactory, blockchainBuilder, transactionProcessor, addressManager, network)
+        blockSyncer = BlockSyncer(factories.realmFactory, blockchain, transactionProcessor, addressManager, bloomFilterManager, network)
 
-        block = Block(Header().apply {
-            this.prevHash = network.checkpointBlock.headerHash
-        }, realm.where(Block::class.java).findFirst()!!)
+        realm.executeTransaction {
+            block = realm.copyToRealm(Block(Header().apply {
+                this.prevHash = network.checkpointBlock.headerHash
+            }, realm.where(Block::class.java).findFirst()!!))
+
+            realm.insert(BlockHash(block.headerHash, 0, 1))
+        }
 
         transactionMine = Transaction().apply {
             hashHexReversed = "transaction1_1"
@@ -56,9 +62,6 @@ class BlockSyncerHandleMerkleBlockTest {
             associatedTransactions.addAll(listOf(transactionMine, transactionNotMine))
         }
 
-        realm.executeTransaction {
-            realm.insert(BlockHash(block.headerHash, 0, 1))
-        }
     }
 
     @Test
@@ -69,11 +72,11 @@ class BlockSyncerHandleMerkleBlockTest {
             realm.insert(transactionMine)
         }
 
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
+        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
 
-        blockSyncer.handleMerkleBlock(merkleBlock, true)
+        blockSyncer.handleMerkleBlock(merkleBlock)
 
-        verify(transactionProcessor).process(transactionMine, realm)
+        verify(transactionProcessor, never()).process(transactionMine, realm)
 
         val realm1 = factories.realmFactory.realm
 
@@ -84,9 +87,9 @@ class BlockSyncerHandleMerkleBlockTest {
 
     @Test
     fun handleMerkleBlock_onlyMyTransactionsSaved() {
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
+        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
 
-        blockSyncer.handleMerkleBlock(merkleBlock, true)
+        blockSyncer.handleMerkleBlock(merkleBlock)
 
         verify(transactionProcessor).process(transactionMine, realm)
         verify(transactionProcessor).process(transactionNotMine, realm)
@@ -98,25 +101,10 @@ class BlockSyncerHandleMerkleBlockTest {
     }
 
     @Test
-    fun handleMerkleBlock_hasNewOutput_exceptionThrown() {
-        transactionMine.outputs.add(TransactionOutput().apply {
-            scriptType = ScriptType.P2WPKH
-        })
-
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
-
-        try {
-            blockSyncer.handleMerkleBlock(merkleBlock, true)
-            Assert.fail("Expected exception")
-        } catch (e: BlockSyncer.Error.NextBlockNotFull) {
-        }
-    }
-
-    @Test
     fun handleMerkleBlock_blockSaved() {
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
+        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
 
-        blockSyncer.handleMerkleBlock(merkleBlock, true)
+        blockSyncer.handleMerkleBlock(merkleBlock)
 
         val realm1 = factories.realmFactory.realm
 
@@ -124,22 +112,10 @@ class BlockSyncerHandleMerkleBlockTest {
     }
 
     @Test
-    fun handleMerkleBlock_gapShiftsTrue_exceptionThrown() {
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
-        whenever(addressManager.gapShifts(realm)).thenReturn(true)
-
-        try {
-            blockSyncer.handleMerkleBlock(merkleBlock, true)
-            Assert.fail("Expected exception")
-        } catch (e: BlockSyncer.Error.NextBlockNotFull) {
-        }
-    }
-
-    @Test
     fun handleMerkleBlock_FullBlock_blockHashDeleted() {
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
+        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
 
-        blockSyncer.handleMerkleBlock(merkleBlock, true)
+        blockSyncer.handleMerkleBlock(merkleBlock)
 
         val realm1 = factories.realmFactory.realm
         assertBlockHashNotPresent(block.reversedHeaderHashHex, realm1)
@@ -147,12 +123,7 @@ class BlockSyncerHandleMerkleBlockTest {
 
     @Test
     fun handleMerkleBlock_NotFullBlock_blockHashNotDeleted() {
-        whenever(blockchainBuilder.connect(merkleBlock, realm)).thenReturn(block)
-
-        blockSyncer.handleMerkleBlock(merkleBlock, false)
-
-        val realm1 = factories.realmFactory.realm
-        assertBlockHashPresent(block.reversedHeaderHashHex, realm1)
+        // todo
     }
 
     private fun assertBlockHashPresent(reversedHeaderHashHex: String, realm: Realm) {

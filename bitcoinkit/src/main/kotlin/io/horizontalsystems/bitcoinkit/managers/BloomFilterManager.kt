@@ -2,10 +2,12 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
+import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.Utils
+import io.realm.Sort
 
 class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: RealmFactory) {
 
@@ -33,17 +35,23 @@ class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: Re
             elements.add(publicKey.scriptHashP2WPKH)
         }
 
-        val unspentOutputs = realm.where(TransactionOutput::class.java)
+        var transactionOutputs: List<TransactionOutput> = realm.where(TransactionOutput::class.java)
                 .isNull("publicKey")
                 .`in`("scriptType", arrayOf(ScriptType.P2WPKH, ScriptType.P2PK))
                 .findAll()
-                .filter { it.inputs?.size ?: 0 == 0 }
 
-        for (output in unspentOutputs) {
+        realm.where(Block::class.java)
+                .sort("height", Sort.DESCENDING)
+                .findFirst()
+                ?.height
+                ?.let { bestBlockHeight ->
+                    transactionOutputs = transactionOutputs.filter { needToSetToBloomFilter(it, bestBlockHeight) }
+                }
+
+        for (output in transactionOutputs) {
             output.transaction?.let { transaction ->
                 val outpoint = transaction.hash + Utils.intToByteArray(output.index).reversedArray()
                 elements.add(outpoint)
-
             }
         }
 
@@ -57,6 +65,19 @@ class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: Re
         }
 
         realm.close()
+    }
+
+    /**
+     * @return false if transaction output is spent more then 100 blocks before, otherwise true
+     */
+    private fun needToSetToBloomFilter(output: TransactionOutput, bestBlockHeight: Int): Boolean {
+        if (output.inputs == null || output.inputs.size == 0) {
+            return true
+        }
+
+        val outputSpentBlockHeight = output.inputs.firstOrNull()?.transaction?.block?.height
+
+        return outputSpentBlockHeight == null || bestBlockHeight - outputSpentBlockHeight < 100
     }
 
 }

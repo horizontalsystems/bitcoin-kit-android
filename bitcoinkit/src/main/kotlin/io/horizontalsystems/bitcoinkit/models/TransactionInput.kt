@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.models
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
+import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.annotations.LinkingObjects
@@ -44,6 +45,7 @@ open class TransactionInput : RealmObject {
     constructor()
     constructor(input: BitcoinInput) {
         previousOutputHash = input.readBytes(32)
+        previousOutputHexReversed = HashUtils.toHexStringAsLE(previousOutputHash)
         previousOutputIndex = input.readUnsignedInt()
         val sigScriptLength = input.readVarInt()
         sigScript = input.readBytes(sigScriptLength.toInt())

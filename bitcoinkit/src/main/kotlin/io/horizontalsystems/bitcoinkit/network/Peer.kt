@@ -20,7 +20,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         fun onReady(peer: Peer)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
         fun onTaskCompleted(peer: Peer, task: PeerTask)
-        fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock, fullBlock: Boolean)
+        fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
     }
 
     private val peerConnection = PeerConnection(host, network, this)
@@ -115,8 +115,8 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         listener.disconnected(this, e)
     }
 
-    override fun handleMerkleBlock(merkleBlock: MerkleBlock, fullBlock: Boolean) {
-        listener.handleMerkleBlock(this, merkleBlock, fullBlock)
+    override fun handleMerkleBlock(merkleBlock: MerkleBlock) {
+        listener.handleMerkleBlock(this, merkleBlock)
     }
 
     override fun onTaskCompleted(task: PeerTask) {

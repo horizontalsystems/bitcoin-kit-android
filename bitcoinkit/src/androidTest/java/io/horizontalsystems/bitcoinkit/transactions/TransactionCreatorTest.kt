@@ -32,8 +32,6 @@ class TransactionCreatorTest {
         realm.commitTransaction()
 
         whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any(), any())).thenReturn(Fixtures.transactionP2PKH)
-        whenever(transactionProcessor.enqueueRun()).then { }
-        whenever(peerGroup.relay(any())).then { }
         whenever(addressManager.changePublicKey()).thenReturn(Fixtures.publicKey)
     }
 
@@ -44,7 +42,7 @@ class TransactionCreatorTest {
         val insertedTx = realm.where(Transaction::class.java).equalTo("hashHexReversed", Fixtures.transactionP2PKH.hashHexReversed).findFirst()
 
         assertTrue(insertedTx != null)
-        verify(transactionProcessor).enqueueRun()
+        verify(transactionProcessor).process(Fixtures.transactionP2PKH, realm)
         verify(peerGroup).relay(argThat { hashHexReversed == Fixtures.transactionP2PKH.hashHexReversed })
     }
 
@@ -65,8 +63,8 @@ class TransactionCreatorTest {
             assertTrue(ex is RealmException)
         }
 
-        verify(transactionProcessor, never()).enqueueRun()
-        verify(peerGroup, never()).relay(any())
+        verifyNoMoreInteractions(transactionProcessor)
+        verifyNoMoreInteractions(peerGroup)
     }
 
 }

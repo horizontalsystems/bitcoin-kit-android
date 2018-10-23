@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.network.PeerTask
 
-import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
@@ -10,7 +9,6 @@ class GetMerkleBlocksTask(hashes: List<ByteArray>) : PeerTask() {
 
     private var hashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
-    private var nextBlockFull = true
 
     override fun start() {
         val items = hashes.map { hash ->
@@ -53,11 +51,7 @@ class GetMerkleBlocksTask(hashes: List<ByteArray>) : PeerTask() {
             hashes.remove(it)
         }
 
-        try {
-            delegate?.handleMerkleBlock(merkleBlock, nextBlockFull)
-        } catch (e: BlockSyncer.Error.NextBlockNotFull) {
-            nextBlockFull = false
-        }
+        delegate?.handleMerkleBlock(merkleBlock)
 
         if (hashes.isEmpty()) {
             delegate?.onTaskCompleted(this)

@@ -28,7 +28,7 @@ class BloomFilter(elements: List<ByteArray>) {
     private val nTweak = valueOf(Math.random() * Long.MAX_VALUE).toLong()
 
     /** Filter update flags  */
-    private val nFlags = UPDATE_P2PUBKEY_ONLY
+    private val nFlags = UPDATE_NONE
 
     init {
         val falsePositiveRate = 0.00005

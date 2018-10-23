@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoinkit.utils.HashUtils
 class RegTest : NetworkParameters() {
     override var port: Int = 18444
 
-    override var magic: Long = 0xfabfb5da
+    override var magic: Long = 0xdab5bffa
     override var bip32HeaderPub: Int = 0x043587CF
     override var bip32HeaderPriv: Int = 0x04358394
     override var addressVersion: Int = 111
@@ -26,12 +26,12 @@ class RegTest : NetworkParameters() {
     override val blockValidator = TestnetValidator(this)
 
     private val blockHeader = Header().apply {
-        version = 536870912
-        prevHash = HashUtils.toBytesAsLE("00000000000000000000943de85f4495f053ff55f27d135edc61c27990c2eec5")
-        merkleHash = HashUtils.toBytesAsLE("167bf70981d49388d07881b1a448ff9b79cf2a32716e45c535345823d8cdd541")
-        timestamp = 1533980459
-        bits = 388763047
-        nonce = 1545867530
+        version = 1
+        prevHash = zeroHashBytes
+        merkleHash = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b")
+        timestamp = 1296688602
+        bits = 545259519
+        nonce = 2
     }
 
     override val checkpointBlock = Block(blockHeader, 0)

@@ -25,11 +25,13 @@ class TransactionCreator(private val realmFactory: RealmFactory,
         }
 
         realm.executeTransaction {
-            it.insert(transaction)
+            realm.insert(transaction)
+            processor.process(transaction, realm)
         }
 
-        processor.enqueueRun()
         peerGroup.relay(transaction)
+
+        realm.close()
     }
 
     open class TransactionCreationException(msg: String) : Exception(msg)
