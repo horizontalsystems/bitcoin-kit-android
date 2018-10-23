@@ -24,6 +24,7 @@ open class Block() : RealmObject() {
     var header: Header? = null
     var headerHash: ByteArray = byteArrayOf()
     var previousBlock: Block? = null
+    var stale = false
 
     @LinkingObjects("block")
     val transactions: RealmResults<Transaction>? = null
