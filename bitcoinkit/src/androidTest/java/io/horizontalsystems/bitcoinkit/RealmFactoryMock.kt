@@ -22,6 +22,7 @@ class RealmFactoryMock {
 
         val configuration = RealmConfiguration.Builder()
                 .name("test-db")
+                .deleteRealmIfMigrationNeeded()
                 .modules(BitcoinKitModule())
                 .build()
 
