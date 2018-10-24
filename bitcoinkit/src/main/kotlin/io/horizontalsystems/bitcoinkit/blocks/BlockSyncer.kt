@@ -66,7 +66,9 @@ class BlockSyncer(private val realmFactory: RealmFactory,
     }
 
     private fun handleFork() {
-        // todo
+        realmFactory.realm.use {
+            blockchain.handleFork(it)
+        }
     }
 
     fun getBlockHashes(): List<ByteArray> {
