@@ -16,6 +16,7 @@ class BalanceFragment : Fragment() {
     lateinit var networkName: TextView
     lateinit var balanceValue: TextView
     lateinit var lastBlockValue: TextView
+    lateinit var progressValue: TextView
     lateinit var startButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -30,6 +31,11 @@ class BalanceFragment : Fragment() {
 
             viewModel.lastBlockHeight.observe(this, Observer {
                 lastBlockValue.text = (it ?: 0).toString()
+            })
+
+            viewModel.progress.observe(this, Observer {
+                val percentage = (it ?: 0.0) * 100
+                progressValue.text = "${percentage}%"
             })
 
             viewModel.status.observe(this, Observer {
@@ -58,6 +64,7 @@ class BalanceFragment : Fragment() {
 
         balanceValue = view.findViewById(R.id.balanceValue)
         lastBlockValue = view.findViewById(R.id.lastBlockValue)
+        progressValue = view.findViewById(R.id.progressValue)
         startButton = view.findViewById(R.id.buttonStart)
 
         startButton.setOnClickListener {
