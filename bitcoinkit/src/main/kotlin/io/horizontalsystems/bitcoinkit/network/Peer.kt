@@ -152,6 +152,14 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.sendMessage(TransactionMessage(transaction))
     }
 
+    fun handleRelayedTransaction(hash: ByteArray): Boolean {
+        return tasks.any { it.handleRelayedTransaction(hash) }
+    }
+
+    fun isRequestingInventory(hash: ByteArray): Boolean {
+        return tasks.any { it.isRequestingInventory(hash) }
+    }
+
     private fun handleInvMessage(message: InvMessage) {
         for (task in tasks) {
             if (task.handleInventoryItems(message.inventory)) {

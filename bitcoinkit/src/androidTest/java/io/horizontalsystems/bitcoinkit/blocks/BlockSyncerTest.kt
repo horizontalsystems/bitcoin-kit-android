@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
-import com.nhaarman.mockito_kotlin.never
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
@@ -65,42 +64,6 @@ class BlockSyncerTest {
     }
 
     @Test
-    fun handleMerkleBlock_transactionAlreadyInDB() {
-        realm.executeTransaction {
-            transactionMine.status = Transaction.Status.NEW
-
-            realm.insert(transactionMine)
-        }
-
-        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
-
-        blockSyncer.handleMerkleBlock(merkleBlock)
-
-        verify(transactionProcessor, never()).process(transactionMine, realm)
-
-        val realm1 = factories.realmFactory.realm
-
-        val transactionInDB = realm1.where(Transaction::class.java).equalTo("hashHexReversed", transactionMine.hashHexReversed).findFirst()
-        Assert.assertEquals(Transaction.Status.RELAYED, transactionInDB?.status)
-        Assert.assertEquals(block.reversedHeaderHashHex, transactionInDB?.block?.reversedHeaderHashHex)
-    }
-
-    @Test
-    fun handleMerkleBlock_onlyMyTransactionsSaved() {
-        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
-
-        blockSyncer.handleMerkleBlock(merkleBlock)
-
-        verify(transactionProcessor).process(transactionMine, realm)
-        verify(transactionProcessor).process(transactionNotMine, realm)
-
-        val realm1 = factories.realmFactory.realm
-
-        assertTransactionSaved(transactionMine, block, realm1)
-        assertTransactionNotSaved(transactionNotMine, realm1)
-    }
-
-    @Test
     fun handleMerkleBlock_blockSaved() {
         whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
 
@@ -112,18 +75,26 @@ class BlockSyncerTest {
     }
 
     @Test
-    fun handleMerkleBlock_FullBlock_blockHashDeleted() {
+    fun handleMerkleBlock_BloomFilterNotExpired_blockHashDeleted() {
         whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
 
         blockSyncer.handleMerkleBlock(merkleBlock)
+
+        verify(transactionProcessor).process(merkleBlock.associatedTransactions, block, true, realm)
 
         val realm1 = factories.realmFactory.realm
         assertBlockHashNotPresent(block.reversedHeaderHashHex, realm1)
     }
 
     @Test
-    fun handleMerkleBlock_NotFullBlock_blockHashNotDeleted() {
-        // todo
+    fun handleMerkleBlock_BloomFilterExpired_blockHashNotDeleted() {
+        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
+        whenever(transactionProcessor.process(merkleBlock.associatedTransactions, block, true, realm)).thenThrow(BloomFilterManager.BloomFilterExpired)
+
+        blockSyncer.handleMerkleBlock(merkleBlock)
+
+        val realm1 = factories.realmFactory.realm
+        assertBlockHashPresent(block.reversedHeaderHashHex, realm1)
     }
 
     private fun assertBlockHashPresent(reversedHeaderHashHex: String, realm: Realm) {

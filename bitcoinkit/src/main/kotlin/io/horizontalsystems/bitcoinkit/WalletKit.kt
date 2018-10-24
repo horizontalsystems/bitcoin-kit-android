@@ -10,10 +10,7 @@ import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.transactions.TransactionCreator
-import io.horizontalsystems.bitcoinkit.transactions.TransactionExtractor
-import io.horizontalsystems.bitcoinkit.transactions.TransactionLinker
-import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
+import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -97,11 +94,12 @@ class WalletKit(words: List<String>, networkType: NetworkType) : PeerGroup.LastB
         val transactionExtractor = TransactionExtractor(addressConverter)
         val transactionLinker = TransactionLinker()
 
-        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker)
+        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
         val addressConverter = AddressConverter(network)
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, network)
+        peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = this
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
