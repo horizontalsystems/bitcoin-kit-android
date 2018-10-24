@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit
 
 import android.content.Context
+import android.os.Handler
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
@@ -20,12 +21,13 @@ import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
 import io.realm.RealmResults
+import io.realm.Sort
 import io.realm.annotations.RealmModule
 
 @RealmModule(library = true, allClasses = true)
 class WalletKitModule
 
-class WalletKit(words: List<String>, networkType: NetworkType) {
+class WalletKit(words: List<String>, networkType: NetworkType) : PeerGroup.LastBlockHeightListener {
 
     interface Listener {
         fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -67,6 +69,10 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
     private var addressConverter: AddressConverter
 
+    private val handler = Handler()
+
+    private var knownBestBlockHeight = 0
+
     init {
         realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
@@ -96,7 +102,7 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, network)
-
+        peerGroup.lastBlockHeightListener = this
 
         val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
         val stateManager = StateManager(realmFactory)
@@ -163,6 +169,15 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
         realm.close()
     }
 
+    override fun onReceiveBestBlockHeight(lastBlockHeight: Int) {
+        knownBestBlockHeight = Math.max(knownBestBlockHeight, lastBlockHeight)
+        realmFactory.realm.use {
+            val localLastBlockHeight = it.where(Block::class.java).sort("height", Sort.DESCENDING).findFirst()?.height ?: 0
+
+            handleProgress(localLastBlockHeight)
+        }
+    }
+
     private fun handleTransactions(collection: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == OrderedCollectionChangeSet.State.UPDATE) {
             listener?.let { listener ->
@@ -187,7 +202,23 @@ class WalletKit(words: List<String>, networkType: NetworkType) {
             collection.lastOrNull()?.let { block ->
                 listener?.lastBlockInfoUpdated(this,
                         BlockInfo(block.reversedHeaderHashHex, block.height, block.header?.timestamp))
+
+                handleProgress(block.height)
             }
+        }
+    }
+
+    private fun handleProgress(blockHeight: Int) {
+        val downloadedBlocksCount = blockHeight - network.checkpointBlock.height
+        val allBlocksCount = knownBestBlockHeight - network.checkpointBlock.height
+
+        val progress = when {
+            allBlocksCount > 0 -> downloadedBlocksCount / allBlocksCount.toDouble()
+            else -> 0.0
+        }
+
+        handler.post {
+            listener?.progressUpdated(this, Math.min(Math.max(0.0, progress), 1.0))
         }
     }
 

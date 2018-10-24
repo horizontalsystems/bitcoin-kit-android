@@ -15,7 +15,12 @@ import java.util.logging.Logger
 
 class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: BloomFilterManager, val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
+    interface LastBlockHeightListener {
+        fun onReceiveBestBlockHeight(lastBlockHeight: Int)
+    }
+
     var blockSyncer: BlockSyncer? = null
+    var lastBlockHeightListener: LastBlockHeightListener? = null
 
     private val logger = Logger.getLogger("PeerGroup")
     private val peerMap = ConcurrentHashMap<String, Peer>()
@@ -188,6 +193,10 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         } catch (e: Exception) {
             peer.close()
         }
+    }
+
+    override fun onReceiveBestBlockHeight(peer: Peer, lastBlockHeight: Int) {
+        lastBlockHeightListener?.onReceiveBestBlockHeight(lastBlockHeight)
     }
 
     override fun onFilterUpdated(bloomFilter: BloomFilter) {

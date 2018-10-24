@@ -15,6 +15,7 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
     val transactions = MutableLiveData<List<TransactionInfo>>()
     val balance = MutableLiveData<Long>()
     val lastBlockHeight = MutableLiveData<Int>()
+    val progress = MutableLiveData<Double>()
     val status = MutableLiveData<State>()
     val networkName: String
 
@@ -37,6 +38,7 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
         balance.value = walletKit.balance
         transactions.value = walletKit.transactions.asReversed()
         lastBlockHeight.value = walletKit.lastBlockHeight
+        progress.value = 0.0
 
         started = false
     }
@@ -69,6 +71,6 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
     }
 
     override fun progressUpdated(walletKit: WalletKit, progress: Double) {
-        TODO("not implemented")
+        this.progress.value = progress
     }
 }
