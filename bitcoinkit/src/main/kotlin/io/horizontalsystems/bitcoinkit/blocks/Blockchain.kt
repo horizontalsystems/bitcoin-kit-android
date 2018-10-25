@@ -30,6 +30,10 @@ class Blockchain(private val network: NetworkParameters) {
         return realm.copyToRealm(block)
     }
 
+    fun forceAdd(merkleBlock: MerkleBlock, height: Int, realm: Realm): Block {
+        return realm.copyToRealm(Block(merkleBlock.header, height))
+    }
+
     fun handleFork(realm: Realm) {
         val firstStaleHeight = realm.where(Block::class.java)
                 .equalTo("stale", true)
