@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
+import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
@@ -149,7 +150,20 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         val realm = realmFactory.realm
 
         realm.executeTransaction {
-            val block = blockchain.connect(merkleBlock, realm)
+            val block = try {
+                blockchain.connect(merkleBlock, realm)
+            } catch (e: BlockValidatorException.NoPreviousBlock) {
+                val height = realm.where(BlockHash::class.java)
+                        .equalTo("headerHash", merkleBlock.blockHash)
+                        .findFirst()
+                        ?.height ?: 0
+
+                if (height > 0) {
+                    blockchain.forceAdd(merkleBlock, height, realm)
+                } else {
+                    throw e
+                }
+            }
 
             try {
                 transactionProcessor.process(merkleBlock.associatedTransactions, block, !needToRedownload, realm)
@@ -171,7 +185,10 @@ class BlockSyncer(private val realmFactory: RealmFactory,
     private fun clearNotFullBlocks() {
         val realm = realmFactory.realm
 
-        val toDelete = realm.where(BlockHash::class.java).findAll().map { it.reversedHeaderHashHex }.toTypedArray()
+        val toDelete = realm.where(BlockHash::class.java)
+                .equalTo("height", 0L)
+                .notEqualTo("reversedHeaderHashHex", network.checkpointBlock.reversedHeaderHashHex)
+                .findAll().map { it.reversedHeaderHashHex }.toTypedArray()
 
         realm.executeTransaction {
             realm.where(Block::class.java).`in`("reversedHeaderHashHex", toDelete).findAll().let { blocksToDelete ->

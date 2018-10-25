@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
+import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.*
@@ -64,14 +65,39 @@ class BlockSyncerTest {
     }
 
     @Test
-    fun handleMerkleBlock_blockSaved() {
-        whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
+    fun handleMerkleBlock_forceAddValidOrphanBlock() {
+        val height = 100
+        realm.executeTransaction {
+            realm.where(BlockHash::class.java)
+                    .equalTo("headerHash", merkleBlock.blockHash)
+                    .findFirst()
+                    ?.height = height
+        }
+
+        whenever(blockchain.forceAdd(merkleBlock, height, realm)).thenReturn(block)
+        whenever(blockchain.connect(merkleBlock, realm)).thenThrow(BlockValidatorException.NoPreviousBlock())
 
         blockSyncer.handleMerkleBlock(merkleBlock)
 
-        val realm1 = factories.realmFactory.realm
+        verify(blockchain).forceAdd(merkleBlock, height, realm)
+    }
 
-        assertBlockSaved(block, realm1)
+    @Test
+    fun handleMerkleBlock_NoPreviousBlock() {
+        realm.executeTransaction {
+            realm.where(BlockHash::class.java)
+                    .equalTo("headerHash", merkleBlock.blockHash)
+                    .findFirst()
+                    ?.height = 0
+        }
+
+        whenever(blockchain.connect(merkleBlock, realm)).thenThrow(BlockValidatorException.NoPreviousBlock())
+
+        try {
+            blockSyncer.handleMerkleBlock(merkleBlock)
+            Assert.fail("Expected exception")
+        } catch (e: BlockValidatorException.NoPreviousBlock) {
+        }
     }
 
     @Test
@@ -105,28 +131,6 @@ class BlockSyncerTest {
     private fun assertBlockHashNotPresent(reversedHeaderHashHex: String, realm: Realm) {
         val blockHash = realm.where(BlockHash::class.java).equalTo("reversedHeaderHashHex", reversedHeaderHashHex).findFirst()
         Assert.assertNull(blockHash)
-    }
-
-    private fun assertTransactionSaved(transaction: Transaction, block: Block, realm: Realm) {
-        val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
-        Assert.assertNotNull(transactionInDB)
-        Assert.assertEquals(block.reversedHeaderHashHex, transactionInDB?.block?.reversedHeaderHashHex)
-    }
-
-    private fun assertTransactionNotSaved(transaction: Transaction, realm: Realm) {
-        val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
-        Assert.assertNull(transactionInDB)
-    }
-
-    private fun assertBlockSaved(block: Block, realm: Realm) {
-        val blockInDB = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex).findFirst()
-        Assert.assertNotNull(blockInDB)
-        Assert.assertNotNull(blockInDB?.previousBlock)
-    }
-
-    private fun assertBlockNotSaved(block: Block, realm: Realm) {
-        val blockInDB = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex).findFirst()
-        Assert.assertNull(blockInDB)
     }
 
 }

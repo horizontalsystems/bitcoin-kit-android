@@ -40,7 +40,7 @@ class BlockDiscover(private val hdWallet: HDWallet,
                     .flatMap { blockResponses ->
 
                         allKeys.add(publicKey)
-                        allBlockResponses.addAll(blockResponses.filter { it.height < maxHeight })
+                        allBlockResponses.addAll(blockResponses.filter { it.height <= maxHeight })
 
                         requestApiRecursive(external, index + 1, if (blockResponses.isEmpty()) emptyResponsesInRow + 1 else 0, allKeys, allBlockResponses)
                     }
