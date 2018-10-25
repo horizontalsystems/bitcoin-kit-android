@@ -43,11 +43,6 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.close()
     }
 
-    // Sets a Bloom filter on this connection
-    fun setBloomFilter(filter: BloomFilter) {
-        peerConnection.sendMessage(FilterLoadMessage(filter))
-    }
-
     override fun onMessage(message: Message) {
         when (message) {
             is PingMessage -> peerConnection.sendMessage(PongMessage(message.nonce))
@@ -101,6 +96,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
 
     fun filterLoad(bloomFilter: BloomFilter) {
         peerConnection.sendMessage(FilterLoadMessage(bloomFilter))
+    }
+
+    fun sendMempoolMessage() {
+        peerConnection.sendMessage(MempoolMessage())
     }
 
     fun addTask(task: PeerTask) {

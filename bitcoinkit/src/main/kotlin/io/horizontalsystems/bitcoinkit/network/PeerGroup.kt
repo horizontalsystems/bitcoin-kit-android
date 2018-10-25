@@ -123,6 +123,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
         if (syncPeer?.synced == true) {
             blockSyncer?.downloadCompleted()
+            syncPeer?.sendMempoolMessage()
             syncPeer = null
             assignNextSyncPeer()
         }
