@@ -22,15 +22,15 @@ import io.realm.Sort
 import io.realm.annotations.RealmModule
 
 @RealmModule(library = true, allClasses = true)
-class WalletKitModule
+class BitcoinKitModule
 
-class WalletKit(words: List<String>, networkType: NetworkType) : PeerGroup.LastBlockHeightListener {
+class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.LastBlockHeightListener {
 
     interface Listener {
-        fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
-        fun balanceUpdated(walletKit: WalletKit, balance: Long)
-        fun lastBlockInfoUpdated(walletKit: WalletKit, lastBlockInfo: BlockInfo)
-        fun progressUpdated(walletKit: WalletKit, progress: Double)
+        fun transactionsUpdated(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
+        fun balanceUpdated(bitcoinKit: BitcoinKit, balance: Long)
+        fun lastBlockInfoUpdated(bitcoinKit: BitcoinKit, lastBlockInfo: BlockInfo)
+        fun progressUpdated(bitcoinKit: BitcoinKit, progress: Double)
     }
 
     enum class NetworkType { MainNet, TestNet, RegTest, MainNetBitCash, TestNetBitCash }

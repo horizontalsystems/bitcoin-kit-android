@@ -2,11 +2,11 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
-import io.horizontalsystems.bitcoinkit.WalletKit
+import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 
-class MainViewModel : ViewModel(), WalletKit.Listener {
+class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     enum class State {
         STARTED, STOPPED
@@ -25,19 +25,19 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
             status.value = (if (value) State.STARTED else State.STOPPED)
         }
 
-    private var walletKit: WalletKit
+    private var bitcoinKit: BitcoinKit
 
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
-        val networkType = WalletKit.NetworkType.TestNet
+        val networkType = BitcoinKit.NetworkType.TestNet
 
-        walletKit = WalletKit(words, networkType)
-        walletKit.listener = this
+        bitcoinKit = BitcoinKit(words, networkType)
+        bitcoinKit.listener = this
 
         networkName = networkType.name
-        balance.value = walletKit.balance
-        transactions.value = walletKit.transactions.asReversed()
-        lastBlockHeight.value = walletKit.lastBlockHeight
+        balance.value = bitcoinKit.balance
+        transactions.value = bitcoinKit.transactions.asReversed()
+        lastBlockHeight.value = bitcoinKit.lastBlockHeight
         progress.value = 0.0
 
         started = false
@@ -47,30 +47,30 @@ class MainViewModel : ViewModel(), WalletKit.Listener {
         if (started) return
         started = true
 
-        walletKit.start()
+        bitcoinKit.start()
     }
 
     fun receiveAddress(): String {
-        return walletKit.receiveAddress()
+        return bitcoinKit.receiveAddress()
     }
 
     fun send(address: String, amount: Int) {
-        walletKit.send(address, amount)
+        bitcoinKit.send(address, amount)
     }
 
-    override fun transactionsUpdated(walletKit: WalletKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        transactions.value = walletKit.transactions.asReversed()
+    override fun transactionsUpdated(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
+        transactions.value = bitcoinKit.transactions.asReversed()
     }
 
-    override fun balanceUpdated(walletKit: WalletKit, balance: Long) {
+    override fun balanceUpdated(bitcoinKit: BitcoinKit, balance: Long) {
         this.balance.value = balance
     }
 
-    override fun lastBlockInfoUpdated(walletKit: WalletKit, lastBlockInfo: BlockInfo) {
+    override fun lastBlockInfoUpdated(bitcoinKit: BitcoinKit, lastBlockInfo: BlockInfo) {
         this.lastBlockHeight.value = lastBlockInfo.height
     }
 
-    override fun progressUpdated(walletKit: WalletKit, progress: Double) {
+    override fun progressUpdated(bitcoinKit: BitcoinKit, progress: Double) {
         this.progress.value = progress
     }
 }

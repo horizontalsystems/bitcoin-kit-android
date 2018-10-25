@@ -22,7 +22,7 @@ class RealmFactoryMock {
 
         val configuration = RealmConfiguration.Builder()
                 .name("test-db")
-                .modules(WalletKitModule())
+                .modules(BitcoinKitModule())
                 .build()
 
         doAnswer { Realm.getInstance(configuration) }.whenever(realmFactory).realm
