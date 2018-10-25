@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.app.Application
 import com.squareup.leakcanary.LeakCanary
-import io.horizontalsystems.bitcoinkit.WalletKit
+import io.horizontalsystems.bitcoinkit.BitcoinKit
 
 class App : Application() {
 
@@ -16,7 +16,7 @@ class App : Application() {
         }
         LeakCanary.install(this)
 
-        WalletKit.init(this)
+        BitcoinKit.init(this)
     }
 
 }
