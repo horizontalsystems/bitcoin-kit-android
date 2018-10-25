@@ -50,9 +50,11 @@ class BlockSyncer(private val realmFactory: RealmFactory,
     }
 
     fun downloadIterationCompleted() {
-        needToRedownload = false
-        addressManager.fillGap()
-        bloomFilterManager.regenerateBloomFilter()
+        if (needToRedownload) {
+            needToRedownload = false
+            addressManager.fillGap()
+            bloomFilterManager.regenerateBloomFilter()
+        }
     }
 
     fun downloadCompleted() {
