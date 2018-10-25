@@ -6,9 +6,7 @@ import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
-import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.NetworkParameters
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Sort
 
@@ -52,9 +50,11 @@ class BlockSyncer(private val realmFactory: RealmFactory,
     }
 
     fun downloadIterationCompleted() {
-        needToRedownload = false
-        addressManager.fillGap()
-        bloomFilterManager.regenerateBloomFilter()
+        if (needToRedownload) {
+            needToRedownload = false
+            addressManager.fillGap()
+            bloomFilterManager.regenerateBloomFilter()
+        }
     }
 
     fun downloadCompleted() {
@@ -151,23 +151,10 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.executeTransaction {
             val block = blockchain.connect(merkleBlock, realm)
 
-            for (transaction in merkleBlock.associatedTransactions) {
-                val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
-
-                if (transactionInDB != null) {
-                    transactionInDB.status = Transaction.Status.RELAYED
-                    transactionInDB.block = block
-                    continue
-                }
-
-                transactionProcessor.process(transaction, realm)
-
-                if (transaction.isMine) {
-                    transaction.block = block
-                    realm.insert(transaction)
-
-                    needToRedownload = needToRedownload || addressManager.gapShifts(realm) || transaction.outputs.any { output -> output.scriptType == ScriptType.P2PK || output.scriptType == ScriptType.P2WPKH }
-                }
+            try {
+                transactionProcessor.process(merkleBlock.associatedTransactions, block, !needToRedownload, realm)
+            } catch (e: BloomFilterManager.BloomFilterExpired) {
+                needToRedownload = true
             }
 
             if (!needToRedownload) {

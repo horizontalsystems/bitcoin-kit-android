@@ -9,6 +9,8 @@ import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.GetBlockHashesTask
 import io.horizontalsystems.bitcoinkit.network.PeerTask.GetMerkleBlocksTask
 import io.horizontalsystems.bitcoinkit.network.PeerTask.PeerTask
+import io.horizontalsystems.bitcoinkit.network.PeerTask.RequestTransactionsTask
+import io.horizontalsystems.bitcoinkit.transactions.TransactionSyncer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
@@ -20,6 +22,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     var blockSyncer: BlockSyncer? = null
+    var transactionSyncer: TransactionSyncer? = null
     var lastBlockHeightListener: LastBlockHeightListener? = null
 
     private val logger = Logger.getLogger("PeerGroup")
@@ -39,6 +42,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         blockSyncer?.prepareForDownload()
 
         running = true
+        addNonSentTransactions()
         // loop:
         while (running) {
             if (peerMap.size < peerSize) {
@@ -119,6 +123,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
         if (syncPeer?.synced == true) {
             blockSyncer?.downloadCompleted()
+            syncPeer?.sendMempoolMessage()
             syncPeer = null
             assignNextSyncPeer()
         }
@@ -154,9 +159,23 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     override fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>) {
-        val blockHashes = inventoryItems.filter {
-            it.type == InventoryItem.MSG_BLOCK && blockSyncer?.shouldRequest(it.hash) ?: false
-        }.map { it.hash }
+        val blockHashes = mutableListOf<ByteArray>()
+        val transactionHashes = mutableListOf<ByteArray>()
+
+        inventoryItems.forEach { item ->
+            when (item.type) {
+                InventoryItem.MSG_BLOCK -> {
+                    if (blockSyncer?.shouldRequest(item.hash) == true) {
+                        blockHashes.add(item.hash)
+                    }
+                }
+                InventoryItem.MSG_TX -> {
+                    if (!isRequestingInventory(item.hash) && !handleRelayedTransaction(item.hash) && transactionSyncer?.shouldRequestTransaction(item.hash) == true) {
+                        transactionHashes.add(item.hash)
+                    }
+                }
+            }
+        }
 
         if (blockHashes.isNotEmpty() && peer.synced) {
             peer.synced = false
@@ -164,10 +183,8 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             assignNextSyncPeer()
         }
 
-        val transactionHashes = inventoryItems.filter { it.type == InventoryItem.MSG_TX }.map { it.hash }
-
-        transactionHashes.forEach {
-            //        TODO("not implemented")
+        if (transactionHashes.isNotEmpty()) {
+            peer.addTask(RequestTransactionsTask(transactionHashes))
         }
     }
 
@@ -182,6 +199,9 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             }
             is GetMerkleBlocksTask -> {
                 blockSyncer?.downloadIterationCompleted()
+            }
+            is RequestTransactionsTask -> {
+                transactionSyncer?.handleTransactions(task.transactions)
             }
             else -> throw Exception("Task not handled: ${task}")
         }
@@ -205,4 +225,17 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         }
     }
 
+    private fun handleRelayedTransaction(hash: ByteArray): Boolean {
+        return peerMap.any { (_, peer) -> peer.handleRelayedTransaction(hash) }
+    }
+
+    private fun isRequestingInventory(hash: ByteArray): Boolean {
+        return peerMap.any { (_, peer) -> peer.isRequestingInventory(hash) }
+    }
+
+    private fun addNonSentTransactions() {
+        transactionSyncer?.getNonSentTransactions()?.let { transactions ->
+            transactions.forEach { relay(it) }
+        }
+    }
 }

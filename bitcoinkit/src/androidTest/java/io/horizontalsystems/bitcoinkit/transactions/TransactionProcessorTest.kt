@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
+import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import org.junit.Before
 import org.junit.Test
@@ -14,12 +15,13 @@ class TransactionProcessorTest {
     private var realm = realmFactory.realm
     private val linker = mock(TransactionLinker::class.java)
     private val extractor = mock(TransactionExtractor::class.java)
+    private val addressManager = mock(AddressManager::class.java)
 
     lateinit var processor: TransactionProcessor
 
     @Before
     fun setup() {
-        processor = TransactionProcessor(extractor, linker)
+        processor = TransactionProcessor(extractor, linker, addressManager)
     }
 
     @Test

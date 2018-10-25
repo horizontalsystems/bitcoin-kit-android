@@ -11,6 +11,8 @@ import io.realm.Sort
 
 class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: RealmFactory) {
 
+    object BloomFilterExpired : Exception()
+
     interface Listener {
         fun onFilterUpdated(bloomFilter: BloomFilter)
     }
