@@ -1,57 +1,53 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import android.content.Context
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
-import io.realm.Realm
-import io.realm.RealmConfiguration
-import io.realm.internal.RealmCore
+import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.network.PeerTask.RelayTransactionTask
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.powermock.api.mockito.PowerMockito
-import org.powermock.api.mockito.PowerMockito.mockStatic
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 import java.net.SocketTimeoutException
 
 @RunWith(PowerMockRunner::class)
-@PrepareForTest(PeerGroup::class, Realm::class, RealmConfiguration::class, RealmCore::class)
+@PrepareForTest(PeerGroup::class)
 
 class PeerGroupTest {
     private lateinit var peerGroup: PeerGroup
-    private lateinit var peer: Peer
-    private lateinit var peer2: Peer
-    private lateinit var peerManager: PeerManager
-    private lateinit var bloomFilterManager: BloomFilterManager
+
+    private var peer1 = mock(Peer::class.java)
+    private var peer2 = mock(Peer::class.java)
+    private var peerManager = mock(PeerManager::class.java)
+    private var bloomFilterManager = mock(BloomFilterManager::class.java)
+    private var relayTransactionTask = mock(RelayTransactionTask::class.java)
+
     private val peerIp = "8.8.8.8"
     private val peerIp2 = "5.5.5.5"
     private val network = MainNet()
 
     @Before
     fun setup() {
-        peerManager = mock(PeerManager::class.java)
-        bloomFilterManager = mock(BloomFilterManager::class.java)
-        peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 2)
-        peer = mock(Peer::class.java)
-        peer2 = mock(Peer::class.java)
-        whenever(peer.host).thenReturn(peerIp)
+        whenever(peer1.host).thenReturn(peerIp)
         whenever(peer2.host).thenReturn(peerIp2)
-
         whenever(peerManager.getPeerIp())
                 .thenReturn(peerIp, peerIp2)
 
+        // Peer
         PowerMockito.whenNew(Peer::class.java)
                 .withAnyArguments()
-                .thenReturn(peer, peer2)
+                .thenReturn(peer1, peer2)
 
-        // Realm initialize
-        mockStatic(Realm::class.java)
-        mockStatic(RealmConfiguration::class.java)
-        mockStatic(RealmCore::class.java)
+        // RelayTransactionTask
+        PowerMockito.whenNew(RelayTransactionTask::class.java)
+                .withAnyArguments()
+                .thenReturn(relayTransactionTask)
 
-        RealmCore.loadLibrary(any(Context::class.java))
+        peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 2)
     }
 
     @Test
@@ -59,7 +55,7 @@ class PeerGroupTest {
         peerGroup.start()
 
         Thread.sleep(500L)
-        verify(peer).start()
+        verify(peer1).start()
 
         // close thread:
         peerGroup.close()
@@ -69,8 +65,20 @@ class PeerGroupTest {
 
     @Test
     fun disconnected_withError() { // removes peer from connection list
-        peerGroup.disconnected(peer, SocketTimeoutException("Some Error"))
+        peerGroup.disconnected(peer1, SocketTimeoutException("Some Error"))
 
         verify(peerManager).markFailed(peerIp)
+    }
+
+    @Test
+    fun relay() { // send transaction
+        whenever(peer1.ready).thenReturn(true)
+        peerGroup.connected(peer1)
+
+        val transaction = Transaction()
+        peerGroup.relay(transaction)
+
+        Thread.sleep(100) // wait thread executor
+        verify(peer1).addTask(relayTransactionTask)
     }
 }

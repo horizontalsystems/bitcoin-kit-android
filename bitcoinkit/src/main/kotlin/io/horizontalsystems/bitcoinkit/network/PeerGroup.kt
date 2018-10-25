@@ -6,10 +6,7 @@ import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.PeerTask.GetBlockHashesTask
-import io.horizontalsystems.bitcoinkit.network.PeerTask.GetMerkleBlocksTask
-import io.horizontalsystems.bitcoinkit.network.PeerTask.PeerTask
-import io.horizontalsystems.bitcoinkit.network.PeerTask.RequestTransactionsTask
+import io.horizontalsystems.bitcoinkit.network.PeerTask.*
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSyncer
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
@@ -27,12 +24,15 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
     private val logger = Logger.getLogger("PeerGroup")
     private val peerMap = ConcurrentHashMap<String, Peer>()
+    private var pendingTransactions: MutableList<Transaction> = mutableListOf()
 
     //    @Volatile???
     private var syncPeer: Peer? = null
 
     @Volatile
     private var running = false
+    private val syncPeerQueue = Executors.newSingleThreadExecutor()
+    private val localQueue = Executors.newSingleThreadExecutor()
 
     init {
         bloomFilterManager.listener = this
@@ -82,8 +82,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         } catch (e: InterruptedException) {
         }
     }
-
-    private val syncPeerQueue = Executors.newSingleThreadExecutor()
 
     override fun connected(peer: Peer) {
         peerMap[peer.host] = peer
@@ -149,12 +147,15 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     fun relay(transaction: Transaction) {
-        TODO()
+        localQueue.execute {
+            pendingTransactions.add(transaction)
+            dispatchTasks()
+        }
     }
 
     override fun onReady(peer: Peer) {
-        if (peer == syncPeer) {
-            downloadBlockchain()
+        localQueue.execute {
+            dispatchTasks(peer)
         }
     }
 
@@ -223,6 +224,26 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         peerMap.values.forEach { peer ->
             peer.filterLoad(bloomFilter)
         }
+    }
+
+    private fun dispatchTasks(peer: Peer? = null) {
+        if (peer != null)
+            return handleReady(peer)
+
+        peerMap.values.filter { it.ready }.forEach {
+            handleReady(it)
+        }
+    }
+
+    private fun handleReady(peer: Peer) {
+        if (!peer.ready)
+            return
+
+        if (peer == syncPeer)
+            return downloadBlockchain()
+
+        pendingTransactions.forEach { peer.addTask(RelayTransactionTask(it)) }
+        pendingTransactions = mutableListOf()
     }
 
     private fun handleRelayedTransaction(hash: ByteArray): Boolean {
