@@ -146,9 +146,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
         transactionCreator.create(address, value)
     }
 
-    fun fee(value: Int, address: String? = null, senderPay: Boolean = true) {
-        transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
-    }
+    fun fee(value: Int, address: String? = null, senderPay: Boolean = true) =
+            transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
 
     fun receiveAddress(): String {
         return addressManager.receiveAddress()
@@ -170,7 +169,9 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
     override fun onReceiveBestBlockHeight(lastBlockHeight: Int) {
         knownBestBlockHeight = Math.max(knownBestBlockHeight, lastBlockHeight)
         realmFactory.realm.use {
-            val localLastBlockHeight = it.where(Block::class.java).sort("height", Sort.DESCENDING).findFirst()?.height ?: 0
+            val localLastBlockHeight = it.where(Block::class.java)
+                    .sort("height", Sort.DESCENDING)
+                    .findFirst()?.height ?: 0
 
             handleProgress(localLastBlockHeight)
         }
