@@ -55,15 +55,14 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
         }
 
         //add output
-        val transactionOutput = TransactionOutput().apply {
+        transaction.outputs.add(TransactionOutput().apply {
             this.value = 0
             this.index = 0
             this.lockingScript = scriptBuilder.lockingScript(address)
             this.scriptType = address.scriptType
             this.address = address.string
             this.keyHash = address.hash
-        }
-        transaction.outputs.add(transactionOutput)
+        })
 
         //calculate fee and add change output if needed
         check(senderPay || selectedOutputsInfo.fee < value) {
@@ -77,15 +76,15 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
 
         if (selectedOutputsInfo.totalValue > sentValue + transactionSizeCalculator.outputSize(scripType = changeScriptType) * feeRate) {
             val changeAddress = addressConverter.convert(changePubKey.publicKeyHash, changeScriptType)
-            val changeOutput = TransactionOutput().apply {
+            transaction.outputs.add(TransactionOutput().apply {
                 this.value = selectedOutputsInfo.totalValue - sentValue
                 this.index = 1
                 this.lockingScript = scriptBuilder.lockingScript(changeAddress)
                 this.scriptType = changeScriptType
                 this.address = changeAddress.string
                 this.keyHash = changeAddress.hash
-            }
-            transaction.outputs.add(changeOutput)
+                this.publicKey = changePubKey
+            })
         }
 
         //sign inputs

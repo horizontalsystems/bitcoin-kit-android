@@ -24,7 +24,7 @@ class TransactionMessage() : Message("tx") {
     }
 
     override fun getPayload(): ByteArray {
-        TODO("not implemented")
+        return transaction.toByteArray()
     }
 
 }

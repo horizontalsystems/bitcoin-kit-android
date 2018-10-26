@@ -18,8 +18,7 @@ import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.realm.Realm
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertTrue
+import junit.framework.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -113,6 +112,7 @@ class TransactionBuilderTest {
 
         assertEquals(1, transaction.inputs.size)
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
+        assertNull(transaction.outputs[0]?.publicKey)
 
         assertEquals(2, transaction.outputs.size)
 
@@ -120,6 +120,7 @@ class TransactionBuilderTest {
         assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
 
         assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
+        assertEquals(changePubKey, transaction.outputs[1]?.publicKey)
         assertEquals(unspentOutputs.outputs[0].value - txValue, transaction.outputs[1]?.value)
     }
 

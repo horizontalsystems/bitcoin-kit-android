@@ -25,9 +25,8 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     }
 
     private val peerConnection = PeerConnection(host, network, this)
-    private var relayedTransactions: MutableMap<ByteArray, Transaction> = mutableMapOf()
-
     private var tasks = mutableListOf<PeerTask>()
+
     var connected = false
     var synced = false
     var blockHashesSynced = false
@@ -64,12 +63,9 @@ class Peer(val host: String, private val network: NetworkParameters, private val
             is TransactionMessage -> handleTransactionMessage(message)
             is InvMessage -> handleInvMessage(message)
             is GetDataMessage -> {
-
-                //handle relayed transactions
-                message.inventory.filter { it.type == InventoryItem.MSG_TX }.forEach {
-                    relayedTransactions[it.hash]?.let { tx ->
-                        peerConnection.sendMessage(TransactionMessage(tx))
-                        relayedTransactions.remove(tx.hash)
+                for (inv in message.inventory) {
+                    if (tasks.any { it.handleGetDataInventoryItem(inv) }) {
+                        continue
                     }
                 }
             }
