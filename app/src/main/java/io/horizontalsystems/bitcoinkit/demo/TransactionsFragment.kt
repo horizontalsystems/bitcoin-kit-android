@@ -68,6 +68,21 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
     private val summary = containerView.findViewById<TextView>(R.id.summary)!!
 
     fun bind(transactionInfo: TransactionInfo, index: Int) {
-        summary.text = "#${index} - From: ${transactionInfo.from.first().address}, To: ${transactionInfo.to.first().address}, Amount: ${transactionInfo.amount}"
+        containerView.setBackgroundColor(if (index % 2 == 0) Color.parseColor("#dddddd") else Color.TRANSPARENT)
+
+        val timeInMillis = transactionInfo.timestamp?.times(1000)
+
+        val date = when {
+            timeInMillis != null -> DateFormat.getInstance().format(Date(timeInMillis))
+            else -> "--"
+        }
+
+        summary.text = "#$index" +
+                "\nFrom: ${transactionInfo.from.first().address}" +
+                "\nTo: ${transactionInfo.to.first().address}" +
+                "\nAmount: ${NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)}" +
+                "\nBlock: ${transactionInfo.blockHeight}" +
+                "\nTimestamp: ${transactionInfo.timestamp}" +
+                "\nDate: $date"
     }
 }
