@@ -94,4 +94,12 @@ class ScriptTest {
         val keyHash = script.getPubKeyHashIn()
         assertEquals("aed6f804c63da80800892f8fd4cdbad0d3ad6d12", keyHash?.toHexString())
     }
+
+    @Test
+    fun getPubKeyHashIn_WPKH() {
+        script = Script("483045022100df7b7e5cda14ddf91290e02ea10786e03eb11ee36ec02dd862fe9a326bbcb7fd02203f5b4496b667e6e281cc654a2da9e4f08660c620a1051337fa8965f727eb19190121038262a6c6cec93c2d3ecd6c6072efea86d02ff8e3328bbd0242b20af3425990ac".hexStringToByteArray())
+
+        val keyHash = script.getPubKeyHashIn()
+        assertEquals("1d7cd6c75c2e86f4cbf98eaed221b30bd9a0b928", keyHash?.toHexString())
+    }
 }

@@ -23,6 +23,8 @@ class Script(bytes: ByteArray) {
             return Utils.sha256Hash160(chunks[1].data)
         if (ScriptParser.isSHashInput(this) || ScriptParser.isMultiSigInput(this))
             return Utils.sha256Hash160(chunks.last().data)
+        if (ScriptParser.isP2WPKH(this))
+            return chunks[1].data
 
         return null
     }

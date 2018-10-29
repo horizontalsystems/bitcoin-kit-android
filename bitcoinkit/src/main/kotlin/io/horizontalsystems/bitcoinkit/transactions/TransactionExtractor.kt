@@ -14,16 +14,19 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
             val pkHash = script.getPubKeyHash()
             if (pkHash != null) {
                 output.scriptType = script.getScriptType()
-                output.keyHash = pkHash
-                output.address = getAddress(pkHash, script.getScriptType())
+                try {
+                    val address = addressConverter.convert(pkHash, output.scriptType)
+                    output.keyHash = address.hash
+                    output.address = address.string
 
-                realm.where(PublicKey::class.java)
-                        .equalTo("publicKeyHash", output.keyHash)
-                        .findFirst()
-                        ?.let { pubKey ->
-                            transaction.isMine = true
-                            output.publicKey = pubKey
-                        }
+                    realm.where(PublicKey::class.java)
+                            .equalTo("publicKeyHash", output.keyHash)
+                            .findFirst()?.let { pubKey ->
+                                transaction.isMine = true
+                                output.publicKey = pubKey
+                            }
+                } catch (e: Exception) {
+                }
             }
         }
 
@@ -31,13 +34,14 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
             val script = Script(input.sigScript)
             val pkHash = script.getPubKeyHashIn()
             if (pkHash != null) {
-                input.keyHash = pkHash
-                input.address = getAddress(pkHash, script.getScriptType())
+                try {
+                    val address = addressConverter.convert(pkHash, script.getScriptType())
+                    input.keyHash = address.hash
+                    input.address = address.string
+                } catch (e: Exception) {
+                }
             }
         }
     }
 
-    private fun getAddress(hash: ByteArray, scriptType: Int): String {
-        return addressConverter.convert(hash, scriptType).string
-    }
 }
