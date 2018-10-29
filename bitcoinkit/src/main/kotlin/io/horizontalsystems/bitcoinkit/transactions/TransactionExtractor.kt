@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.transactions
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.scripts.Script
+import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.realm.Realm
 
@@ -19,12 +20,14 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
                     output.keyHash = address.hash
                     output.address = address.string
 
-                    realm.where(PublicKey::class.java)
-                            .equalTo("publicKeyHash", output.keyHash)
-                            .findFirst()?.let { pubKey ->
-                                transaction.isMine = true
-                                output.publicKey = pubKey
-                            }
+                    getPubKey(address.hash, realm)?.let { pubKey ->
+                        if (pubKey.scriptHashP2WPKH.contentEquals(address.hash)) {
+                            output.scriptType = ScriptType.P2WPKHSH
+                        }
+
+                        output.publicKey = pubKey
+                        transaction.isMine = true
+                    }
                 } catch (e: Exception) {
                 }
             }
@@ -44,4 +47,13 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
         }
     }
 
+    private fun getPubKey(hash: ByteArray, realm: Realm): PublicKey? {
+        return realm.where(PublicKey::class.java)
+                .beginGroup()
+                    .equalTo("publicKeyHash", hash)
+                    .or()
+                    .equalTo("scriptHashP2WPKH", hash)
+                .endGroup()
+                .findFirst()
+    }
 }

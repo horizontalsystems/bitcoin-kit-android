@@ -3,11 +3,12 @@ package io.horizontalsystems.bitcoinkit.scripts
 import io.horizontalsystems.bitcoinkit.utils.Utils
 
 object ScriptType {
-    const val P2PKH = 1   // pay to pubkey hash (aka pay to address)
-    const val P2PK = 2    // pay to pubkey
-    const val P2SH = 3    // pay to script hash
-    const val P2WPKH = 4  // pay to witness pubkey hash
-    const val P2WSH = 5   // pay to witness script hash
+    const val P2PKH = 1     // pay to pubkey hash (aka pay to address)
+    const val P2PK = 2      // pay to pubkey
+    const val P2SH = 3      // pay to script hash
+    const val P2WPKH = 4    // pay to witness pubkey hash
+    const val P2WSH = 5     // pay to witness script hash
+    const val P2WPKHSH = 6  // P2WPKH nested in P2SH
     const val UNKNOWN = 0
 }
 
