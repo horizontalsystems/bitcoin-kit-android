@@ -65,9 +65,9 @@ class BlockDiscoverTest {
         whenever(addressConverter.convert(byteArrayOf(2))).thenReturn(address2)
         whenever(addressConverter.convert(byteArrayOf(3))).thenReturn(address3)
 
-        whenever(address1.toString()).thenReturn(externalPublicKey1Address)
-        whenever(address2.toString()).thenReturn(externalPublicKey2Address)
-        whenever(address3.toString()).thenReturn(externalPublicKey3Address)
+        whenever(address1.string).thenReturn(externalPublicKey1Address)
+        whenever(address2.string).thenReturn(externalPublicKey2Address)
+        whenever(address3.string).thenReturn(externalPublicKey3Address)
 
         whenever(apiManager.getBlockHashes(externalPublicKey1Address)).thenReturn(Observable.just(blockHashes1))
         whenever(apiManager.getBlockHashes(externalPublicKey2Address)).thenReturn(Observable.just(blockHashes2))

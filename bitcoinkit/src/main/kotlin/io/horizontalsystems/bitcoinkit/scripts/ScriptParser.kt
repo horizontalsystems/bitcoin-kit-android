@@ -9,25 +9,14 @@ object ScriptParser {
     const val WITNESS_SH_LENGTH = 32
     const val ADDRESS_LENGTH = 20
 
-    private val standardScriptChunks = arrayOf(
-            ScriptChunk(OP_DUP, null, 0),
-            ScriptChunk(OP_HASH160, null, 1),
-            ScriptChunk(OP_EQUALVERIFY, null, 23),
-            ScriptChunk(OP_CHECKSIG, null, 24)
-    )
-
     fun parseChunks(bytes: ByteArray): List<ScriptChunk> {
-        val chunks = mutableListOf<ScriptChunk>() // Common size.
+        val chunks = mutableListOf<ScriptChunk>()
         val stream = ByteArrayInputStream(bytes)
 
-        val initialSize = stream.available()
-
         while (stream.available() > 0) {
-            val startLocationInScript = initialSize - stream.available()
-            val opcode = stream.read()
-
             var dataToRead: Long = -1
 
+            val opcode = stream.read()
             if (opcode >= 0 && opcode < OP_PUSHDATA1) {
                 // Read some bytes of data, where how many is the opcode value itself.
                 dataToRead = opcode.toLong()
@@ -50,18 +39,13 @@ object ScriptParser {
 
             var chunk: ScriptChunk
             if (dataToRead < 0) {
-                chunk = ScriptChunk(opcode, null, startLocationInScript)
+                chunk = ScriptChunk(opcode)
             } else if (dataToRead > stream.available()) {
                 throw Exception("Push of data element that is larger than remaining data")
             } else {
                 val data = ByteArray(dataToRead.toInt())
                 check(dataToRead == 0L || stream.read(data, 0, dataToRead.toInt()).toLong() == dataToRead)
-                chunk = ScriptChunk(opcode, data, startLocationInScript)
-            }
-
-            // Save some memory by eliminating redundant copies of the same chunk objects.
-            for (sc in standardScriptChunks) {
-                if (sc == chunk) chunk = sc
+                chunk = ScriptChunk(opcode, data)
             }
 
             chunks.add(chunk)
@@ -147,7 +131,7 @@ object ScriptParser {
         return chunkLast.equalsOpCode(OP_CHECKSIG) || chunkLast.equalsOpCode(OP_CHECKSIGVERIFY) || chunkLast.equalsOpCode(OP_CHECKMULTISIGVERIFY) || chunkLast.equalsOpCode(OP_CHECKMULTISIG)
     }
 
-    // Pay To PubKey Hash; OP_DUP OP_HASH160 <pubkey hash> OP_EQUALVERIFY OP_CHECKSIG
+    //  OP_DUP OP_HASH160 <pubkey hash> OP_EQUALVERIFY OP_CHECKSIG
     fun isP2PKH(script: Script): Boolean {
         val chunks = script.chunks
         if (chunks.size != 5)
@@ -167,7 +151,7 @@ object ScriptParser {
         return true
     }
 
-    // Pay To PubKey; <pubkey> OP_CHECKSIG
+    //  <pubkey> OP_CHECKSIG
     fun isP2PK(script: Script): Boolean {
         val chunks = script.chunks
         if (chunks.size != 2)
@@ -184,7 +168,7 @@ object ScriptParser {
         return true
     }
 
-    // Pay To ScriptHash; OP_HASH160 OP_PUSHDATA1 0x14 <20 bytes of script hash> OP_EQUAL
+    //  OP_HASH160 OP_PUSHDATA1 0x14 <20 bytes of script hash> OP_EQUAL
     fun isP2SH(script: Script): Boolean {
         val chunks = script.chunks
         if (chunks.size != 3)
@@ -203,7 +187,7 @@ object ScriptParser {
         return true
     }
 
-
+    // OP_0 0x20 <32 bytes of script hash>
     fun isP2WSH(script: Script): Boolean {
         if (!isPayToWitnessHash(script))
             return false
@@ -215,6 +199,7 @@ object ScriptParser {
         return true
     }
 
+    //  OP_0 0x14 {20 bytes key hash}
     fun isP2WPKH(script: Script): Boolean {
         if (!isPayToWitnessHash(script))
             return false

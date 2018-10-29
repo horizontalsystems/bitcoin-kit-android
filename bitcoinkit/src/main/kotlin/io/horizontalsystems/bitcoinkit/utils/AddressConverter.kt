@@ -19,6 +19,7 @@ class AddressConverter(private val network: NetworkParameters) {
         else -> SegwitAddressConverter()
     }
 
+    @Throws
     fun convert(addressString: String): Address {
         return try {
             bech32.convert(network.addressSegwitHrp, addressString)
@@ -38,6 +39,7 @@ class AddressConverter(private val network: NetworkParameters) {
         }
     }
 
+    @Throws
     fun convert(bytes: ByteArray, scriptType: Int = ScriptType.P2PKH): Address {
 
         try {

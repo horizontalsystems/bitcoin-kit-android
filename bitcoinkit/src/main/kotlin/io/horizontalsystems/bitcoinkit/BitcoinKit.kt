@@ -122,7 +122,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
 
         transactionOutputRealmResults = realm.where(TransactionOutput::class.java)
                 .isNotNull("publicKey")
-                .`in`("scriptType", arrayOf(ScriptType.P2PKH, ScriptType.P2PK))
+                .notEqualTo("scriptType", ScriptType.UNKNOWN)
                 .findAll()
 
         transactionOutputRealmResults.addChangeListener { t, changeSet ->
