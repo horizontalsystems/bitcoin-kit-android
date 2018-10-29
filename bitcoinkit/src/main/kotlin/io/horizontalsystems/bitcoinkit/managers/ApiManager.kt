@@ -30,6 +30,7 @@ class ApiManager(private val url: String) {
         return try {
             URL(url).openConnection().apply {
                 connectTimeout = 500
+                readTimeout = 1000
                 setRequestProperty("Accept", "application/json")
             }.getInputStream().use {
                 Json.parse(it.bufferedReader()).asObject()
