@@ -36,7 +36,7 @@ class BlockDiscover(private val hdWallet: HDWallet,
             val publicKey = hdWallet.publicKey(index, external)
 
             apiManager
-                    .getBlockHashes(addressConverter.convert(publicKey.publicKey).toString())
+                    .getBlockHashes(addressConverter.convert(publicKey.publicKey).string)
                     .flatMap { blockResponses ->
 
                         allKeys.add(publicKey)
