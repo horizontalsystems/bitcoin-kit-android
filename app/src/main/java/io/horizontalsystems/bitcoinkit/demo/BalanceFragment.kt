@@ -25,8 +25,11 @@ class BalanceFragment : Fragment() {
         activity?.let {
             viewModel = ViewModelProviders.of(it).get(MainViewModel::class.java)
 
-            viewModel.balance.observe(this, Observer {
-                balanceValue.text = (it ?: 0).toString()
+            viewModel.balance.observe(this, Observer { balance ->
+                balanceValue.text = when(balance) {
+                    null -> ""
+                    else -> NumberFormatHelper.cryptoAmountFormat.format(balance / 100_000_000.0)
+                }
             })
 
             viewModel.lastBlockHeight.observe(this, Observer {
