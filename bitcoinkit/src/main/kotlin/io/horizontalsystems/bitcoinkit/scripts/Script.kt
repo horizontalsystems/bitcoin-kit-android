@@ -12,19 +12,10 @@ object ScriptType {
 }
 
 class Script(bytes: ByteArray) {
-    var chunks = listOf<ScriptChunk>()
-
-    // Creation time of the associated keys in seconds since the epoch.
-    private var creationTimeSeconds: Long
-
-    init {
-        chunks = try {
-            ScriptParser.parseChunks(bytes)
-        } catch (e: Exception) {
-            listOf()
-        }
-
-        creationTimeSeconds = 0
+    val chunks = try {
+        ScriptParser.parseChunks(bytes)
+    } catch (e: Exception) {
+        listOf<ScriptChunk>()
     }
 
     fun getPubKeyHashIn(): ByteArray? {

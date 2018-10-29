@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.scripts
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
 
-class ScriptChunk(val opcode: Int, val data: ByteArray? = null, val startLocationInScript: Int = -1) {
+class ScriptChunk(val opcode: Int, val data: ByteArray? = null) {
 
     fun equalsOpCode(opcode: Int): Boolean {
         return opcode == this.opcode
