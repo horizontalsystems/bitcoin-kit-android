@@ -31,6 +31,8 @@ android {
         test.java.srcDirs += sharedTestDir
         androidTest.java.srcDirs += sharedTestDir
     }
+
+    lintOptions { abortOnError false }
 }
 
 dependencies {
