@@ -24,6 +24,8 @@ class TransactionSyncer(private val realmFactory: RealmFactory,
             }
         }
 
+        realm.close()
+
         if (needToUpdateBloomFilter) {
             addressManager.fillGap()
             bloomFilterManager.regenerateBloomFilter()

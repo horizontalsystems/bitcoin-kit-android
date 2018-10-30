@@ -58,9 +58,9 @@ class InitialSyncer(
             it.insertOrUpdate(blockHashes)
         }
 
-        addressManager.addKeys(keys)
-
         realm.close()
+
+        addressManager.addKeys(keys)
 
         stateManager.apiSynced = true
         peerGroup.start()

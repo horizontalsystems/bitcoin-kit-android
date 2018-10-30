@@ -2,12 +2,13 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.KitState
+import io.realm.Realm
 
 class StateManager(private val realmFactory: RealmFactory) {
 
     var apiSynced: Boolean
-        get() {
-            return getKitState().apiSynced
+        get() = realmFactory.realm.use {
+            getKitState(it).apiSynced
         }
         set(value) {
             setKitState { kitState ->
@@ -15,20 +16,19 @@ class StateManager(private val realmFactory: RealmFactory) {
             }
         }
 
-    private fun getKitState(): KitState {
-        return realmFactory.realm.where(KitState::class.java).findFirst() ?: KitState()
+    private fun getKitState(realm: Realm): KitState {
+        return realm.where(KitState::class.java).findFirst() ?: KitState()
     }
 
     private fun setKitState(setMethod: (KitState) -> Unit) {
-        val realm = realmFactory.realm
-        val kitState = realmFactory.realm.where(KitState::class.java).findFirst() ?: KitState()
+        realmFactory.realm.use { realm ->
+            val kitState = realm.where(KitState::class.java).findFirst() ?: KitState()
 
-        realm.executeTransaction {
-            setMethod(kitState)
-            it.insertOrUpdate(kitState)
+            realm.executeTransaction {
+                setMethod(kitState)
+                it.insertOrUpdate(kitState)
+            }
         }
-
-        realm.close()
     }
 
 }
