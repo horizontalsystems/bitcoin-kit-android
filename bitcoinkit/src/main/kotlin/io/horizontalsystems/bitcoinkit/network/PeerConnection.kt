@@ -24,6 +24,7 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
     private val logger = Logger.getLogger("Peer[$host]")
     private val sendingQueue: BlockingQueue<Message> = ArrayBlockingQueue(100)
     private val socket = Socket()
+    private var disconnectError: Exception? = null
 
     @Volatile
     private var isRunning = false
@@ -66,7 +67,7 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
                 }
             }
 
-            listener.disconnected()
+            listener.disconnected(disconnectError)
         } catch (e: SocketTimeoutException) {
             logger.log(Level.SEVERE, "Connect timeout exception: ${e.message}", e)
             listener.disconnected(e)
@@ -87,7 +88,9 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
         }
     }
 
-    fun close() {
+    fun close(disconnectError: Exception?) {
+        this.disconnectError = disconnectError
+
         isRunning = false
         try {
             join(1000)

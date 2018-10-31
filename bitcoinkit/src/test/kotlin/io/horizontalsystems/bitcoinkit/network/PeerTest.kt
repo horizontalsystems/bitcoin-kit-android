@@ -80,7 +80,7 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        verify(peerConnection).close()
+        verify(peerConnection).close(null)
     }
 
     @Test
@@ -89,7 +89,7 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        verify(peerConnection).close()
+        verify(peerConnection).close(null)
     }
 
     @Test
@@ -98,7 +98,7 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        verify(peerConnection).close()
+        verify(peerConnection).close(null)
     }
 
 }
