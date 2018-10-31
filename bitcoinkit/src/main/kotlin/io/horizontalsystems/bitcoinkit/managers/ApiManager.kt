@@ -42,4 +42,8 @@ class ApiManager(private val url: String) {
 
 }
 
-data class BlockResponse(val hash: String, val height: Int)
+data class BlockResponse(val hash: String, val height: Int) {
+    override fun equals(other: Any?): Boolean {
+        return other is BlockResponse && other.height == this.height
+    }
+}

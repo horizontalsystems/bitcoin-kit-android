@@ -95,17 +95,24 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
         val transactionLinker = TransactionLinker()
 
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
-        val addressConverter = AddressConverter(network)
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = this
 
-        val apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
+        val addressSelector = when (networkType) {
+            NetworkType.MainNet,
+            NetworkType.TestNet,
+            NetworkType.RegTest -> BitcoinAddressSelector(addressConverter)
+            NetworkType.MainNetBitCash,
+            NetworkType.TestNetBitCash -> BitcoinCashAddressSelector(addressConverter)
+        }
+
+        val apiManager = ApiManagerBtcCom(ApiRequesterBtcCom(networkType), addressSelector)
         val stateManager = StateManager(realmFactory)
 
-        val blockDiscover = BlockDiscover(wallet, apiManager, network, addressConverter)
+        val blockDiscover = BlockDiscover(wallet, apiManager, network)
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
 
