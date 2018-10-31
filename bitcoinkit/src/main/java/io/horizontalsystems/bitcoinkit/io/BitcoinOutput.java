@@ -11,7 +11,7 @@ import java.nio.charset.StandardCharsets;
  */
 public final class BitcoinOutput {
 
-    ByteArrayOutputStream out;
+    private ByteArrayOutputStream out;
 
     public BitcoinOutput() {
         this.out = new ByteArrayOutputStream(1024);

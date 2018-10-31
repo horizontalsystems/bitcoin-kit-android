@@ -38,6 +38,7 @@ open class Transaction : RealmObject {
     var status: Int = Status.RELAYED
     var block: Block? = null
     var isMine = false
+    var segwit = false
 
     constructor()
 
@@ -49,13 +50,26 @@ open class Transaction : RealmObject {
     constructor(input: BitcoinInput) {
         version = input.readInt()
 
-        // inputs
-        val inputCount = input.readVarInt()
+        val marker = 0xff and input.readUnsignedByte()
+        val inputCount = if (marker == 0) {  // segwit marker: 0x00
+            input.read()  // skip segwit flag: 0x01
+            segwit = true
+            input.readVarInt()
+        } else {
+            input.readVarInt(marker)
+        }
+
+        //  inputs
         repeat(inputCount.toInt()) { inputs.add(TransactionInput(input)) }
 
-        // outputs
+        //  outputs
         val outputCount = input.readVarInt()
         repeat(outputCount.toInt()) { outputs.add(TransactionOutput(input)) }
+
+        //  extract witness data
+        if (segwit) {
+            inputs.forEach { it.storeWitness(input) }
+        }
 
         lockTime = input.readUnsignedInt()
 
@@ -66,6 +80,11 @@ open class Transaction : RealmObject {
         val buffer = BitcoinOutput()
         buffer.writeInt(version)
 
+        if (segwit) {
+            buffer.writeByte(0) // marker 0x00
+            buffer.writeByte(1) // flag 0x01
+        }
+
         // inputs
         buffer.writeVarInt(inputs.size.toLong())
         inputs.forEach { buffer.write(it.toByteArray()) }
@@ -73,6 +92,11 @@ open class Transaction : RealmObject {
         // outputs
         buffer.writeVarInt(outputs.size.toLong())
         outputs.forEach { buffer.write(it.toByteArray()) }
+
+        //  serialize witness data
+        if (segwit) {
+            inputs.forEach { buffer.write(it.toByteArrayWitness()) }
+        }
 
         buffer.writeUnsignedInt(lockTime)
         return buffer.toByteArray()
