@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.utils
 
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.Address
 import io.horizontalsystems.bitcoinkit.models.AddressType
 import io.horizontalsystems.bitcoinkit.network.MainNet
@@ -112,12 +113,12 @@ class AddressConverterTest {
         converter = AddressConverter(MainNet())
 
         addressString = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4"
-        bytes = "751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
+        bytes = "0014751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
         address = converter.convert(bytes, ScriptType.P2WPKH)
 
         assertEquals(AddressType.WITNESS, address.type)
         assertEquals(addressString, address.string)
-        assertEquals(bytes, address.hash)
+        assertEquals("751e76e8199196d454941c45d1b3a323f1433bd6", address.hash.toHexString())
     }
 
     @Test

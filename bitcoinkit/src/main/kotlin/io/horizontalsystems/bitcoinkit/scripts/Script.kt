@@ -12,7 +12,7 @@ object ScriptType {
     const val UNKNOWN = 0
 }
 
-class Script(bytes: ByteArray) {
+class Script(private val bytes: ByteArray) {
     val chunks = try {
         ScriptParser.parseChunks(bytes)
     } catch (e: Exception) {
@@ -25,7 +25,7 @@ class Script(bytes: ByteArray) {
         if (ScriptParser.isSHashInput(this) || ScriptParser.isMultiSigInput(this))
             return Utils.sha256Hash160(chunks.last().data)
         if (ScriptParser.isP2WPKH(this))
-            return chunks[1].data
+            return bytes
 
         return null
     }
@@ -38,7 +38,7 @@ class Script(bytes: ByteArray) {
         if (ScriptParser.isP2SH(this))
             return chunks[1].data
         if (ScriptParser.isPayToWitnessHash(this))
-            return chunks[1].data
+            return bytes
 
         return null
     }

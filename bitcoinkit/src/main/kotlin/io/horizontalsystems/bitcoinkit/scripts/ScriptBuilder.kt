@@ -17,10 +17,9 @@ class ScriptBuilder {
 
         if (address is SegWitAddress) {
             data.add(byteArrayOf(address.version.toByte()))
-            data.add(address.hash)
-        } else {
-            data.add(address.hash)
         }
+
+        data.add(address.hash)
 
         return when (address.type) {
             AddressType.P2PKH -> p2pkhStart + OpCodes.push(data[0]) + p2pkhEnd
