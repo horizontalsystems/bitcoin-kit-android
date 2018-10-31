@@ -98,6 +98,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
                 peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
                     syncPeer = nonSyncedPeer
                     blockSyncer?.downloadStarted()
+                    logger.info("Start syncing peer ${nonSyncedPeer.host}")
                     downloadBlockchain()
                 }
             }
@@ -122,6 +123,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         if (syncPeer?.synced == true) {
             blockSyncer?.downloadCompleted()
             syncPeer?.sendMempoolMessage()
+            logger.info("Peer synced ${syncPeer?.host}")
             syncPeer = null
             assignNextSyncPeer()
         }
@@ -129,10 +131,10 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
     override fun disconnected(peer: Peer, e: Exception?) {
         if (e == null) {
-            logger.info("PeerAddress $peer.host disconnected.")
+            logger.info("Peer ${peer.host} disconnected.")
             peerManager.markSuccess(peer.host)
         } else {
-            logger.warning("PeerAddress $peer.host disconnected with error.")
+            logger.warning("Peer ${peer.host} disconnected with error ${e.message}.")
             peerManager.markFailed(peer.host)
         }
 
