@@ -27,4 +27,8 @@ class TransactionMessage() : Message("tx") {
         return transaction.toByteArray()
     }
 
+    override fun toString(): String {
+        return "TransactionMessage(${transaction.hashHexReversed})"
+    }
+
 }

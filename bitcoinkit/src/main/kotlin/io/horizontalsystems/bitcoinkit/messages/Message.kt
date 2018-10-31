@@ -8,7 +8,6 @@ import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
-import java.util.logging.Logger
 
 abstract class Message(cmd: String) {
 
@@ -33,7 +32,6 @@ abstract class Message(cmd: String) {
 
     object Builder {
 
-        private val logger = Logger.getLogger("Builder")
         private val msgMap = initMessages()
 
         private fun initMessages(): Map<String, Class<*>> {
@@ -80,7 +78,6 @@ abstract class Message(cmd: String) {
                 throw BitcoinException("Checksum failed.")
             }
 
-            logger.info("MSG: $command payload ($payloadLength)")
             // build msg:
             val msgClass = msgMap[command] ?: return UnknownMessage(command, payload) as T
             try {

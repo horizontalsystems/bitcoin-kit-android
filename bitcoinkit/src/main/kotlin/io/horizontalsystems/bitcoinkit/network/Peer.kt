@@ -49,7 +49,6 @@ class Peer(val host: String, private val network: NetworkParameters, private val
             is VersionMessage -> {
                 val reason = reasonToClosePeer(message)
                 if (reason.isEmpty()) {
-                    logger.info("SENDING VerAckMessage")
                     peerConnection.sendMessage(VerAckMessage())
                     listener.onReceiveBestBlockHeight(this, message.lastBlock)
                 } else {

@@ -21,7 +21,7 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
         fun disconnected(e: Exception? = null)
     }
 
-    private val logger = Logger.getLogger("PeerConnection")
+    private val logger = Logger.getLogger("Peer[$host]")
     private val sendingQueue: BlockingQueue<Message> = ArrayBlockingQueue(100)
     private val socket = Socket()
 
