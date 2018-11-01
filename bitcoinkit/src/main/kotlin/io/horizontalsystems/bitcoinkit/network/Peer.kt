@@ -38,8 +38,8 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.start()
     }
 
-    fun close() {
-        peerConnection.close()
+    fun close(disconnectError: Exception? = null) {
+        peerConnection.close(disconnectError)
     }
 
     override fun onMessage(message: Message) {

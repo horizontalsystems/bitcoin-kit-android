@@ -130,6 +130,8 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     override fun disconnected(peer: Peer, e: Exception?) {
+        peerMap.remove(peer.host)
+
         if (e == null) {
             logger.info("Peer ${peer.host} disconnected.")
             peerManager.markSuccess(peer.host)
@@ -144,8 +146,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             syncPeer = null
             assignNextSyncPeer()
         }
-
-        peerMap.remove(peer.host)
     }
 
     fun relay(transaction: Transaction) {
@@ -214,7 +214,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         try {
             blockSyncer?.handleMerkleBlock(merkleBlock)
         } catch (e: Exception) {
-            peer.close()
+            peer.close(e)
         }
     }
 
