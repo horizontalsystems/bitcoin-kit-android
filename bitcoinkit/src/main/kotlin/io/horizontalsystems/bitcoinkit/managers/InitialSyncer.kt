@@ -1,13 +1,13 @@
 package io.horizontalsystems.bitcoinkit.managers
 
+import android.util.Log
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.PeerGroup
-import io.reactivex.Observable
 import io.reactivex.Scheduler
+import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.functions.BiFunction
 import io.reactivex.schedulers.Schedulers
 
 class InitialSyncer(
@@ -26,23 +26,22 @@ class InitialSyncer(
             val externalObservable = blockDiscover.fetchFromApi(true)
             val internalObservable = blockDiscover.fetchFromApi(false)
 
-            val disposable = Observable
-                    .zip(externalObservable, internalObservable, BiFunction<Pair<List<PublicKey>, List<BlockHash>>, Pair<List<PublicKey>, List<BlockHash>>, Pair<List<PublicKey>, List<BlockHash>>> { external, internal ->
-                        val (externalKeys, externalBlocks) = external
-                        val (internalKeys, internalBlocks) = internal
-
-                        Pair(externalKeys + internalKeys, externalBlocks + internalBlocks)
-                    })
+            val disposable = Single
+                    .merge(externalObservable, internalObservable)
+                    .toList()
                     .subscribeOn(scheduler)
-                    .subscribe(
-                            { (keys, blockHashes) ->
-                                handle(keys, blockHashes)
-                            },
+                    .subscribe({ pairsList ->
+                        val publicKeys = mutableListOf<PublicKey>()
+                        val blockHashes = mutableListOf<BlockHash>()
+                        pairsList.forEach { (keys, hashes) ->
+                            publicKeys.addAll(keys)
+                            blockHashes.addAll(hashes)
+                        }
+                        handle(publicKeys, blockHashes)
+                    },
                             {
-                                print("Initial Sync Error: $it")
-                            }
-                    )
-
+                                Log.e("InitialSyncer", "Initial Sync Error: $it")
+                            })
             disposables.add(disposable)
         } else {
             peerGroup.start()
