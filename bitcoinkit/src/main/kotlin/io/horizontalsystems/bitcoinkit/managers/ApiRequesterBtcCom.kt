@@ -107,8 +107,8 @@ class ApiRequesterBtcCom(networkType: NetworkType) : IApiRequester {
 
     private fun getAsJsonObject(url: String): JsonObject {
         return URL(url).openConnection().apply {
-            connectTimeout = 1000
-            readTimeout = 1000
+            connectTimeout = 3000
+            readTimeout = 15000
             setRequestProperty("Accept", "application/json")
         }.getInputStream().use {
             Json.parse(it.bufferedReader()).asObject()
