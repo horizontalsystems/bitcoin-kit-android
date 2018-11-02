@@ -74,6 +74,18 @@ open class TransactionInput : RealmObject {
                 .toByteArray()
     }
 
+    fun toOutpointByteArray(): ByteArray {
+        val output = checkNotNull(previousOutput) { throw Exception("No previous output") }
+        val prevTxHash = checkNotNull(output.transaction?.hash) {
+            throw Exception("No previous transaction hash")
+        }
+
+        return BitcoinOutput()
+                .write(prevTxHash)
+                .writeInt(output.index)
+                .toByteArray()
+    }
+
     fun toByteArrayWitness(): ByteArray {
         val output = BitcoinOutput()
                 .writeVarInt(witness.size.toLong())

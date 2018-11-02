@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.models
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
+import io.horizontalsystems.bitcoinkit.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.realm.RealmList
 import io.realm.RealmObject
@@ -102,19 +103,45 @@ open class Transaction : RealmObject {
         return buffer.toByteArray()
     }
 
-    fun toSignatureByteArray(inputIndex: Int): ByteArray {
-        val buffer = BitcoinOutput()
-        buffer.writeInt(version)
+    fun toSignatureByteArray(inputIndex: Int, isWitness: Boolean = false): ByteArray {
+        val buffer = BitcoinOutput().writeInt(version)
+        if (isWitness) {
+            val outpoints = BitcoinOutput()
+            val sequences = BitcoinOutput()
 
-        // inputs
-        buffer.writeVarInt(inputs.size.toLong())
-        inputs.forEachIndexed { index, input ->
-            buffer.write(input.toSignatureByteArray(index == inputIndex))
+            for (input in inputs) {
+                outpoints.write(input.toOutpointByteArray())
+                sequences.writeInt32(input.sequence)
+            }
+
+            buffer.write(HashUtils.doubleSha256(outpoints.toByteArray())) // hash prevouts
+            buffer.write(HashUtils.doubleSha256(sequences.toByteArray())) // hash sequence
+
+            val inputToSign = inputs[inputIndex] ?: throw Exception("invalid input index")
+            val previousOutput = checkNotNull(inputToSign.previousOutput) { throw Exception("no previous output") }
+
+            buffer.write(inputToSign.toOutpointByteArray())
+            buffer.write(OpCodes.push(OpCodes.p2pkhStart + OpCodes.push(previousOutput.keyHash!!) + OpCodes.p2pkhEnd))
+            buffer.writeInt32(previousOutput.value)
+            buffer.writeInt32(inputToSign.sequence)
+
+            val hashOutputs = BitcoinOutput()
+            for (output in outputs) {
+                hashOutputs.write(output.toByteArray())
+            }
+
+            buffer.write(HashUtils.doubleSha256(hashOutputs.toByteArray()))
+        } else {
+            // inputs
+            buffer.writeVarInt(inputs.size.toLong())
+            inputs.forEachIndexed { index, input ->
+                buffer.write(input.toSignatureByteArray(index == inputIndex))
+            }
+
+            // outputs
+            buffer.writeVarInt(outputs.size.toLong())
+            outputs.forEach { buffer.write(it.toByteArray()) }
         }
-
-        // outputs
-        buffer.writeVarInt(outputs.size.toLong())
-        outputs.forEach { buffer.write(it.toByteArray()) }
 
         buffer.writeUnsignedInt(lockTime)
         return buffer.toByteArray()

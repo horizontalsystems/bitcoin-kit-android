@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.horizontalsystems.bitcoinkit.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
@@ -40,7 +41,7 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
 
         val transaction = Transaction(version = 1, lockTime = 0)
 
-        //add inputs
+        // add inputs
         for (output in selectedOutputsInfo.outputs) {
             val previousTx = checkNotNull(output.transaction) {
                 throw TransactionBuilderException.NoPreviousTransaction()
@@ -54,7 +55,7 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
             transaction.inputs.add(txInput)
         }
 
-        //add output
+        // add output
         transaction.outputs.add(TransactionOutput().apply {
             this.value = 0
             this.index = 0
@@ -64,7 +65,7 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
             this.keyHash = address.hash
         })
 
-        //calculate fee and add change output if needed
+        // calculate fee and add change output if needed
         check(senderPay || selectedOutputsInfo.fee < value) {
             throw TransactionBuilderException.FeeMoreThanValue()
         }
@@ -87,10 +88,29 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
             })
         }
 
-        //sign inputs
-        transaction.inputs.forEachIndexed { index, transactionInput ->
+        // sign inputs
+        transaction.inputs.forEachIndexed { index, input ->
+            val output = selectedOutputsInfo.outputs[index]
             val sigScriptData = inputSigner.sigScriptData(transaction, index)
-            transactionInput?.sigScript = scriptBuilder.unlockingScript(sigScriptData)
+
+            when (output.scriptType) {
+                ScriptType.P2WPKH -> {
+                    transaction.segwit = true
+                    input.witness.addAll(sigScriptData)
+                }
+
+                ScriptType.P2WPKHSH -> {
+                    val pubKey = checkNotNull(output.publicKey)
+
+                    transaction.segwit = true
+                    val witnessProgram = OpCodes.push(0) + OpCodes.push(pubKey.publicKeyHash)
+
+                    input.sigScript = scriptBuilder.unlockingScript(listOf(witnessProgram))
+                    input.witness.addAll(sigScriptData)
+                }
+
+                else -> input.sigScript = scriptBuilder.unlockingScript(sigScriptData)
+            }
         }
 
         transaction.status = Transaction.Status.NEW

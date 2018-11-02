@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.hdwalletkit.HDKey
 import io.horizontalsystems.hdwalletkit.HDWallet
-import junit.framework.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -19,29 +19,13 @@ class InputSignerTest {
     private val privateKey = mock(HDKey::class.java)
     private val inputSigner = InputSigner(hdWallet)
 
+    private var derEncodedSignature = "abc".hexStringToByteArray()
     private var transaction = Fixtures.transactionP2PKH_ForSignatureTest
 
     @Before
     fun setUp() {
-
+        whenever(privateKey.createSignature(any())).thenReturn(derEncodedSignature)
         whenever(hdWallet.privateKey(any(), any())).thenReturn(privateKey)
-
-        val serializedTransaction = transaction.toSignatureByteArray(0) + byteArrayOf(InputSigner.SIGHASH_ALL, 0, 0, 0)
-        val derEncodedSignature = "304402201d914e9d229e4b8cbb7c8dee96f4fdd835cabae7e016e0859c5dc95977b697d50220681395971eecd5df3eb36b8f97f0c8b1a6e98dc7d5662f921e0b2fb0694db0f2".hexStringToByteArray()
-
-        whenever(privateKey.createSignature(serializedTransaction)).thenReturn(derEncodedSignature)
-    }
-
-    @Test
-    fun sigScriptData_CorrectSignature() {
-        val previousOutputPubKey = transaction.inputs[0]?.previousOutput?.publicKey
-        val expectedSignature = "304402201d914e9d229e4b8cbb7c8dee96f4fdd835cabae7e016e0859c5dc95977b697d50220681395971eecd5df3eb36b8f97f0c8b1a6e98dc7d5662f921e0b2fb0694db0f201"
-
-        val resultSignature = inputSigner.sigScriptData(transaction, 0)
-
-        Assert.assertEquals(2, resultSignature.size)
-        Assert.assertEquals(expectedSignature, resultSignature[0].toHexString())
-        Assert.assertEquals(previousOutputPubKey?.publicKey, resultSignature[1])
     }
 
     @Test(expected = InputSigner.NoInputAtIndexException::class)
@@ -73,16 +57,42 @@ class InputSignerTest {
     }
 
     @Test
-    fun sigScriptData_TransactionP2PK() {
-        val expectedSignature = "304402201d914e9d229e4b8cbb7c8dee96f4fdd835cabae7e016e0859c5dc95977b697d50220681395971eecd5df3eb36b8f97f0c8b1a6e98dc7d5662f921e0b2fb0694db0f201"
-
-        val inputPrevOutput = transaction.inputs[0]?.previousOutput
-        inputPrevOutput?.scriptType = ScriptType.P2PK
+    fun sigScriptData_CorrectSignature() {
+        val previousOutputPubKey = transaction.inputs[0]?.previousOutput?.publicKey
 
         val resultSignature = inputSigner.sigScriptData(transaction, 0)
+        val expectedSignature = derEncodedSignature.toHexString() + "01"
 
-        Assert.assertEquals(1, resultSignature.size)
-        Assert.assertEquals(expectedSignature, resultSignature[0].toHexString())
+        assertEquals(2, resultSignature.size)
+        assertEquals(expectedSignature, resultSignature[0].toHexString())
+        assertEquals(previousOutputPubKey?.publicKey, resultSignature[1])
     }
+
+    @Test
+    fun sigScriptData_P2PK() {
+        transaction.inputs[0]?.previousOutput.apply {
+            this?.scriptType = ScriptType.P2PK
+        }
+
+        val resultSignature = inputSigner.sigScriptData(transaction, 0)
+        val expectedSignature = derEncodedSignature.toHexString() + "01"
+
+        assertEquals(1, resultSignature.size)
+        assertEquals(expectedSignature, resultSignature[0].toHexString())
+    }
+
+//    @Test
+//    fun sigScriptData_P2WPKH() {
+//
+//        transaction.inputs[0]?.previousOutput.apply {
+//            this?.scriptType = ScriptType.P2WPKH
+//        }
+//
+//        val resultSignature = inputSigner.sigScriptData(transaction, 0)
+//        val expectedSignature = derEncodedSignature.toHexString() + "01"
+//
+//        assertEquals(2, resultSignature.size)
+//        assertEquals(expectedSignature, resultSignature[0].toHexString())
+//    }
 
 }
