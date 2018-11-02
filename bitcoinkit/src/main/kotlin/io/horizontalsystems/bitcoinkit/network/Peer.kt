@@ -46,17 +46,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         when (message) {
             is PingMessage -> peerConnection.sendMessage(PongMessage(message.nonce))
             is PongMessage -> handlePongMessage(message)
-            is VersionMessage -> {
-                val reason = reasonToClosePeer(message)
-                if (reason.isEmpty()) {
-                    peerConnection.sendMessage(VerAckMessage())
-                    listener.onReceiveBestBlockHeight(this, message.lastBlock)
-                } else {
-                    //close with reason
-                    logger.info("Closing Peer with reason: $reason")
-                    close()
-                }
-            }
+            is VersionMessage -> handleVersionMessage(message)
             is VerAckMessage -> handleVerackMessage()
             is MerkleBlockMessage -> handleMerkleBlockMessage(message)
             is TransactionMessage -> handleTransactionMessage(message)
@@ -71,22 +61,27 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         }
     }
 
+    private fun handleVersionMessage(message: VersionMessage) = try {
+        validatePeerVersion(message)
+
+        peerConnection.sendMessage(VerAckMessage())
+        listener.onReceiveBestBlockHeight(this, message.lastBlock)
+    } catch (e: Error.UnsuitablePeerVersion) {
+        close(e)
+    }
+
     private fun handleVerackMessage() {
         connected = true
 
         listener.connected(this)
     }
 
-    private fun reasonToClosePeer(message: VersionMessage): String {
-        var reason = ""
-        if (message.lastBlock <= 0) {
-            reason = "Peer last block is not greater than 0."
-        } else if (!message.hasBlockChain(network)) {
-            reason = "Peer does not have a copy of the block chain."
-        } else if (!message.supportsBloomFilter(network)) {
-            reason = "Peer does not support Bloom Filter."
+    private fun validatePeerVersion(message: VersionMessage) {
+        when {
+            message.lastBlock <= 0 -> throw Error.UnsuitablePeerVersion("Peer last block is not greater than 0.")
+            !message.hasBlockChain(network) -> throw Error.UnsuitablePeerVersion("Peer does not have a copy of the block chain.")
+            !message.supportsBloomFilter(network) -> throw Error.UnsuitablePeerVersion("Peer does not support Bloom Filter.")
         }
-        return reason
     }
 
     fun filterLoad(bloomFilter: BloomFilter) {
@@ -186,6 +181,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
                 return
             }
         }
+    }
+
+    open class Error(message: String) : Exception(message) {
+        class UnsuitablePeerVersion(message: String) : Error(message)
     }
 
 }
