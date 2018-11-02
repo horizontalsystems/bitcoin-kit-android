@@ -15,7 +15,7 @@ class TransactionProcessor(private val extractor: TransactionExtractor, private 
     }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
-    fun process(transactions: List<Transaction>, block: Block?, checkBloomFilter: Boolean, realm: Realm) {
+    fun process(transactions: List<Transaction>, block: Block?, skipCheckBloomFilter: Boolean, realm: Realm) {
         var needToUpdateBloomFilter = false
 
         for (transaction in transactions) {
@@ -33,7 +33,7 @@ class TransactionProcessor(private val extractor: TransactionExtractor, private 
                 transaction.block = block
                 realm.insert(transaction)
 
-                if (checkBloomFilter) {
+                if (!skipCheckBloomFilter) {
                     needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts(realm) || hasUnspentOutputs(transaction)
                 }
 
