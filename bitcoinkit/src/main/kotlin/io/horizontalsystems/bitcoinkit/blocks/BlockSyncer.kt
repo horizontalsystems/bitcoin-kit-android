@@ -99,7 +99,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
     }
 
-    fun getBlockLocatorHashes(): List<ByteArray> {
+    fun getBlockLocatorHashes(peerLastBlockHeight: Int): List<ByteArray> {
         val result = mutableListOf<ByteArray>()
         val realm = realmFactory.realm
 
@@ -122,7 +122,11 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                     }
         }
 
-        result.add(network.checkpointBlock.headerHash)
+        val checkPointHeaderHash = (realm.where(Block::class.java)
+                .equalTo("height", peerLastBlockHeight)
+                .findFirst() ?: network.checkpointBlock).headerHash
+
+        result.add(checkPointHeaderHash)
 
         realm.close()
 

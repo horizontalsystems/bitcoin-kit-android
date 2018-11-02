@@ -106,26 +106,28 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
     }
 
     private fun downloadBlockchain() {
-        blockSyncer?.getBlockHashes()?.let { blockHashes ->
-            if (blockHashes.isEmpty()) {
-                syncPeer?.synced = syncPeer?.blockHashesSynced ?: false
-            } else {
-                syncPeer?.addTask(GetMerkleBlocksTask(blockHashes))
-            }
-        }
+        syncPeer?.let { syncPeer ->
+            blockSyncer?.let { blockSyncer ->
 
-        if (syncPeer?.blockHashesSynced != true) {
-            blockSyncer?.getBlockLocatorHashes()?.let { blockLocatorHashes ->
-                syncPeer?.addTask(GetBlockHashesTask(blockLocatorHashes))
-            }
-        }
+                val blockHashes = blockSyncer.getBlockHashes()
+                if (blockHashes.isEmpty()) {
+                    syncPeer.synced = syncPeer.blockHashesSynced
+                } else {
+                    syncPeer.addTask(GetMerkleBlocksTask(blockHashes))
+                }
 
-        if (syncPeer?.synced == true) {
-            blockSyncer?.downloadCompleted()
-            syncPeer?.sendMempoolMessage()
-            logger.info("Peer synced ${syncPeer?.host}")
-            syncPeer = null
-            assignNextSyncPeer()
+                if (!syncPeer.blockHashesSynced) {
+                    syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight)))
+                }
+
+                if (syncPeer.synced) {
+                    blockSyncer.downloadCompleted()
+                    syncPeer.sendMempoolMessage()
+                    logger.info("Peer synced ${syncPeer.host}")
+                    this.syncPeer = null
+                    assignNextSyncPeer()
+                }
+            }
         }
     }
 

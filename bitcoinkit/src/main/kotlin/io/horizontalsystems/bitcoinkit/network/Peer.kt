@@ -30,6 +30,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     var connected = false
     var synced = false
     var blockHashesSynced = false
+    var announcedLastBlockHeight: Int = 0
 
     val ready: Boolean
         get() = connected && tasks.isEmpty()
@@ -63,6 +64,8 @@ class Peer(val host: String, private val network: NetworkParameters, private val
 
     private fun handleVersionMessage(message: VersionMessage) = try {
         validatePeerVersion(message)
+
+        announcedLastBlockHeight = message.lastBlock
 
         peerConnection.sendMessage(VerAckMessage())
         listener.onReceiveBestBlockHeight(this, message.lastBlock)
