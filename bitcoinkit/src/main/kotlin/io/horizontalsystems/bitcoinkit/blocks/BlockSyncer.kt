@@ -150,6 +150,8 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         val realm = realmFactory.realm
 
         realm.executeTransaction {
+            var forceAdd = false
+
             val block = try {
                 blockchain.connect(merkleBlock, realm)
             } catch (e: BlockValidatorException.NoPreviousBlock) {
@@ -159,6 +161,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                         ?.height ?: 0
 
                 if (height > 0) {
+                    forceAdd = true
                     blockchain.forceAdd(merkleBlock, height, realm)
                 } else {
                     throw e
@@ -166,7 +169,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
             }
 
             try {
-                transactionProcessor.process(merkleBlock.associatedTransactions, block, !needToRedownload, realm)
+                transactionProcessor.process(merkleBlock.associatedTransactions, block, needToRedownload || forceAdd, realm)
             } catch (e: BloomFilterManager.BloomFilterExpired) {
                 needToRedownload = true
             }
