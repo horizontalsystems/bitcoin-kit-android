@@ -5,96 +5,81 @@ import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
-import junit.framework.Assert
-import org.junit.After
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.mock
+import org.mockito.Mockito
 
 class UnspentOutputSelectorTest {
-
-    private val txSizeCalculator = mock(TransactionSizeCalculator::class.java)
+    private val txSizeCalculator = Mockito.mock(TransactionSizeCalculator::class.java)
     private val unspentOutputSelector = UnspentOutputSelector(txSizeCalculator)
     private lateinit var outputs: List<TransactionOutput>
 
     @Before
     fun setUp() {
-        outputs = listOf(TransactionOutput().apply {
-            value = 100_000
-            scriptType = ScriptType.P2PKH
-        }, TransactionOutput().apply {
-            value = 200_000
-            scriptType = ScriptType.P2PKH
-        }, TransactionOutput().apply {
-            value = 400_000
-            scriptType = ScriptType.P2PKH
-        }, TransactionOutput().apply {
-            value = 800_000
-            scriptType = ScriptType.P2PKH
-        }, TransactionOutput().apply {
-            value = 1_600_000
-            scriptType = ScriptType.P2PKH
-        })
+        outputs = listOf(
+                TransactionOutput().apply { value = 1000; scriptType = ScriptType.P2PKH },
+                TransactionOutput().apply { value = 2000; scriptType = ScriptType.P2PKH },
+                TransactionOutput().apply { value = 4000; scriptType = ScriptType.P2PKH },
+                TransactionOutput().apply { value = 8000; scriptType = ScriptType.P2PKH },
+                TransactionOutput().apply { value = 16000;scriptType = ScriptType.P2PKH })
 
-        whenever(txSizeCalculator.inputSize(any())).thenReturn(149)
-        whenever(txSizeCalculator.outputSize(any())).thenReturn(34)
-        whenever(txSizeCalculator.emptyTxSize).thenReturn(10)
-    }
-
-    @After
-    fun tearDown() {
+        whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
+        whenever(txSizeCalculator.outputSize(any())).thenReturn(2)
+        whenever(txSizeCalculator.transactionSize(any(), any())).thenReturn(100)
     }
 
     @Test
-    fun testExactlyValueReceiverPay() {
-        val selectedOutputs = unspentOutputSelector.select(value = 400_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
+    fun select_ExactlyValueReceiverPay() {
+        fun check(value: Int, feeRate: Int, fee: Int, senderPay: Boolean, output: TransactionOutput) {
+            try {
+                val selectedOutputs = unspentOutputSelector.select(value = value, feeRate = feeRate, senderPay = senderPay, outputs = outputs)
 
-        Assert.assertEquals(listOf(outputs[2]), selectedOutputs.outputs)
-        Assert.assertEquals(400_000, selectedOutputs.totalValue)
-        Assert.assertEquals(115_800, selectedOutputs.fee)
+                assertArrayEquals(arrayOf(output), selectedOutputs.outputs.toTypedArray())
+                assertEquals(output.value, selectedOutputs.totalValue)
+                assertEquals(fee, selectedOutputs.fee)
+                assertEquals(false, selectedOutputs.addChangeOutput)
+
+            } catch (e: Exception) {
+                fail("tail failed with error: ${e.message}")
+            }
+        }
+
+        check(value = 4000, feeRate = 1, fee = 100, senderPay = false, output = outputs[2])      // exactly, without fee
+        check(value = 4000 - 5, feeRate = 1, fee = 100, senderPay = false, output = outputs[2])  // in range using dust, without fee
+        check(value = 3900, feeRate = 1, fee = 100, senderPay = true, output = outputs[2])       // exactly, with fee
+        check(value = 3900 - 5, feeRate = 1, fee = 105, senderPay = true, output = outputs[2])   // in range using dust, with fee
     }
 
     @Test
-    fun testExactlyValueSenderPay() {
-        val fee = (10 + 149 + 29) * 600 // transaction + 1 input + 1 output
-        val selectedOutputs = unspentOutputSelector.select(value = 339_950 - fee, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
+    fun select_receiverPay() {
+        val selectedOutput = unspentOutputSelector.select(value = 7000, feeRate = 1, senderPay = true, outputs = outputs)
 
-        Assert.assertEquals(listOf(outputs[2]), selectedOutputs.outputs)
-        Assert.assertEquals(400_000, selectedOutputs.totalValue)
-        Assert.assertEquals(115_800, selectedOutputs.fee)
+        assertEquals(listOf(outputs[0], outputs[1], outputs[2], outputs[3]), selectedOutput.outputs)
+        assertEquals(15000, selectedOutput.totalValue)
+        assertEquals(100, selectedOutput.fee)
+        assertEquals(true, selectedOutput.addChangeOutput)
     }
 
     @Test
-    fun testTotalValueReceiverPay() {
-        val selectedOutputs = unspentOutputSelector.select(value = 700_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
+    fun select_receiverPayNoChangeOutput() {
+        val expectedFee = 100 + 10 + 2  // fee for tx + fee for change input + fee for change output
+        val selectedOutputs = unspentOutputSelector.select(value = 15000 - expectedFee, feeRate = 1, senderPay = true, outputs = outputs)
 
-        Assert.assertEquals(listOf(outputs[0], outputs[1], outputs[2]), selectedOutputs.outputs)
-        Assert.assertEquals(700_000, selectedOutputs.totalValue)
-        Assert.assertEquals(294_600, selectedOutputs.fee)
-    }
-
-    @Test
-    fun testTotalValueSenderPay() {
-        val selectedOutputs = unspentOutputSelector.select(value = 700_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
-
-        Assert.assertEquals(listOf(outputs[0], outputs[1], outputs[2], outputs[3]), selectedOutputs.outputs)
-        Assert.assertEquals(1_500_000, selectedOutputs.totalValue)
-        Assert.assertEquals(384_000, selectedOutputs.fee)
+        assertEquals(listOf(outputs[0], outputs[1], outputs[2], outputs[3]), selectedOutputs.outputs)
+        assertEquals(15000, selectedOutputs.totalValue)
+        assertEquals(expectedFee, selectedOutputs.fee)
+        assertEquals(false, selectedOutputs.addChangeOutput)
     }
 
     @Test(expected = UnspentOutputSelector.InsufficientUnspentOutputs::class)
     fun testNotEnoughErrorReceiverPay() {
-        unspentOutputSelector.select(value = 3_100_100, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = false, unspentOutputs = outputs)
-    }
-
-    @Test(expected = UnspentOutputSelector.InsufficientUnspentOutputs::class)
-    fun testNotEnoughErrorSenderPay() {
-        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = outputs)
+        unspentOutputSelector.select(value = 3_100_100, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = false, outputs = outputs)
     }
 
     @Test(expected = UnspentOutputSelector.EmptyUnspentOutputs::class)
     fun testEmptyOutputsError() {
-        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputScriptType = ScriptType.P2PKH, senderPay = true, unspentOutputs = listOf())
+        unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = true, outputs = listOf())
     }
 
 }

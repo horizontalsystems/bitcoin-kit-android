@@ -67,10 +67,10 @@ class TransactionBuilderTest {
         whenever(network.addressVersion).thenReturn(111)
         whenever(network.addressScriptVersion).thenReturn(196)
 
-        unspentOutputs = SelectedUnspentOutputInfo(listOf(previousTransaction.outputs[0]!!), previousTransaction.outputs[0]!!.value, fee)
+        unspentOutputs = SelectedUnspentOutputInfo(listOf(previousTransaction.outputs[0]!!), previousTransaction.outputs[0]!!.value, fee, false)
 
         whenever(unspentOutputProvider.allUnspentOutputs()).thenReturn(unspentOutputs.outputs)
-        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
+        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
         whenever(transactionSizeCalculator.outputSize(any())).thenReturn(34)
 
         //receive address locking script P2PKH
@@ -94,13 +94,10 @@ class TransactionBuilderTest {
         assertEquals(1, transaction.inputs.size)
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
 
-        assertEquals(2, transaction.outputs.size)
+        assertEquals(1, transaction.outputs.size)
 
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
         assertEquals(txValue.toLong(), transaction.outputs[0]?.value)
-
-        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
-        assertEquals(unspentOutputs.outputs[0].value - txValue.toLong() - fee, transaction.outputs[1]?.value)
     }
 
     @Test
@@ -114,14 +111,10 @@ class TransactionBuilderTest {
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
         assertNull(transaction.outputs[0]?.publicKey)
 
-        assertEquals(2, transaction.outputs.size)
+        assertEquals(1, transaction.outputs.size)
 
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
         assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
-
-        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
-        assertEquals(changePubKey, transaction.outputs[1]?.publicKey)
-        assertEquals(unspentOutputs.outputs[0].value - txValue, transaction.outputs[1]?.value)
     }
 
     @Test
@@ -134,13 +127,10 @@ class TransactionBuilderTest {
         assertEquals(1, transaction.inputs.size)
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
 
-        assertEquals(2, transaction.outputs.size)
+        assertEquals(1, transaction.outputs.size)
 
         assertEquals(toAddressP2SH, transaction.outputs[0]?.address)
         assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
-
-        assertEquals(changePubKey.publicKeyHash, transaction.outputs[1]?.keyHash)
-        assertEquals(unspentOutputs.outputs[0].value - txValue, transaction.outputs[1]?.value)
     }
 
     @Test
@@ -180,8 +170,8 @@ class TransactionBuilderTest {
 
     @Test
     fun fee() {
-        val unspentOutputs = SelectedUnspentOutputInfo(listOf(), 11_805_400, 112_800)
-        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
+        val unspentOutputs = SelectedUnspentOutputInfo(listOf(), 11_805_400, 112_800, false)
+        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
         val fee = transactionBuilder.fee(10_782_000, 600, true, toAddressP2PKH)
 
         assertEquals(133_200, fee)

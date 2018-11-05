@@ -27,7 +27,7 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
     fun fee(value: Int, feeRate: Int, senderPay: Boolean, address: String? = null): Int {
         val outputType = if (address == null) ScriptType.P2PKH else addressConverter.convert(address).scriptType
 
-        val selectedOutputsInfo = unspentOutputsSelector.select(value = value, feeRate = feeRate, outputScriptType = outputType, senderPay = senderPay, unspentOutputs = unspentOutputProvider.allUnspentOutputs())
+        val selectedOutputsInfo = unspentOutputsSelector.select(value = value, feeRate = feeRate, outputType = outputType, senderPay = senderPay, outputs = unspentOutputProvider.allUnspentOutputs())
 
         val feeWithChangeOutput = if (senderPay) selectedOutputsInfo.fee + transactionSizeCalculator.outputSize(scripType = ScriptType.P2PKH) * feeRate else 0
 
@@ -37,7 +37,14 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
     fun buildTransaction(value: Int, toAddress: String, feeRate: Int, senderPay: Boolean, changePubKey: PublicKey, changeScriptType: Int = ScriptType.P2PKH): Transaction {
 
         val address = addressConverter.convert(toAddress)
-        val selectedOutputsInfo = unspentOutputsSelector.select(value = value, feeRate = feeRate, outputScriptType = address.scriptType, senderPay = senderPay, unspentOutputs = unspentOutputProvider.allUnspentOutputs())
+        val selectedOutputsInfo = unspentOutputsSelector.select(
+                value = value,
+                feeRate = feeRate,
+                outputType = address.scriptType,
+                changeType = changeScriptType,
+                senderPay = senderPay,
+                outputs = unspentOutputProvider.allUnspentOutputs()
+        )
 
         val transaction = Transaction(version = 1, lockTime = 0)
 
@@ -66,7 +73,7 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
         })
 
         // calculate fee and add change output if needed
-        check(senderPay || selectedOutputsInfo.fee < value) {
+        if (!senderPay && selectedOutputsInfo.fee > value) {
             throw TransactionBuilderException.FeeMoreThanValue()
         }
 
@@ -75,7 +82,7 @@ class TransactionBuilder(private val addressConverter: AddressConverter,
 
         transaction.outputs[0]?.value = receivedValue.toLong()
 
-        if (selectedOutputsInfo.totalValue > sentValue + transactionSizeCalculator.outputSize(scripType = changeScriptType) * feeRate) {
+        if (selectedOutputsInfo.addChangeOutput) {
             val changeAddress = addressConverter.convert(changePubKey.publicKeyHash, changeScriptType)
             transaction.outputs.add(TransactionOutput().apply {
                 this.value = selectedOutputsInfo.totalValue - sentValue

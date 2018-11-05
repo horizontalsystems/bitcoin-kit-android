@@ -13,7 +13,7 @@ class UnspentOutputProvider(private val realmFactory: RealmFactory) {
         realmFactory.realm.use {
             unspentOutputs = it.where(TransactionOutput::class.java)
                     .isNotNull("publicKey")
-                    .`in`("scriptType", arrayOf(ScriptType.P2PKH, ScriptType.P2PK))
+                    .notEqualTo("scriptType", ScriptType.UNKNOWN)
                     .isEmpty("inputs")
                     .findAll()
         }

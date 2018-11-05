@@ -1,56 +1,80 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PKH
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 
-class UnspentOutputSelector(private val txSizeCalculator: TransactionSizeCalculator) {
+class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
 
     class EmptyUnspentOutputs : Exception()
     class InsufficientUnspentOutputs : Exception()
 
-    fun select(value: Int, feeRate: Int, outputScriptType: Int, senderPay: Boolean, unspentOutputs: List<TransactionOutput>): SelectedUnspentOutputInfo {
+    fun select(value: Int, feeRate: Int, outputType: Int = P2PKH, changeType: Int = P2PKH, senderPay: Boolean, outputs: List<TransactionOutput>): SelectedUnspentOutputInfo {
 
-        if (unspentOutputs.isEmpty()) {
+        if (outputs.isEmpty()) {
             throw EmptyUnspentOutputs()
         }
 
-        val selected = mutableListOf<TransactionOutput>()
-        var calculatedFee = (txSizeCalculator.emptyTxSize + txSizeCalculator.outputSize(outputScriptType)) * feeRate
-        val dust = txSizeCalculator.inputSize(ScriptType.P2PKH) * feeRate
+        val dust = (calculator.inputSize(changeType) + calculator.outputSize(changeType)) * feeRate
 
-        // try to find 1 unspent output with exactly matching value
-        unspentOutputs.firstOrNull {
-            val totalFee = if (senderPay) calculatedFee + txSizeCalculator.inputSize(it.scriptType) * feeRate else 0
-            (value + totalFee <= it.value) && (value + totalFee + dust > it.value)               //value + input fee + dust
-        }?.let { output ->
-            selected.add(output)
-            calculatedFee += txSizeCalculator.inputSize(output.scriptType) * feeRate
+        //  try to find 1 unspent output with exactly matching value
+        for (output in outputs) {
+            val fee = calculator.transactionSize(listOf(output.scriptType), listOf(outputType)) * feeRate
+            val totalFee = if (senderPay) fee else 0
 
-            return SelectedUnspentOutputInfo(outputs = selected, totalValue = output.value, fee = calculatedFee)
+            if (value + totalFee <= output.value && value + totalFee + dust > output.value) {
+                return SelectedUnspentOutputInfo(
+                        outputs = listOf(output),
+                        totalValue = output.value,
+                        fee = if (senderPay) output.value.toInt() - value else fee,
+                        addChangeOutput = false)
+            }
         }
 
-        // select outputs with least value until we get needed value
-        val sortedOutputs = unspentOutputs.sortedBy { it.value }
+        //  select outputs with least value until we get needed value
+        val sortedOutputs = outputs.sortedBy { it.value }
+        val selectedOutputs = mutableListOf<TransactionOutput>()
+        val selectedOutputTypes = mutableListOf<Int>()
         var totalValue = 0L
+
+        var fee = 0
+        var lastCalculatedFee = 0
         for (output in sortedOutputs) {
-            if (totalValue >= value + (if (senderPay) calculatedFee else 0)) {
+            lastCalculatedFee = calculator.transactionSize(inputs = selectedOutputTypes, outputs = listOf(outputType)) * feeRate
+            if (senderPay) {
+                fee = lastCalculatedFee
+            }
+
+            if (totalValue >= value + fee) {
                 break
             }
-            selected.add(output)
-            calculatedFee += txSizeCalculator.inputSize(output.scriptType) * feeRate
+
+            selectedOutputs.add(output)
+            selectedOutputTypes.add(output.scriptType)
             totalValue += output.value
         }
 
         // if all outputs are selected and total value less than needed throw error
-        if (totalValue < value + (if (senderPay) calculatedFee else 0)) {
+        if (totalValue < value + fee) {
             throw InsufficientUnspentOutputs()
         }
 
-        return SelectedUnspentOutputInfo(outputs = selected, totalValue = totalValue, fee = calculatedFee)
-    }
+        //  if total selected outputs value more than value and fee for transaction with change output + change input -> add fee for change output and mark as need change address
+        var addChangeOutput = false
+        if (totalValue > value + lastCalculatedFee + (if (senderPay) dust else 0)) {
+            lastCalculatedFee = calculator.transactionSize(inputs = selectedOutputTypes, outputs = listOf(outputType, changeType)) * feeRate
+            addChangeOutput = true
+        } else if (senderPay) {
+            lastCalculatedFee = totalValue.toInt() - value
+        }
 
+        return SelectedUnspentOutputInfo(selectedOutputs, totalValue, lastCalculatedFee, addChangeOutput)
+    }
 }
 
-data class SelectedUnspentOutputInfo(val outputs: List<TransactionOutput>, val totalValue: Long, val fee: Int)
-
+data class SelectedUnspentOutputInfo(
+        val outputs: List<TransactionOutput>,
+        val totalValue: Long,
+        val fee: Int,
+        val addChangeOutput: Boolean
+)
