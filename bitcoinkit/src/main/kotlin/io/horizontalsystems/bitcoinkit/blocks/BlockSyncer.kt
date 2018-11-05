@@ -186,18 +186,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                 .findAll().map { it.reversedHeaderHashHex }.toTypedArray()
 
         realm.executeTransaction {
-            realm.where(Block::class.java).`in`("reversedHeaderHashHex", toDelete).findAll().let { blocksToDelete ->
-                blocksToDelete.forEach { block ->
-                    block.transactions?.let { transactions ->
-                        transactions.forEach { transaction ->
-                            transaction.inputs.deleteAllFromRealm()
-                            transaction.outputs.deleteAllFromRealm()
-                        }
-                        transactions.deleteAllFromRealm()
-                    }
-                }
-                blocksToDelete.deleteAllFromRealm()
-            }
+            blockchain.deleteBlocks(realm.where(Block::class.java).`in`("reversedHeaderHashHex", toDelete).findAll())
         }
 
         realm.close()

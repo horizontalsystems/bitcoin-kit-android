@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.models.Block
+import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.NetworkParameters
 import io.realm.Realm
 import junit.framework.Assert
@@ -36,7 +37,7 @@ class BlockchainTest {
     }
 
     @Test
-    fun handleFork_forkExist_newBlocksLonger() {
+    fun handleFork_forkExist_newBlocksLonger_transactions() {
         val blocksInChain = mapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3")
         val newBlocks = mapOf(2 to "NewBlock2", 3 to "NewBlock3", 4 to "NewBlock4")
 
@@ -76,7 +77,7 @@ class BlockchainTest {
     }
 
     @Test
-    fun handleFork_xxx_noNewBlocks() {
+    fun handleFork_noNewBlocks() {
         val blocksInChain = mapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3")
         val newBlocks = mapOf<Int, String>()
 
@@ -102,36 +103,49 @@ class BlockchainTest {
     private fun assertBlocksPresent(blocksInChain: Map<Int, String>, realm: Realm) {
         blocksInChain.forEach { (height, id) ->
             Assert.assertEquals("Block $id($height) not found", 1, realm.where(Block::class.java).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
+            Assert.assertEquals("Transaction $id($height) not found", 1, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
         }
     }
 
     private fun assertBlocksNotPresent(blocksInChain: Map<Int, String>, realm: Realm) {
         blocksInChain.forEach { (height, id) ->
             Assert.assertEquals("Block $id($height) should not present", 0, realm.where(Block::class.java).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
+            Assert.assertEquals("Transaction $id($height) should not present", 0, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
         }
     }
 
     private fun assertNotStaleBlocksPresent(blocksInChain: Map<Int, String>, realm: Realm) {
         blocksInChain.forEach { (height, id) ->
             Assert.assertEquals("Not stale block $id($height) not found", 1, realm.where(Block::class.java).equalTo("stale", false).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
+            Assert.assertEquals("Transaction $id($height) not found", 1, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
         }
     }
 
     private fun insertBlocks(blocksInChain: Map<Int, String>, newBlocks: Map<Int, String>) {
         realm.executeTransaction {
             blocksInChain.forEach { (height, id) ->
-                realm.insert(Block().apply {
+                val block = realm.copyToRealm(Block().apply {
                     reversedHeaderHashHex = id
                     this.height = height
                     stale = false
                 })
+
+                realm.insert(Transaction().apply {
+                    hashHexReversed = id
+                    this.block = block
+                })
             }
 
             newBlocks.forEach { (height, id) ->
-                realm.insert(Block().apply {
+                val block = realm.copyToRealm(Block().apply {
                     reversedHeaderHashHex = id
                     this.height = height
                     stale = true
+                })
+
+                realm.insert(Transaction().apply {
+                    hashHexReversed = id
+                    this.block = block
                 })
             }
         }
