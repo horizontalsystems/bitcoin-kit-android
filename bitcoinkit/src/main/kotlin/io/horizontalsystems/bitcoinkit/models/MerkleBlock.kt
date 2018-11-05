@@ -23,6 +23,7 @@ class MerkleBlock() {
     var hashes: Array<ByteArray> = arrayOf()
     var flags: ByteArray = byteArrayOf()
 
+    var height: Int? = null
     var associatedTransactionHexes = listOf<String>()
     val associatedTransactions = mutableListOf<Transaction>()
     val blockHash: ByteArray by lazy {
