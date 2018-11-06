@@ -46,6 +46,7 @@ open class PeerTask {
 
 interface IPeerTaskDelegate {
     fun onTaskCompleted(task: PeerTask)
+    fun onTaskFailed(task: PeerTask, e: Exception)
     fun handleMerkleBlock(merkleBlock: MerkleBlock)
 }
 

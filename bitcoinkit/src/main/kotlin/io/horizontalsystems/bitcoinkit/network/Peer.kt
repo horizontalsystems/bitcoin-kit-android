@@ -124,6 +124,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         }
     }
 
+    override fun onTaskFailed(task: PeerTask, e: Exception) {
+        peerConnection.close(e)
+    }
+
     override fun getBlocks(hashes: List<ByteArray>) {
         peerConnection.sendMessage(GetBlocksMessage(hashes, network))
     }

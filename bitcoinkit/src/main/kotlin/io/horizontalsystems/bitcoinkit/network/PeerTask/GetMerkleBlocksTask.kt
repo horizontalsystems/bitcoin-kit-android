@@ -10,6 +10,7 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
 
     private var blockHashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
+    private val pingNonce = (Math.random() * Long.MAX_VALUE).toLong()
 
     override fun start() {
         val items = blockHashes.map { hash ->
@@ -17,6 +18,7 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         }
 
         requester?.getData(items)
+        requester?.ping(pingNonce)
     }
 
     override fun handleMerkleBlock(merkleBlock: MerkleBlock): Boolean {
@@ -47,6 +49,15 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         return true
     }
 
+    override fun handlePong(nonce: Long): Boolean {
+        if (nonce == pingNonce) {
+            delegate?.onTaskFailed(this, MerkleBlockNotReceived())
+            return true
+        }
+
+        return false
+    }
+
     private fun handleCompletedMerkleBlock(merkleBlock: MerkleBlock) {
         blockHashes.firstOrNull { it.headerHash.contentEquals(merkleBlock.blockHash) }?.let {
             blockHashes.remove(it)
@@ -58,5 +69,7 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
             delegate?.onTaskCompleted(this)
         }
     }
+
+    class MerkleBlockNotReceived : Exception("Merkle blocks are not received")
 
 }
