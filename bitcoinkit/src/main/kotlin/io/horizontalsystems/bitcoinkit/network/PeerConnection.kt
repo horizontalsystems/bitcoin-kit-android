@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.network
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.messages.Message
+import io.horizontalsystems.bitcoinkit.messages.PingMessage
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -18,6 +19,7 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
         fun onMessage(message: Message)
     }
 
+    private val timer = PeerTimer()
     private val logger = Logger.getLogger("Peer[$host]")
     private val sendingQueue: BlockingQueue<Message> = ArrayBlockingQueue(100)
     private val socket = Socket()
@@ -46,20 +48,31 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
             listener.socketConnected(socket.inetAddress)
             // loop:
             while (isRunning) {
-                // try get message to send:
-                val msg = sendingQueue.poll(1, TimeUnit.SECONDS)
-                if (isRunning && msg != null) {
-                    // send message:
-                    logger.info("=> " + msg.toString())
-                    output.write(msg.toByteArray(network))
-                }
+                try {
+                    timer.check()
 
-                // try receive message:
-                while (isRunning && input.available() > 0) {
-                    val inputStream = BitcoinInput(input)
-                    val parsedMsg = Message.Builder.parseMessage<Message>(inputStream, network)
-                    logger.info("<= $parsedMsg")
-                    listener.onMessage(parsedMsg)
+                    // try get message to send:
+                    val msg = sendingQueue.poll(1, TimeUnit.SECONDS)
+                    if (isRunning && msg != null) {
+                        // send message:
+                        logger.info("=> " + msg.toString())
+                        output.write(msg.toByteArray(network))
+                    }
+
+                    // try receive message:
+                    while (isRunning && input.available() > 0) {
+                        val inputStream = BitcoinInput(input)
+                        val parsedMsg = Message.Builder.parseMessage<Message>(inputStream, network)
+                        logger.info("<= $parsedMsg")
+                        listener.onMessage(parsedMsg)
+                        timer.restart()
+                    }
+
+                } catch (e: PeerTimer.Error.Idle) {
+                    sendMessage(PingMessage((Math.random() * Long.MAX_VALUE).toLong()))
+                    timer.pingSent()
+                } catch (e: PeerTimer.Error.Timeout) {
+                    close(e)
                 }
             }
 
