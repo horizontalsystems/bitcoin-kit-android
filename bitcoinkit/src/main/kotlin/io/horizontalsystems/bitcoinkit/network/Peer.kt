@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.IPeerTaskDelegate
 import io.horizontalsystems.bitcoinkit.network.PeerTask.IPeerTaskRequester
 import io.horizontalsystems.bitcoinkit.network.PeerTask.PeerTask
+import java.net.InetAddress
 import java.util.logging.Logger
 
 class Peer(val host: String, private val network: NetworkParameters, private val listener: Listener) : PeerConnection.Listener, IPeerTaskDelegate, IPeerTaskRequester {
@@ -31,6 +32,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     var synced = false
     var blockHashesSynced = false
     var announcedLastBlockHeight: Int = 0
+    var localBestBlockHeight: Int = 0
 
     val ready: Boolean
         get() = connected && tasks.isEmpty()
@@ -82,6 +84,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     private fun validatePeerVersion(message: VersionMessage) {
         when {
             message.lastBlock <= 0 -> throw Error.UnsuitablePeerVersion("Peer last block is not greater than 0.")
+            message.lastBlock < localBestBlockHeight -> throw Error.UnsuitablePeerVersion("Peer has expired blockchain ${message.lastBlock} vs ${localBestBlockHeight}(local)")
             !message.hasBlockChain(network) -> throw Error.UnsuitablePeerVersion("Peer does not have a copy of the block chain.")
             !message.supportsBloomFilter(network) -> throw Error.UnsuitablePeerVersion("Peer does not support Bloom Filter.")
         }
@@ -102,6 +105,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         task.requester = this
 
         task.start()
+    }
+
+    override fun socketConnected(address: InetAddress) {
+        peerConnection.sendMessage(VersionMessage(localBestBlockHeight, address, network))
     }
 
     override fun disconnected(e: Exception?) {

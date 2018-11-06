@@ -68,6 +68,7 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         if (ip != null) {
             logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this)
+            peer.localBestBlockHeight = blockSyncer?.localBestBlockHeight ?: 0
             peer.start()
         } else {
             logger.info("No peers found yet.")

@@ -2,12 +2,8 @@ package io.horizontalsystems.bitcoinkit.network
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.messages.Message
-import io.horizontalsystems.bitcoinkit.messages.VersionMessage
 import java.io.IOException
-import java.net.ConnectException
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.net.SocketTimeoutException
+import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
@@ -17,8 +13,9 @@ import java.util.logging.Logger
 class PeerConnection(val host: String, private val network: NetworkParameters, private val listener: Listener) : Thread() {
 
     interface Listener {
-        fun onMessage(message: Message)
+        fun socketConnected(address: InetAddress)
         fun disconnected(e: Exception? = null)
+        fun onMessage(message: Message)
     }
 
     private val logger = Logger.getLogger("Peer[$host]")
@@ -46,8 +43,7 @@ class PeerConnection(val host: String, private val network: NetworkParameters, p
 
             logger.info("Socket $host connected.")
 
-            // add version message to send automatically:
-            sendMessage(VersionMessage(0, socket.inetAddress, network))
+            listener.socketConnected(socket.inetAddress)
             // loop:
             while (isRunning) {
                 // try get message to send:
