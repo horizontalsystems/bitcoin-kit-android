@@ -35,21 +35,22 @@ class TransactionBuilderTest {
     private val transactionSizeCalculator = mock(TransactionSizeCalculator::class.java)
     private val inputSigner = mock(InputSigner::class.java)
 
-
     private lateinit var previousTransaction: Transaction
     private lateinit var unspentOutputs: SelectedUnspentOutputInfo
 
     private val addressConverter = AddressConverter(network)
-    private val transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, transactionSizeCalculator, inputSigner)
+    private val transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner)
 
-    private val txValue = 93_417_732
-    private val toAddressP2PKH = "mmLB5DvGbsb4krT9PJ7WrKmv8DkyvNx1ne"
-    private val toAddressP2SH = "2MyQWMrsLsqAMSUeusduAzN6pWuH2V27ykE"
-    private val feeRate = 5406
     private val changePubKey = PublicKey().apply {
         publicKeyHash = "563e1365e6567bb0115a5158bfc94fe834067fd6".hexStringToByteArray()
         publicKeyHex = "563e1365e6567bb0115a5158bfc94fe834067fd6"
     }
+
+    private val toAddressP2PKH = "mmLB5DvGbsb4krT9PJ7WrKmv8DkyvNx1ne"
+    private val toAddressP2SH = "2MyQWMrsLsqAMSUeusduAzN6pWuH2V27ykE"
+
+    private val txValue = 93_417_732
+    private val feeRate = 5406
     private val fee = 1_032_655
     private val unlockingScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexStringToByteArray()
 
@@ -174,7 +175,7 @@ class TransactionBuilderTest {
         whenever(unspentOutputSelector.select(any(), any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
         val fee = transactionBuilder.fee(10_782_000, 600, true, toAddressP2PKH)
 
-        assertEquals(133_200, fee)
+        assertEquals(112800, fee)
     }
 
 }

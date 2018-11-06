@@ -14,24 +14,39 @@ import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 
-class TransactionBuilder(private val addressConverter: AddressConverter,
-                         private val unspentOutputsSelector: UnspentOutputSelector,
-                         private val unspentOutputProvider: UnspentOutputProvider,
-                         private val scriptBuilder: ScriptBuilder,
-                         private val transactionSizeCalculator: TransactionSizeCalculator,
-                         private val inputSigner: InputSigner) {
+class TransactionBuilder {
+    private val addressConverter: AddressConverter
+    private val unspentOutputsSelector: UnspentOutputSelector
+    private val unspentOutputProvider: UnspentOutputProvider
+    private val scriptBuilder: ScriptBuilder
+    private val inputSigner: InputSigner
 
-    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet)
-            : this(addressConverter, UnspentOutputSelector(TransactionSizeCalculator()), UnspentOutputProvider(realmFactory), ScriptBuilder(), TransactionSizeCalculator(), InputSigner(wallet))
+    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet) {
+        this.addressConverter = addressConverter
+        this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
+        this.unspentOutputProvider = UnspentOutputProvider(realmFactory)
+        this.scriptBuilder = ScriptBuilder()
+        this.inputSigner = InputSigner(wallet)
+    }
+
+    constructor(addressConverter: AddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner) {
+        this.addressConverter = addressConverter
+        this.unspentOutputsSelector = unspentOutputsSelector
+        this.unspentOutputProvider = unspentOutputProvider
+        this.scriptBuilder = scriptBuilder
+        this.inputSigner = inputSigner
+    }
 
     fun fee(value: Int, feeRate: Int, senderPay: Boolean, address: String? = null): Int {
         val outputType = if (address == null) ScriptType.P2PKH else addressConverter.convert(address).scriptType
 
-        val selectedOutputsInfo = unspentOutputsSelector.select(value = value, feeRate = feeRate, outputType = outputType, senderPay = senderPay, outputs = unspentOutputProvider.allUnspentOutputs())
-
-        val feeWithChangeOutput = if (senderPay) selectedOutputsInfo.fee + transactionSizeCalculator.outputSize(scripType = ScriptType.P2PKH) * feeRate else 0
-
-        return if (selectedOutputsInfo.totalValue > value + feeWithChangeOutput) feeWithChangeOutput else selectedOutputsInfo.fee
+        return unspentOutputsSelector.select(
+                value = value,
+                feeRate = feeRate,
+                outputType = outputType,
+                senderPay = senderPay,
+                outputs = unspentOutputProvider.allUnspentOutputs()
+        ).fee
     }
 
     fun buildTransaction(value: Int, toAddress: String, feeRate: Int, senderPay: Boolean, changePubKey: PublicKey, changeScriptType: Int = ScriptType.P2PKH): Transaction {
