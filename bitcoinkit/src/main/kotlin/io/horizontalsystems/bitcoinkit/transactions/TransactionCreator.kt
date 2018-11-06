@@ -12,7 +12,7 @@ class TransactionCreator(private val realmFactory: RealmFactory,
                          private val peerGroup: PeerGroup,
                          private val addressManager: AddressManager) {
 
-    val feeRate = 60
+    val feeRate = 8
 
     fun create(address: String, value: Int) {
         val realm = realmFactory.realm

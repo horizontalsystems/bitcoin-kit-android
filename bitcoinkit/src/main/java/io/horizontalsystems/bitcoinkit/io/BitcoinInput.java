@@ -14,7 +14,7 @@ import java.nio.charset.StandardCharsets;
 public final class BitcoinInput implements AutoCloseable {
 
     private static byte[] EMPTY_BYTES = new byte[0];
-    final InputStream in;
+    private final InputStream in;
     private byte bufferOf8bytes[] = new byte[8];
 
     public BitcoinInput(InputStream in) {
@@ -34,10 +34,13 @@ public final class BitcoinInput implements AutoCloseable {
      */
     public long readVarInt() throws IOException {
         byte[] buffer = new byte[1];
-        if (in.read(buffer) == 0) {
+        if (in.read(buffer) < 0) {
             throw new EOFException();
         }
-        int ch = 0xff & buffer[0];
+        return readVarInt(0xff & buffer[0]);
+    }
+
+    public long readVarInt(int ch) throws IOException {
         if (ch < 0xfd) {
             return ch;
         }

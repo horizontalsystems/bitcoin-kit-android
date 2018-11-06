@@ -1,53 +1,82 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PK
+import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PKH
+import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2WPKHSH
 
 class TransactionSizeCalculator {
+    private val signatureLength = 72 + 1      // signature length + pushByte
+    private val pubKeyLength = 33 + 1         // pubKey length + pushByte
+    private val p2wpkhShLength = 22 + 1       // 0014<20-byte-script-hash> + pushByte
 
-    companion object {
-        private const val VERSION_SIZE = 4
-        private const val OUTPUT_COUNT_SIZE = 1
-        private const val INPUT_COUNT_SIZE = 1
-        private const val LOCK_TIME_SIZE = 4
+    private val legacyTx = 16 + 4 + 4 + 16    // 40 Version + number of inputs + number of outputs + locktime
+    private val legacyWitnessData = 1         // 1 Only 0x00 for legacy input
+    private val witnessTx = legacyTx + 1 + 1  // 42 segwit marker + segwit flag
+    private val witnessData = 1 + signatureLength + pubKeyLength  // 108 Number of stack items for input + Size of stack item 0 + Stack item 0, signature + Size of stack item 1 + Stack item 1, pubkey
 
-        private const val OUTPUT_HEX_SIZE = 32
-        private const val OUTPUT_INDEX_SIZE = 4
-        private const val SEQUENCE_SIZE = 4
-        private const val SCRIPT_SIZE = 1
-        private const val VALUE_SIZE = 8
-
-        private const val SIGNATURE_SIZE = 73
-        private const val PUB_KEY_SIZE = 33
-        private const val PUB_KEY_HASH_SIZE = 20
-        private const val SCRIPT_HASH_ADDRESS_SIZE = 20
-
-        private const val OP_PUSHDATA_SIZE = 1
-        private const val OP_CHECKSIG_SIZE = 1
-        private const val OP_DUP_SIZE = 1
-        private const val OP_HASH160_SIZE = 1
-        private const val OP_EQUALVERIFY_SIZE = 1
+    fun outputSize(scripType: Int): Int {
+        return 8 + 1 + getLockingScriptSize(scripType)
     }
-
-    val emptyTxSize = VERSION_SIZE + OUTPUT_COUNT_SIZE + INPUT_COUNT_SIZE + LOCK_TIME_SIZE
-
-    fun outputSize(scripType: Int) = VALUE_SIZE + SCRIPT_SIZE + getLockingScriptSize(scripType)
 
     fun inputSize(scriptType: Int): Int {
-        return OUTPUT_HEX_SIZE + OUTPUT_INDEX_SIZE + SCRIPT_SIZE + getUnlockingScriptSize(scriptType) + SEQUENCE_SIZE
+        val sigLength = when (scriptType) {
+            P2PKH -> signatureLength + pubKeyLength
+            P2PK -> signatureLength
+            P2WPKHSH -> p2wpkhShLength
+            else -> 0
+        }
+
+        return 32 + 4 + 1 + sigLength + 4 // PreviousOutputHex + OutputIndex + sigLength + sigScript + sequence
     }
 
-    private fun getUnlockingScriptSize(scriptType: Int) = OP_PUSHDATA_SIZE + SIGNATURE_SIZE + when (scriptType) {
-        ScriptType.P2PK -> 0
-        ScriptType.P2PKH -> OP_PUSHDATA_SIZE + PUB_KEY_SIZE
-        ScriptType.P2SH -> OP_PUSHDATA_SIZE + SCRIPT_HASH_ADDRESS_SIZE
-        else -> 0
+    fun transactionSize(inputs: List<Int>, outputs: List<Int>): Int {
+        var segwit = false
+        var inputWeight = 0
+
+        for (input in inputs) {
+            if (isWitness(input)) {
+                segwit = true
+                break
+            }
+        }
+
+        inputs.forEach { input ->
+            inputWeight += inputSize(input) * 4  // to vbytes
+            if (isWitness(input)) {
+                inputWeight += witnessSize(input)
+            }
+        }
+
+        val outputWeight = outputs.fold(0) { memo, next -> memo + outputSize(next) } * 4 // to vbytes
+        val txWeight = if (segwit) witnessTx else legacyTx
+
+        return toBytes(txWeight + inputWeight + outputWeight)
+    }
+
+    private fun witnessSize(type: Int): Int {  // in vbytes
+        if (isWitness(type)) {
+            return witnessData
+        }
+
+        return legacyWitnessData
+    }
+
+    private fun toBytes(fee: Int): Int {
+        return (fee / 4) + if (fee % 4 == 0) 0 else 1
     }
 
     private fun getLockingScriptSize(scriptType: Int) = when (scriptType) {
-        ScriptType.P2PK -> OP_PUSHDATA_SIZE + PUB_KEY_SIZE + OP_CHECKSIG_SIZE
-        ScriptType.P2PKH -> OP_DUP_SIZE + OP_HASH160_SIZE + OP_PUSHDATA_SIZE + PUB_KEY_HASH_SIZE + OP_EQUALVERIFY_SIZE + OP_CHECKSIG_SIZE
-        ScriptType.P2SH -> 23 //todo need to change after adding p2sh addresses
+        ScriptType.P2PK -> 35
+        ScriptType.P2PKH -> 25
+        ScriptType.P2SH -> 23
+        ScriptType.P2WPKH -> 22
+        ScriptType.P2WSH -> 34
+        ScriptType.P2WPKHSH -> 23
         else -> 0
     }
 
+    private fun isWitness(type: Int): Boolean {
+        return type in arrayOf(ScriptType.P2WPKH, ScriptType.P2WSH, ScriptType.P2WPKHSH)
+    }
 }

@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.models
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
+import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.RealmResults
 import io.realm.annotations.LinkingObjects
@@ -36,6 +37,7 @@ open class TransactionInput : RealmObject {
     var previousOutputHexReversed = ""
     var keyHash: ByteArray? = null
     var address: String? = ""
+    var witness = RealmList<ByteArray>()
 
     @LinkingObjects("inputs")
     val transactions: RealmResults<Transaction>? = null
@@ -52,6 +54,16 @@ open class TransactionInput : RealmObject {
         sequence = input.readUnsignedInt()
     }
 
+    fun storeWitness(input: BitcoinInput) {
+        val stackSize = input.readVarInt()
+
+        for (i in 0 until stackSize) {
+            val dataSize = input.readVarInt()
+            val data = input.readBytes(dataSize.toInt())
+            witness.add(data)
+        }
+    }
+
     fun toByteArray(): ByteArray {
         return BitcoinOutput()
                 .write(previousOutputHash)
@@ -60,6 +72,30 @@ open class TransactionInput : RealmObject {
                 .write(sigScript)
                 .writeUnsignedInt(sequence)
                 .toByteArray()
+    }
+
+    fun toOutpointByteArray(): ByteArray {
+        val output = checkNotNull(previousOutput) { throw Exception("No previous output") }
+        val prevTxHash = checkNotNull(output.transaction?.hash) {
+            throw Exception("No previous transaction hash")
+        }
+
+        return BitcoinOutput()
+                .write(prevTxHash)
+                .writeInt(output.index)
+                .toByteArray()
+    }
+
+    fun toByteArrayWitness(): ByteArray {
+        val output = BitcoinOutput()
+                .writeVarInt(witness.size.toLong())
+
+        witness.forEach { data ->
+            output.writeVarInt(data.size.toLong())
+            output.write(data)
+        }
+
+        return output.toByteArray()
     }
 
     fun toSignatureByteArray(forCurrentInputSignature: Boolean): ByteArray {
@@ -79,10 +115,6 @@ open class TransactionInput : RealmObject {
         }
 
         return output.writeUnsignedInt(sequence).toByteArray()
-    }
-
-    fun validate() {
-        // throw new ValidateException("Verify signature failed.");
     }
 
 }

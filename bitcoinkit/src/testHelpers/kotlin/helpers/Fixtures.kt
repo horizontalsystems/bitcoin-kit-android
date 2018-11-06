@@ -1,6 +1,7 @@
 package helpers
 
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
@@ -151,6 +152,33 @@ object Fixtures {
             scriptType = ScriptType.UNKNOWN
         })
 
+        setHashes()
+    }
+
+    val transactionP2WPKH = Transaction().apply {
+        version = 1
+        inputs.add(TransactionInput().apply {
+            previousOutputHash = "a6d1ce683f38a84cfd88a9d48b0ba2d7a8def00f8517e3da02c86fce6c7863d7".hexStringToByteArray()
+            previousOutputHexReversed = previousOutputHash.reversedArray().toHexString()
+            previousOutputIndex = 0
+            sigScript = "4730440220302e597d74aebcb0bf7f372be156252017af190bd586466104b079fba4b7efa7022037ebbf84e096ef3d966123a93a83586012353c1d2c11c967d21acf1c94c45df001210347235e12207d21b6093d9fd93a0df4d589a0d44252b98b2e934a8da5ab1d1654".hexStringToByteArray()
+            sequence = 4294967295
+        })
+        outputs.add(TransactionOutput().apply {
+            value = 10792000
+            index = 0
+            lockingScript = "00148749115073ad59a6f3587f1f9e468adedf01473f".hexStringToByteArray()
+            scriptType = ScriptType.P2WPKH
+            keyHash = byteArrayOf()
+        })
+        outputs.add(TransactionOutput().apply {
+            value = 0
+            index = 0
+            lockingScript = "6a4c500000b919000189658af37cd16dbd16e4186ea13c5d8e1f40c5b5a0958326067dd923b8fc8f0767f62eb9a7fd57df4f3e775a96ca5b5eabf5057dff98997a3bbd011366703f5e45075f397f7f3c8465da".hexStringToByteArray()
+            scriptType = ScriptType.P2PK
+            keyHash = byteArrayOf()
+        })
+        lockTime = 0
         setHashes()
     }
 
