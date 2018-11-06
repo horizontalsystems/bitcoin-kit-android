@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.PeerGroup
-import io.reactivex.Observable
+import io.reactivex.Single
 import org.junit.After
 import org.junit.Assert
 import org.junit.Before
@@ -78,8 +78,8 @@ class InitialSyncerTest {
             reversedHeaderHashHex = blockIndex++.toString()
         }
 
-        val externalObservable = Observable.just(Pair(listOf(externalPublicKey1), listOf(blockExternal1, blockExternal2)))
-        val internalObservable = Observable.just(Pair(listOf(internalPublicKey1), listOf(blockInternal1, blockInternal2)))
+        val externalObservable = Single.just(Pair(listOf(externalPublicKey1), listOf(blockExternal1, blockExternal2)))
+        val internalObservable = Single.just(Pair(listOf(internalPublicKey1), listOf(blockInternal1, blockInternal2)))
 
         whenever(stateManager.apiSynced).thenReturn(false)
 
@@ -107,8 +107,8 @@ class InitialSyncerTest {
     fun sync_apiNotSynced_blocksDiscoveredFail() {
         whenever(stateManager.apiSynced).thenReturn(false)
 
-        whenever(blockDiscover.fetchFromApi(true)).thenReturn(Observable.error(Exception()))
-        whenever(blockDiscover.fetchFromApi(false)).thenReturn(Observable.error(Exception()))
+        whenever(blockDiscover.fetchFromApi(true)).thenReturn(Single.error(Exception()))
+        whenever(blockDiscover.fetchFromApi(false)).thenReturn(Single.error(Exception()))
 
         initialSyncer.sync()
 

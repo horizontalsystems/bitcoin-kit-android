@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import android.content.Context
+import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.argumentCaptor
 import com.nhaarman.mockito_kotlin.verify
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
@@ -80,7 +81,9 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        verify(peerConnection).close(null)
+        verify(peerConnection).close(argThat {
+            this is Peer.Error.UnsuitablePeerVersion
+        })
     }
 
     @Test
@@ -89,7 +92,9 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        verify(peerConnection).close(null)
+        verify(peerConnection).close(argThat {
+            this is Peer.Error.UnsuitablePeerVersion
+        })
     }
 
     @Test
@@ -98,7 +103,9 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        verify(peerConnection).close(null)
+        verify(peerConnection).close(argThat {
+            this is Peer.Error.UnsuitablePeerVersion
+        })
     }
 
 }
