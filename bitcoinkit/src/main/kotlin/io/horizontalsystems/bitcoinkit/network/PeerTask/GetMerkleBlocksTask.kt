@@ -1,27 +1,28 @@
 package io.horizontalsystems.bitcoinkit.network.PeerTask
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
 
-class GetMerkleBlocksTask(hashes: List<ByteArray>) : PeerTask() {
+class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
 
-    private var hashes = hashes.toMutableList()
+    private var blockHashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
 
     override fun start() {
-        val items = hashes.map { hash ->
-            InventoryItem(InventoryItem.MSG_FILTERED_BLOCK, hash)
+        val items = blockHashes.map { hash ->
+            InventoryItem(InventoryItem.MSG_FILTERED_BLOCK, hash.headerHash)
         }
 
         requester?.getData(items)
     }
 
     override fun handleMerkleBlock(merkleBlock: MerkleBlock): Boolean {
-        if (hashes.firstOrNull { merkleBlock.blockHash.contentEquals(it) } == null) {
-            return false
-        }
+        val blockHash = blockHashes.firstOrNull { merkleBlock.blockHash.contentEquals(it.headerHash) } ?: return false
+
+        merkleBlock.height = if (blockHash.height > 0) blockHash.height else null
 
         if (merkleBlock.complete) {
             handleCompletedMerkleBlock(merkleBlock)
@@ -47,19 +48,15 @@ class GetMerkleBlocksTask(hashes: List<ByteArray>) : PeerTask() {
     }
 
     private fun handleCompletedMerkleBlock(merkleBlock: MerkleBlock) {
-        hashes.firstOrNull { it.contentEquals(merkleBlock.blockHash) }?.let {
-            hashes.remove(it)
+        blockHashes.firstOrNull { it.headerHash.contentEquals(merkleBlock.blockHash) }?.let {
+            blockHashes.remove(it)
         }
 
         delegate?.handleMerkleBlock(merkleBlock)
 
-        if (hashes.isEmpty()) {
+        if (blockHashes.isEmpty()) {
             delegate?.onTaskCompleted(this)
         }
     }
-
-//    override func isRequestingInventory(hash: Data) -> Bool {
-//        return hashes.contains(hash)
-//    }
 
 }

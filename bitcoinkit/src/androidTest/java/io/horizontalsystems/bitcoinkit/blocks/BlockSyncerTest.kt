@@ -67,12 +67,8 @@ class BlockSyncerTest {
     @Test
     fun handleMerkleBlock_forceAddValidOrphanBlock() {
         val height = 100
-        realm.executeTransaction {
-            realm.where(BlockHash::class.java)
-                    .equalTo("headerHash", merkleBlock.blockHash)
-                    .findFirst()
-                    ?.height = height
-        }
+
+        merkleBlock.height = height
 
         whenever(blockchain.forceAdd(merkleBlock, height, realm)).thenReturn(block)
         whenever(blockchain.connect(merkleBlock, realm)).thenThrow(BlockValidatorException.NoPreviousBlock())
@@ -106,7 +102,7 @@ class BlockSyncerTest {
 
         blockSyncer.handleMerkleBlock(merkleBlock)
 
-        verify(transactionProcessor).process(merkleBlock.associatedTransactions, block, true, realm)
+        verify(transactionProcessor).process(merkleBlock.associatedTransactions, block, false, realm)
 
         val realm1 = factories.realmFactory.realm
         assertBlockHashNotPresent(block.reversedHeaderHashHex, realm1)
@@ -115,7 +111,7 @@ class BlockSyncerTest {
     @Test
     fun handleMerkleBlock_BloomFilterExpired_blockHashNotDeleted() {
         whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
-        whenever(transactionProcessor.process(merkleBlock.associatedTransactions, block, true, realm)).thenThrow(BloomFilterManager.BloomFilterExpired)
+        whenever(transactionProcessor.process(merkleBlock.associatedTransactions, block, false, realm)).thenThrow(BloomFilterManager.BloomFilterExpired)
 
         blockSyncer.handleMerkleBlock(merkleBlock)
 
