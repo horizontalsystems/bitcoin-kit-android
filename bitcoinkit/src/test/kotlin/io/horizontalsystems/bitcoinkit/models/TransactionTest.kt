@@ -20,6 +20,9 @@ class TransactionTest {
         assertEquals(transaction.inputs.size, 1)
         assertEquals(transaction.outputs.size, 2)
 
+        assertEquals(transaction.outputs[0]?.index, 0)
+        assertEquals(transaction.outputs[1]?.index, 1)
+
         assertEquals(transaction.hash.toHexString(), txHashLE)
         assertEquals(transaction.hashHexReversed, txHashBE)
     }

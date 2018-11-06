@@ -40,10 +40,11 @@ open class TransactionOutput : RealmObject {
         get() = transactions?.first()
 
     constructor()
-    constructor(input: BitcoinInput) {
+    constructor(input: BitcoinInput, vout: Long) {
         value = input.readLong()
         val scriptLength = input.readVarInt() // do not store
         lockingScript = input.readBytes(scriptLength.toInt())
+        index = vout.toInt()
     }
 
     fun toByteArray(): ByteArray {

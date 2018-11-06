@@ -61,11 +61,15 @@ open class Transaction : RealmObject {
         }
 
         //  inputs
-        repeat(inputCount.toInt()) { inputs.add(TransactionInput(input)) }
+        for (i in 0 until inputCount) {
+            inputs.add(TransactionInput(input))
+        }
 
         //  outputs
         val outputCount = input.readVarInt()
-        repeat(outputCount.toInt()) { outputs.add(TransactionOutput(input)) }
+        for (i in 0 until outputCount) {
+            outputs.add(TransactionOutput(input, i))
+        }
 
         //  extract witness data
         if (segwit) {
@@ -122,7 +126,7 @@ open class Transaction : RealmObject {
 
             buffer.write(inputToSign.toOutpointByteArray())
             buffer.write(OpCodes.push(OpCodes.p2pkhStart + OpCodes.push(previousOutput.keyHash!!) + OpCodes.p2pkhEnd))
-            buffer.writeInt32(previousOutput.value)
+            buffer.writeLong(previousOutput.value)
             buffer.writeInt32(inputToSign.sequence)
 
             val hashOutputs = BitcoinOutput()
