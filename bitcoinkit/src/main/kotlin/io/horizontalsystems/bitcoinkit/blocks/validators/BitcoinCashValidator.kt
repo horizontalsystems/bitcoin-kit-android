@@ -25,11 +25,10 @@ class BitcoinCashValidator(private val network: NetworkParameters) : BlockValida
 
     //  Get median of last 3 blocks based on timestamp
     fun getSuitableBlock(block: Block): Block {
-        val blocks = mutableListOf<Block>()
+        val blocks = Array(3) { block }
 
-        blocks.add(block)
-        blocks.add(blocks[0].previousBlock ?: throw BlockValidatorException.NoPreviousBlock())
-        blocks.add(blocks[1].previousBlock ?: throw BlockValidatorException.NoPreviousBlock())
+        blocks[1] = blocks[2].previousBlock ?: throw BlockValidatorException.NoPreviousBlock()
+        blocks[0] = blocks[1].previousBlock ?: throw BlockValidatorException.NoPreviousBlock()
 
         return blocks.sortedBy { it.header?.timestamp }[1]
     }
