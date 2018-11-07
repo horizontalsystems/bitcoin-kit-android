@@ -17,6 +17,11 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                   private val bloomFilterManager: BloomFilterManager,
                   private val network: NetworkParameters) {
 
+    val localBestBlockHeight: Int?
+        get() = realmFactory.realm.use {
+            it.where(Block::class.java).sort("height", Sort.DESCENDING).findFirst()?.height
+        }
+
     private var needToRedownload = false
 
     init {
