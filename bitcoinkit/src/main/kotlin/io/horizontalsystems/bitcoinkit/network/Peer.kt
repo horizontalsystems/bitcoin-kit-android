@@ -22,7 +22,6 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
         fun onTaskCompleted(peer: Peer, task: PeerTask)
         fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
-        fun onReceiveBestBlockHeight(peer: Peer, lastBlockHeight: Int)
     }
 
     private val peerConnection = PeerConnection(host, network, this)
@@ -70,7 +69,6 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         announcedLastBlockHeight = message.lastBlock
 
         peerConnection.sendMessage(VerAckMessage())
-        listener.onReceiveBestBlockHeight(this, message.lastBlock)
     } catch (e: Error.UnsuitablePeerVersion) {
         close(e)
     }

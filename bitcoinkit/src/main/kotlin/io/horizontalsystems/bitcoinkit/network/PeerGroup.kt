@@ -15,7 +15,7 @@ import java.util.logging.Logger
 class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: BloomFilterManager, val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     interface LastBlockHeightListener {
-        fun onReceiveBestBlockHeight(lastBlockHeight: Int)
+        fun onReceiveMaxBlockHeight(height: Int)
     }
 
     var blockSyncer: BlockSyncer? = null
@@ -100,6 +100,9 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
                     syncPeer = nonSyncedPeer
                     blockSyncer?.downloadStarted()
                     logger.info("Start syncing peer ${nonSyncedPeer.host}")
+
+                    lastBlockHeightListener?.onReceiveMaxBlockHeight(nonSyncedPeer.announcedLastBlockHeight)
+
                     downloadBlockchain()
                 }
             }
@@ -219,10 +222,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         } catch (e: Exception) {
             peer.close(e)
         }
-    }
-
-    override fun onReceiveBestBlockHeight(peer: Peer, lastBlockHeight: Int) {
-        lastBlockHeightListener?.onReceiveBestBlockHeight(lastBlockHeight)
     }
 
     override fun onFilterUpdated(bloomFilter: BloomFilter) {

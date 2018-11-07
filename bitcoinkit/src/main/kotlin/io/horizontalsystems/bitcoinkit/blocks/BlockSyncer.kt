@@ -15,7 +15,13 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                   private val transactionProcessor: TransactionProcessor,
                   private val addressManager: AddressManager,
                   private val bloomFilterManager: BloomFilterManager,
+                  private val listener: Listener,
                   private val network: NetworkParameters) {
+
+    interface Listener {
+        fun onInitialBestBlockHeight(height: Int)
+        fun onCurrentBestBlockHeight(height: Int)
+    }
 
     val localBestBlockHeight: Int?
         get() = realmFactory.realm.use {
@@ -35,6 +41,8 @@ class BlockSyncer(private val realmFactory: RealmFactory,
             } catch (e: RuntimeException) {
             }
         }
+
+        listener.onInitialBestBlockHeight(localBestBlockHeight ?: 0)
 
         realm.close()
     }
@@ -177,6 +185,8 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                         .findFirst()
                         ?.deleteFromRealm()
             }
+
+            listener.onCurrentBestBlockHeight(block.height)
         }
 
         realm.close()
