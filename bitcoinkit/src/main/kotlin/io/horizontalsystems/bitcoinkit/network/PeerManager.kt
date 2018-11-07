@@ -1,53 +1,18 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import io.horizontalsystems.bitcoinkit.utils.JsonUtils
-import java.io.*
-import java.util.logging.Level
+import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.models.PeerAddress
+import io.realm.Realm
 import java.util.logging.Logger
 
-class PeerManager(val network: NetworkParameters, private val cached: File? = null) {
-
-    // A PeerAddress holds an IP address representing the network location of
-    // a peer in the Peer-to-Peer network.
-    class PeerAddress(var ip: String, var score: Int = 0) {
-
-        @Volatile
-        var using: Boolean = false
-
-        override fun equals(other: Any?): Boolean {
-            if (other is PeerAddress) {
-                return ip == other.ip
-            }
-
-            return false
-        }
-
-        override fun hashCode() = ip.hashCode()
-    }
+class PeerManager(private val network: NetworkParameters, private val realmFactory: RealmFactory) {
 
     private val logger = Logger.getLogger("PeerManager")
-    private val peerAddresses: MutableList<PeerAddress> = ArrayList()
+    private val usingPeers = mutableListOf<String>()
+    private var peerDiscover = PeerDiscover()
 
-    init {
-        // add cached peer addresses:
-        addPeers(loadPeers())
-
-        if (peerAddresses.size < 5) {
-            // lookup from DNS:
-            val thread = object : Thread() {
-                override fun run() {
-                    try {
-                        addPeers(PeerDiscover.lookup(network.dnsSeeds))
-                    } catch (e: Exception) {
-                        logger.log(Level.WARNING, "Could not discover peerAddresses.", e)
-                    }
-
-                }
-            }
-
-            thread.isDaemon = true
-            thread.start()
-        }
+    constructor(network: NetworkParameters, realmFactory: RealmFactory, peerDiscover: PeerDiscover) : this(network, realmFactory) {
+        this.peerDiscover = peerDiscover
     }
 
     /**
@@ -55,102 +20,69 @@ class PeerManager(val network: NetworkParameters, private val cached: File? = nu
      *
      * @return Ip or null if no peer available.
      */
-    @Synchronized
     fun getPeerIp(): String? {
-        logger.info("Try get an unused peer from " + peerAddresses.size + " peerAddresses...")
-        peerAddresses.sortWith(Comparator { p1, p2 ->
-            if (p1.score > p2.score) -1 else 1
-        })
+        logger.info("Try get an unused peer from peer addresses...")
 
-        for (p in peerAddresses) {
-            if (!p.using) {
-                p.using = true
-
-                if (p.ip == "") {
-                    throw Exception()
+        realmFactory.realm.use { realm ->
+            val peerAddress = getUnusedPeer(realm)
+            if (peerAddress == null) {
+                try {
+                    addPeers(peerDiscover.lookup(network.dnsSeeds))
+                } catch (e: Exception) {
+                    logger.warning("Could not discover peer addresses. ${e.message}")
                 }
 
-                return p.ip
+                return null
             }
-        }
 
-        return null
+            // mark peer as "using"
+            usingPeers.add(peerAddress.ip)
+
+            return peerAddress.ip
+        }
     }
 
-    @Synchronized
     fun markFailed(peerIp: String) {
-        peerAddresses.firstOrNull { it.ip == peerIp }?.let { peer ->
-            peerAddresses.remove(peer)
-            storePeers()
+        val realm = realmFactory.realm
+        val peer = getUnusedPeer(realm, peerIp)
+        if (peer != null) {
+            usingPeers.removeAll { it == peerIp }
+            realm.executeTransaction {
+                peer.deleteFromRealm()
+            }
         }
     }
 
-    @Synchronized
     fun markSuccess(peerIp: String) {
-        peerAddresses.firstOrNull { it.ip == peerIp }?.let { peer ->
-            peer.using = false
-            peer.score += 3
-
-            storePeers()
-        }
-    }
-
-    @Synchronized
-    fun peerCount(): Int {
-        return peerAddresses.size
-    }
-
-    @Synchronized
-    fun addPeers(ips: Array<String>) {
-        addPeers(ips.map { PeerAddress(it) }.toTypedArray())
-        storePeers()
-    }
-
-    @Synchronized
-    private fun addPeers(ps: Array<PeerAddress>) {
-        logger.info("Add discovered " + ps.size + " peerAddresses...")
-        for (p in ps) {
-            if (!peerAddresses.contains(p)) {
-                peerAddresses.add(p)
+        val realm = realmFactory.realm
+        val peer = getUnusedPeer(realm, peerIp)
+        if (peer != null) {
+            realm.executeTransaction {
+                peer.score += 3
             }
         }
-        logger.info("Total peerAddresses: " + peerAddresses.size)
-        storePeers()
     }
 
-    @Synchronized
-    fun close() {
-        storePeers()
-    }
-
-    private fun loadPeers(): Array<PeerAddress> {
-        if (cached != null) {
-            try {
-                val inputStream = FileInputStream(cached)
-                BufferedInputStream(inputStream).use { input ->
-                    return JsonUtils.fromJson(Array<PeerAddress>::class.java, input)
-                }
-            } catch (e: Exception) {
-                logger.warning("Load cached peerAddresses from cached file failed: " + cached.absolutePath)
-            }
-
+    private fun getUnusedPeer(realm: Realm, peerIp: String? = null): PeerAddress? {
+        val query = realm.where(PeerAddress::class.java)
+        if (peerIp != null) {
+            query.equalTo("ip", peerIp)
+        } else {
+            query.not().`in`("ip", usingPeers.toTypedArray()).sort("score")
         }
 
-        return arrayOf()
+        return query.findFirst()
     }
 
-    private fun storePeers() {
-        if (cached != null) {
-            try {
-                val streamWriter = OutputStreamWriter(FileOutputStream(cached), "UTF-8")
-                BufferedWriter(streamWriter).use { writer ->
-                    val peerArray = peerAddresses.toTypedArray()
-                    writer.write(JsonUtils.toJson(peerArray))
-                }
-            } catch (e: Exception) {
-                logger.log(Level.WARNING, "Write peerAddresses to cached file failed: " + cached.absolutePath, e)
-            }
+    private fun addPeers(ips: Array<String>) {
+        logger.info("Add discovered " + ips.size + " peer addresses...")
 
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction {
+                ips.forEach { realm.insertOrUpdate(PeerAddress(it)) }
+            }
         }
+
+        logger.info("Total peer addresses: " + ips.size)
     }
 }
