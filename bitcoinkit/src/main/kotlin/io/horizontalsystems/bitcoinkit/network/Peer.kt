@@ -17,12 +17,12 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     private val logger = Logger.getLogger("Peer")
 
     interface Listener {
-        fun connected(peer: Peer)
-        fun disconnected(peer: Peer, e: Exception?)
+        fun onConnect(peer: Peer)
         fun onReady(peer: Peer)
+        fun onDisconnect(peer: Peer, e: Exception?)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
-        fun onTaskCompleted(peer: Peer, task: PeerTask)
-        fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
+        fun onReceiveMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
+        fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
     private val peerConnection = PeerConnection(host, network, this)
@@ -79,7 +79,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     private fun handleVerackMessage() {
         connected = true
 
-        listener.connected(this)
+        listener.onConnect(this)
     }
 
     private fun validatePeerVersion(message: VersionMessage) {
@@ -114,17 +114,17 @@ class Peer(val host: String, private val network: NetworkParameters, private val
 
     override fun disconnected(e: Exception?) {
         connected = false
-        listener.disconnected(this, e)
+        listener.onDisconnect(this, e)
     }
 
     override fun handleMerkleBlock(merkleBlock: MerkleBlock) {
-        listener.handleMerkleBlock(this, merkleBlock)
+        listener.onReceiveMerkleBlock(this, merkleBlock)
     }
 
     override fun onTaskCompleted(task: PeerTask) {
         tasks.firstOrNull { it == task }?.let { completedTask ->
             tasks.remove(completedTask)
-            listener.onTaskCompleted(this, task)
+            listener.onTaskComplete(this, task)
         }
 
         if (tasks.isEmpty()) {

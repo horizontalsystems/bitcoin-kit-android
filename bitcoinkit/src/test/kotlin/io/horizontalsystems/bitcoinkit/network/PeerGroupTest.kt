@@ -65,7 +65,7 @@ class PeerGroupTest {
 
     @Test
     fun disconnected_withError() { // removes peer from connection list
-        peerGroup.disconnected(peer1, SocketTimeoutException("Some Error"))
+        peerGroup.onDisconnect(peer1, SocketTimeoutException("Some Error"))
 
         verify(peerManager).markFailed(peerIp)
     }
@@ -73,7 +73,7 @@ class PeerGroupTest {
     @Test
     fun relay() { // send transaction
         whenever(peer1.ready).thenReturn(true)
-        peerGroup.connected(peer1)
+        peerGroup.onConnect(peer1)
 
         val transaction = Transaction()
         peerGroup.relay(transaction)

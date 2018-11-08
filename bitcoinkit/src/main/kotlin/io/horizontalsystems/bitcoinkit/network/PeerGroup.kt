@@ -82,7 +82,7 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
     //
     // PeerListener implementations
     //
-    override fun connected(peer: Peer) {
+    override fun onConnect(peer: Peer) {
         peerMap[peer.host] = peer
         bloomFilterManager.bloomFilter?.let {
             peer.filterLoad(it)
@@ -97,14 +97,14 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
         }
     }
 
-    override fun disconnected(peer: Peer, e: Exception?) {
+    override fun onDisconnect(peer: Peer, e: Exception?) {
         peerMap.remove(peer.host)
 
         if (e == null) {
-            logger.info("Peer ${peer.host} disconnected.")
+            logger.info("Peer ${peer.host} onDisconnect.")
             peerManager.markSuccess(peer.host)
         } else {
-            logger.warning("Peer ${peer.host} disconnected with error ${e.message}.")
+            logger.warning("Peer ${peer.host} onDisconnect with error ${e.message}.")
             peerManager.markFailed(peer.host)
         }
 
@@ -146,7 +146,15 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
         }
     }
 
-    override fun onTaskCompleted(peer: Peer, task: PeerTask) {
+    override fun onReceiveMerkleBlock(peer: Peer, merkleBlock: MerkleBlock) {
+        try {
+            blockSyncer?.handleMerkleBlock(merkleBlock)
+        } catch (e: Exception) {
+            peer.close(e)
+        }
+    }
+
+    override fun onTaskComplete(peer: Peer, task: PeerTask) {
         when (task) {
             is GetBlockHashesTask -> {
                 if (task.blockHashes.isEmpty()) {
@@ -162,14 +170,6 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
                 transactionSyncer?.handleTransactions(task.transactions)
             }
             else -> throw Exception("Task not handled: ${task}")
-        }
-    }
-
-    override fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock) {
-        try {
-            blockSyncer?.handleMerkleBlock(merkleBlock)
-        } catch (e: Exception) {
-            peer.close(e)
         }
     }
 
