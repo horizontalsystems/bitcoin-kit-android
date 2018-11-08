@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
-class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: BloomFilterManager, val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
+class PeerGroup(private val peerManager: PeerManager, private val bloomFilterManager: BloomFilterManager, private val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     interface LastBlockHeightListener {
         fun onReceiveMaxBlockHeight(height: Int)
@@ -24,10 +24,8 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
 
     private val logger = Logger.getLogger("PeerGroup")
     private val peerMap = ConcurrentHashMap<String, Peer>()
-    private var pendingTransactions: MutableList<Transaction> = mutableListOf()
-
-    //    @Volatile???
     private var syncPeer: Peer? = null
+    private var pendingTransactions: MutableList<Transaction> = mutableListOf()
 
     @Volatile
     private var running = false
@@ -38,6 +36,25 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         bloomFilterManager.listener = this
     }
 
+    fun relay(transaction: Transaction) {
+        localQueue.execute {
+            pendingTransactions.add(transaction)
+            dispatchTasks()
+        }
+    }
+
+    fun close() {
+        running = false
+        interrupt()
+        try {
+            join(5000)
+        } catch (e: InterruptedException) {
+        }
+    }
+
+    //
+    // Thread implementations
+    //
     override fun run() {
         blockSyncer?.prepareForDownload()
 
@@ -62,28 +79,9 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         }
     }
 
-    private fun startConnection() {
-        logger.info("Try open new peer connection...")
-        val ip = peerManager.getPeerIp()
-        if (ip != null) {
-            logger.info("Try open new peer connection to $ip...")
-            val peer = Peer(ip, network, this)
-            peer.localBestBlockHeight = blockSyncer?.localBestBlockHeight ?: 0
-            peer.start()
-        } else {
-            logger.info("No peers found yet.")
-        }
-    }
-
-    fun close() {
-        running = false
-        interrupt()
-        try {
-            join(5000)
-        } catch (e: InterruptedException) {
-        }
-    }
-
+    //
+    // PeerListener implementations
+    //
     override fun connected(peer: Peer) {
         peerMap[peer.host] = peer
         bloomFilterManager.bloomFilter?.let {
@@ -93,45 +91,9 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         assignNextSyncPeer()
     }
 
-    private fun assignNextSyncPeer() {
-        syncPeerQueue.execute {
-            if (syncPeer == null) {
-                peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
-                    syncPeer = nonSyncedPeer
-                    blockSyncer?.downloadStarted()
-                    logger.info("Start syncing peer ${nonSyncedPeer.host}")
-
-                    lastBlockHeightListener?.onReceiveMaxBlockHeight(nonSyncedPeer.announcedLastBlockHeight)
-
-                    downloadBlockchain()
-                }
-            }
-        }
-    }
-
-    private fun downloadBlockchain() {
-        syncPeer?.let { syncPeer ->
-            blockSyncer?.let { blockSyncer ->
-
-                val blockHashes = blockSyncer.getBlockHashes()
-                if (blockHashes.isEmpty()) {
-                    syncPeer.synced = syncPeer.blockHashesSynced
-                } else {
-                    syncPeer.addTask(GetMerkleBlocksTask(blockHashes))
-                }
-
-                if (!syncPeer.blockHashesSynced) {
-                    syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight)))
-                }
-
-                if (syncPeer.synced) {
-                    blockSyncer.downloadCompleted()
-                    syncPeer.sendMempoolMessage()
-                    logger.info("Peer synced ${syncPeer.host}")
-                    this.syncPeer = null
-                    assignNextSyncPeer()
-                }
-            }
+    override fun onReady(peer: Peer) {
+        localQueue.execute {
+            dispatchTasks(peer)
         }
     }
 
@@ -151,19 +113,6 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
             blockSyncer?.downloadFailed()
             syncPeer = null
             assignNextSyncPeer()
-        }
-    }
-
-    fun relay(transaction: Transaction) {
-        localQueue.execute {
-            pendingTransactions.add(transaction)
-            dispatchTasks()
-        }
-    }
-
-    override fun onReady(peer: Peer) {
-        localQueue.execute {
-            dispatchTasks(peer)
         }
     }
 
@@ -224,9 +173,70 @@ class PeerGroup(private val peerManager: PeerManager, val bloomFilterManager: Bl
         }
     }
 
+    //
+    // BloomFilterManager implementations
+    //
     override fun onFilterUpdated(bloomFilter: BloomFilter) {
         peerMap.values.forEach { peer ->
             peer.filterLoad(bloomFilter)
+        }
+    }
+
+    //
+    // Private methods
+    //
+    private fun startConnection() {
+        logger.info("Try open new peer connection...")
+        val ip = peerManager.getPeerIp()
+        if (ip != null) {
+            logger.info("Try open new peer connection to $ip...")
+            val peer = Peer(ip, network, this)
+            peer.localBestBlockHeight = blockSyncer?.localBestBlockHeight ?: 0
+            peer.start()
+        } else {
+            logger.info("No peers found yet.")
+        }
+    }
+
+    private fun assignNextSyncPeer() {
+        syncPeerQueue.execute {
+            if (syncPeer == null) {
+                peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
+                    syncPeer = nonSyncedPeer
+                    blockSyncer?.downloadStarted()
+                    logger.info("Start syncing peer ${nonSyncedPeer.host}")
+
+                    lastBlockHeightListener?.onReceiveMaxBlockHeight(nonSyncedPeer.announcedLastBlockHeight)
+
+                    downloadBlockchain()
+                }
+            }
+        }
+    }
+
+    private fun downloadBlockchain() {
+        syncPeer?.let { syncPeer ->
+            blockSyncer?.let { blockSyncer ->
+
+                val blockHashes = blockSyncer.getBlockHashes()
+                if (blockHashes.isEmpty()) {
+                    syncPeer.synced = syncPeer.blockHashesSynced
+                } else {
+                    syncPeer.addTask(GetMerkleBlocksTask(blockHashes))
+                }
+
+                if (!syncPeer.blockHashesSynced) {
+                    syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight)))
+                }
+
+                if (syncPeer.synced) {
+                    blockSyncer.downloadCompleted()
+                    syncPeer.sendMempoolMessage()
+                    logger.info("Peer synced ${syncPeer.host}")
+                    this.syncPeer = null
+                    assignNextSyncPeer()
+                }
+            }
         }
     }
 
