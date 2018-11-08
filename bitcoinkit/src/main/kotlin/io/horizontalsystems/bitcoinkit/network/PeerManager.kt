@@ -63,18 +63,7 @@ class PeerManager(private val network: NetworkParameters, private val realmFacto
         }
     }
 
-    private fun getUnusedPeer(realm: Realm, peerIp: String? = null): PeerAddress? {
-        val query = realm.where(PeerAddress::class.java)
-        if (peerIp != null) {
-            query.equalTo("ip", peerIp)
-        } else {
-            query.not().`in`("ip", usingPeers.toTypedArray()).sort("score")
-        }
-
-        return query.findFirst()
-    }
-
-    private fun addPeers(ips: Array<String>) {
+    fun addPeers(ips: Array<String>) {
         logger.info("Add discovered " + ips.size + " peer addresses...")
 
         realmFactory.realm.use { realm ->
@@ -84,5 +73,16 @@ class PeerManager(private val network: NetworkParameters, private val realmFacto
         }
 
         logger.info("Total peer addresses: " + ips.size)
+    }
+
+    private fun getUnusedPeer(realm: Realm, peerIp: String? = null): PeerAddress? {
+        val query = realm.where(PeerAddress::class.java)
+        if (peerIp != null) {
+            query.equalTo("ip", peerIp)
+        } else {
+            query.not().`in`("ip", usingPeers.toTypedArray()).sort("score")
+        }
+
+        return query.findFirst()
     }
 }

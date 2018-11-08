@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.messages.*
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
+import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.IPeerTaskDelegate
 import io.horizontalsystems.bitcoinkit.network.PeerTask.IPeerTaskRequester
@@ -22,6 +23,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         fun onDisconnect(peer: Peer, e: Exception?)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
         fun onReceiveMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
+        fun onReceiveAddress(addrs: Array<NetworkAddress>)
         fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
@@ -53,6 +55,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
             is PongMessage -> handlePongMessage(message)
             is VersionMessage -> handleVersionMessage(message)
             is VerAckMessage -> handleVerackMessage()
+            is AddrMessage -> handleAddrMessage(message)
             is MerkleBlockMessage -> handleMerkleBlockMessage(message)
             is TransactionMessage -> handleTransactionMessage(message)
             is InvMessage -> handleInvMessage(message)
@@ -80,6 +83,10 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         connected = true
 
         listener.onConnect(this)
+    }
+
+    private fun handleAddrMessage(message: AddrMessage) {
+        listener.onReceiveAddress(message.addresses)
     }
 
     private fun validatePeerVersion(message: VersionMessage) {

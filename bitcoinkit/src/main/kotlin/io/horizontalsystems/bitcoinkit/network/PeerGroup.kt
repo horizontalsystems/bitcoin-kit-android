@@ -5,9 +5,11 @@ import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
+import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.*
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSyncer
+import java.net.InetAddress
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
@@ -152,6 +154,16 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
         } catch (e: Exception) {
             peer.close(e)
         }
+    }
+
+    override fun onReceiveAddress(addrs: Array<NetworkAddress>) {
+        val peerIps = mutableListOf<String>()
+        for (address in addrs) {
+            val addr = InetAddress.getByAddress(address.address)
+            peerIps.add(addr.hostAddress)
+        }
+
+        peerManager.addPeers(peerIps.toTypedArray())
     }
 
     override fun onTaskComplete(peer: Peer, task: PeerTask) {
