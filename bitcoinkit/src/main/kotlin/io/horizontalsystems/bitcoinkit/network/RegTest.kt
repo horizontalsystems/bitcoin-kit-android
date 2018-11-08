@@ -16,6 +16,8 @@ class RegTest : NetworkParameters() {
     override var addressScriptVersion: Int = 196
     override var coinType: Int = 1
 
+    override val maxBlockSize = 1_000_000
+
     override var dnsSeeds: Array<String> = arrayOf(
             "blocknode01.grouvi.org",
             "blocknode02.grouvi.org",

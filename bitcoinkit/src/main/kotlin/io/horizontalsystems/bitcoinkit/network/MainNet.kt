@@ -17,6 +17,8 @@ class MainNet : NetworkParameters() {
     override var addressScriptVersion: Int = 5
     override var coinType: Int = 0
 
+    override val maxBlockSize = 1_000_000
+
     override var dnsSeeds: Array<String> = arrayOf(
             "seed.bitcoin.sipa.be",             // Pieter Wuille
             "dnsseed.bluematt.me",              // Matt Corallo

@@ -17,6 +17,8 @@ class MainNetBitcoinCash : NetworkParameters() {
     override var addressScriptVersion: Int = 5
     override var coinType: Int = 0
 
+    override val maxBlockSize = 32 * 1024 * 1024
+
     override var dnsSeeds: Array<String> = arrayOf(
             "seed.bitcoinabc.org"
     )

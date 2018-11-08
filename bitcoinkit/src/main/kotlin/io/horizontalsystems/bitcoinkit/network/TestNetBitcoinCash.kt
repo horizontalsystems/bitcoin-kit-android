@@ -17,6 +17,8 @@ class TestNetBitcoinCash : NetworkParameters() {
     override var addressScriptVersion: Int = 196
     override var coinType: Int = 1
 
+    override val maxBlockSize = 32 * 1024 * 1024
+
     override var dnsSeeds: Array<String> = arrayOf(
             "testnet-seed.bitcoinabc.org"
     )

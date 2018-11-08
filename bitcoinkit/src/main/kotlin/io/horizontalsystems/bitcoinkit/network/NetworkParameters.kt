@@ -19,6 +19,8 @@ abstract class NetworkParameters {
     val targetSpacing = 10 * 60                         // 10 minutes per block.
     var heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
+    abstract val maxBlockSize: Int
+
     abstract var port: Int
 
     abstract var magic: Long

@@ -17,6 +17,8 @@ class TestNet : NetworkParameters() {
     override var addressScriptVersion: Int = 196
     override var coinType: Int = 1
 
+    override val maxBlockSize = 1_000_000
+
     override var dnsSeeds: Array<String> = arrayOf(
             "testnet-seed.bitcoin.petertodd.org",    // Peter Todd
             "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
