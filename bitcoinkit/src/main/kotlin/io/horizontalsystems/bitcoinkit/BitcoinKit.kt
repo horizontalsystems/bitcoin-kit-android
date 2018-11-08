@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Handler
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
+import io.horizontalsystems.bitcoinkit.blocks.ProgressSyncer
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoinkit.managers.*
@@ -18,13 +19,12 @@ import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
 import io.realm.RealmResults
-import io.realm.Sort
 import io.realm.annotations.RealmModule
 
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.LastBlockHeightListener {
+class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer.Listener {
 
     interface Listener {
         fun transactionsUpdated(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -68,8 +68,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
 
     private val handler = Handler()
 
-    private var knownBestBlockHeight = 0
-
     init {
         realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
@@ -96,10 +94,12 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
 
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
 
+        val progressSyncer = ProgressSyncer(this)
+
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
-        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, network)
+        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, progressSyncer, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
-        peerGroup.lastBlockHeightListener = this
+        peerGroup.lastBlockHeightListener = progressSyncer
 
         val addressSelector = when (networkType) {
             NetworkType.MainNet,
@@ -173,17 +173,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
         realm.close()
     }
 
-    override fun onReceiveBestBlockHeight(lastBlockHeight: Int) {
-        knownBestBlockHeight = Math.max(knownBestBlockHeight, lastBlockHeight)
-        realmFactory.realm.use {
-            val localLastBlockHeight = it.where(Block::class.java)
-                    .sort("height", Sort.DESCENDING)
-                    .findFirst()?.height ?: 0
-
-            handleProgress(localLastBlockHeight)
-        }
-    }
-
     private fun handleTransactions(collection: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == OrderedCollectionChangeSet.State.UPDATE) {
             listener?.let { listener ->
@@ -208,23 +197,13 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : PeerGroup.Last
             collection.lastOrNull()?.let { block ->
                 listener?.lastBlockInfoUpdated(this,
                         BlockInfo(block.reversedHeaderHashHex, block.height, block.header?.timestamp))
-
-                handleProgress(block.height)
             }
         }
     }
 
-    private fun handleProgress(blockHeight: Int) {
-        val downloadedBlocksCount = blockHeight - network.checkpointBlock.height
-        val allBlocksCount = knownBestBlockHeight - network.checkpointBlock.height
-
-        val progress = when {
-            allBlocksCount > 0 -> downloadedBlocksCount / allBlocksCount.toDouble()
-            else -> 0.0
-        }
-
+    override fun onProgressUpdate(progress: Double) {
         handler.post {
-            listener?.progressUpdated(this, Math.min(Math.max(0.0, progress), 1.0))
+            listener?.progressUpdated(this, progress)
         }
     }
 
