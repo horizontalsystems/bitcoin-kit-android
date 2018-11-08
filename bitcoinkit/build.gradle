@@ -43,8 +43,6 @@ dependencies {
 
     // For cryptocurrency
     implementation 'org.bouncycastle:bcprov-jdk16:1.45'
-    implementation 'com.fasterxml.jackson.core:jackson-core:2.9.6'
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.6'
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
 
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
