@@ -25,13 +25,35 @@ class BitcoinCashValidator(private val network: NetworkParameters) : BlockValida
 
     //  Get median of last 3 blocks based on timestamp
     fun getSuitableBlock(block: Block): Block {
-        val blocks = Array(3) { block }
+        val blocks: MutableList<Block> = mutableListOf()
+        blocks.add(block)
+        blocks.add(blocks[0].previousBlock ?: throw BlockValidatorException.NoPreviousBlock())
+        blocks.add(blocks[1].previousBlock ?: throw BlockValidatorException.NoPreviousBlock())
 
-        blocks[1] = blocks[2].previousBlock ?: throw BlockValidatorException.NoPreviousBlock()
-        blocks[0] = blocks[1].previousBlock ?: throw BlockValidatorException.NoPreviousBlock()
+        blocks.reverse()
 
-        return blocks.sortedBy { it.header?.timestamp }[1]
+        if (blockTimestamp(blocks[0]) > blockTimestamp(blocks[2])) {
+            blocks.swap(0, 2)
+        }
+
+        if (blockTimestamp(blocks[0]) > blockTimestamp(blocks[1])) {
+            blocks.swap(0, 1)
+        }
+
+        if (blockTimestamp(blocks[1]) > blockTimestamp(blocks[2])) {
+            blocks.swap(1, 2)
+        }
+
+        return blocks[1]
     }
+
+    private fun MutableList<Block>.swap(index1: Int, index2: Int) {
+        val tmp = this[index1]
+        this[index1] = this[index2]
+        this[index2] = tmp
+    }
+
+    private fun blockTimestamp(block: Block) = block.header?.timestamp ?: 0
 
     //  Difficulty adjustment algorithm
     fun validateDAA(candidate: Block, previousBlock: Block) {
