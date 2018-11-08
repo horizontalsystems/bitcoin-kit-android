@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.network.NetworkParameters
 
-class BitcoinCashValidator(private val network: NetworkParameters) : BlockValidator(network) {
+open class BitcoinCashValidator(private val network: NetworkParameters) : BlockValidator(network) {
     private val largestHash = 1.toBigInteger() shl 256
     private val diffDate = 1510600000
 
@@ -56,7 +56,7 @@ class BitcoinCashValidator(private val network: NetworkParameters) : BlockValida
     private fun blockTimestamp(block: Block) = block.header?.timestamp ?: 0
 
     //  Difficulty adjustment algorithm
-    fun validateDAA(candidate: Block, previousBlock: Block) {
+    open fun validateDAA(candidate: Block, previousBlock: Block) {
         val candidateHeader = checkNotNull(candidate.header) {
             throw BlockValidatorException.NoHeader()
         }
