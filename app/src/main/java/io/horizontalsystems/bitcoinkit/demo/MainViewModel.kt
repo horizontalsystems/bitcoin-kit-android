@@ -36,7 +36,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
         networkName = networkType.name
         balance.value = bitcoinKit.balance
-        transactions.value = bitcoinKit.transactions.asReversed()
+        transactions.value = bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
         lastBlockHeight.value = bitcoinKit.lastBlockHeight
         progress.value = 0.0
 
@@ -59,7 +59,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     override fun transactionsUpdated(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        transactions.value = bitcoinKit.transactions.asReversed()
+        transactions.value = bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
     }
 
     override fun balanceUpdated(bitcoinKit: BitcoinKit, balance: Long) {
