@@ -5,36 +5,34 @@ import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.messages.*
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
+import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.IPeerTaskDelegate
 import io.horizontalsystems.bitcoinkit.network.PeerTask.IPeerTaskRequester
 import io.horizontalsystems.bitcoinkit.network.PeerTask.PeerTask
 import java.net.InetAddress
-import java.util.logging.Logger
 
 class Peer(val host: String, private val network: NetworkParameters, private val listener: Listener) : PeerConnection.Listener, IPeerTaskDelegate, IPeerTaskRequester {
 
-    private val logger = Logger.getLogger("Peer")
-
     interface Listener {
-        fun connected(peer: Peer)
-        fun disconnected(peer: Peer, e: Exception?)
+        fun onConnect(peer: Peer)
         fun onReady(peer: Peer)
+        fun onDisconnect(peer: Peer, e: Exception?)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
-        fun onTaskCompleted(peer: Peer, task: PeerTask)
-        fun handleMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
+        fun onReceiveMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
+        fun onReceiveAddress(addrs: Array<NetworkAddress>)
+        fun onTaskComplete(peer: Peer, task: PeerTask)
     }
-
-    private val peerConnection = PeerConnection(host, network, this)
-    private var tasks = mutableListOf<PeerTask>()
-
-    private val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
 
     var connected = false
     var synced = false
     var blockHashesSynced = false
     var announcedLastBlockHeight: Int = 0
     var localBestBlockHeight: Int = 0
+
+    private val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
+    private val peerConnection = PeerConnection(host, network, this)
+    private var tasks = mutableListOf<PeerTask>()
 
     val ready: Boolean
         get() = connected && tasks.isEmpty()
@@ -47,12 +45,41 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.close(disconnectError)
     }
 
+    fun addTask(task: PeerTask) {
+        tasks.add(task)
+
+        task.delegate = this
+        task.requester = this
+
+        task.start()
+    }
+
+    fun filterLoad(bloomFilter: BloomFilter) {
+        peerConnection.sendMessage(FilterLoadMessage(bloomFilter))
+    }
+
+    fun sendMempoolMessage() {
+        peerConnection.sendMessage(MempoolMessage())
+    }
+
+    fun handleRelayedTransaction(hash: ByteArray): Boolean {
+        return tasks.any { it.handleRelayedTransaction(hash) }
+    }
+
+    fun isRequestingInventory(hash: ByteArray): Boolean {
+        return tasks.any { it.isRequestingInventory(hash) }
+    }
+
+    //
+    // PeerConnection Listener implementations
+    //
     override fun onMessage(message: Message) {
         when (message) {
             is PingMessage -> peerConnection.sendMessage(PongMessage(message.nonce))
             is PongMessage -> handlePongMessage(message)
             is VersionMessage -> handleVersionMessage(message)
             is VerAckMessage -> handleVerackMessage()
+            is AddrMessage -> handleAddrMessage(message)
             is MerkleBlockMessage -> handleMerkleBlockMessage(message)
             is TransactionMessage -> handleTransactionMessage(message)
             is InvMessage -> handleInvMessage(message)
@@ -64,6 +91,15 @@ class Peer(val host: String, private val network: NetworkParameters, private val
                 }
             }
         }
+    }
+
+    override fun socketConnected(address: InetAddress) {
+        peerConnection.sendMessage(VersionMessage(localBestBlockHeight, address, network))
+    }
+
+    override fun disconnected(e: Exception?) {
+        connected = false
+        listener.onDisconnect(this, e)
     }
 
     private fun handleVersionMessage(message: VersionMessage) = try {
@@ -79,7 +115,11 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     private fun handleVerackMessage() {
         connected = true
 
-        listener.connected(this)
+        listener.onConnect(this)
+    }
+
+    private fun handleAddrMessage(message: AddrMessage) {
+        listener.onReceiveAddress(message.addresses)
     }
 
     private fun validatePeerVersion(message: VersionMessage) {
@@ -91,40 +131,13 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         }
     }
 
-    fun filterLoad(bloomFilter: BloomFilter) {
-        peerConnection.sendMessage(FilterLoadMessage(bloomFilter))
-    }
-
-    fun sendMempoolMessage() {
-        peerConnection.sendMessage(MempoolMessage())
-    }
-
-    fun addTask(task: PeerTask) {
-        tasks.add(task)
-
-        task.delegate = this
-        task.requester = this
-
-        task.start()
-    }
-
-    override fun socketConnected(address: InetAddress) {
-        peerConnection.sendMessage(VersionMessage(localBestBlockHeight, address, network))
-    }
-
-    override fun disconnected(e: Exception?) {
-        connected = false
-        listener.disconnected(this, e)
-    }
-
-    override fun handleMerkleBlock(merkleBlock: MerkleBlock) {
-        listener.handleMerkleBlock(this, merkleBlock)
-    }
-
+    //
+    // IPeerTaskDelegate implementations
+    //
     override fun onTaskCompleted(task: PeerTask) {
         tasks.firstOrNull { it == task }?.let { completedTask ->
             tasks.remove(completedTask)
-            listener.onTaskCompleted(this, task)
+            listener.onTaskComplete(this, task)
         }
 
         if (tasks.isEmpty()) {
@@ -136,6 +149,13 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.close(e)
     }
 
+    override fun handleMerkleBlock(merkleBlock: MerkleBlock) {
+        listener.onReceiveMerkleBlock(this, merkleBlock)
+    }
+
+    //
+    // IPeerTaskRequester implementations
+    //
     override fun getBlocks(hashes: List<ByteArray>) {
         peerConnection.sendMessage(GetBlocksMessage(hashes, network))
     }
@@ -156,14 +176,9 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.sendMessage(TransactionMessage(transaction))
     }
 
-    fun handleRelayedTransaction(hash: ByteArray): Boolean {
-        return tasks.any { it.handleRelayedTransaction(hash) }
-    }
-
-    fun isRequestingInventory(hash: ByteArray): Boolean {
-        return tasks.any { it.isRequestingInventory(hash) }
-    }
-
+    //
+    // Private methods
+    //
     private fun handleInvMessage(message: InvMessage) {
         for (task in tasks) {
             if (task.handleInventoryItems(message.inventory)) {

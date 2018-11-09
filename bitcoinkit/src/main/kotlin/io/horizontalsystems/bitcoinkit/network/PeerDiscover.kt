@@ -6,7 +6,7 @@ import java.net.UnknownHostException
 import java.util.*
 import java.util.logging.Logger
 
-object PeerDiscover {
+class PeerDiscover {
 
     private val log = Logger.getLogger("PeerDiscover")
 
@@ -35,10 +35,11 @@ object PeerDiscover {
         }
 
         if (ips.isEmpty()) {
-            throw BitcoinException("Cannot lookup pears from all DNS seeds.")
+            throw Exception("Cannot lookup pears from all DNS seeds.")
         }
 
         log.info(ips.size.toString() + " peers found.")
+
         return ips.toTypedArray()
     }
 }

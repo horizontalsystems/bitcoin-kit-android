@@ -57,19 +57,14 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     // since Realm java does not support Collection aggregate queries as in Swift
     private val transactionOutputRealmResults: RealmResults<TransactionOutput>
     private val blockRealmResults: RealmResults<Block>
-
-    private var peerGroup: PeerGroup
-
-    private var realmFactory: RealmFactory
+    private val realmFactory = RealmFactory(networkType.name)
 
     private val network: NetworkParameters
-
-    private var addressConverter: AddressConverter
-
+    private val addressConverter: AddressConverter
+    private val peerGroup: PeerGroup
     private val handler = Handler()
 
     init {
-        realmFactory = RealmFactory(networkType.name)
         val realm = realmFactory.realm
 
         network = when (networkType) {
@@ -81,7 +76,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         }
 
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
-        val peerManager = PeerManager(network)
+        val peerManager = PeerManager(network, realmFactory)
 
         val pubKeys = realm.where(PublicKey::class.java).findAll()
         val bloomFilterManager = BloomFilterManager(pubKeys.map { it.publicKey }, realmFactory)

@@ -1,7 +1,10 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
+import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
+import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.RelayTransactionTask
 import org.junit.Before
@@ -65,7 +68,7 @@ class PeerGroupTest {
 
     @Test
     fun disconnected_withError() { // removes peer from connection list
-        peerGroup.disconnected(peer1, SocketTimeoutException("Some Error"))
+        peerGroup.onDisconnect(peer1, SocketTimeoutException("Some Error"))
 
         verify(peerManager).markFailed(peerIp)
     }
@@ -73,12 +76,24 @@ class PeerGroupTest {
     @Test
     fun relay() { // send transaction
         whenever(peer1.ready).thenReturn(true)
-        peerGroup.connected(peer1)
+        peerGroup.onConnect(peer1)
 
         val transaction = Transaction()
         peerGroup.relay(transaction)
 
         Thread.sleep(100) // wait thread executor
         verify(peer1).addTask(relayTransactionTask)
+    }
+
+    @Test
+    fun onReceiveAddresses() {
+        val ip4 = "0A000001"
+        val raw = arrayOf("E215104D", "0100000000000000", "00000000000000000000FFFF$ip4", "208D").joinToString("")
+        val input = BitcoinInput(raw.hexStringToByteArray())
+
+        val netAddress = NetworkAddress(input, false)
+
+        peerGroup.onReceiveAddress(arrayOf(netAddress))
+        verify(peerManager).addPeers(arrayOf("10.0.0.1"))
     }
 }
