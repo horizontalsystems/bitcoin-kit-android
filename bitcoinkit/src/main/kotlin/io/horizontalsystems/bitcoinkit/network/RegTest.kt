@@ -19,10 +19,10 @@ class RegTest : NetworkParameters() {
     override val maxBlockSize = 1_000_000
 
     override var dnsSeeds: Array<String> = arrayOf(
-            "blocknode01.grouvi.org",
-            "blocknode02.grouvi.org",
-            "blocknode03.grouvi.org",
-            "blocknode04.grouvi.org"
+            "btc-regtest.horizontalsystems.xyz",
+            "btc01-regtest.horizontalsystems.xyz",
+            "btc02-regtest.horizontalsystems.xyz",
+            "btc03-regtest.horizontalsystems.xyz"
     )
 
     override val blockValidator = TestnetValidator(this)
