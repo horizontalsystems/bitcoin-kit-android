@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.network
 
+import io.horizontalsystems.bitcoinkit.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.messages.*
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
@@ -26,6 +27,8 @@ class Peer(val host: String, private val network: NetworkParameters, private val
 
     private val peerConnection = PeerConnection(host, network, this)
     private var tasks = mutableListOf<PeerTask>()
+
+    private val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
 
     var connected = false
     var synced = false
@@ -173,7 +176,7 @@ class Peer(val host: String, private val network: NetworkParameters, private val
 
     private fun handleMerkleBlockMessage(message: MerkleBlockMessage) {
         for (task in tasks) {
-            if (task.handleMerkleBlock(message.merkleBlock)) {
+            if (task.handleMerkleBlock(merkleBlockExtractor.extract(message))) {
                 return
             }
         }

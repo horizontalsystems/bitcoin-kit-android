@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.TestnetBitcoinCashValidator
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
@@ -17,6 +17,8 @@ class TestNetBitcoinCash : NetworkParameters() {
     override var addressScriptVersion: Int = 196
     override var coinType: Int = 1
 
+    override val maxBlockSize = 32 * 1024 * 1024
+
     override var dnsSeeds: Array<String> = arrayOf(
             "testnet-seed.bitcoinabc.org"
     )
@@ -30,7 +32,7 @@ class TestNetBitcoinCash : NetworkParameters() {
         nonce = 408109711
     }, 1257984)
 
-    override val blockValidator = BlockValidator(this)
+    override val blockValidator = TestnetBitcoinCashValidator(this)
 
     override fun validateBlock(block: Block, previousBlock: Block) {
         blockValidator.validate(block, previousBlock)

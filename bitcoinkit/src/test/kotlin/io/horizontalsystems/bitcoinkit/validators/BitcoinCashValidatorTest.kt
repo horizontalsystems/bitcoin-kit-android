@@ -69,15 +69,24 @@ class BitcoinCashValidatorTest {
 
     @Test
     fun getSuitableBlock() {
-        fun header(time: Long): Header {
-            return Header().apply { timestamp = time }
-        }
+        val block1 = Block().apply { height = 1; header = header(10) }
+        val block2 = Block().apply { height = 2; header = header(20); previousBlock = block1 }
+        val block3 = Block().apply { height = 3; header = header(30); previousBlock = block2 }
 
-        val block1 = Block().apply { header = header(20) }
-        val block2 = Block().apply { header = header(10); previousBlock = block1 }
-        val block3 = Block().apply { header = header(30); previousBlock = block2 }
+        assertEquals(block2, blockBalidator.getSuitableBlock(block3))
+    }
 
-        assertEquals(block1, blockBalidator.getSuitableBlock(block3))
+    @Test
+    fun getSuitableBlock_sameTime() {
+        val block1 = Block().apply { height = 1; header = header(1536779466) }
+        val block2 = Block().apply { height = 2; header = header(1536780486); previousBlock = block1 }
+        val block3 = Block().apply { height = 3; header = header(1536780486); previousBlock = block2 }
+
+        assertEquals(block2, blockBalidator.getSuitableBlock(block3))
+    }
+
+    private fun header(time: Long): Header {
+        return Header().apply { timestamp = time }
     }
 
     private fun chain(block: Block, size: Int, timeInterval: Int = 100): Block {

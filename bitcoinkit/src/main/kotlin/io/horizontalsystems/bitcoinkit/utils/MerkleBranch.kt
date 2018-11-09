@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.utils
 
 import io.horizontalsystems.bitcoinkit.exceptions.InvalidMerkleBlockException
 
-class MerkleBranch(val txCount: Int, val hashes: Array<ByteArray>, val flags: ByteArray) {
+class MerkleBranch(val txCount: Int, val hashes: List<ByteArray>, val flags: ByteArray) {
     /** Bits used while traversing the tree  */
     private var bitsUsed: Int = 0
 
