@@ -44,7 +44,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         get() = blockRealmResults.lastOrNull()?.height ?: 0
 
     val balance: Long
-        get() = transactionOutputRealmResults.filter { it.inputs?.size ?: 0 == 0 }.map { it.value }.sum()
+        get() = unspentOutputsRealmResults.map { it.value }.sum()
 
     private val initialSyncer: InitialSyncer
     private val addressManager: AddressManager
@@ -52,10 +52,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     private val transactionBuilder: TransactionBuilder
 
     private val transactionRealmResults: RealmResults<Transaction>
-
-    // we use transactionOutputRealmResults instead of unspentOutputRealmResults
-    // since Realm java does not support Collection aggregate queries as in Swift
-    private val transactionOutputRealmResults: RealmResults<TransactionOutput>
+    private val unspentOutputsRealmResults: RealmResults<TransactionOutput>
     private val blockRealmResults: RealmResults<Block>
     private val realmFactory = RealmFactory(networkType.name)
 
@@ -122,12 +119,13 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
             handleTransactions(t, changeSet)
         }
 
-        transactionOutputRealmResults = realm.where(TransactionOutput::class.java)
+        unspentOutputsRealmResults = realm.where(TransactionOutput::class.java)
                 .isNotNull("publicKey")
                 .notEqualTo("scriptType", ScriptType.UNKNOWN)
+                .isEmpty("inputs")
                 .findAll()
 
-        transactionOutputRealmResults.addChangeListener { t, changeSet ->
+        unspentOutputsRealmResults.addChangeListener { _, changeSet ->
             handleUnspentOutputs(changeSet)
         }
 
