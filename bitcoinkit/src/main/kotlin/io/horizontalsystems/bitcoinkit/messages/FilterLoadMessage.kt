@@ -25,6 +25,6 @@ class FilterLoadMessage() : Message("filterload") {
     }
 
     override fun toString(): String {
-        return "FilterLoad message: " + filter.toString()
+        return "FilterLoadMessage($filter)"
     }
 }
