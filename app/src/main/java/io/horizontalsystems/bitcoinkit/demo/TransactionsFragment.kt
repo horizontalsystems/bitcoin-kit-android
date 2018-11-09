@@ -81,6 +81,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                 "\nFrom: ${transactionInfo.from.first().address}" +
                 "\nTo: ${transactionInfo.to.first().address}" +
                 "\nAmount: ${NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)}" +
+                "\nTx hash: ${transactionInfo.transactionHash}" +
                 "\nBlock: ${transactionInfo.blockHeight}" +
                 "\nTimestamp: ${transactionInfo.timestamp}" +
                 "\nDate: $date"
