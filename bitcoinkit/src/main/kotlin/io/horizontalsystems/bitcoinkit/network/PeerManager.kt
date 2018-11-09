@@ -43,22 +43,23 @@ class PeerManager(private val network: NetworkParameters, private val realmFacto
     }
 
     fun markFailed(peerIp: String) {
-        val realm = realmFactory.realm
-        val peer = getUnusedPeer(realm, peerIp)
-        if (peer != null) {
-            usingPeers.removeAll { it == peerIp }
-            realm.executeTransaction {
-                peer.deleteFromRealm()
+        realmFactory.realm.use { realm ->
+            getPeer(realm, peerIp)?.let { peer ->
+                usingPeers.removeAll { it == peerIp }
+                realm.executeTransaction {
+                    peer.deleteFromRealm()
+                }
             }
         }
     }
 
     fun markSuccess(peerIp: String) {
-        val realm = realmFactory.realm
-        val peer = getUnusedPeer(realm, peerIp)
-        if (peer != null) {
-            realm.executeTransaction {
-                peer.score += 3
+        realmFactory.realm.use { realm ->
+            getPeer(realm, peerIp)?.let { peer ->
+                usingPeers.removeAll { it == peerIp }
+                realm.executeTransaction {
+                    peer.score += 3
+                }
             }
         }
     }
@@ -68,21 +69,23 @@ class PeerManager(private val network: NetworkParameters, private val realmFacto
 
         realmFactory.realm.use { realm ->
             realm.executeTransaction {
-                ips.forEach { realm.insertOrUpdate(PeerAddress(it)) }
+                ips.forEach { ip -> realm.insertOrUpdate(PeerAddress(ip)) }
             }
         }
 
         logger.info("Total peer addresses: " + ips.size)
     }
 
-    private fun getUnusedPeer(realm: Realm, peerIp: String? = null): PeerAddress? {
-        val query = realm.where(PeerAddress::class.java)
-        if (peerIp != null) {
-            query.equalTo("ip", peerIp)
-        } else {
-            query.not().`in`("ip", usingPeers.toTypedArray()).sort("score")
-        }
+    private fun getUnusedPeer(realm: Realm): PeerAddress? {
+        return realm.where(PeerAddress::class.java).not()
+                .`in`("ip", usingPeers.toTypedArray())
+                .sort("score")
+                .findFirst()
+    }
 
-        return query.findFirst()
+    private fun getPeer(realm: Realm, peerIp: String): PeerAddress? {
+        return realm.where(PeerAddress::class.java)
+                .equalTo("ip", peerIp)
+                .findFirst()
     }
 }

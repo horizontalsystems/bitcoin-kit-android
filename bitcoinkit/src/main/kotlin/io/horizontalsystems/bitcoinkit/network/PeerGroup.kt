@@ -103,10 +103,10 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
         peerMap.remove(peer.host)
 
         if (e == null) {
-            logger.info("Peer ${peer.host} onDisconnect.")
+            logger.info("Peer ${peer.host} disconnected.")
             peerManager.markSuccess(peer.host)
         } else {
-            logger.warning("Peer ${peer.host} onDisconnect with error ${e.message}.")
+            logger.warning("Peer ${peer.host} disconnected with error ${e.message}.")
             peerManager.markFailed(peer.host)
         }
 

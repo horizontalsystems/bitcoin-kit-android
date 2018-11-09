@@ -68,31 +68,31 @@ class PeerManagerTest {
     @Test
     fun markSuccess() {
         val peerIp = ipsPeers[0]
-        var peerAddress = getUnusedPeer(realmFactory.realm, peerIp)
+        var peerAddress = getPeer(realmFactory.realm, peerIp)
 
         assertEquals(0, peerAddress?.score)
         peerManager.getPeerIp()
         peerManager.markSuccess(peerIp)
 
-        peerAddress = getUnusedPeer(realmFactory.realm, peerIp)
+        peerAddress = getPeer(realmFactory.realm, peerIp)
         assertEquals(3, peerAddress?.score)
     }
 
     @Test
     fun markFailed() {
         val peerIp = ipsPeers[0]
-        var peerAddress = getUnusedPeer(realmFactory.realm, peerIp)
+        var peerAddress = getPeer(realmFactory.realm, peerIp)
 
         assertTrue(peerAddress != null)
 
         peerManager.getPeerIp()
         peerManager.markFailed(peerIp)
 
-        peerAddress = getUnusedPeer(realmFactory.realm, peerIp)
+        peerAddress = getPeer(realmFactory.realm, peerIp)
         assertTrue(peerAddress == null)
     }
 
-    private fun getUnusedPeer(realm: Realm, peerIp: String): PeerAddress? {
+    private fun getPeer(realm: Realm, peerIp: String): PeerAddress? {
         return realm.where(PeerAddress::class.java)
                 .equalTo("ip", peerIp)
                 .findFirst()

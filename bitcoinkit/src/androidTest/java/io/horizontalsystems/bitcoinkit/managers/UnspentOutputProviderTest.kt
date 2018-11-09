@@ -59,7 +59,7 @@ class UnspentOutputProviderTest {
                     setHashes()
                 })
 
-        val outGoingTx = realm.copyToRealm(Transaction(1, 0).apply {
+        realm.copyToRealm(Transaction(1, 0).apply {
             inputs.add(TransactionInput().apply {
                 previousOutputHexReversed = incomingTx.hashHexReversed
                 previousOutput = incomingTx.outputs[0]
@@ -72,7 +72,7 @@ class UnspentOutputProviderTest {
 
         val unspents = unspentOutputProvider.allUnspentOutputs()
 
-        Assert.assertEquals(3, unspents.size)
+        Assert.assertEquals(4, unspents.size)
 
         Assert.assertEquals(unspents[0].keyHash?.toHexString(), unspentOutputs[1].keyHash?.toHexString())
         Assert.assertEquals(unspents[1].keyHash?.toHexString(), unspentOutputs[2].keyHash?.toHexString())
@@ -86,13 +86,12 @@ class UnspentOutputProviderTest {
 
         realm.beginTransaction()
 
-        val incomingTx = realm.copyToRealm(
-                Transaction(1, 0).apply {
-                    outputs.addAll(unspentOutputs)
-                    setHashes()
-                })
+        val incomingTx = realm.copyToRealm(Transaction(1, 0).apply {
+            outputs.addAll(unspentOutputs)
+            setHashes()
+        })
 
-        val outGoingTx = realm.copyToRealm(Transaction(1, 0).apply {
+        realm.copyToRealm(Transaction(1, 0).apply {
             inputs.addAll(listOf(TransactionInput().apply {
                 previousOutputHexReversed = incomingTx.hashHexReversed
                 previousOutput = incomingTx.outputs[0]
@@ -105,8 +104,10 @@ class UnspentOutputProviderTest {
             }, TransactionInput().apply {
                 previousOutputHexReversed = incomingTx.hashHexReversed
                 previousOutput = incomingTx.outputs[3]
-            }
-            ))
+            }, TransactionInput().apply {
+                previousOutputHexReversed = incomingTx.hashHexReversed
+                previousOutput = incomingTx.outputs[4]
+            }))
 
             setHashes()
         })

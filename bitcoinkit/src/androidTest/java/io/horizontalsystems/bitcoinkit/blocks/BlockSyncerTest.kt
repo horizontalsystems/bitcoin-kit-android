@@ -23,6 +23,7 @@ class BlockSyncerTest {
     private val transactionProcessor = mock(TransactionProcessor::class.java)
     private val addressManager = mock(AddressManager::class.java)
     private val bloomFilterManager = mock(BloomFilterManager::class.java)
+    private val processSyncer = mock(ProgressSyncer::class.java)
 
     private lateinit var blockSyncer: BlockSyncer
 
@@ -37,7 +38,7 @@ class BlockSyncerTest {
             realm.deleteAll()
         }
 
-        blockSyncer = BlockSyncer(factories.realmFactory, blockchain, transactionProcessor, addressManager, bloomFilterManager, network)
+        blockSyncer = BlockSyncer(factories.realmFactory, blockchain, transactionProcessor, addressManager, bloomFilterManager, processSyncer, network)
 
         realm.executeTransaction {
             block = realm.copyToRealm(Block(Header().apply {
