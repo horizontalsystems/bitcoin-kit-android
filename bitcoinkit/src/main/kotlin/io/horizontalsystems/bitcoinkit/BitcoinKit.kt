@@ -78,9 +78,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
         val peerManager = PeerManager(network, realmFactory)
 
-        val pubKeys = realm.where(PublicKey::class.java).findAll()
-        val bloomFilterManager = BloomFilterManager(pubKeys.map { it.publicKey }, realmFactory)
-
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
@@ -90,6 +87,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
 
         val progressSyncer = ProgressSyncer(this)
+
+        val bloomFilterManager = BloomFilterManager(realmFactory)
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, progressSyncer, network)

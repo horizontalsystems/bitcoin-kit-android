@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.Utils
 import io.realm.Sort
 
-class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: RealmFactory) {
+class BloomFilterManager(private val realmFactory: RealmFactory) {
 
     object BloomFilterExpired : Exception()
 
@@ -21,9 +21,7 @@ class BloomFilterManager(elements: List<ByteArray>, private val realmFactory: Re
     var bloomFilter: BloomFilter? = null
 
     init {
-        if (elements.isNotEmpty()) {
-            bloomFilter = BloomFilter(elements)
-        }
+        regenerateBloomFilter()
     }
 
     fun regenerateBloomFilter() {
