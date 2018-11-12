@@ -27,7 +27,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
         fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long)
-        fun onBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo)
+        fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo)
         fun onProgressUpdate(bitcoinKit: BitcoinKit, progress: Double)
     }
 
@@ -131,8 +131,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         listener?.onBalanceUpdate(this, balance)
     }
 
-    override fun onBlockInfoUpdate(blockInfo: BlockInfo) {
-        listener?.onBlockInfoUpdate(this, blockInfo)
+    override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
+        listener?.onLastBlockInfoUpdate(this, blockInfo)
     }
 
     //
