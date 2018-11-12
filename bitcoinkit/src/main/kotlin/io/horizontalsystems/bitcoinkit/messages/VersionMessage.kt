@@ -45,7 +45,7 @@ class VersionMessage : Message {
     private var nonce = 0L
 
     // User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
-    private var subVersion = "/Satoshi:0.7.2/"
+    private var subVersion = "/BitcoinKit:1.0.0/"
 
     // How many blocks are in the chain, according to the other side.
     var lastBlock: Int = 0
