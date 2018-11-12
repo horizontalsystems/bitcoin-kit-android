@@ -58,19 +58,22 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         bitcoinKit.send(address, amount)
     }
 
-    override fun transactionsUpdated(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        transactions.value = bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
+    //
+    // BitcoinKit Listener implementations
+    //
+    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
+        transactions.value = this.bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
     }
 
-    override fun balanceUpdated(bitcoinKit: BitcoinKit, balance: Long) {
+    override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {
         this.balance.value = balance
     }
 
-    override fun lastBlockInfoUpdated(bitcoinKit: BitcoinKit, lastBlockInfo: BlockInfo) {
-        this.lastBlockHeight.value = lastBlockInfo.height
+    override fun onBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
+        this.lastBlockHeight.value = blockInfo.height
     }
 
-    override fun progressUpdated(bitcoinKit: BitcoinKit, progress: Double) {
+    override fun onProgressUpdate(bitcoinKit: BitcoinKit, progress: Double) {
         this.progress.value = progress
     }
 }

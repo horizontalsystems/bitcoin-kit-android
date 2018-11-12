@@ -5,86 +5,70 @@ import android.os.Handler
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.blocks.ProgressSyncer
+import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
-import io.horizontalsystems.bitcoinkit.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoinkit.managers.*
-import io.horizontalsystems.bitcoinkit.models.*
+import io.horizontalsystems.bitcoinkit.models.BlockInfo
+import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
-import io.realm.OrderedCollectionChangeSet
 import io.realm.Realm
-import io.realm.RealmResults
 import io.realm.annotations.RealmModule
 
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer.Listener {
+class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer.Listener, DataProvider.Listener {
 
     interface Listener {
-        fun transactionsUpdated(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
-        fun balanceUpdated(bitcoinKit: BitcoinKit, balance: Long)
-        fun lastBlockInfoUpdated(bitcoinKit: BitcoinKit, lastBlockInfo: BlockInfo)
-        fun progressUpdated(bitcoinKit: BitcoinKit, progress: Double)
+        fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
+        fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long)
+        fun onBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo)
+        fun onProgressUpdate(bitcoinKit: BitcoinKit, progress: Double)
     }
-
-    enum class NetworkType { MainNet, TestNet, RegTest, MainNetBitCash, TestNetBitCash }
 
     var listener: Listener? = null
 
-    val transactions: List<TransactionInfo>
-        get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
+    //  DataProvider getters
+    val balance get() = dataProvider.balance
+    val transactions get() = dataProvider.transactions
+    val lastBlockHeight get() = dataProvider.lastBlockHeight
 
-    val lastBlockHeight: Int
-        get() = blockRealmResults.lastOrNull()?.height ?: 0
-
-    val balance: Long
-        get() = unspentOutputsRealmResults.map { it.value }.sum()
-
+    private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
     private val addressManager: AddressManager
+    private val addressConverter: AddressConverter
     private val transactionCreator: TransactionCreator
     private val transactionBuilder: TransactionBuilder
-
-    private val transactionRealmResults: RealmResults<Transaction>
-    private val unspentOutputsRealmResults: RealmResults<TransactionOutput>
-    private val blockRealmResults: RealmResults<Block>
+    private val dataProvider: DataProvider
     private val realmFactory = RealmFactory(networkType.name)
 
-    private val network: NetworkParameters
-    private val addressConverter: AddressConverter
-    private val peerGroup: PeerGroup
     private val handler = Handler()
+    private val network = when (networkType) {
+        NetworkType.MainNet -> MainNet()
+        NetworkType.MainNetBitCash -> MainNetBitcoinCash()
+        NetworkType.TestNet -> TestNet()
+        NetworkType.TestNetBitCash -> TestNetBitcoinCash()
+        NetworkType.RegTest -> RegTest()
+    }
 
     init {
         val realm = realmFactory.realm
-
-        network = when (networkType) {
-            NetworkType.MainNet -> MainNet()
-            NetworkType.MainNetBitCash -> MainNetBitcoinCash()
-            NetworkType.TestNet -> TestNet()
-            NetworkType.TestNetBitCash -> TestNetBitcoinCash()
-            NetworkType.RegTest -> RegTest()
-        }
-
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
-        val peerManager = PeerManager(network, realmFactory)
 
+        dataProvider = DataProvider(realm, this)
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
-        val transactionExtractor = TransactionExtractor(addressConverter)
-        val transactionLinker = TransactionLinker()
-
-        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
-
+        val peerManager = PeerManager(network, realmFactory)
         val progressSyncer = ProgressSyncer(this)
-
+        val transactionLinker = TransactionLinker()
+        val transactionExtractor = TransactionExtractor(addressConverter)
+        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
         val bloomFilterManager = BloomFilterManager(realmFactory)
 
         peerGroup = PeerGroup(peerManager, bloomFilterManager, network, 1)
@@ -102,41 +86,16 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
 
         val apiManager = ApiManagerBtcCom(ApiRequesterBtcCom(networkType), addressSelector)
         val stateManager = StateManager(realmFactory)
-
         val blockDiscover = BlockDiscover(wallet, apiManager, network)
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
-
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
-
-        transactionRealmResults = realm.where(Transaction::class.java)
-                .equalTo("isMine", true)
-                .findAll()
-
-        transactionRealmResults.addChangeListener { t, changeSet ->
-            handleTransactions(t, changeSet)
-        }
-
-        unspentOutputsRealmResults = realm.where(TransactionOutput::class.java)
-                .isNotNull("publicKey")
-                .notEqualTo("scriptType", ScriptType.UNKNOWN)
-                .isEmpty("inputs")
-                .findAll()
-
-        unspentOutputsRealmResults.addChangeListener { _, changeSet ->
-            handleUnspentOutputs(changeSet)
-        }
-
-        blockRealmResults = realm.where(Block::class.java)
-                .sort("height")
-                .findAll()
-
-        blockRealmResults.addChangeListener { t, changeSet ->
-            handleBlocks(t, changeSet)
-        }
     }
 
+    //
+    // API methods
+    //
     fun start() {
         initialSyncer.sync()
     }
@@ -145,104 +104,50 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         transactionCreator.create(address, value)
     }
 
-    fun fee(value: Int, address: String? = null, senderPay: Boolean = true) =
-            transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
-
     fun receiveAddress(): String {
         return addressManager.receiveAddress()
     }
 
-    @Throws(AddressFormatException::class)
     fun validateAddress(address: String) {
         addressConverter.convert(address)
     }
 
-    fun clear() {
-        val realm = realmFactory.realm
-        realm.executeTransaction {
-            it.deleteAll()
-        }
-        realm.close()
+    fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
+        return transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
     }
 
-    private fun handleTransactions(collection: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
-        if (changeSet.state == OrderedCollectionChangeSet.State.UPDATE) {
-            listener?.let { listener ->
-                val inserted = changeSet.insertions.asList().mapNotNull { transactionInfo(collection[it]) }
-                val updated = changeSet.changes.asList().mapNotNull { transactionInfo(collection[it]) }
-                val deleted = changeSet.deletions.asList()
-
-                listener.transactionsUpdated(this, inserted, updated, deleted)
-            }
-        }
+    fun clear() = realmFactory.realm.use { realm ->
+        realm.executeTransaction { realm.deleteAll() }
     }
 
-    private fun handleUnspentOutputs(changeSet: OrderedCollectionChangeSet) {
-        if (changeSet.state == OrderedCollectionChangeSet.State.UPDATE) {
-            listener?.balanceUpdated(this, balance)
-        }
+    //
+    // DataProvider Listener implementations
+    //
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
+        listener?.onTransactionsUpdate(this, inserted, updated, deleted)
     }
 
-    private fun handleBlocks(collection: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
-        if (changeSet.state == OrderedCollectionChangeSet.State.UPDATE
-                && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
-            collection.lastOrNull()?.let { block ->
-                listener?.lastBlockInfoUpdated(this,
-                        BlockInfo(block.reversedHeaderHashHex, block.height, block.header?.timestamp))
-            }
-        }
+    override fun onBalanceUpdate(balance: Long) {
+        listener?.onBalanceUpdate(this, balance)
     }
 
+    override fun onBlockInfoUpdate(blockInfo: BlockInfo) {
+        listener?.onBlockInfoUpdate(this, blockInfo)
+    }
+
+    //
+    // ProgressSyncer Listener implementations
+    //
     override fun onProgressUpdate(progress: Double) {
-        handler.post {
-            listener?.progressUpdated(this, progress)
-        }
+        handler.post { listener?.onProgressUpdate(this, progress) }
     }
 
-    private fun transactionInfo(transaction: Transaction?): TransactionInfo? {
-        if (transaction == null) return null
-
-        var totalMineInput = 0L
-        var totalMineOutput = 0L
-        val fromAddresses = mutableListOf<TransactionAddress>()
-        val toAddresses = mutableListOf<TransactionAddress>()
-
-        transaction.inputs.forEach { input ->
-            input.previousOutput?.let { previousOutput ->
-                if (previousOutput.publicKey != null) {
-                    totalMineInput += previousOutput.value
-                }
-            }
-
-            val mine = input.previousOutput?.publicKey != null
-            input.address?.let { address ->
-                fromAddresses.add(TransactionAddress(address, mine))
-            }
-        }
-
-        transaction.outputs.forEach { output ->
-            var mine = false
-
-            if (output.publicKey != null) {
-                totalMineOutput += output.value
-                mine = true
-            }
-
-            output.address?.let { address ->
-                toAddresses.add(TransactionAddress(address, mine))
-            }
-        }
-
-        val amount = totalMineOutput - totalMineInput
-
-        return TransactionInfo(
-                transaction.hashHexReversed,
-                fromAddresses,
-                toAddresses,
-                amount,
-                transaction.block?.height,
-                transaction.block?.header?.timestamp
-        )
+    enum class NetworkType {
+        MainNet,
+        TestNet,
+        RegTest,
+        MainNetBitCash,
+        TestNetBitCash
     }
 
     companion object {
