@@ -12,7 +12,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener) {
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
         fun onBalanceUpdate(balance: Long)
-        fun onBlockInfoUpdate(blockInfo: BlockInfo)
+        fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
         fun onProgressUpdate(progress: Double)
     }
 
@@ -60,7 +60,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener) {
     private fun handleBlocks(blocks: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == State.UPDATE && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
             blocks.lastOrNull()?.let { block ->
-                listener.onBlockInfoUpdate(BlockInfo(
+                listener.onLastBlockInfoUpdate(BlockInfo(
                         block.reversedHeaderHashHex,
                         block.height,
                         block.header?.timestamp

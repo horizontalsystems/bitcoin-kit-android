@@ -69,7 +69,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         this.balance.value = balance
     }
 
-    override fun onBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
+    override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
         this.lastBlockHeight.value = blockInfo.height
     }
 
