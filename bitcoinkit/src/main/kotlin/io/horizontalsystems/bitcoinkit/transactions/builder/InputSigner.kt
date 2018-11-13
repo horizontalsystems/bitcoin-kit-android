@@ -1,50 +1,73 @@
 package io.horizontalsystems.bitcoinkit.transactions.builder
 
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
+import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.scripts.Sighash
 import io.horizontalsystems.hdwalletkit.HDWallet
-import io.horizontalsystems.hdwalletkit.HDWallet.Chain
 
-class InputSigner(private val hdWallet: HDWallet) {
+class InputSigner(private val hdWallet: HDWallet, val network: NetworkParameters) {
 
     fun sigScriptData(transaction: Transaction, index: Int): List<ByteArray> {
 
-        val input = checkNotNull(transaction.inputs[index]) {
-            throw NoInputAtIndexException(index)
+        val transactionInput = transaction.inputs[index]
+        val prevOutput = checkNotNull(transactionInput?.previousOutput) {
+            throw Error.NoPreviousOutput()
         }
 
-        val prevOutput = checkNotNull(input.previousOutput) {
-            throw NoPreviousOutputException(index)
+        val publicKey = checkNotNull(prevOutput.publicKey) {
+            throw Error.NoPreviousOutputAddress()
         }
 
-        val pubKey = checkNotNull(prevOutput.publicKey) {
-            throw NoPreviousOutputAddressException(index)
+        val privateKey = checkNotNull(hdWallet.privateKey(publicKey.index, publicKey.external)) {
+            throw Error.NoPrivateKey()
         }
 
-        val chainIndex = if (pubKey.external) Chain.EXTERNAL.ordinal else Chain.INTERNAL.ordinal
-        val privateKey = checkNotNull(hdWallet.privateKey(pubKey.index, chainIndex)) {
-            throw NoPrivateKeyException(index)
-        }
+        val isWitness = isFork() || prevOutput.scriptType in arrayOf(
+                ScriptType.P2WPKH,
+                ScriptType.P2WPKHSH
+        )
 
-        val isWitness = prevOutput.scriptType in arrayOf(ScriptType.P2WPKH, ScriptType.P2WPKHSH)
-        val txContent = transaction.toSignatureByteArray(index, isWitness) + byteArrayOf(SIGHASH_ALL, 0, 0, 0)
-        val signature = privateKey.createSignature(txContent) + byteArrayOf(SIGHASH_ALL)
+        val txContent = transaction.toSignatureByteArray(index, isWitness) + sigHashType()
+        val signature = privateKey.createSignature(txContent) + sigHashType(true)
 
         if (prevOutput.scriptType == ScriptType.P2PK) {
             return listOf(signature)
         }
 
-        return listOf(signature, pubKey.publicKey)
+        return listOf(signature, publicKey.publicKey)
     }
 
-    open class InputSignerException(index: Int) : Exception("index: $index")
-    class NoInputAtIndexException(index: Int) : InputSignerException(index)
-    class NoPreviousOutputException(index: Int) : InputSignerException(index)
-    class NoPreviousOutputAddressException(index: Int) : InputSignerException(index)
-    class NoPrivateKeyException(index: Int) : InputSignerException(index)
+    private fun sigHashType(typeOnly: Boolean = false): ByteArray {
+        val sigHash = if (isFork()) {
+            Sighash.FORKID or Sighash.ALL
+        } else {
+            Sighash.ALL
+        }
 
-    companion object {
-        const val SIGHASH_ALL: Byte = 1
+        if (typeOnly) {
+            return byteArrayOf(sigHash.toByte())
+        }
+
+        return byteArrayOf(sigHash.toByte(), 0, 0, 0)
     }
 
+    private fun isFork(): Boolean {
+        return when (network) {
+            // Fork
+            is MainNetBitcoinCash,
+            is TestNetBitcoinCash -> true
+
+            // Bitcoin
+            else -> false
+        }
+    }
+
+    open class Error : Exception() {
+        class NoPrivateKey : Error()
+        class NoPreviousOutput : Error()
+        class NoPreviousOutputAddress : Error()
+    }
 }
