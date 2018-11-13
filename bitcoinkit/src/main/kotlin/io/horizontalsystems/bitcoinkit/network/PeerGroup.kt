@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
-class PeerGroup(private val peerManager: PeerManager, private val bloomFilterManager: BloomFilterManager, private val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
+class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilterManager: BloomFilterManager, private val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     interface LastBlockHeightListener {
         fun onReceiveMaxBlockHeight(height: Int)
@@ -104,10 +104,10 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
 
         if (e == null) {
             logger.info("Peer ${peer.host} disconnected.")
-            peerManager.markSuccess(peer.host)
+            hostManager.markSuccess(peer.host)
         } else {
             logger.warning("Peer ${peer.host} disconnected with error ${e.message}.")
-            peerManager.markFailed(peer.host)
+            hostManager.markFailed(peer.host)
         }
 
         // it restores syncPeer on next connection
@@ -163,7 +163,7 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
             peerIps.add(addr.hostAddress)
         }
 
-        peerManager.addPeers(peerIps.toTypedArray())
+        hostManager.addPeers(peerIps.toTypedArray())
     }
 
     override fun onTaskComplete(peer: Peer, task: PeerTask) {
@@ -199,7 +199,7 @@ class PeerGroup(private val peerManager: PeerManager, private val bloomFilterMan
     //
     private fun startConnection() {
         logger.info("Try open new peer connection...")
-        val ip = peerManager.getPeerIp()
+        val ip = hostManager.getPeerIp()
         if (ip != null) {
             logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this)

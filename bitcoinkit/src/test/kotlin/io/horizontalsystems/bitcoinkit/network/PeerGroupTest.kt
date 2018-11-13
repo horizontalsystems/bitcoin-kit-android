@@ -25,7 +25,7 @@ class PeerGroupTest {
 
     private var peer1 = mock(Peer::class.java)
     private var peer2 = mock(Peer::class.java)
-    private var peerManager = mock(PeerManager::class.java)
+    private var peerManager = mock(PeerHostManager::class.java)
     private var bloomFilterManager = mock(BloomFilterManager::class.java)
     private var relayTransactionTask = mock(RelayTransactionTask::class.java)
 

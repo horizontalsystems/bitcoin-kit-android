@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.PeerAddress
 import io.realm.Realm
 import java.util.logging.Logger
 
-class PeerManager(private val network: NetworkParameters, private val realmFactory: RealmFactory) {
+class PeerHostManager(private val network: NetworkParameters, private val realmFactory: RealmFactory) {
 
     private val logger = Logger.getLogger("PeerManager")
     private val usingPeers = mutableListOf<String>()
