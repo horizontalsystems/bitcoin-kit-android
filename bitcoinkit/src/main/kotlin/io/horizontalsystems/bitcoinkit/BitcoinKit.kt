@@ -89,7 +89,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         val blockDiscover = BlockDiscover(wallet, apiManager, network)
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
-        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet)
+        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
     }
 

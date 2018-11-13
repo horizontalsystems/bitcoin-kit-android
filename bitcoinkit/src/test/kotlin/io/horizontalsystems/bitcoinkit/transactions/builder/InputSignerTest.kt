@@ -5,53 +5,59 @@ import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.network.NetworkParameters
 import io.horizontalsystems.bitcoinkit.scripts.ScriptType
 import io.horizontalsystems.hdwalletkit.HDKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
+import org.mockito.Mockito.anyBoolean
 import org.mockito.Mockito.mock
 
 class InputSignerTest {
 
+    private val network = mock(NetworkParameters::class.java)
     private val hdWallet = mock(HDWallet::class.java)
     private val privateKey = mock(HDKey::class.java)
-    private val inputSigner = InputSigner(hdWallet)
 
     private var derEncodedSignature = "abc".hexStringToByteArray()
     private var transaction = Fixtures.transactionP2PKH_ForSignatureTest
 
+    private lateinit var inputSigner: InputSigner
+
     @Before
     fun setUp() {
         whenever(privateKey.createSignature(any())).thenReturn(derEncodedSignature)
-        whenever(hdWallet.privateKey(any(), any())).thenReturn(privateKey)
+        whenever(hdWallet.privateKey(any(), anyBoolean())).thenReturn(privateKey)
+
+        inputSigner = InputSigner(hdWallet, network)
     }
 
-    @Test(expected = InputSigner.NoInputAtIndexException::class)
+    @Test(expected = InputSigner.Error.NoPreviousOutput::class)
     fun sigScriptData_NoInputAtIndex() {
         transaction.inputs[0] = null
 
         inputSigner.sigScriptData(transaction, 0)
     }
 
-    @Test(expected = InputSigner.NoPreviousOutputException::class)
+    @Test(expected = InputSigner.Error.NoPreviousOutput::class)
     fun sigScriptData_NoPreviousOutput() {
         transaction.inputs[0]?.previousOutput = null
 
         inputSigner.sigScriptData(transaction, 0)
     }
 
-    @Test(expected = InputSigner.NoPreviousOutputAddressException::class)
+    @Test(expected = InputSigner.Error.NoPreviousOutputAddress::class)
     fun sigScriptData_NoPreviousOutputAddress() {
         transaction.inputs[0]?.previousOutput?.publicKey = null
 
         inputSigner.sigScriptData(transaction, 0)
     }
 
-    @Test(expected = InputSigner.NoPrivateKeyException::class)
+    @Test(expected = InputSigner.Error.NoPrivateKey::class)
     fun sigScriptData_NoPrivateKey() {
-        whenever(hdWallet.privateKey(any(), any())).thenReturn(null)
+        whenever(hdWallet.privateKey(any(), anyBoolean())).thenReturn(null)
 
         inputSigner.sigScriptData(transaction, 0)
     }

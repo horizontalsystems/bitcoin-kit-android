@@ -141,6 +141,15 @@ const val OP_NOP9 = 0xb8
 const val OP_NOP10 = 0xb9
 const val OP_INVALIDOPCODE = 0xff
 
+/** Sighash Types */
+object Sighash {
+    const val ALL = 1              // Sign all outputs
+    const val NONE = 2             // Do not sign outputs (zero sequences)
+    const val SINGLE = 3           // Sign output at the same index (zero sequences)
+    const val FORKID = 0x40        // Bitcoin Cash SIGHASH_FORKID
+    const val ANYONECANPAY = 0x80  // Sign only the current input (mask)
+}
+
 object OpCodes {
 
     private val opCodeMap = hashMapOf(
