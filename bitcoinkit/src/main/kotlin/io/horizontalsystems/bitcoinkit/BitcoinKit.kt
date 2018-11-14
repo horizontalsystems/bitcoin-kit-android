@@ -45,7 +45,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     private val transactionCreator: TransactionCreator
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
-    private val realmFactory = RealmFactory(networkType.name)
+    private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}")
 
     private val handler = Handler()
     private val network = when (networkType) {
