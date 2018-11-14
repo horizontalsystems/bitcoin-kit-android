@@ -12,7 +12,7 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoMoreInteractions
 
-class PeerManagerTest {
+class PeerHostManagerTest {
     private val factories = RealmFactoryMock()
     private val realmFactory = factories.realmFactory
 

@@ -35,10 +35,6 @@ open class PeerTask {
         return false
     }
 
-    open fun handleRelayedTransaction(hash: ByteArray): Boolean {
-        return false
-    }
-
     open fun isRequestingInventory(hash: ByteArray): Boolean {
         return false
     }

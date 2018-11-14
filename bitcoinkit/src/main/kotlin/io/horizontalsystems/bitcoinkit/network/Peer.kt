@@ -62,10 +62,6 @@ class Peer(val host: String, private val network: NetworkParameters, private val
         peerConnection.sendMessage(MempoolMessage())
     }
 
-    fun handleRelayedTransaction(hash: ByteArray): Boolean {
-        return tasks.any { it.handleRelayedTransaction(hash) }
-    }
-
     fun isRequestingInventory(hash: ByteArray): Boolean {
         return tasks.any { it.isRequestingInventory(hash) }
     }

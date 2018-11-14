@@ -6,15 +6,18 @@ import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
-import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerTask.*
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSyncer
 import java.net.InetAddress
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
-class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilterManager: BloomFilterManager, private val network: NetworkParameters, private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
+class PeerGroup(
+        private val hostManager: PeerHostManager,
+        private val bloomFilterManager: BloomFilterManager,
+        private val network: NetworkParameters,
+        private val peerManager: PeerManager = PeerManager(),
+        private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     interface LastBlockHeightListener {
         fun onReceiveMaxBlockHeight(height: Int)
@@ -24,25 +27,17 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
     var transactionSyncer: TransactionSyncer? = null
     var lastBlockHeightListener: LastBlockHeightListener? = null
 
-    private val logger = Logger.getLogger("PeerGroup")
-    private val peerMap = ConcurrentHashMap<String, Peer>()
-    private var syncPeer: Peer? = null
-    private var pendingTransactions: MutableList<Transaction> = mutableListOf()
-
     @Volatile
     private var running = false
-    private val syncPeerQueue = Executors.newSingleThreadExecutor()
-    private val localQueue = Executors.newSingleThreadExecutor()
+    private val peersQueue = Executors.newSingleThreadExecutor()
+    private val logger = Logger.getLogger("PeerGroup")
 
     init {
         bloomFilterManager.listener = this
     }
 
-    fun relay(transaction: Transaction) {
-        localQueue.execute {
-            pendingTransactions.add(transaction)
-            dispatchTasks()
-        }
+    fun sendPendingTransactions() {
+        handlePendingTransactions()
     }
 
     fun close() {
@@ -58,13 +53,12 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
     // Thread implementations
     //
     override fun run() {
+        running = true
+
         blockSyncer?.prepareForDownload()
 
-        running = true
-        addNonSentTransactions()
-        // loop:
         while (running) {
-            if (peerMap.size < peerSize) {
+            if (peerManager.peersCount() < peerSize) {
                 startConnection()
             }
 
@@ -76,16 +70,16 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
         }
 
         logger.info("Closing all peer connections...")
-        for (conn in peerMap.values) {
-            conn.close()
-        }
+
+        peerManager.disconnectAll()
     }
 
     //
     // PeerListener implementations
     //
     override fun onConnect(peer: Peer) {
-        peerMap[peer.host] = peer
+        peerManager.add(peer)
+
         bloomFilterManager.bloomFilter?.let {
             peer.filterLoad(it)
         }
@@ -94,13 +88,13 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
     }
 
     override fun onReady(peer: Peer) {
-        localQueue.execute {
-            dispatchTasks(peer)
+        peersQueue.execute {
+            downloadBlockchain()
         }
     }
 
     override fun onDisconnect(peer: Peer, e: Exception?) {
-        peerMap.remove(peer.host)
+        peerManager.remove(peer)
 
         if (e == null) {
             logger.info("Peer ${peer.host} disconnected.")
@@ -110,10 +104,9 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
             hostManager.markFailed(peer.host)
         }
 
-        // it restores syncPeer on next connection
-        if (syncPeer == peer) {
+        if (peerManager.isSyncPeer(peer)) {
+            peerManager.syncPeer = null
             blockSyncer?.downloadFailed()
-            syncPeer = null
             assignNextSyncPeer()
         }
     }
@@ -124,13 +117,11 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
 
         inventoryItems.forEach { item ->
             when (item.type) {
-                InventoryItem.MSG_BLOCK -> {
-                    if (blockSyncer?.shouldRequest(item.hash) == true) {
-                        blockHashes.add(item.hash)
-                    }
+                InventoryItem.MSG_BLOCK -> if (blockSyncer?.shouldRequest(item.hash) == true) {
+                    blockHashes.add(item.hash)
                 }
                 InventoryItem.MSG_TX -> {
-                    if (!isRequestingInventory(item.hash) && !handleRelayedTransaction(item.hash) && transactionSyncer?.shouldRequestTransaction(item.hash) == true) {
+                    if (!isRequestingInventory(item.hash) && transactionSyncer?.shouldRequestTransaction(item.hash) == true) {
                         transactionHashes.add(item.hash)
                     }
                 }
@@ -181,7 +172,10 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
             is RequestTransactionsTask -> {
                 transactionSyncer?.handleTransactions(task.transactions)
             }
-            else -> throw Exception("Task not handled: ${task}")
+            is SendTransactionTask -> {
+                transactionSyncer?.handleTransaction(task.transaction)
+            }
+            else -> throw Exception("Task not handled: $task")
         }
     }
 
@@ -189,7 +183,7 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
     // BloomFilterManager implementations
     //
     override fun onFilterUpdated(bloomFilter: BloomFilter) {
-        peerMap.values.forEach { peer ->
+        peerManager.connected().forEach { peer ->
             peer.filterLoad(bloomFilter)
         }
     }
@@ -211,15 +205,18 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
     }
 
     private fun assignNextSyncPeer() {
-        syncPeerQueue.execute {
-            if (syncPeer == null) {
-                peerMap.values.firstOrNull { it.connected && !it.synced }?.let { nonSyncedPeer ->
-                    syncPeer = nonSyncedPeer
+        peersQueue.execute {
+            if (peerManager.syncPeer == null) {
+                val nonSyncedPeer = peerManager.nonSyncedPeer()
+                if (nonSyncedPeer == null) {
+                    handlePendingTransactions()
+                } else {
+                    peerManager.syncPeer = nonSyncedPeer
                     blockSyncer?.downloadStarted()
+
                     logger.info("Start syncing peer ${nonSyncedPeer.host}")
 
                     lastBlockHeightListener?.onReceiveMaxBlockHeight(nonSyncedPeer.announcedLastBlockHeight)
-
                     downloadBlockchain()
                 }
             }
@@ -227,7 +224,7 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
     }
 
     private fun downloadBlockchain() {
-        syncPeer?.let { syncPeer ->
+        peerManager.syncPeer?.let { syncPeer ->
             blockSyncer?.let { blockSyncer ->
 
                 val blockHashes = blockSyncer.getBlockHashes()
@@ -245,44 +242,26 @@ class PeerGroup(private val hostManager: PeerHostManager, private val bloomFilte
                     blockSyncer.downloadCompleted()
                     syncPeer.sendMempoolMessage()
                     logger.info("Peer synced ${syncPeer.host}")
-                    this.syncPeer = null
+                    peerManager.syncPeer = null
                     assignNextSyncPeer()
                 }
             }
         }
     }
 
-    private fun dispatchTasks(peer: Peer? = null) {
-        if (peer != null)
-            return handleReady(peer)
-
-        peerMap.values.filter { it.ready }.forEach {
-            handleReady(it)
-        }
-    }
-
-    private fun handleReady(peer: Peer) {
-        if (!peer.ready)
+    private fun handlePendingTransactions() {
+        if (peerManager.peersCount() < 1 || peerManager.nonSyncedPeer() != null) {
             return
+        }
 
-        if (peer == syncPeer)
-            return downloadBlockchain()
-
-        pendingTransactions.forEach { peer.addTask(RelayTransactionTask(it)) }
-        pendingTransactions = mutableListOf()
-    }
-
-    private fun handleRelayedTransaction(hash: ByteArray): Boolean {
-        return peerMap.any { (_, peer) -> peer.handleRelayedTransaction(hash) }
+        peerManager.someReadyPeers().forEach { peer ->
+            transactionSyncer?.getPendingTransactions()?.forEach { pendingTransaction ->
+                peer.addTask(SendTransactionTask(pendingTransaction))
+            }
+        }
     }
 
     private fun isRequestingInventory(hash: ByteArray): Boolean {
-        return peerMap.any { (_, peer) -> peer.isRequestingInventory(hash) }
-    }
-
-    private fun addNonSentTransactions() {
-        transactionSyncer?.getNonSentTransactions()?.let { transactions ->
-            transactions.forEach { relay(it) }
-        }
+        return peerManager.connected().any { peer -> peer.isRequestingInventory(hash) }
     }
 }

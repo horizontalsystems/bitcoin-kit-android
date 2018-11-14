@@ -71,7 +71,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
         val bloomFilterManager = BloomFilterManager(realmFactory)
 
-        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, 1)
+        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = 1)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, progressSyncer, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = progressSyncer
