@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.network
 
 class PeerManager {
 
+    @Volatile
     var syncPeer: Peer? = null
 
     @Volatile
