@@ -84,8 +84,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
             NetworkType.TestNetBitCash -> BitcoinCashAddressSelector(addressConverter)
         }
 
+        val stateManager = StateManager(realmFactory, network)
         val apiManager = ApiManagerBtcCom(ApiRequesterBtcCom(networkType), addressSelector)
-        val stateManager = StateManager(realmFactory)
         val blockDiscover = BlockDiscover(wallet, apiManager, network)
 
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
