@@ -12,7 +12,7 @@ import org.junit.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoMoreInteractions
 
-class PeerManagerTest {
+class PeerHostManagerTest {
     private val factories = RealmFactoryMock()
     private val realmFactory = factories.realmFactory
 
@@ -22,7 +22,7 @@ class PeerManagerTest {
     private val ipsPeers = arrayOf("0.0.0.0", "1.1.1.1")
     private val dnsSeeds = arrayOf("abc.com", "com.abc")
 
-    private lateinit var peerManager: PeerManager
+    private lateinit var peerHostManager: PeerHostManager
 
     @Before
     fun setup() {
@@ -37,18 +37,18 @@ class PeerManagerTest {
         whenever(network.dnsSeeds).thenReturn(dnsSeeds)
         whenever(peerDiscover.lookup(dnsSeeds)).thenReturn(ipsPeers)
 
-        peerManager = PeerManager(network, realmFactory, peerDiscover)
+        peerHostManager = PeerHostManager(network, realmFactory, peerDiscover)
     }
 
     @Test
     fun getPeerIp_withPeerAddresses() {
-        var peerIp = peerManager.getPeerIp()
+        var peerIp = peerHostManager.getPeerIp()
 
         verifyNoMoreInteractions(peerDiscover)
         assertEquals(ipsPeers[0], peerIp)
 
         // second time
-        peerIp = peerManager.getPeerIp()
+        peerIp = peerHostManager.getPeerIp()
         assertEquals(ipsPeers[1], peerIp)
     }
 
@@ -59,7 +59,7 @@ class PeerManagerTest {
             realm.executeTransaction { it.deleteAll() }
         }
 
-        val peerIp = peerManager.getPeerIp()
+        val peerIp = peerHostManager.getPeerIp()
 
         verify(peerDiscover).lookup(dnsSeeds)
         assertEquals(null, peerIp)
@@ -71,8 +71,8 @@ class PeerManagerTest {
         var peerAddress = getPeer(realmFactory.realm, peerIp)
 
         assertEquals(0, peerAddress?.score)
-        peerManager.getPeerIp()
-        peerManager.markSuccess(peerIp)
+        peerHostManager.getPeerIp()
+        peerHostManager.markSuccess(peerIp)
 
         peerAddress = getPeer(realmFactory.realm, peerIp)
         assertEquals(3, peerAddress?.score)
@@ -85,8 +85,8 @@ class PeerManagerTest {
 
         assertTrue(peerAddress != null)
 
-        peerManager.getPeerIp()
-        peerManager.markFailed(peerIp)
+        peerHostManager.getPeerIp()
+        peerHostManager.markFailed(peerIp)
 
         peerAddress = getPeer(realmFactory.realm, peerIp)
         assertTrue(peerAddress == null)

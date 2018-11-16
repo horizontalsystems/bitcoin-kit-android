@@ -22,7 +22,8 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
     }
 
     override fun handleMerkleBlock(merkleBlock: MerkleBlock): Boolean {
-        val blockHash = blockHashes.firstOrNull { merkleBlock.blockHash.contentEquals(it.headerHash) } ?: return false
+        val blockHash = blockHashes.find { merkleBlock.blockHash.contentEquals(it.headerHash) }
+                ?: return false
 
         merkleBlock.height = if (blockHash.height > 0) blockHash.height else null
 
@@ -36,7 +37,7 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
     }
 
     override fun handleTransaction(transaction: Transaction): Boolean {
-        val block = pendingMerkleBlocks.firstOrNull { it.associatedTransactionHexes.contains(transaction.hash.toHexString()) }
+        val block = pendingMerkleBlocks.find { it.associatedTransactionHexes.contains(transaction.hash.toHexString()) }
                 ?: return false
 
         block.associatedTransactions.add(transaction)
@@ -51,7 +52,7 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
 
     override fun handlePong(nonce: Long): Boolean {
         if (nonce == pingNonce) {
-            delegate?.onTaskFailed(this, MerkleBlockNotReceived())
+            listener?.onTaskFailed(this, MerkleBlockNotReceived())
             return true
         }
 
@@ -59,14 +60,14 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
     }
 
     private fun handleCompletedMerkleBlock(merkleBlock: MerkleBlock) {
-        blockHashes.firstOrNull { it.headerHash.contentEquals(merkleBlock.blockHash) }?.let {
+        blockHashes.find { it.headerHash.contentEquals(merkleBlock.blockHash) }?.let {
             blockHashes.remove(it)
         }
 
-        delegate?.handleMerkleBlock(merkleBlock)
+        listener?.handleMerkleBlock(merkleBlock)
 
         if (blockHashes.isEmpty()) {
-            delegate?.onTaskCompleted(this)
+            listener?.onTaskCompleted(this)
         }
     }
 

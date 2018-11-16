@@ -6,11 +6,12 @@ import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.PeerGroup
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 
-class TransactionCreator(private val realmFactory: RealmFactory,
-                         private val builder: TransactionBuilder,
-                         private val processor: TransactionProcessor,
-                         private val peerGroup: PeerGroup,
-                         private val addressManager: AddressManager) {
+class TransactionCreator(
+        private val realmFactory: RealmFactory,
+        private val builder: TransactionBuilder,
+        private val processor: TransactionProcessor,
+        private val peerGroup: PeerGroup,
+        private val addressManager: AddressManager) {
 
     val feeRate = 8
 
@@ -28,10 +29,9 @@ class TransactionCreator(private val realmFactory: RealmFactory,
             realm.insert(transaction)
             processor.process(transaction, realm)
         }
-
-        peerGroup.relay(transaction)
-
         realm.close()
+
+        peerGroup.sendPendingTransactions()
     }
 
     open class TransactionCreationException(msg: String) : Exception(msg)

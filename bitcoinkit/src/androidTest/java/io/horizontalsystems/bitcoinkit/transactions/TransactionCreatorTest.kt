@@ -1,6 +1,9 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
+import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
@@ -43,7 +46,7 @@ class TransactionCreatorTest {
 
         assertTrue(insertedTx != null)
         verify(transactionProcessor).process(Fixtures.transactionP2PKH, realm)
-        verify(peerGroup).relay(argThat { hashHexReversed == Fixtures.transactionP2PKH.hashHexReversed })
+        verify(peerGroup).sendPendingTransactions()
     }
 
     @Test(expected = TransactionCreator.TransactionAlreadyExists::class)
