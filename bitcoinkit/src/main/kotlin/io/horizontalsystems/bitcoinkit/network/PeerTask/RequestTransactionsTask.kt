@@ -20,7 +20,7 @@ class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
         transactions.add(transaction)
 
         if (hashes.isEmpty()) {
-            delegate?.onTaskCompleted(this)
+            listener?.onTaskCompleted(this)
         }
 
         return true

@@ -40,7 +40,7 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>) : Peer
 
     override fun handlePong(nonce: Long): Boolean {
         if (nonce == pingNonce) {
-            delegate?.onTaskCompleted(this)
+            listener?.onTaskCompleted(this)
             return true
         }
 

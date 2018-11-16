@@ -6,8 +6,23 @@ import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
 
 open class PeerTask {
-    var requester: IPeerTaskRequester? = null
-    var delegate: IPeerTaskDelegate? = null
+
+    interface Listener {
+        fun onTaskCompleted(task: PeerTask)
+        fun onTaskFailed(task: PeerTask, e: Exception)
+        fun handleMerkleBlock(merkleBlock: MerkleBlock)
+    }
+
+    interface Requester {
+        fun getBlocks(hashes: List<ByteArray>)
+        fun ping(nonce: Long)
+        fun getData(items: List<InventoryItem>)
+        fun sendTransactionInventory(hash: ByteArray)
+        fun send(transaction: Transaction)
+    }
+
+    var requester: Requester? = null
+    var listener: Listener? = null
 
     open fun start() = Unit
 
@@ -38,18 +53,4 @@ open class PeerTask {
     open fun isRequestingInventory(hash: ByteArray): Boolean {
         return false
     }
-}
-
-interface IPeerTaskDelegate {
-    fun onTaskCompleted(task: PeerTask)
-    fun onTaskFailed(task: PeerTask, e: Exception)
-    fun handleMerkleBlock(merkleBlock: MerkleBlock)
-}
-
-interface IPeerTaskRequester {
-    fun getBlocks(hashes: List<ByteArray>)
-    fun ping(nonce: Long)
-    fun getData(items: List<InventoryItem>)
-    fun sendTransactionInventory(hash: ByteArray)
-    fun send(transaction: Transaction)
 }
