@@ -93,6 +93,7 @@ class PeerTest {
         val raw = "f9beb4d961646472000000000000000023000000dff105f601250be45b250be45b000000000000000000000000000000000000ffff591ba82e208d"
         val msg = getMessageFromHex(raw) as AddrMessage
 
+        peer.connected = true
         peer.onMessage(msg)
         verify(listener).onReceiveAddress(msg.addresses)
     }

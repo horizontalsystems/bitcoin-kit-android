@@ -70,11 +70,16 @@ class Peer(val host: String, private val network: NetworkParameters, private val
     // PeerConnection Listener implementations
     //
     override fun onMessage(message: Message) {
+        if (message is VersionMessage)
+            return handleVersionMessage(message)
+        if (message is VerAckMessage)
+            return handleVerackMessage()
+
+        if (!connected) return
+
         when (message) {
             is PingMessage -> peerConnection.sendMessage(PongMessage(message.nonce))
             is PongMessage -> handlePongMessage(message)
-            is VersionMessage -> handleVersionMessage(message)
-            is VerAckMessage -> handleVerackMessage()
             is AddrMessage -> handleAddrMessage(message)
             is MerkleBlockMessage -> handleMerkleBlockMessage(message)
             is TransactionMessage -> handleTransactionMessage(message)
