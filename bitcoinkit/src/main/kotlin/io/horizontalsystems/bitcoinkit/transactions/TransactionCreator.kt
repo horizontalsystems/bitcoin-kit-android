@@ -17,7 +17,7 @@ class TransactionCreator(
 
     fun create(address: String, value: Int) {
         val realm = realmFactory.realm
-        val changePubKey = addressManager.changePublicKey()
+        val changePubKey = addressManager.changePublicKey(realm)
 
         val transaction = builder.buildTransaction(value, address, feeRate, true, changePubKey)
 

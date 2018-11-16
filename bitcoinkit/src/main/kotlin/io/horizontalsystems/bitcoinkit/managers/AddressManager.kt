@@ -13,37 +13,35 @@ class AddressManager(private val realmFactory: RealmFactory,
                      private val addressConverter: AddressConverter) {
 
     @Throws
-    fun changePublicKey(): PublicKey {
-        return getPublicKey(HDWallet.Chain.INTERNAL)
+    fun changePublicKey(realm: Realm): PublicKey {
+        return getPublicKey(HDWallet.Chain.INTERNAL, realm)
     }
 
     @Throws
     fun receiveAddress(): String {
-        val publicKey = getPublicKey(HDWallet.Chain.EXTERNAL)
-        val address = addressConverter.convert(publicKey.publicKeyHash)
+        realmFactory.realm.use { realm ->
+            val publicKey = getPublicKey(HDWallet.Chain.EXTERNAL, realm)
+            val address = addressConverter.convert(publicKey.publicKeyHash)
 
-        return address.string
+            return address.string
+        }
     }
 
     fun fillGap() {
-        val realm = realmFactory.realm
-
-        fillGap(true, realm)
-        fillGap(false, realm)
-
-        realm.close()
+        realmFactory.realm.use { realm ->
+            fillGap(true, realm)
+            fillGap(false, realm)
+        }
     }
 
     fun addKeys(keys: List<PublicKey>) {
         if (keys.isEmpty()) return
 
-        val realm = realmFactory.realm
-
-        realm.executeTransaction {
-            realm.insertOrUpdate(keys)
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction {
+                realm.insertOrUpdate(keys)
+            }
         }
-
-        realm.close()
     }
 
     fun gapShifts(realm: Realm): Boolean {
@@ -78,8 +76,7 @@ class AddressManager(private val realmFactory: RealmFactory,
     }
 
     @Throws
-    private fun getPublicKey(chain: HDWallet.Chain): PublicKey {
-        val realm = realmFactory.realm
+    private fun getPublicKey(chain: HDWallet.Chain, realm: Realm): PublicKey {
         val existingKeys = realm.where(PublicKey::class.java)
                 .equalTo("external", chain == HDWallet.Chain.EXTERNAL)
                 .sort("index")
