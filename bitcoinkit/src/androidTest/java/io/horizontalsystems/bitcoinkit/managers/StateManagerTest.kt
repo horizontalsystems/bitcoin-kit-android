@@ -1,6 +1,8 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
+import io.horizontalsystems.bitcoinkit.network.MainNet
+import io.horizontalsystems.bitcoinkit.network.RegTest
 import io.realm.Realm
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,13 +14,22 @@ class StateManagerTest {
     private val factory = RealmFactoryMock()
     private lateinit var realm: Realm
 
-    private val stateManager = StateManager(factory.realmFactory)
+    private lateinit var stateManager: StateManager
 
     @Before
     fun setUp() {
         realm = factory.realmFactory.realm
-
         realm.executeTransaction { it.deleteAll() }
+
+        stateManager = StateManager(factory.realmFactory, MainNet())
+    }
+
+    @Test
+    fun apiSynced_RegTest() {
+        assertFalse(stateManager.apiSynced)
+
+        stateManager = StateManager(factory.realmFactory, RegTest())
+        assertTrue(stateManager.apiSynced)
     }
 
     @Test

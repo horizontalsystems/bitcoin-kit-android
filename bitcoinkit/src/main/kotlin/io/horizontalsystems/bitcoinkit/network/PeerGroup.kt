@@ -36,6 +36,7 @@ class PeerGroup(
         bloomFilterManager.listener = this
     }
 
+    @Throws
     fun sendPendingTransactions() {
         handlePendingTransactions()
     }
@@ -249,9 +250,14 @@ class PeerGroup(
         }
     }
 
+    @Throws
     private fun handlePendingTransactions() {
-        if (peerManager.peersCount() < 1 || peerManager.nonSyncedPeer() != null) {
-            return
+        if (peerManager.peersCount() < 1) {
+            throw Error("No peers connected")
+        }
+
+        if (peerManager.nonSyncedPeer() != null) {
+            throw Error("Peers not synced yet")
         }
 
         peerManager.someReadyPeers().forEach { peer ->
@@ -264,4 +270,9 @@ class PeerGroup(
     private fun isRequestingInventory(hash: ByteArray): Boolean {
         return peerManager.connected().any { peer -> peer.isRequestingInventory(hash) }
     }
+
+    //
+    // PeerGroup Exceptions
+    //
+    class Error(message: String) : Exception(message)
 }

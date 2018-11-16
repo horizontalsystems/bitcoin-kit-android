@@ -6,6 +6,8 @@ import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.network.PeerTask.SendTransactionTask
+import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,7 +26,8 @@ class PeerGroupTest {
 
     private var peer1 = mock(Peer::class.java)
     private var peer2 = mock(Peer::class.java)
-    private var peerManager = mock(PeerHostManager::class.java)
+    private var hostManager = mock(PeerHostManager::class.java)
+    private var peerManager = mock(PeerManager::class.java)
     private var bloomFilterManager = mock(BloomFilterManager::class.java)
     private var relayTransactionTask = mock(SendTransactionTask::class.java)
 
@@ -36,7 +39,7 @@ class PeerGroupTest {
     fun setup() {
         whenever(peer1.host).thenReturn(peerIp)
         whenever(peer2.host).thenReturn(peerIp2)
-        whenever(peerManager.getPeerIp())
+        whenever(hostManager.getPeerIp())
                 .thenReturn(peerIp, peerIp2)
 
         // Peer
@@ -49,7 +52,7 @@ class PeerGroupTest {
                 .withAnyArguments()
                 .thenReturn(relayTransactionTask)
 
-        peerGroup = PeerGroup(peerManager, bloomFilterManager, network, peerSize = 2)
+        peerGroup = PeerGroup(hostManager, bloomFilterManager, network, peerManager, 2)
     }
 
     @Test
@@ -69,7 +72,7 @@ class PeerGroupTest {
     fun disconnected_withError() { // removes peer from connection list
         peerGroup.onDisconnect(peer1, SocketTimeoutException("Some Error"))
 
-        verify(peerManager).markFailed(peerIp)
+        verify(hostManager).markFailed(peerIp)
     }
 
 //    @Test
@@ -93,6 +96,30 @@ class PeerGroupTest {
         val netAddress = NetworkAddress(input, false)
 
         peerGroup.onReceiveAddress(arrayOf(netAddress))
-        verify(peerManager).addPeers(arrayOf("10.0.0.1"))
+
+        verify(hostManager).addPeers(arrayOf("10.0.0.1"))
+    }
+
+    @Test
+    fun sendPendingTransactions_noPeers() {
+        try {
+            peerGroup.sendPendingTransactions()
+            fail("Expected exception PeerGroup.Error")
+        } catch (e: PeerGroup.Error) {
+            assertEquals("No peers connected", e.message)
+        }
+    }
+
+    @Test
+    fun sendPendingTransactions_notSynced() {
+        try {
+            whenever(peerManager.peersCount()).thenReturn(1)
+            whenever(peerManager.nonSyncedPeer()).thenReturn(peer1)
+
+            peerGroup.sendPendingTransactions()
+            fail("Expected exception PeerGroup.Error")
+        } catch (e: PeerGroup.Error) {
+            assertEquals("Peers not synced yet", e.message)
+        }
     }
 }
