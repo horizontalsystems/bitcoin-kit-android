@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.network.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.reactivex.Single
 import org.junit.After
 import org.junit.Assert

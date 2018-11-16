@@ -7,8 +7,8 @@ import io.horizontalsystems.bitcoinkit.models.Address
 import io.horizontalsystems.bitcoinkit.models.AddressType
 import io.horizontalsystems.bitcoinkit.models.CashAddress
 import io.horizontalsystems.bitcoinkit.models.SegWitAddress
-import io.horizontalsystems.bitcoinkit.scripts.Script
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.Script
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import java.util.*
 
 abstract class Bech32AddressConverter {

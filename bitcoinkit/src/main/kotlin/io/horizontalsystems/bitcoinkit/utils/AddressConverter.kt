@@ -6,12 +6,12 @@ import io.horizontalsystems.bitcoinkit.models.Address
 import io.horizontalsystems.bitcoinkit.models.AddressType
 import io.horizontalsystems.bitcoinkit.models.LegacyAddress
 import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import java.util.*
 
-class AddressConverter(private val network: NetworkParameters) {
+class AddressConverter(private val network: Network) {
     private val bech32 = when (network) {
         is MainNetBitcoinCash,
         is TestNetBitcoinCash -> CashAddressConverter()

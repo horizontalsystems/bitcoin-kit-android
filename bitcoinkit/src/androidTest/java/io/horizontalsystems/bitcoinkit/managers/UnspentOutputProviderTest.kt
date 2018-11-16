@@ -7,10 +7,10 @@ import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PK
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PKH
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2SH
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.UNKNOWN
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PK
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2SH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.UNKNOWN
 import io.realm.Realm
 import org.junit.Assert.assertEquals
 import org.junit.Before

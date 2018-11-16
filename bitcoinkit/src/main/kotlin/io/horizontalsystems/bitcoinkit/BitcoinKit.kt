@@ -11,6 +11,8 @@ import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter

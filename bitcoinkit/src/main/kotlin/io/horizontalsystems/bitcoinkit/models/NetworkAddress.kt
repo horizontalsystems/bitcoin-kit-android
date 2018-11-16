@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.models
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.utils.NetworkUtils
 import java.io.IOException
 import java.net.InetAddress
@@ -44,11 +44,11 @@ class NetworkAddress {
         port = input.readUnsignedShort()
     }
 
-    constructor(addr: InetAddress, networkParameters: NetworkParameters) {
+    constructor(addr: InetAddress, network: Network) {
         time = System.currentTimeMillis() / 1000
         services = 1
         address = NetworkUtils.getIPv6(addr)
-        port = networkParameters.port
+        port = network.port
     }
 
     fun toByteArray(excludeTime: Boolean): ByteArray {

@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
-class RegTest : NetworkParameters() {
+class RegTest : Network() {
     override var port: Int = 18444
 
     override var magic: Long = 0xdab5bffa

@@ -7,10 +7,10 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
-import io.horizontalsystems.bitcoinkit.scripts.OpCodes
-import io.horizontalsystems.bitcoinkit.scripts.ScriptBuilder
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -22,7 +22,7 @@ class TransactionBuilder {
     private val scriptBuilder: ScriptBuilder
     private val inputSigner: InputSigner
 
-    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: NetworkParameters) {
+    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: Network) {
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
         this.unspentOutputProvider = UnspentOutputProvider(realmFactory)

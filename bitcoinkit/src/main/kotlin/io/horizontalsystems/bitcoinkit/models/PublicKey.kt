@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.models
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.scripts.OpCodes
+import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.utils.Utils
 import io.realm.RealmObject
 import io.realm.RealmResults

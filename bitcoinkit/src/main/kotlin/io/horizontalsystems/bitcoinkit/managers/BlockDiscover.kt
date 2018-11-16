@@ -4,13 +4,13 @@ import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.publicKey
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.reactivex.Single
 
 class BlockDiscover(private val hdWallet: HDWallet,
                     private val apiManager: IApiManager,
-                    network: NetworkParameters) {
+                    network: Network) {
 
     private val maxHeight: Int = network.checkpointBlock.height
     private val gapLimit = hdWallet.gapLimit

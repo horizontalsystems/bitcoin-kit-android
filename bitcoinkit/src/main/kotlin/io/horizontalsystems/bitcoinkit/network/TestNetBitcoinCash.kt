@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
-class TestNetBitcoinCash : NetworkParameters() {
+class TestNetBitcoinCash : Network() {
 
     override var port: Int = 18333
 

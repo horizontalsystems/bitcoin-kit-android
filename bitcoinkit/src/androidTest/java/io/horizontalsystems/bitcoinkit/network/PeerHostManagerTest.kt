@@ -4,6 +4,8 @@ import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.models.PeerAddress
+import io.horizontalsystems.bitcoinkit.network.peer.PeerDiscover
+import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
 import io.realm.Realm
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

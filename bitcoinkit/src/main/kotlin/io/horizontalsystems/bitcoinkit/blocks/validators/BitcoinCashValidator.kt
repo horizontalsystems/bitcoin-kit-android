@@ -3,9 +3,9 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 
-open class BitcoinCashValidator(private val network: NetworkParameters) : BlockValidator(network) {
+open class BitcoinCashValidator(private val network: Network) : BlockValidator(network) {
     private val largestHash = 1.toBigInteger() shl 256
     private val diffDate = 1510600000
 

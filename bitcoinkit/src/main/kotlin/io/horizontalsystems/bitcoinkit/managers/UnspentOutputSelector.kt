@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PKH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 
 class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {

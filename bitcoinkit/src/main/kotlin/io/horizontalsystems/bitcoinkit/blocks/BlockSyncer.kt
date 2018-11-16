@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Sort
 
@@ -16,7 +16,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                   private val addressManager: AddressManager,
                   private val bloomFilterManager: BloomFilterManager,
                   private val listener: Listener,
-                  private val network: NetworkParameters) {
+                  private val network: Network) {
 
     interface Listener {
         fun onInitialBestBlockHeight(height: Int)

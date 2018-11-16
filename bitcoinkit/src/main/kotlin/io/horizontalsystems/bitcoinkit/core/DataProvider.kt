@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.core
 
 import io.horizontalsystems.bitcoinkit.models.*
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
 import io.realm.Realm

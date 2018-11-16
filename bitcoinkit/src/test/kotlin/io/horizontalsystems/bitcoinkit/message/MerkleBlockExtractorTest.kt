@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.message
 
 import io.horizontalsystems.bitcoinkit.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.messages.MerkleBlockMessage
+import io.horizontalsystems.bitcoinkit.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoinkit.network.TestNet
 import org.junit.Assert
 import org.junit.Test

@@ -1,6 +1,8 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoinkit.network.peer.Peer
+import io.horizontalsystems.bitcoinkit.network.peer.PeerManager
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test

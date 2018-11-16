@@ -4,7 +4,7 @@ import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test

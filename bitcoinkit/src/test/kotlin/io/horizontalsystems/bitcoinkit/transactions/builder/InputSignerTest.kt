@@ -5,8 +5,8 @@ import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.hdwalletkit.HDKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 import org.junit.Assert.assertEquals
@@ -17,7 +17,7 @@ import org.mockito.Mockito.mock
 
 class InputSignerTest {
 
-    private val network = mock(NetworkParameters::class.java)
+    private val network = mock(Network::class.java)
     private val hdWallet = mock(HDWallet::class.java)
     private val privateKey = mock(HDKey::class.java)
 

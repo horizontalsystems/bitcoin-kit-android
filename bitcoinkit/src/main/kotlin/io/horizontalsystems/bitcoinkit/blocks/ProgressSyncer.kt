@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
-import io.horizontalsystems.bitcoinkit.network.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 
 class ProgressSyncer(private val listener: Listener) : PeerGroup.LastBlockHeightListener, BlockSyncer.Listener {
 

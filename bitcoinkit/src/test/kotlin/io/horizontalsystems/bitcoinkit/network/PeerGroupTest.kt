@@ -5,7 +5,11 @@ import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
-import io.horizontalsystems.bitcoinkit.network.PeerTask.SendTransactionTask
+import io.horizontalsystems.bitcoinkit.network.peer.task.SendTransactionTask
+import io.horizontalsystems.bitcoinkit.network.peer.Peer
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
+import io.horizontalsystems.bitcoinkit.network.peer.PeerManager
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before

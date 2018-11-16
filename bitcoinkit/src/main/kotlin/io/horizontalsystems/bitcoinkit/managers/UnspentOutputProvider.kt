@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 
 class UnspentOutputProvider(private val realmFactory: RealmFactory) {
     fun allUnspentOutputs(): List<TransactionOutput> {

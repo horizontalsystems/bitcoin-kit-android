@@ -5,9 +5,11 @@ import com.nhaarman.mockito_kotlin.argumentCaptor
 import com.nhaarman.mockito_kotlin.verify
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.messages.AddrMessage
-import io.horizontalsystems.bitcoinkit.messages.Message
-import io.horizontalsystems.bitcoinkit.messages.VerAckMessage
+import io.horizontalsystems.bitcoinkit.network.messages.AddrMessage
+import io.horizontalsystems.bitcoinkit.network.messages.Message
+import io.horizontalsystems.bitcoinkit.network.messages.VerAckMessage
+import io.horizontalsystems.bitcoinkit.network.peer.Peer
+import io.horizontalsystems.bitcoinkit.network.peer.PeerConnection
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test

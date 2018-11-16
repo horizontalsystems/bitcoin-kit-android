@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.realm.Realm
 import junit.framework.Assert
 import org.junit.Before
@@ -13,7 +13,7 @@ import org.mockito.Mockito.mock
 class BlockchainTest {
     private val factories = RealmFactoryMock()
     private val realm = factories.realmFactory.realm
-    private val network = mock(NetworkParameters::class.java)
+    private val network = mock(Network::class.java)
     private val blockchain = Blockchain(network)
 
     @Before
