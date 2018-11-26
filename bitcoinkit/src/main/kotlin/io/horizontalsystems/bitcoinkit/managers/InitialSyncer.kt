@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.managers
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.network.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable

@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoinkit.blocks.validators
 
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 
-class TestnetValidator(private val network: NetworkParameters) : BlockValidator(network) {
+class TestnetValidator(private val network: Network) : BlockValidator(network) {
     private val diffDate = 1329264000L // February 16th 2012
 
     override fun validate(candidate: Block, previousBlock: Block) {

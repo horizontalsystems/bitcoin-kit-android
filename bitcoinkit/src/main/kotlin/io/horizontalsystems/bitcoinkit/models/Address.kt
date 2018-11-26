@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.models
 
-import io.horizontalsystems.bitcoinkit.scripts.ScriptParser
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptParser
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 
 enum class AddressType {
     P2PKH,  // Pay to public key hash

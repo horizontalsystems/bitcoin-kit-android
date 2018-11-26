@@ -8,7 +8,7 @@ import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.realm.exceptions.RealmException
 import junit.framework.Assert.assertTrue
@@ -35,7 +35,7 @@ class TransactionCreatorTest {
         realm.commitTransaction()
 
         whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any(), any())).thenReturn(Fixtures.transactionP2PKH)
-        whenever(addressManager.changePublicKey()).thenReturn(Fixtures.publicKey)
+        whenever(addressManager.changePublicKey(any())).thenReturn(Fixtures.publicKey)
     }
 
     @Test
@@ -58,7 +58,7 @@ class TransactionCreatorTest {
 
     @Test
     fun create_failNoChangeAddress() {
-        whenever(addressManager.changePublicKey()).thenThrow(RealmException("no item found"))
+        whenever(addressManager.changePublicKey(any())).thenThrow(RealmException("no item found"))
 
         try {
             transactionCreator.create("address", 123)

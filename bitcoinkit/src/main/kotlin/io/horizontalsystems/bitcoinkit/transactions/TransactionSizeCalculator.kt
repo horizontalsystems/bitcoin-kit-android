@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PK
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PKH
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2WPKHSH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PK
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2WPKHSH
 
 class TransactionSizeCalculator {
     private val signatureLength = 72 + 1      // signature length + pushByte

@@ -3,12 +3,12 @@ package io.horizontalsystems.bitcoinkit.blocks
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.realm.Realm
 import io.realm.RealmResults
 import io.realm.Sort
 
-class Blockchain(private val network: NetworkParameters) {
+class Blockchain(private val network: Network) {
 
     fun connect(merkleBlock: MerkleBlock, realm: Realm): Block {
         val blockInDB = realm.where(Block::class.java)

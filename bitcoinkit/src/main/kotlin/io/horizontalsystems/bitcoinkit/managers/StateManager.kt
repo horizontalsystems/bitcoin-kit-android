@@ -2,11 +2,11 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.KitState
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.RegTest
 import io.realm.Realm
 
-class StateManager(private val realmFactory: RealmFactory, val network: NetworkParameters) {
+class StateManager(private val realmFactory: RealmFactory, val network: Network) {
 
     var apiSynced: Boolean
         get() {

@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PK
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2PKH
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2SH
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2WPKH
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType.P2WPKHSH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PK
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2SH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2WPKH
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2WPKHSH
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

@@ -4,7 +4,7 @@ import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.hdwalletkit.HDPublicKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.reactivex.Single
@@ -18,7 +18,7 @@ class BlockDiscoverTest {
 
     private val hdWallet = mock(HDWallet::class.java)
     private val apiManager = mock(IApiManager::class.java)
-    private val network = mock(NetworkParameters::class.java)
+    private val network = mock(Network::class.java)
     private val checkpointBlock = mock(Block::class.java)
 
     @Before

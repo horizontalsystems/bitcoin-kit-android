@@ -12,9 +12,9 @@ import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
-import io.horizontalsystems.bitcoinkit.scripts.ScriptBuilder
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.realm.Realm
@@ -28,7 +28,7 @@ class TransactionBuilderTest {
     private val factory = RealmFactoryMock()
     private lateinit var realm: Realm
 
-    private val network = mock(NetworkParameters::class.java)
+    private val network = mock(Network::class.java)
     private val unspentOutputSelector = mock(UnspentOutputSelector::class.java)
     private val unspentOutputProvider = mock(UnspentOutputProvider::class.java)
     private val scriptBuilder = mock(ScriptBuilder::class.java)

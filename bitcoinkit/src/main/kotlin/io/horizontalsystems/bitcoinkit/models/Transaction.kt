@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.models
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
-import io.horizontalsystems.bitcoinkit.scripts.OpCodes
+import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.realm.RealmList
 import io.realm.RealmObject

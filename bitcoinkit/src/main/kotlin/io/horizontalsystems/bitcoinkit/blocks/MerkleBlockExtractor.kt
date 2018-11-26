@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.exceptions.InvalidMerkleBlockException
-import io.horizontalsystems.bitcoinkit.messages.MerkleBlockMessage
+import io.horizontalsystems.bitcoinkit.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.utils.MerkleBranch
 

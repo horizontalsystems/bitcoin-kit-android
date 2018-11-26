@@ -2,9 +2,9 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 
-open class BlockValidator(private val network: NetworkParameters) {
+open class BlockValidator(private val network: Network) {
 
     open fun validate(candidate: Block, previousBlock: Block) {
         validateHeader(candidate, previousBlock)

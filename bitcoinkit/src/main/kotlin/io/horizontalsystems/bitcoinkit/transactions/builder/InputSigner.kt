@@ -2,13 +2,13 @@ package io.horizontalsystems.bitcoinkit.transactions.builder
 
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
-import io.horizontalsystems.bitcoinkit.network.NetworkParameters
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
-import io.horizontalsystems.bitcoinkit.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.scripts.Sighash
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.transactions.scripts.Sighash
 import io.horizontalsystems.hdwalletkit.HDWallet
 
-class InputSigner(private val hdWallet: HDWallet, val network: NetworkParameters) {
+class InputSigner(private val hdWallet: HDWallet, val network: Network) {
 
     fun sigScriptData(transaction: Transaction, index: Int): List<ByteArray> {
 

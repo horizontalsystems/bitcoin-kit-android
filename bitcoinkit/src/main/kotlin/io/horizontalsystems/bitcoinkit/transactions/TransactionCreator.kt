@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.transactions
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.PeerGroup
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 
 class TransactionCreator(

@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.message
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.messages.TransactionMessage
+import io.horizontalsystems.bitcoinkit.network.messages.TransactionMessage
 import junit.framework.Assert
 import org.junit.Test
 
