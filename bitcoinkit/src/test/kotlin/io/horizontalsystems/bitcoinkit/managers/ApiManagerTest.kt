@@ -2,9 +2,11 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.RxTestRule
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
@@ -16,8 +18,8 @@ import java.net.URLConnection
 @PrepareForTest(ApiManager::class, URL::class)
 class ApiManagerTest {
 
-    private val url = PowerMockito.mock(URL::class.java)
-    private val urlConnection = PowerMockito.mock(URLConnection::class.java)
+    private val url = mock(URL::class.java)
+    private val urlConnection = mock(URLConnection::class.java)
 
     private lateinit var apiManager: ApiManager
 
@@ -32,31 +34,24 @@ class ApiManagerTest {
 
         whenever(url.openConnection()).thenReturn(urlConnection)
 
-        apiManager = ApiManager("http://ipfs.grouvi.org/ipns/QmVefrf2xrWzGzPpERF6fRHeUTh9uVSyfHHh4cWgUBnXpq/io-hs/data/blockstore")
+        apiManager = ApiManager("https://ipfs.horizontalsystems.xyz")
     }
 
     @Test
-    fun getBlockHashes_onNext() {
-        val jsonResponse = "{\"address\":\"mgST3vt11R2HSHqHbtNRgDFdLo8QG2VqzR\",\"blocks\":[{\"hash\":\"3137c5f3db4d59917664371f48bf2a1f5b519063feda0772f64b68a0c51d3d3c\",\"height\":597},{\"hash\":\"717257c058eb9e99c4cf164245d0421d1254a59975369b502cab1abab9d5c8ea\",\"height\":339}]}"
-        whenever(urlConnection.getInputStream()).thenReturn(jsonResponse.byteInputStream())
+    fun getJson() {
+        val data = "data"
+        val resp = "{\"field\":\"$data\"}"
 
-        val address = "mgST3vt11R2HSHqHbtNRgDFdLo8QG2VqzR"
-        apiManager.getBlockHashes(address).test()
-                .assertValue { blocksList ->
-                    blocksList.size == 2 &&
-                            blocksList[0].hash == "3137c5f3db4d59917664371f48bf2a1f5b519063feda0772f64b68a0c51d3d3c" &&
-                            blocksList[0].height == 597 &&
-                            blocksList[1].hash == "717257c058eb9e99c4cf164245d0421d1254a59975369b502cab1abab9d5c8ea" &&
-                            blocksList[1].height == 339
-                }
+        whenever(urlConnection.getInputStream()).thenReturn(resp.byteInputStream())
+
+        val json = apiManager.getJson("/file.json")
+        assertEquals(data, json["field"].asString())
     }
 
-    @Test
-    fun getBlockHashes_onError() {
-        val address = "mgST3vt11R2HSHqHbtNRgDFdLo8QG2VqzR"
+    @Test(expected = FileNotFoundException::class)
+    fun getJson_Throws() {
         whenever(urlConnection.getInputStream()).thenThrow(FileNotFoundException())
-        apiManager.getBlockHashes(address).test()
-                .assertValue { blocksList -> blocksList.isEmpty() }
+        apiManager.getJson("/file.json")
     }
 
 }
