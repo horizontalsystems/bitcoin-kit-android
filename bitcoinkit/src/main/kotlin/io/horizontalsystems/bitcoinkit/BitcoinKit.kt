@@ -42,6 +42,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
+    private val feeRateSyncer: FeeRateSyncer
     private val addressManager: AddressManager
     private val addressConverter: AddressConverter
     private val transactionCreator: TransactionCreator
@@ -90,6 +91,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         val apiManager = ApiManagerBtcCom(ApiRequesterBtcCom(networkType), addressSelector)
         val blockDiscover = BlockDiscover(wallet, apiManager, network)
 
+        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
@@ -100,6 +102,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     //
     fun start() {
         initialSyncer.sync()
+        feeRateSyncer.start()
     }
 
     fun send(address: String, value: Int) {
