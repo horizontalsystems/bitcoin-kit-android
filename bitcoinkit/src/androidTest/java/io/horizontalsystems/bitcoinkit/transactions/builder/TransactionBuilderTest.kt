@@ -7,15 +7,16 @@ import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.SelectedUnspentOutputInfo
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.realm.Realm
 import junit.framework.Assert.*
@@ -25,7 +26,7 @@ import org.mockito.Mockito.mock
 
 class TransactionBuilderTest {
 
-    private val factory = RealmFactoryMock()
+    private val realmFactory = RealmFactoryMock().realmFactory
     private lateinit var realm: Realm
 
     private val network = mock(Network::class.java)
@@ -34,12 +35,13 @@ class TransactionBuilderTest {
     private val scriptBuilder = mock(ScriptBuilder::class.java)
     private val transactionSizeCalculator = mock(TransactionSizeCalculator::class.java)
     private val inputSigner = mock(InputSigner::class.java)
+    private val addressManager = mock(AddressManager::class.java)
 
     private lateinit var previousTransaction: Transaction
     private lateinit var unspentOutputs: SelectedUnspentOutputInfo
 
     private val addressConverter = AddressConverter(network)
-    private val transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner)
+    private val transactionBuilder = TransactionBuilder(realmFactory, addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, addressManager)
 
     private val changePubKey = PublicKey().apply {
         publicKeyHash = "563e1365e6567bb0115a5158bfc94fe834067fd6".hexStringToByteArray()
@@ -56,7 +58,7 @@ class TransactionBuilderTest {
 
     @Before
     fun setUp() {
-        realm = factory.realmFactory.realm
+        realm = realmFactory.realm
         realm.beginTransaction()
         realm.deleteAll()
 
@@ -87,7 +89,7 @@ class TransactionBuilderTest {
 
     @Test
     fun buildTransaction_P2PKH_SenderPay() {
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, true, changePubKey)
+        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, true, realm)
 
         assertTrue(transaction.isMine)
         assertEquals(Transaction.Status.NEW, transaction.status)
@@ -103,7 +105,7 @@ class TransactionBuilderTest {
 
     @Test
     fun buildTransaction_P2PKH_ReceiverPay() {
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, changePubKey)
+        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, realm)
 
         assertTrue(transaction.isMine)
         assertEquals(Transaction.Status.NEW, transaction.status)
@@ -120,7 +122,7 @@ class TransactionBuilderTest {
 
     @Test
     fun buildTransaction_P2SH() {
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2SH, feeRate, false, changePubKey)
+        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2SH, feeRate, false, realm)
 
         assertTrue(transaction.isMine)
         assertEquals(Transaction.Status.NEW, transaction.status)
@@ -138,7 +140,7 @@ class TransactionBuilderTest {
     fun buildTransaction_WithoutChangeOutput() {
         val txValue = unspentOutputs.outputs[0].value.toInt()
 
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, changePubKey)
+        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, realm)
 
         assertEquals(1, transaction.inputs.size)
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
@@ -152,7 +154,7 @@ class TransactionBuilderTest {
     fun buildTransaction_ChangeNotAddedForDust() {
         val txValue = unspentOutputs.outputs[0].value.toInt() - transactionSizeCalculator.outputSize(scripType = ScriptType.P2PKH) * feeRate
 
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, changePubKey)
+        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, realm)
 
         assertEquals(1, transaction.inputs.size)
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
@@ -164,7 +166,7 @@ class TransactionBuilderTest {
 
     @Test
     fun buildTransaction_InputsSigned() {
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, changePubKey)
+        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, realm)
 
         assertEquals(unlockingScript.toHexString(), transaction.inputs[0]?.sigScript?.toHexString())
     }
@@ -173,7 +175,7 @@ class TransactionBuilderTest {
     fun fee() {
         val unspentOutputs = SelectedUnspentOutputInfo(listOf(), 11_805_400, 112_800, false)
         whenever(unspentOutputSelector.select(any(), any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
-        val fee = transactionBuilder.fee(10_782_000, 600, true, toAddressP2PKH)
+        val fee = transactionBuilder.fee(10_782_000, 600, true)
 
         assertEquals(112800, fee)
     }

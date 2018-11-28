@@ -45,7 +45,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
                 fee = lastCalculatedFee
             }
 
-            if (totalValue >= value + fee) {
+            if (totalValue >= lastCalculatedFee && totalValue >= value + fee) {
                 break
             }
 

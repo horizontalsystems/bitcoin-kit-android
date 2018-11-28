@@ -93,8 +93,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
         initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
-        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network)
-        transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
+        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager)
+        transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }
 
     //

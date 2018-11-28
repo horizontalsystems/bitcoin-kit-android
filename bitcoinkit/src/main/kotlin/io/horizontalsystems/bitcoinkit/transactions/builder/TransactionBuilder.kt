@@ -1,19 +1,20 @@
 package io.horizontalsystems.bitcoinkit.transactions.builder
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
-import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
+import io.realm.Realm
 
 class TransactionBuilder {
     private val addressConverter: AddressConverter
@@ -21,16 +22,22 @@ class TransactionBuilder {
     private val unspentOutputProvider: UnspentOutputProvider
     private val scriptBuilder: ScriptBuilder
     private val inputSigner: InputSigner
+    private val addressManager: AddressManager
+    private val realmFactory: RealmFactory
 
-    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: Network) {
+    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager) {
+        this.realmFactory = realmFactory
         this.addressConverter = addressConverter
+        this.addressManager = addressManager
         this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
         this.unspentOutputProvider = UnspentOutputProvider(realmFactory)
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
     }
 
-    constructor(addressConverter: AddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner) {
+    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager) {
+        this.realmFactory = realmFactory
+        this.addressManager = addressManager
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = unspentOutputsSelector
         this.unspentOutputProvider = unspentOutputProvider
@@ -39,20 +46,44 @@ class TransactionBuilder {
     }
 
     fun fee(value: Int, feeRate: Int, senderPay: Boolean, address: String? = null): Int {
-        val outputType = if (address == null) ScriptType.P2PKH else addressConverter.convert(address).scriptType
+        val estimatedFee = if (address == null) {
+            true
+        } else try { // if address is valid then calculate actual fee
+            addressConverter.convert(address)
+            false
+        } catch (e: Exception) {
+            true
+        }
 
-        return unspentOutputsSelector.select(
+        if (estimatedFee) {
+            return unspentOutputsSelector.select(
+                    value = value,
+                    feeRate = feeRate,
+                    outputType = ScriptType.P2PKH,
+                    changeType = ScriptType.P2PKH,
+                    senderPay = senderPay,
+                    outputs = unspentOutputProvider.allUnspentOutputs()
+            ).fee
+        }
+
+        val realm = realmFactory.realm
+        val transaction = buildTransaction(
+                realm = realm,
                 value = value,
                 feeRate = feeRate,
-                outputType = outputType,
                 senderPay = senderPay,
-                outputs = unspentOutputProvider.allUnspentOutputs()
-        ).fee
+                toAddress = address!!
+        )
+        realm.close()
+
+        return transaction.toByteArray().size * feeRate
     }
 
-    fun buildTransaction(value: Int, toAddress: String, feeRate: Int, senderPay: Boolean, changePubKey: PublicKey, changeScriptType: Int = ScriptType.P2PKH): Transaction {
+    fun buildTransaction(value: Int, toAddress: String, feeRate: Int, senderPay: Boolean, realm: Realm): Transaction {
 
         val address = addressConverter.convert(toAddress)
+        val changePubKey = addressManager.changePublicKey(realm)
+        val changeScriptType = ScriptType.P2PKH
         val selectedOutputsInfo = unspentOutputsSelector.select(
                 value = value,
                 feeRate = feeRate,
@@ -62,12 +93,16 @@ class TransactionBuilder {
                 outputs = unspentOutputProvider.allUnspentOutputs()
         )
 
+        if (!senderPay && selectedOutputsInfo.fee > value) {
+            throw BuilderException.FeeMoreThanValue()
+        }
+
         val transaction = Transaction(version = 1, lockTime = 0)
 
         // add inputs
         for (output in selectedOutputsInfo.outputs) {
             val previousTx = checkNotNull(output.transaction) {
-                throw TransactionBuilderException.NoPreviousTransaction()
+                throw BuilderException.NoPreviousTransaction()
             }
             val txInput = TransactionInput().apply {
                 previousOutputHash = previousTx.hash
@@ -88,11 +123,7 @@ class TransactionBuilder {
             this.keyHash = address.hash
         })
 
-        // calculate fee and add change output if needed
-        if (!senderPay && selectedOutputsInfo.fee > value) {
-            throw TransactionBuilderException.FeeMoreThanValue()
-        }
-
+        //  calculate fee and add change output if needed
         val receivedValue = if (senderPay) value else value - selectedOutputsInfo.fee
         val sentValue = if (senderPay) value + selectedOutputsInfo.fee else value
 
@@ -143,9 +174,9 @@ class TransactionBuilder {
         return transaction
     }
 
-    open class TransactionBuilderException : Exception() {
-        class NoPreviousTransaction : TransactionBuilderException()
-        class FeeMoreThanValue : TransactionBuilderException()
+    open class BuilderException : Exception() {
+        class NoPreviousTransaction : BuilderException()
+        class FeeMoreThanValue : BuilderException()
     }
 
 }
