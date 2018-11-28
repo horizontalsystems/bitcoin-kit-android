@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2WPKHSH
 
 class TransactionSizeCalculator {
-    private val signatureLength = 72 + 1      // signature length + pushByte
+    private val signatureLength = 74 + 1      // signature length + pushByte
     private val pubKeyLength = 33 + 1         // pubKey length + pushByte
     private val p2wpkhShLength = 22 + 1       // 0014<20-byte-script-hash> + pushByte
 
