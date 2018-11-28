@@ -25,9 +25,9 @@ class MainNet : Network() {
             "dnsseed.bitcoin.dashjr.org",       // Luke Dashjr
             "seed.bitcoinstats.com",            // Chris Decker
             "seed.bitnodes.io",                 // Addy Yeow
-            "bitseed.xf2.org",                  // Jeff Garzik
             "seed.bitcoin.jonasschnelli.ch",    // Jonas Schnelli
-            "bitcoin.bloqseeds.net"             // Bloq
+            "seed.btc.petertodd.org",           // Peter Todd
+            "seed.bitcoin.sprovoost.nl"         // Sjors Provoost
     )
 
     private val blockHeader = Header().apply {
