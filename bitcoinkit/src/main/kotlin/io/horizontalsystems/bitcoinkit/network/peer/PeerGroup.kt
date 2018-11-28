@@ -211,7 +211,11 @@ class PeerGroup(
             if (peerManager.syncPeer == null) {
                 val nonSyncedPeer = peerManager.nonSyncedPeer()
                 if (nonSyncedPeer == null) {
-                    handlePendingTransactions()
+                    try {
+                        handlePendingTransactions()
+                    } catch (e: PeerGroup.Error) {
+                        logger.warning("Handling pending transactions failed with: ${e.message}")
+                    }
                 } else {
                     peerManager.syncPeer = nonSyncedPeer
                     blockSyncer?.downloadStarted()
