@@ -2,15 +2,12 @@ package io.horizontalsystems.bitcoinkit.transactions
 
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
-import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
-import io.realm.exceptions.RealmException
 import junit.framework.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -24,9 +21,8 @@ class TransactionCreatorTest {
     private val transactionBuilder = mock(TransactionBuilder::class.java)
     private val transactionProcessor = mock(TransactionProcessor::class.java)
     private val peerGroup = mock(PeerGroup::class.java)
-    private val addressManager = mock(AddressManager::class.java)
 
-    private val transactionCreator = TransactionCreator(realmFactoryMock.realmFactory, transactionBuilder, transactionProcessor, peerGroup, addressManager)
+    private val transactionCreator = TransactionCreator(realmFactoryMock.realmFactory, transactionBuilder, transactionProcessor, peerGroup)
 
     @Before
     fun setUp() {
@@ -34,8 +30,7 @@ class TransactionCreatorTest {
         realm.deleteAll()
         realm.commitTransaction()
 
-        whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any(), any())).thenReturn(Fixtures.transactionP2PKH)
-        whenever(addressManager.changePublicKey(any())).thenReturn(Fixtures.publicKey)
+        whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any())).thenReturn(Fixtures.transactionP2PKH)
     }
 
     @Test
@@ -55,20 +50,5 @@ class TransactionCreatorTest {
 
         transactionCreator.create("address", 123)
     }
-
-    @Test
-    fun create_failNoChangeAddress() {
-        whenever(addressManager.changePublicKey(any())).thenThrow(RealmException("no item found"))
-
-        try {
-            transactionCreator.create("address", 123)
-        } catch (ex: Exception) {
-            assertTrue(ex is RealmException)
-        }
-
-        verifyNoMoreInteractions(transactionProcessor)
-        verifyNoMoreInteractions(peerGroup)
-    }
-
 }
 
