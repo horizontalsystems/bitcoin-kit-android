@@ -58,10 +58,12 @@ class TransactionSyncer(
                 }
             }
 
-            return realm.where(Transaction::class.java)
+            val pendingTransactions = realm.where(Transaction::class.java)
                     .equalTo("status", Transaction.Status.NEW)
                     .findAll()
                     .filter(filterByTime)
+
+            return realm.copyFromRealm(pendingTransactions)
         }
     }
 
