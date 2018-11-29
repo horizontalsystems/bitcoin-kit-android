@@ -11,9 +11,7 @@ class TransactionCreator(
         private val processor: TransactionProcessor,
         private val peerGroup: PeerGroup) {
 
-    val feeRate = 8
-
-    fun create(address: String, value: Int) {
+    fun create(address: String, value: Int, feeRate: Int) {
         val realm = realmFactory.realm
         val transaction = builder.buildTransaction(value, address, feeRate, true, realm)
 

@@ -106,7 +106,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     }
 
     fun send(address: String, value: Int) {
-        transactionCreator.create(address, value)
+        transactionCreator.create(address, value, dataProvider.feeRate.medium)
     }
 
     fun receiveAddress(): String {
@@ -118,7 +118,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
     }
 
     fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
-        return transactionBuilder.fee(value, transactionCreator.feeRate, senderPay, address)
+        return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
     }
 
     fun clear() = realmFactory.realm.use { realm ->
