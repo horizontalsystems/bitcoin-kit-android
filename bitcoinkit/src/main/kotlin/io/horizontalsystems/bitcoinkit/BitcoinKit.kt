@@ -105,8 +105,12 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         feeRateSyncer.start()
     }
 
-    fun send(address: String, value: Int) {
-        transactionCreator.create(address, value, dataProvider.feeRate.medium)
+    fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
+        return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
+    }
+
+    fun send(address: String, value: Int, senderPay: Boolean = true) {
+        transactionCreator.create(address, value, dataProvider.feeRate.medium, senderPay)
     }
 
     fun receiveAddress(): String {
@@ -115,10 +119,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
 
     fun validateAddress(address: String) {
         addressConverter.convert(address)
-    }
-
-    fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
-        return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
     }
 
     fun clear() = realmFactory.realm.use { realm ->
