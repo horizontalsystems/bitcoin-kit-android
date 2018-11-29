@@ -18,8 +18,8 @@ open class FeeRate : RealmObject() {
     val medium get() = satoshiPerByte(mediumPriority)
     val highest get() = satoshiPerByte(highPriority)
 
-    private fun satoshiPerByte(value: Double): Int {
-        return (value * 100_000_000 / 1000).toInt()
+    private fun satoshiPerByte(bitcoinPerKB: Double): Int {
+        return (bitcoinPerKB * 100_000_000 / 1000).toInt()
     }
 
     companion object {
