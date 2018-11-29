@@ -35,7 +35,7 @@ class TransactionCreatorTest {
 
     @Test
     fun create_Success() {
-        transactionCreator.create("address", 10_000_000)
+        transactionCreator.create("address", 10_000_000, 8, true)
 
         val insertedTx = realm.where(Transaction::class.java).equalTo("hashHexReversed", Fixtures.transactionP2PKH.hashHexReversed).findFirst()
 
@@ -48,7 +48,7 @@ class TransactionCreatorTest {
     fun create_failWithTransactionAlreadyExists() {
         realm.executeTransaction { it.insert(Fixtures.transactionP2PKH) }
 
-        transactionCreator.create("address", 123)
+        transactionCreator.create("address", 123, 8, true)
     }
 }
 

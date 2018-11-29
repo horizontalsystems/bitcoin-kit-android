@@ -14,4 +14,19 @@ open class FeeRate : RealmObject() {
     @PrimaryKey
     var unique = ""
 
+    val lowest get() = satoshiPerByte(lowPriority)
+    val medium get() = satoshiPerByte(mediumPriority)
+    val highest get() = satoshiPerByte(highPriority)
+
+    private fun satoshiPerByte(bitcoinPerKB: Double): Int {
+        return (bitcoinPerKB * 100_000_000 / 1000).toInt()
+    }
+
+    companion object {
+        val defaultFeeRate = FeeRate().apply {
+            lowPriority = 0.00022165
+            mediumPriority = 0.00043505
+            highPriority = 0.00083333
+        }
+    }
 }

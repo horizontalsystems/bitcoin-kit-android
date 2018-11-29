@@ -11,11 +11,9 @@ class TransactionCreator(
         private val processor: TransactionProcessor,
         private val peerGroup: PeerGroup) {
 
-    val feeRate = 8
-
-    fun create(address: String, value: Int) {
+    fun create(address: String, value: Int, feeRate: Int, senderPay: Boolean) {
         val realm = realmFactory.realm
-        val transaction = builder.buildTransaction(value, address, feeRate, true, realm)
+        val transaction = builder.buildTransaction(value, address, feeRate, senderPay, realm)
 
         check(realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst() == null) {
             throw TransactionAlreadyExists("hashHexReversed = ${transaction.hashHexReversed}")

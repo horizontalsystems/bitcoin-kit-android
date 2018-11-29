@@ -24,6 +24,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener) {
     val balance get() = unspentOutputsRealmResults.map { it.value }.sum()
     val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
     val lastBlockHeight get() = blockRealmResults.lastOrNull()?.height ?: 0
+    val feeRate get() = realm.where(FeeRate::class.java).findFirst() ?: FeeRate.defaultFeeRate
 
     init {
         transactionRealmResults.addChangeListener { transactions, changeSet ->
