@@ -6,12 +6,12 @@ import io.realm.annotations.PrimaryKey
 open class SentTransaction() : RealmObject() {
 
     @PrimaryKey
-    var reversedHashHex: String = ""
+    var hashHexReversed: String = ""
     var firstSendTime: Long = System.currentTimeMillis()
     var lastSendTime: Long = System.currentTimeMillis()
     var retriesCount: Int = 0
 
     constructor(reversedHashHex: String) : this() {
-        this.reversedHashHex = reversedHashHex
+        this.hashHexReversed = reversedHashHex
     }
 }
