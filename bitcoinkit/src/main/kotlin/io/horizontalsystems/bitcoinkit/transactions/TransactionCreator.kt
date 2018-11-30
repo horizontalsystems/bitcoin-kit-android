@@ -11,19 +11,22 @@ class TransactionCreator(
         private val processor: TransactionProcessor,
         private val peerGroup: PeerGroup) {
 
+    @Throws
     fun create(address: String, value: Int, feeRate: Int, senderPay: Boolean) {
-        val realm = realmFactory.realm
-        val transaction = builder.buildTransaction(value, address, feeRate, senderPay, realm)
+        peerGroup.checkSendReadiness()
 
-        check(realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst() == null) {
-            throw TransactionAlreadyExists("hashHexReversed = ${transaction.hashHexReversed}")
-        }
+        realmFactory.realm.use { realm ->
+            val transaction = builder.buildTransaction(value, address, feeRate, senderPay, realm)
 
-        realm.executeTransaction {
-            realm.insert(transaction)
-            processor.process(transaction, realm)
+            check(realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst() == null) {
+                throw TransactionAlreadyExists("hashHexReversed = ${transaction.hashHexReversed}")
+            }
+
+            realm.executeTransaction {
+                realm.insert(transaction)
+                processor.process(transaction, realm)
+            }
         }
-        realm.close()
 
         peerGroup.sendPendingTransactions()
     }
