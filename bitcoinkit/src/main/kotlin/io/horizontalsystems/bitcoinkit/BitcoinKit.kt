@@ -24,7 +24,7 @@ import io.realm.annotations.RealmModule
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer.Listener, DataProvider.Listener {
+class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10) : ProgressSyncer.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -74,7 +74,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType) : ProgressSyncer
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
         val bloomFilterManager = BloomFilterManager(realmFactory)
 
-        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = 1)
+        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = peerSize)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, progressSyncer, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = progressSyncer

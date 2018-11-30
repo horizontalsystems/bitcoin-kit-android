@@ -18,7 +18,7 @@ class PeerGroup(
         private val bloomFilterManager: BloomFilterManager,
         private val network: Network,
         private val peerManager: PeerManager = PeerManager(),
-        private val peerSize: Int = 3) : Thread(), Peer.Listener, BloomFilterManager.Listener {
+        private val peerSize: Int) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     interface LastBlockHeightListener {
         fun onReceiveMaxBlockHeight(height: Int)
