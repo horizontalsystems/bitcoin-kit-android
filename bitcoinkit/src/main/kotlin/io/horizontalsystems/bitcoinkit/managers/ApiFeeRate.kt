@@ -17,7 +17,7 @@ class ApiFeeRate(networkType: NetworkType) {
     fun getFeeRate(): Observable<FeeRate> {
         return Observable.create { subscriber ->
             try {
-                val json = apiManager.getJson("/ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain/$resource/estimatefee/index.json")
+                val json = apiManager.getJson("ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain/$resource/estimatefee/index.json")
                 val rate = FeeRate().apply {
                     lowPriority = json["low_priority"].asString().toDouble()
                     mediumPriority = json["medium_priority"].asString().toDouble()

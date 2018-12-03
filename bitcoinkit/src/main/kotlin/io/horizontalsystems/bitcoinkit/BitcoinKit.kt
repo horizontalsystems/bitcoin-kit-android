@@ -99,11 +99,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         }
 
         val stateManager = StateManager(realmFactory, network)
-        val apiManager = ApiManagerBtcCom(ApiRequesterBtcCom(networkType), addressSelector)
-        val blockDiscover = BlockDiscover(wallet, apiManager, network)
+        val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
-        initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
+        initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }
