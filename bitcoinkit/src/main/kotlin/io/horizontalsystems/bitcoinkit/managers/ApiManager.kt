@@ -5,8 +5,10 @@ import com.eclipsesource.json.JsonArray
 import com.eclipsesource.json.JsonObject
 import com.eclipsesource.json.JsonValue
 import java.net.URL
+import java.util.logging.Logger
 
 class ApiManager(private val host: String) {
+    private val logger = Logger.getLogger("ApiManager")
 
     @Throws
     fun getJson(file: String): JsonObject {
@@ -19,7 +21,11 @@ class ApiManager(private val host: String) {
     }
 
     private fun getJsonValue(file: String): JsonValue {
-        return URL("$host/$file")
+        val resource = "$host/$file"
+
+        logger.info("Fetching $resource")
+
+        return URL(resource)
                 .openConnection()
                 .apply {
                     connectTimeout = 1000

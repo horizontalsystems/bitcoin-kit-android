@@ -21,7 +21,7 @@ import org.powermock.modules.junit4.PowerMockRunner
 
 class ApiFeeRateTest {
     private val apiManager = mock(ApiManager::class.java)
-    private val resource = "/ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain"
+    private val resource = "ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain"
 
     private val feeRate = FeeRate().apply {
         lowPriority = 0.00001023
