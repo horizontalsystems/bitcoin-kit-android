@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoinkit.blocks.ProgressSyncer
 import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.*
+import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
@@ -16,6 +17,7 @@ import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.realm.Realm
@@ -45,6 +47,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     private val feeRateSyncer: FeeRateSyncer
     private val addressManager: AddressManager
     private val addressConverter: AddressConverter
+    private val paymentAddressParser: PaymentAddressParser
     private val transactionCreator: TransactionCreator
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
@@ -79,6 +82,14 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = progressSyncer
 
+        paymentAddressParser = when(networkType) {
+            NetworkType.MainNet -> PaymentAddressParser(validScheme = "bitcoin", removeScheme = true)
+            NetworkType.TestNet -> PaymentAddressParser(validScheme = "bitcoin", removeScheme = true)
+            NetworkType.RegTest -> PaymentAddressParser(validScheme = "bitcoin", removeScheme = true)
+            NetworkType.MainNetBitCash -> PaymentAddressParser(validScheme = "bitcoincash", removeScheme = false)
+            NetworkType.TestNetBitCash -> PaymentAddressParser(validScheme = "bitcoincash", removeScheme = false)
+        }
+
         val addressSelector = when (networkType) {
             NetworkType.MainNet,
             NetworkType.TestNet,
@@ -103,6 +114,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     fun start() {
         initialSyncer.sync()
         feeRateSyncer.start()
+    }
+
+    fun parse(paymentAddress: String): BitcoinPaymentData {
+        return paymentAddressParser.parse(paymentAddress = paymentAddress)
     }
 
     fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
