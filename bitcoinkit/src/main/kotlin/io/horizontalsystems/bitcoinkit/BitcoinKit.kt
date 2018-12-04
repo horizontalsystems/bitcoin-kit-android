@@ -82,28 +82,26 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = progressSyncer
 
-        paymentAddressParser = when(networkType) {
-            NetworkType.MainNet -> PaymentAddressParser(validScheme = "bitcoin", removeScheme = true)
-            NetworkType.TestNet -> PaymentAddressParser(validScheme = "bitcoin", removeScheme = true)
-            NetworkType.RegTest -> PaymentAddressParser(validScheme = "bitcoin", removeScheme = true)
-            NetworkType.MainNetBitCash -> PaymentAddressParser(validScheme = "bitcoincash", removeScheme = false)
-            NetworkType.TestNetBitCash -> PaymentAddressParser(validScheme = "bitcoincash", removeScheme = false)
-        }
-
-        val addressSelector = when (networkType) {
+        val addressSelector: IAddressSelector
+        when (networkType) {
             NetworkType.MainNet,
             NetworkType.TestNet,
-            NetworkType.RegTest -> BitcoinAddressSelector(addressConverter)
+            NetworkType.RegTest -> {
+                addressSelector = BitcoinAddressSelector(addressConverter)
+                paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
+            }
             NetworkType.MainNetBitCash,
-            NetworkType.TestNetBitCash -> BitcoinCashAddressSelector(addressConverter)
+            NetworkType.TestNetBitCash -> {
+                addressSelector = BitcoinCashAddressSelector(addressConverter)
+                paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
+            }
         }
 
         val stateManager = StateManager(realmFactory, network)
-        val apiManager = ApiManagerBtcCom(ApiRequesterBtcCom(networkType), addressSelector)
-        val blockDiscover = BlockDiscover(wallet, apiManager, network)
+        val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
-        initialSyncer = InitialSyncer(realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
+        initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }

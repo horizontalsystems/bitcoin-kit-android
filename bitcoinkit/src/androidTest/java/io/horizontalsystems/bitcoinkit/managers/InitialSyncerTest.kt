@@ -18,7 +18,7 @@ import org.mockito.Mockito.*
 class InitialSyncerTest {
 
     private val factories = RealmFactoryMock()
-    private val blockDiscover = mock(BlockDiscover::class.java)
+    private val initialSyncerApi = mock(InitialSyncerApi::class.java)
 
     private val stateManager = mock(StateManager::class.java)
     private val peerGroup = mock(PeerGroup::class.java)
@@ -31,7 +31,7 @@ class InitialSyncerTest {
     fun setup() {
         RxTestRule.setup()
 
-        initialSyncer = InitialSyncer(factories.realmFactory, blockDiscover, stateManager, addressManager, peerGroup)
+        initialSyncer = InitialSyncer(factories.realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup)
     }
 
     @After
@@ -83,8 +83,8 @@ class InitialSyncerTest {
 
         whenever(stateManager.apiSynced).thenReturn(false)
 
-        whenever(blockDiscover.fetchFromApi(true)).thenReturn(externalObservable)
-        whenever(blockDiscover.fetchFromApi(false)).thenReturn(internalObservable)
+        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(externalObservable)
+        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(internalObservable)
 
         initialSyncer.sync()
 
@@ -107,8 +107,8 @@ class InitialSyncerTest {
     fun sync_apiNotSynced_blocksDiscoveredFail() {
         whenever(stateManager.apiSynced).thenReturn(false)
 
-        whenever(blockDiscover.fetchFromApi(true)).thenReturn(Single.error(Exception()))
-        whenever(blockDiscover.fetchFromApi(false)).thenReturn(Single.error(Exception()))
+        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(Single.error(Exception()))
+        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(Single.error(Exception()))
 
         initialSyncer.sync()
 
