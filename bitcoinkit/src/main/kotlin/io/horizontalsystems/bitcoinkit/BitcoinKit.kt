@@ -26,7 +26,7 @@ import io.realm.annotations.RealmModule
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10) : ProgressSyncer.Listener, DataProvider.Listener {
+class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10, newWallet: Boolean = false) : ProgressSyncer.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -76,13 +76,13 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val transactionExtractor = TransactionExtractor(addressConverter)
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
         val bloomFilterManager = BloomFilterManager(realmFactory)
+        val addressSelector: IAddressSelector
 
         peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = peerSize)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, progressSyncer, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.lastBlockHeightListener = progressSyncer
 
-        val addressSelector: IAddressSelector
         when (networkType) {
             NetworkType.MainNet,
             NetworkType.TestNet,
@@ -97,7 +97,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
             }
         }
 
-        val stateManager = StateManager(realmFactory, network)
+        val stateManager = StateManager(realmFactory, network, newWallet)
         val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))

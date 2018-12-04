@@ -21,14 +21,22 @@ class StateManagerTest {
         realm = factory.realmFactory.realm
         realm.executeTransaction { it.deleteAll() }
 
-        stateManager = StateManager(factory.realmFactory, MainNet())
+        stateManager = StateManager(factory.realmFactory, MainNet(), newWallet = false)
     }
 
     @Test
     fun apiSynced_RegTest() {
         assertFalse(stateManager.apiSynced)
 
-        stateManager = StateManager(factory.realmFactory, RegTest())
+        stateManager = StateManager(factory.realmFactory, RegTest(), newWallet = false)
+        assertTrue(stateManager.apiSynced)
+    }
+
+    @Test
+    fun apiSynced_newWallet() {
+        assertFalse(stateManager.apiSynced)
+
+        stateManager = StateManager(factory.realmFactory, MainNet(), newWallet = true)
         assertTrue(stateManager.apiSynced)
     }
 
