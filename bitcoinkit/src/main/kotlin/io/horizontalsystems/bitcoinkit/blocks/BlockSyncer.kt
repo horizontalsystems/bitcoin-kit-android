@@ -23,9 +23,19 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         fun onCurrentBestBlockHeight(height: Int)
     }
 
-    val localBestBlockHeight: Int?
+    val localDownloadedBestBlockHeight: Int?
         get() = realmFactory.realm.use {
             it.where(Block::class.java).sort("height", Sort.DESCENDING).findFirst()?.height
+        }
+
+    val localKnownBestBlockHeight: Int
+        get() = realmFactory.realm.use { realm ->
+            val blockHashesToDownload = realm.where(BlockHash::class.java).findAll().map { it.reversedHeaderHashHex }
+            val alreadyDownloadedBlockHashesCount = realm.where(Block::class.java).`in`("reversedHeaderHashHex", blockHashesToDownload.toTypedArray()).count()
+
+            val newBlockHashesCount = realm.where(BlockHash::class.java).equalTo("height", 0 as Int).count().minus(alreadyDownloadedBlockHashesCount).toInt()
+
+            return (localDownloadedBestBlockHeight ?: 0).plus(newBlockHashesCount)
         }
 
     private var needToRedownload = false
@@ -42,7 +52,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
             }
         }
 
-        listener.onInitialBestBlockHeight(localBestBlockHeight ?: 0)
+        listener.onInitialBestBlockHeight(localDownloadedBestBlockHeight ?: 0)
 
         realm.close()
     }
