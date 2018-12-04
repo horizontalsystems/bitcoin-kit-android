@@ -116,8 +116,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         feeRateSyncer.start()
     }
 
-    fun parse(paymentAddress: String): BitcoinPaymentData {
-        return paymentAddressParser.parse(paymentAddress = paymentAddress)
+    fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {
+        return paymentAddressParser.parse(paymentAddress)
     }
 
     fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
