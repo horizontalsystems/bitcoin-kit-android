@@ -73,6 +73,17 @@ class AddressConverterTest {
     }
 
     @Test
+    fun p2pkh_cashString_withoutPrefix() {
+        converter = AddressConverter(MainNetBitcoinCash())
+
+        bytes = "f5bf48b397dae70be82b3cca4793f8eb2b6cdac9".hexStringToByteArray()
+        addressString = "qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2"
+        address = converter.convert(addressString)
+
+        assertArrayEquals(bytes, address.hash)
+    }
+
+    @Test
     fun p2pkh_string() {
         converter = AddressConverter(MainNet())
 

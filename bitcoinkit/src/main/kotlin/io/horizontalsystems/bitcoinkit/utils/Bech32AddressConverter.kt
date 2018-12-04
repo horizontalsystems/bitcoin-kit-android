@@ -72,8 +72,12 @@ class SegwitAddressConverter : Bech32AddressConverter() {
 
 class CashAddressConverter : Bech32AddressConverter() {
     override fun convert(hrp: String, addressString: String): CashAddress {
+        var correctedAddress = addressString
+        if (addressString.indexOf(":") < 0) {
+            correctedAddress = "$hrp:$addressString"
+        }
 
-        val decoded = Bech32Cash.decode(addressString, hrp)
+        val decoded = Bech32Cash.decode(correctedAddress, hrp)
         if (decoded.hrp != hrp) {
             throw AddressFormatException("Invalid prefix for network: ${decoded.hrp} != $hrp (expected)")
         }
@@ -114,7 +118,7 @@ class CashAddressConverter : Bech32AddressConverter() {
             throw AddressFormatException("Data length ${data.size} != hash size $hashSize")
         }
 
-        return CashAddress(addressString, Arrays.copyOfRange(data, 1, data.size), addressType)
+        return CashAddress(correctedAddress, Arrays.copyOfRange(data, 1, data.size), addressType)
     }
 
     override fun convert(hrp: String, bytes: ByteArray, scriptType: Int): CashAddress {
