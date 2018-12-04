@@ -85,30 +85,26 @@ class BlockSyncer(private val realmFactory: RealmFactory,
     }
 
     fun getBlockHashes(): List<BlockHash> {
-        val realm = realmFactory.realm
-        val blockHashes = realm.where(BlockHash::class.java)
-                .sort("order")
-                .findAll()
+        realmFactory.realm.use { realm ->
+            val blockHashes = realm.where(BlockHash::class.java)
+                    .sort("order", Sort.ASCENDING, "height", Sort.ASCENDING)
+                    .findAll()
 
-        val result = blockHashes.take(500).map { realm.copyFromRealm(it) }
-        realm.close()
-
-        return result
+            return blockHashes.take(500).map { realm.copyFromRealm(it) }
+        }
     }
 
-    // we need to clear block hashes when sync peer is disconnected
+    // we need to clear block hashes when "syncPeer" is disconnected
     private fun clearBlockHashes() {
-        val realm = realmFactory.realm
-
-        realm.executeTransaction {
-            realm.where(BlockHash::class.java)
-                    // block hashes except ones taken from API
-                    .equalTo("height", 0L)
-                    .findAll()
-                    .deleteAllFromRealm()
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction {
+                realm.where(BlockHash::class.java)
+                        // block hashes except ones taken from API
+                        .equalTo("height", 0L)
+                        .findAll()
+                        .deleteAllFromRealm()
+            }
         }
-
-        realm.close()
     }
 
     fun getBlockLocatorHashes(peerLastBlockHeight: Int): List<ByteArray> {
