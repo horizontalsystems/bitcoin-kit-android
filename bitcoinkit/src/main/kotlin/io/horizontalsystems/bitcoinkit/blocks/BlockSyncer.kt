@@ -151,7 +151,10 @@ class BlockSyncer(private val realmFactory: RealmFactory,
 
         realm.executeTransaction {
             blockHashes.forEach { hash ->
-                realm.insert(BlockHash(hash, 0, ++lastOrder))
+                val blockHash = realm.where(BlockHash::class.java).equalTo("headerHash", hash).findFirst()
+                if (blockHash == null) {
+                    realm.insert(BlockHash(hash, 0, ++lastOrder))
+                }
             }
         }
 
