@@ -32,14 +32,14 @@ class MainNet : Network() {
 
     private val blockHeader = Header().apply {
         version = 536870912
-        prevHash = HashUtils.toBytesAsLE("0000000000000000000e5796e9c5cdc8a8a2de84fd17287d7dfe89074de31766")
-        merkleHash = HashUtils.toBytesAsLE("ec04af8c53ccee7050cd42ab26438eaa35812f60dab11f57e878751dc2b1ecd7")
-        timestamp = 1542412284
-        bits = 388648495
-        nonce = 3622707809
+        prevHash = HashUtils.toBytesAsLE("00000000000000000015fe695e8d2e5ed3a7de81d3818ef43a444e1ee7b3ace2")
+        merkleHash = HashUtils.toBytesAsLE("aeee64cab37fb8f50fdbce4ff25dcb2223c099b01070a36cbaafc44d22da2a7f")
+        timestamp = 1543838368
+        bits = 389142908
+        nonce = 512160369
     }
 
-    override val checkpointBlock = Block(blockHeader, 550368)
+    override val checkpointBlock = Block(blockHeader, 552384)
     override val blockValidator = BlockValidator(this)
 
     override fun validateBlock(block: Block, previousBlock: Block) {

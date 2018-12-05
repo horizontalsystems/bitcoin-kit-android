@@ -25,12 +25,12 @@ class TestNetBitcoinCash : Network() {
 
     override val checkpointBlock = Block(Header().apply {
         version = 536870912
-        prevHash = HashUtils.toBytesAsLE("000000000000007de6117a4f0766212efebb95661660aa6d34adcc17e1d0621e")
-        merkleHash = HashUtils.toBytesAsLE("987f271c0f7f1a7a3c9fff00f7603251ae8c4b4d184f800256eda6377c7d67a0")
-        timestamp = 1543341600
-        bits = 436289080
-        nonce = 1941469020
-    }, 1445760)
+        prevHash = HashUtils.toBytesAsLE("000000000000043c25d4b23dee40208a9df99ef5717d236379120b01af2077e2")
+        merkleHash = HashUtils.toBytesAsLE("fb7ca6fbd9e1dd307cdafa7f7bf66317a49bfae4fc8e4d841f4faaf1acae5844")
+        timestamp = 1543989687
+        bits = 486604799
+        nonce = 890299933
+    }, 1272398)
 
     override val blockValidator = TestnetBitcoinCashValidator(this)
 
