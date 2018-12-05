@@ -5,12 +5,15 @@ import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import java.util.concurrent.TimeUnit
 
 class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
-
     private var blockHashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
-    private val pingNonce = (Math.random() * Long.MAX_VALUE).toLong()
+
+    init {
+        allowedIdleTime = TimeUnit.SECONDS.toMillis(5)
+    }
 
     override fun start() {
         val items = blockHashes.map { hash ->
@@ -18,12 +21,14 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         }
 
         requester?.getData(items)
-        requester?.ping(pingNonce)
+        resetTimer()
     }
 
     override fun handleMerkleBlock(merkleBlock: MerkleBlock): Boolean {
         val blockHash = blockHashes.find { merkleBlock.blockHash.contentEquals(it.headerHash) }
                 ?: return false
+
+        resetTimer()
 
         merkleBlock.height = if (blockHash.height > 0) blockHash.height else null
 
@@ -40,6 +45,8 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         val block = pendingMerkleBlocks.find { it.associatedTransactionHexes.contains(transaction.hash.toHexString()) }
                 ?: return false
 
+        resetTimer()
+
         block.associatedTransactions.add(transaction)
 
         if (block.complete) {
@@ -50,13 +57,12 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         return true
     }
 
-    override fun handlePong(nonce: Long): Boolean {
-        if (nonce == pingNonce) {
+    override fun handleTimeout() {
+        if (blockHashes.isEmpty()) {
+            listener?.onTaskCompleted(this)
+        } else {
             listener?.onTaskFailed(this, MerkleBlockNotReceived())
-            return true
         }
-
-        return false
     }
 
     private fun handleCompletedMerkleBlock(merkleBlock: MerkleBlock) {

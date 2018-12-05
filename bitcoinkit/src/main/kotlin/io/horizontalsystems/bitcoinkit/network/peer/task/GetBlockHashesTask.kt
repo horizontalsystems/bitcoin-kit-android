@@ -1,19 +1,35 @@
 package io.horizontalsystems.bitcoinkit.network.peer.task
 
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
+import java.util.concurrent.TimeUnit
 
-class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>) : PeerTask() {
+class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expectedHashesMinCount: Int) : PeerTask() {
 
     var blockHashes = listOf<ByteArray>()
-    private val pingNonce = (Math.random() * Long.MAX_VALUE).toLong()
+
+    private val maxAllowedIdleTime = TimeUnit.SECONDS.toMillis(10)
+    private val minAllowedIdleTime = TimeUnit.SECONDS.toMillis(1)
+    private val maxExpectedBlockHashesCount: Int = 500
+    private val minExpectedBlockHashesCount: Int = 6
+
+    private val expectedHashesMinCount: Int
+
+    init {
+        this.expectedHashesMinCount = Math.min(Math.max(minExpectedBlockHashesCount, expectedHashesMinCount), maxExpectedBlockHashesCount)
+
+        val resolvedAllowedIdleTime = maxAllowedIdleTime * this.expectedHashesMinCount / maxExpectedBlockHashesCount.toDouble()
+        allowedIdleTime = Math.max(minAllowedIdleTime, resolvedAllowedIdleTime.toLong())
+    }
 
     override fun start() {
         requester?.getBlocks(blockLocatorHashes)
-        requester?.ping(pingNonce)
+        resetTimer()
     }
 
     override fun handleInventoryItems(items: List<InventoryItem>): Boolean {
         val newBlockHashes = items.filter { it.type == InventoryItem.MSG_BLOCK }.map { it.hash }
+
+        if (newBlockHashes.isEmpty()) return false
 
         // When we send getblocks message the remote peer responds with 2 inv messages:
         //  - one of them is the message we are awaiting
@@ -35,15 +51,14 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>) : Peer
             blockHashes = newBlockHashes
         }
 
-        return newBlockHashes.isNotEmpty()
-    }
-
-    override fun handlePong(nonce: Long): Boolean {
-        if (nonce == pingNonce) {
+        if (newBlockHashes.size >= expectedHashesMinCount) {
             listener?.onTaskCompleted(this)
-            return true
         }
 
-        return false
+        return true
+    }
+
+    override fun handleTimeout() {
+        listener?.onTaskCompleted(this)
     }
 }

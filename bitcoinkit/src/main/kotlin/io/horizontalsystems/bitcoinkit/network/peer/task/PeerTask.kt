@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import java.util.*
 
 open class PeerTask {
 
@@ -23,6 +24,8 @@ open class PeerTask {
 
     var requester: Requester? = null
     var listener: Listener? = null
+    protected var lastActiveTime: Long? = null
+    protected var allowedIdleTime: Long? = null
 
     open fun start() = Unit
 
@@ -38,10 +41,6 @@ open class PeerTask {
         return false
     }
 
-    open fun handlePong(nonce: Long): Boolean {
-        return false
-    }
-
     open fun handleGetDataInventoryItem(item: InventoryItem): Boolean {
         return false
     }
@@ -53,4 +52,21 @@ open class PeerTask {
     open fun isRequestingInventory(hash: ByteArray): Boolean {
         return false
     }
+
+    open fun handleTimeout() = Unit
+
+    fun checkTimeout() {
+        allowedIdleTime?.let { allowedIdleTime ->
+            lastActiveTime?.let { lastActiveTime ->
+                if (Date().time - lastActiveTime > allowedIdleTime) {
+                    handleTimeout()
+                }
+            }
+        }
+    }
+
+    fun resetTimer() {
+        lastActiveTime = Date().time
+    }
+
 }

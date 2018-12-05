@@ -3,12 +3,12 @@ package io.horizontalsystems.bitcoinkit.network.peer
 import io.horizontalsystems.bitcoinkit.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.exceptions.InvalidMerkleBlockException
-import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
 import java.net.InetAddress
 
@@ -33,6 +33,7 @@ class Peer(val host: String, private val network: Network, private val listener:
     private val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
     private val peerConnection = PeerConnection(host, network, this)
     private var tasks = mutableListOf<PeerTask>()
+    private val timer = PeerTimer()
 
     val ready: Boolean
         get() = connected && tasks.isEmpty()
@@ -69,7 +70,22 @@ class Peer(val host: String, private val network: Network, private val listener:
     //
     // PeerConnection Listener implementations
     //
+    override fun onTimePeriodPassed() {
+        try {
+            timer.check()
+
+            tasks.firstOrNull()?.checkTimeout()
+        } catch (e: PeerTimer.Error.Idle) {
+            ping((Math.random() * Long.MAX_VALUE).toLong())
+            timer.pingSent()
+        } catch (e: PeerTimer.Error.Timeout) {
+            peerConnection.close(e)
+        }
+    }
+
     override fun onMessage(message: Message) {
+        timer.restart()
+
         if (message is VersionMessage)
             return handleVersionMessage(message)
         if (message is VerAckMessage)
@@ -145,6 +161,9 @@ class Peer(val host: String, private val network: Network, private val listener:
             listener.onTaskComplete(this, task)
         }
 
+        // Reset timer for the next task in list
+        tasks.firstOrNull()?.resetTimer()
+
         if (tasks.isEmpty()) {
             listener.onReady(this)
         }
@@ -199,7 +218,6 @@ class Peer(val host: String, private val network: Network, private val listener:
     }
 
     private fun handlePongMessage(message: PongMessage) {
-        tasks.any { it.handlePong(message.nonce) }
     }
 
     open class Error(message: String) : Exception(message) {

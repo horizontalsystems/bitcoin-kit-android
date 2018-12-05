@@ -210,7 +210,7 @@ class PeerGroup(
         if (ip != null) {
             logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this)
-            peer.localBestBlockHeight = blockSyncer?.localBestBlockHeight ?: 0
+            peer.localBestBlockHeight = blockSyncer?.localDownloadedBestBlockHeight ?: 0
             peer.start()
         } else {
             logger.info("No peers found yet.")
@@ -252,7 +252,8 @@ class PeerGroup(
                 }
 
                 if (!syncPeer.blockHashesSynced) {
-                    syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight)))
+                    val expectedHashesMinCount = Math.max(syncPeer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
+                    syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight), expectedHashesMinCount))
                 }
 
                 if (syncPeer.synced) {
