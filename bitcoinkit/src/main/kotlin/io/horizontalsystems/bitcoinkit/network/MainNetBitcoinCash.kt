@@ -20,7 +20,12 @@ class MainNetBitcoinCash : Network() {
     override val maxBlockSize = 32 * 1024 * 1024
 
     override var dnsSeeds: Array<String> = arrayOf(
-            "seed.bitcoinabc.org"
+            "seed.bitcoinabc.org",                  // Bitcoin ABC seeder
+            "seed-abc.bitcoinforks.org",            // bitcoinforks seeders
+            "btccash-seeder.bitcoinunlimited.info", // BU backed seeder
+            "seed.bitprim.org",                     // Bitprim
+            "seed.deadalnix.me",                    // Amaury SÉCHET
+            "seeder.criptolayer.net"                // criptolayer.net
     )
 
     private val blockHeader = Header().apply {

@@ -20,7 +20,11 @@ class TestNetBitcoinCash : Network() {
     override val maxBlockSize = 32 * 1024 * 1024
 
     override var dnsSeeds: Array<String> = arrayOf(
-            "testnet-seed.bitcoinabc.org"
+            "testnet-seed.bitcoinabc.org",          // Bitcoin ABC seeder
+            "testnet-seed-abc.bitcoinforks.org",    // bitcoinforks seeders
+            "testnet-seed.bitprim.org",             // Bitprim
+            "testnet-seed.deadalnix.me",            // Amaury SÉCHET
+            "testnet-seeder.criptolayer.net"        // criptolayer.net
     )
 
     override val checkpointBlock = Block(Header().apply {

@@ -24,7 +24,6 @@ class MainNet : Network() {
             "dnsseed.bluematt.me",              // Matt Corallo
             "dnsseed.bitcoin.dashjr.org",       // Luke Dashjr
             "seed.bitcoinstats.com",            // Chris Decker
-            "seed.bitnodes.io",                 // Addy Yeow
             "seed.bitcoin.jonasschnelli.ch",    // Jonas Schnelli
             "seed.btc.petertodd.org",           // Peter Todd
             "seed.bitcoin.sprovoost.nl"         // Sjors Provoost
