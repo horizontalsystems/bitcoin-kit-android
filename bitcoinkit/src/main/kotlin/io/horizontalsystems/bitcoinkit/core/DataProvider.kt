@@ -2,12 +2,17 @@ package io.horizontalsystems.bitcoinkit.core
 
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
+import io.reactivex.subjects.PublishSubject
 import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
 import io.realm.Realm
 import io.realm.RealmResults
+import java.util.concurrent.TimeUnit
 
-class DataProvider(private val realm: Realm, private val listener: Listener, unspentOutputProvider: UnspentOutputProvider) {
+class DataProvider(private val realm: Realm, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -16,19 +21,21 @@ class DataProvider(private val realm: Realm, private val listener: Listener, uns
         fun onProgressUpdate(progress: Double)
     }
 
-    private val unspentOutputsRealmResults = unspentOutputProvider.allUnspentOutputsAsRealmResults()
     private val transactionRealmResults = getMyTransactions()
     private val blockRealmResults = getBlocks()
 
     //  Getters
     val balance
-        get() = unspentOutputsRealmResults
+        get() = unspentOutputProvider.allUnspentOutputs()
                 .map { it.value }
                 .sum()
 
     val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
     val lastBlockHeight get() = blockRealmResults.lastOrNull()?.height ?: 0
     val feeRate get() = realm.where(FeeRate::class.java).findFirst() ?: FeeRate.defaultFeeRate
+
+    private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
+    private val balanceSubjectDisposable: Disposable
 
     init {
         transactionRealmResults.addChangeListener { transactions, changeSet ->
@@ -39,9 +46,12 @@ class DataProvider(private val realm: Realm, private val listener: Listener, uns
             handleBlocks(blocks, changeSet)
         }
 
-        unspentOutputsRealmResults.addChangeListener { _, changeSet ->
-            handleUnspentOutputs(changeSet)
-        }
+        balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe {
+                    listener.onBalanceUpdate(balance)
+                }
     }
 
     private fun handleTransactions(transactions: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
@@ -53,12 +63,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, uns
 
                 listener.onTransactionsUpdate(inserted, updated, deleted)
             }
-        }
-    }
-
-    private fun handleUnspentOutputs(changeSet: OrderedCollectionChangeSet) {
-        if (changeSet.state == State.UPDATE) {
-            listener.onBalanceUpdate(balance)
+            balanceUpdateSubject.onNext(true)
         }
     }
 
@@ -71,6 +76,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, uns
                         block.header?.timestamp
                 ))
             }
+            balanceUpdateSubject.onNext(true)
         }
     }
 
