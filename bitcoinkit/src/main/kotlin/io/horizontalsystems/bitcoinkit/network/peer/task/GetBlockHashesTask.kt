@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.network.peer.task
 
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expectedHashesMinCount: Int) : PeerTask() {
@@ -14,13 +13,11 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expect
     private val minExpectedBlockHashesCount: Int = 6
 
     private val expectedHashesMinCount: Int
-    private val allowedIdleTime: Long
 
     init {
-        val resolvedExpectedHashesMinCount = Math.min(Math.max(minExpectedBlockHashesCount, expectedHashesMinCount), maxExpectedBlockHashesCount)
-        val resolvedAllowedIdleTime = maxAllowedIdleTime * resolvedExpectedHashesMinCount / maxExpectedBlockHashesCount.toDouble()
+        this.expectedHashesMinCount = Math.min(Math.max(minExpectedBlockHashesCount, expectedHashesMinCount), maxExpectedBlockHashesCount)
 
-        this.expectedHashesMinCount = resolvedExpectedHashesMinCount
+        val resolvedAllowedIdleTime = maxAllowedIdleTime * this.expectedHashesMinCount / maxExpectedBlockHashesCount.toDouble()
         allowedIdleTime = Math.max(minAllowedIdleTime, resolvedAllowedIdleTime.toLong())
     }
 
@@ -61,11 +58,7 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expect
         return true
     }
 
-    override fun checkTimeout() {
-        lastActiveTime?.let { lastActiveTime ->
-            if (Date().time - lastActiveTime > allowedIdleTime) {
-                listener?.onTaskCompleted(this)
-            }
-        }
+    override fun handleTimeout() {
+        listener?.onTaskCompleted(this)
     }
 }

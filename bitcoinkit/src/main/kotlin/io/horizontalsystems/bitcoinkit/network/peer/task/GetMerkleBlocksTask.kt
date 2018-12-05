@@ -5,14 +5,15 @@ import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
-
-    private val allowedIdleTime = TimeUnit.SECONDS.toMillis(5)
     private var blockHashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
+
+    init {
+        allowedIdleTime = TimeUnit.SECONDS.toMillis(5)
+    }
 
     override fun start() {
         val items = blockHashes.map { hash ->
@@ -56,15 +57,11 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         return true
     }
 
-    override fun checkTimeout() {
-        lastActiveTime?.let { lastActiveTime ->
-            if (Date().time - lastActiveTime > allowedIdleTime) {
-                if (blockHashes.isEmpty()) {
-                    listener?.onTaskCompleted(this)
-                } else {
-                    listener?.onTaskFailed(this, TimeoutError())
-                }
-            }
+    override fun handleTimeout() {
+        if (blockHashes.isEmpty()) {
+            listener?.onTaskCompleted(this)
+        } else {
+            listener?.onTaskFailed(this, MerkleBlockNotReceived())
         }
     }
 

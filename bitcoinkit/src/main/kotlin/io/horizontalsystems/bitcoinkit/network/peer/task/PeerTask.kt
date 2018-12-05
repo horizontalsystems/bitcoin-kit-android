@@ -22,11 +22,10 @@ open class PeerTask {
         fun send(transaction: Transaction)
     }
 
-    class TimeoutError: Exception()
-
     var requester: Requester? = null
     var listener: Listener? = null
     protected var lastActiveTime: Long? = null
+    protected var allowedIdleTime: Long? = null
 
     open fun start() = Unit
 
@@ -54,8 +53,16 @@ open class PeerTask {
         return false
     }
 
-    open fun checkTimeout() {
+    open fun handleTimeout() = Unit
 
+    fun checkTimeout() {
+        allowedIdleTime?.let { allowedIdleTime ->
+            lastActiveTime?.let { lastActiveTime ->
+                if (Date().time - lastActiveTime > allowedIdleTime) {
+                    handleTimeout()
+                }
+            }
+        }
     }
 
     fun resetTimer() {
