@@ -25,12 +25,12 @@ class TransactionBuilder {
     private val addressManager: AddressManager
     private val realmFactory: RealmFactory
 
-    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager) {
+    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
         this.realmFactory = realmFactory
         this.addressConverter = addressConverter
         this.addressManager = addressManager
         this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
-        this.unspentOutputProvider = UnspentOutputProvider(realmFactory)
+        this.unspentOutputProvider = unspentOutputProvider
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
     }
