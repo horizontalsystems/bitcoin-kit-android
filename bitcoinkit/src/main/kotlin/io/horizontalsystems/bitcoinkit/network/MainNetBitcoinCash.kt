@@ -20,19 +20,24 @@ class MainNetBitcoinCash : Network() {
     override val maxBlockSize = 32 * 1024 * 1024
 
     override var dnsSeeds: Array<String> = arrayOf(
-            "seed.bitcoinabc.org"
+            "seed.bitcoinabc.org",                  // Bitcoin ABC seeder
+            "seed-abc.bitcoinforks.org",            // bitcoinforks seeders
+            "btccash-seeder.bitcoinunlimited.info", // BU backed seeder
+            "seed.bitprim.org",                     // Bitprim
+            "seed.deadalnix.me",                    // Amaury SÉCHET
+            "seeder.criptolayer.net"                // criptolayer.net
     )
 
     private val blockHeader = Header().apply {
         version = 536870912
-        prevHash = HashUtils.toBytesAsLE("0000000000000000019f415e5bac7de4f0ea5404357d92394a3555cdbcd9d5e7")
-        merkleHash = HashUtils.toBytesAsLE("bc772d571cc133cb070898ec46dfb6b575d83902a2b8a25304777fd64f4e18f4")
-        timestamp = 1543428754
-        bits = 402904107
-        nonce = 2958063584
+        prevHash = HashUtils.toBytesAsLE("0000000000000000012408c48907f199f8155330e4464dea078b34cd2633d1a4")
+        merkleHash = HashUtils.toBytesAsLE("c3e1dcd7029186671cab622b3f444a2ab9bf738ca73d86e28a1202fbe0e2555e")
+        timestamp = 1543990229
+        bits = 403016521
+        nonce = 1766777490
     }
 
-    override val checkpointBlock = Block(blockHeader, 558576)
+    override val checkpointBlock = Block(blockHeader, 559478)
     override val blockValidator = BitcoinCashValidator(this)
 
     override fun validateBlock(block: Block, previousBlock: Block) {
