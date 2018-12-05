@@ -4,9 +4,7 @@ import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.models.TransactionInput
-import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PK
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2SH
@@ -25,6 +23,9 @@ class UnspentOutputProviderTest {
     private lateinit var unspentOutputProvider: UnspentOutputProvider
     private lateinit var unspentOutputs: List<TransactionOutput>
 
+    private val lastBlockHeight = 550368
+    private val confirmationsThreshold = 6
+
     @Before
     fun setUp() {
         unspentOutputProvider = UnspentOutputProvider(realmFactory)
@@ -36,8 +37,13 @@ class UnspentOutputProviderTest {
                 TransactionOutput().apply { value = 5; scriptType = P2SH; keyHash = "00010005".hexStringToByteArray() },
                 TransactionOutput().apply { value = 6; scriptType = UNKNOWN; keyHash = "00000".hexStringToByteArray() })
 
+        unspentOutputs.forEach { it.publicKey = Fixtures.publicKey }
+
         realm = realmFactory.realm
-        realm.executeTransaction { it.deleteAll() }
+        realm.executeTransaction {
+            it.deleteAll()
+            it.insert(Block(Header(), lastBlockHeight).apply { reversedHeaderHashHex = "123" })
+        }
     }
 
     @Test
@@ -50,8 +56,12 @@ class UnspentOutputProviderTest {
         unspentOutputs.forEach { it.publicKey = Fixtures.publicKey }
 
         realm.executeTransaction {
+
+            val incomingTxBlock = realm.copyToRealm(Block(Header(), lastBlockHeight - confirmationsThreshold).apply { reversedHeaderHashHex = "456" })
+
             val incomingTx = realm.copyToRealm(Transaction(1, 0).apply {
                 outputs.addAll(unspentOutputs)
+                block = incomingTxBlock
                 setHashes()
             })
 
@@ -75,11 +85,14 @@ class UnspentOutputProviderTest {
     }
 
     @Test
-    fun allUnspentOutputs_noLinkedInputs() { // one spent but no linked inputs
-        unspentOutputs.forEach { it.publicKey = Fixtures.publicKey }
+    fun allUnspentOutputs_noLinkedInputs() {
+
         realm.executeTransaction {
+            val incomingTxBlock = realm.copyToRealm(Block(Header(), lastBlockHeight - confirmationsThreshold).apply { reversedHeaderHashHex = "456" })
+
             it.copyToRealm(Transaction(1, 0).apply {
                 outputs.addAll(unspentOutputs)
+                block = incomingTxBlock
                 setHashes()
             })
         }
@@ -115,6 +128,53 @@ class UnspentOutputProviderTest {
                     previousOutput = incomingTx.outputs[4]
                 }))
 
+                setHashes()
+            })
+        }
+
+        assertEquals(0, unspentOutputProvider.allUnspentOutputs().size)
+    }
+
+    @Test
+    fun unconfirmedUnspents() {
+        realm.executeTransaction {
+            val incomingTxBlock = realm.copyToRealm(Block(Header(), lastBlockHeight - (confirmationsThreshold - 2)).apply { reversedHeaderHashHex = "456" })
+
+            realm.insert(Transaction(1, 0).apply {
+                outputs.addAll(unspentOutputs)
+                block = incomingTxBlock
+                setHashes()
+            })
+
+        }
+
+        assertEquals(0, unspentOutputProvider.allUnspentOutputs().size)
+    }
+
+    @Test
+    fun unconfirmedOutgoingUnspent() {
+        realm.executeTransaction {
+            val incomingTxBlock = realm.copyToRealm(Block(Header(), lastBlockHeight - (confirmationsThreshold - 2)).apply { reversedHeaderHashHex = "456" })
+
+            realm.insert(Transaction(1, 0).apply {
+                outputs.addAll(unspentOutputs)
+                block = incomingTxBlock
+                isOutgoing = true
+                setHashes()
+            })
+
+        }
+
+        assertEquals(5, unspentOutputProvider.allUnspentOutputs().size)
+    }
+
+
+    @Test
+    fun mempoolTxOutputs() {
+        realm.executeTransaction {
+            realm.insert(Transaction(1, 0).apply {
+                outputs.addAll(unspentOutputs)
+                block = null
                 setHashes()
             })
         }

@@ -13,7 +13,10 @@ class TransactionLinker {
 
             if (previousTransaction != null && previousTransaction.outputs.size > input.previousOutputIndex) {
                 input.previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
-                transaction.isMine = true
+                if (input.previousOutput?.publicKey != null) {
+                    transaction.isMine = true
+                    transaction.isOutgoing = true
+                }
             }
         }
     }

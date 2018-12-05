@@ -1,13 +1,13 @@
 package io.horizontalsystems.bitcoinkit.core
 
+import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
-import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
 import io.realm.Realm
 import io.realm.RealmResults
 
-class DataProvider(private val realm: Realm, private val listener: Listener) {
+class DataProvider(private val realm: Realm, private val listener: Listener, unspentOutputProvider: UnspentOutputProvider) {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -16,12 +16,16 @@ class DataProvider(private val realm: Realm, private val listener: Listener) {
         fun onProgressUpdate(progress: Double)
     }
 
-    private val unspentOutputsRealmResults = getUnspents()
+    private val unspentOutputsRealmResults = unspentOutputProvider.allUnspentOutputsAsRealmResults()
     private val transactionRealmResults = getMyTransactions()
     private val blockRealmResults = getBlocks()
 
     //  Getters
-    val balance get() = unspentOutputsRealmResults.map { it.value }.sum()
+    val balance
+        get() = unspentOutputsRealmResults
+                .map { it.value }
+                .sum()
+
     val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
     val lastBlockHeight get() = blockRealmResults.lastOrNull()?.height ?: 0
     val feeRate get() = realm.where(FeeRate::class.java).findFirst() ?: FeeRate.defaultFeeRate
@@ -111,14 +115,6 @@ class DataProvider(private val realm: Realm, private val listener: Listener) {
                 blockHeight = transaction.block?.height,
                 timestamp = transaction.block?.header?.timestamp
         )
-    }
-
-    private fun getUnspents(): RealmResults<TransactionOutput> {
-        return realm.where(TransactionOutput::class.java)
-                .isNotNull("publicKey")
-                .notEqualTo("scriptType", ScriptType.UNKNOWN)
-                .isEmpty("inputs")
-                .findAll()
     }
 
     private fun getBlocks(): RealmResults<Block> {

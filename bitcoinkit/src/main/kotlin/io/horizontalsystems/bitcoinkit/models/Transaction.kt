@@ -39,6 +39,7 @@ open class Transaction : RealmObject {
     var status: Int = Status.RELAYED
     var block: Block? = null
     var isMine = false
+    var isOutgoing = false
     var segwit = false
 
     constructor()

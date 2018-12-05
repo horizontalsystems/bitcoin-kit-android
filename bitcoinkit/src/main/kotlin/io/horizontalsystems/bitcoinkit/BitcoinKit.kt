@@ -26,7 +26,7 @@ import io.realm.annotations.RealmModule
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10, newWallet: Boolean = false) : ProgressSyncer.Listener, DataProvider.Listener {
+class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : ProgressSyncer.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -51,6 +51,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     private val transactionCreator: TransactionCreator
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
+    private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}")
 
     private val handler = Handler()
@@ -66,7 +67,8 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val realm = realmFactory.realm
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
 
-        dataProvider = DataProvider(realm, this)
+        unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
+        dataProvider = DataProvider(realm, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
@@ -102,7 +104,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
         initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup)
-        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager)
+        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }
 
