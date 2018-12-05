@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.RegTest
 import io.realm.Realm
 
-class StateManager(private val realmFactory: RealmFactory, val network: Network) {
+class StateManager(private val realmFactory: RealmFactory, private val network: Network, newWallet: Boolean) {
 
     var apiSynced: Boolean
         get() {
@@ -23,6 +23,11 @@ class StateManager(private val realmFactory: RealmFactory, val network: Network)
                 kitState.apiSynced = value
             }
         }
+
+    init {
+        // No need to sync from API for new wallets
+        apiSynced = newWallet
+    }
 
     private fun getKitState(realm: Realm): KitState {
         return realm.where(KitState::class.java).findFirst() ?: KitState()
