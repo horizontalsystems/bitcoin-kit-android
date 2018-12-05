@@ -25,7 +25,7 @@ class InitialSyncer(
     fun sync() {
         addressManager.fillGap()
 
-        if (stateManager.apiSynced) {
+        if (stateManager.restored) {
             peerGroup.start()
         } else {
             val externalObservable = syncerApi.fetchFromApi(true)
@@ -62,7 +62,7 @@ class InitialSyncer(
 
         addressManager.addKeys(keys)
 
-        stateManager.apiSynced = true
+        stateManager.restored = true
         peerGroup.start()
     }
 

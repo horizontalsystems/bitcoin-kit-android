@@ -43,7 +43,7 @@ class InitialSyncerTest {
 
     @Test
     fun sync_apiSynced() {
-        whenever(stateManager.apiSynced).thenReturn(true)
+        whenever(stateManager.restored).thenReturn(true)
 
         initialSyncer.sync()
 
@@ -81,14 +81,14 @@ class InitialSyncerTest {
         val externalObservable = Single.just(Pair(listOf(externalPublicKey1), listOf(blockExternal1, blockExternal2)))
         val internalObservable = Single.just(Pair(listOf(internalPublicKey1), listOf(blockInternal1, blockInternal2)))
 
-        whenever(stateManager.apiSynced).thenReturn(false)
+        whenever(stateManager.restored).thenReturn(false)
 
         whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(externalObservable)
         whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(internalObservable)
 
         initialSyncer.sync()
 
-        verify(stateManager).apiSynced = true
+        verify(stateManager).restored = true
         verify(peerGroup).start()
         verify(addressManager).addKeys(check { actualPublicKeys ->
             Assert.assertTrue(containsKey(actualPublicKeys, externalPublicKey1))
@@ -105,14 +105,14 @@ class InitialSyncerTest {
 
     @Test
     fun sync_apiNotSynced_blocksDiscoveredFail() {
-        whenever(stateManager.apiSynced).thenReturn(false)
+        whenever(stateManager.restored).thenReturn(false)
 
         whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(Single.error(Exception()))
         whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(Single.error(Exception()))
 
         initialSyncer.sync()
 
-        verify(stateManager, never()).apiSynced = true
+        verify(stateManager, never()).restored = true
         verifyNoMoreInteractions(peerGroup)
 
         Assert.assertTrue(realm.where(PublicKey::class.java).findAll().isEmpty())
