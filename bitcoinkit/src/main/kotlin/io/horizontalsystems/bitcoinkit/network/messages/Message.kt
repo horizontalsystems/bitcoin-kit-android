@@ -62,7 +62,7 @@ abstract class Message(cmd: String) {
         fun <T : Message> parseMessage(input: BitcoinInput, network: Network): T {
             val magic = input.readUnsignedInt()
             if (magic != network.magic) {
-                throw BitcoinException("Bad magic.")
+                throw BitcoinException("Bad magic. (local) ${network.magic}!=$magic")
             }
 
             val command = getCommandFrom(input.readBytes(12))
