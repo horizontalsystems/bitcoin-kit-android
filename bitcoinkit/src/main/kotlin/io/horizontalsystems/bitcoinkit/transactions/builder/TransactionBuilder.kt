@@ -169,6 +169,7 @@ class TransactionBuilder {
 
         transaction.status = Transaction.Status.NEW
         transaction.isMine = true
+        transaction.isOutgoing = true
         transaction.setHashes()
 
         return transaction

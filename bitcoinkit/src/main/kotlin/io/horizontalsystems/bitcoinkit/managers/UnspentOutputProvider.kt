@@ -4,14 +4,11 @@ import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.realm.RealmResults
 import io.realm.Sort
 
 class UnspentOutputProvider(private val realmFactory: RealmFactory, private val confirmationsThreshold: Int = 6) {
 
-    fun allUnspentOutputs(): List<TransactionOutput> = allUnspentOutputsAsRealmResults().toList()
-
-    fun allUnspentOutputsAsRealmResults(): RealmResults<TransactionOutput> {
+    fun allUnspentOutputs(): List<TransactionOutput> {
         realmFactory.realm.use { realm ->
 
             val lastBlockHeight = realm.where(Block::class.java)
@@ -29,6 +26,7 @@ class UnspentOutputProvider(private val realmFactory: RealmFactory, private val 
                     .lessThanOrEqualTo("transactions.block.height", lastBlockHeight - confirmationsThreshold + 1)
                     .endGroup()
                     .findAll()
+                    .toList()
         }
     }
 }
