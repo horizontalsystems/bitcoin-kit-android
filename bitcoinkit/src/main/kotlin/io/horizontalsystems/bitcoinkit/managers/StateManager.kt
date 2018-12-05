@@ -25,8 +25,10 @@ class StateManager(private val realmFactory: RealmFactory, private val network: 
         }
 
     init {
-        // No need to sync from API for new wallets
-        apiSynced = newWallet
+        //  No need to sync from API for new wallets
+        if (newWallet) {
+            apiSynced = true
+        }
     }
 
     private fun getKitState(realm: Realm): KitState {
