@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
@@ -14,7 +15,8 @@ class InitialSyncer(
         private val syncerApi: InitialSyncerApi,
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
-        private val peerGroup: PeerGroup) {
+        private val peerGroup: PeerGroup,
+        private val listener: ISyncStateListener) {
 
     private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
@@ -26,6 +28,8 @@ class InitialSyncer(
         if (stateManager.restored) {
             peerGroup.start()
         } else {
+            listener.onSyncStart()
+
             val externalObservable = syncerApi.fetchFromApi(true)
             val internalObservable = syncerApi.fetchFromApi(false)
 
@@ -43,6 +47,7 @@ class InitialSyncer(
                         handle(publicKeys, blockHashes)
                     }, {
                         logger.severe("Initial Sync Error: $it")
+                        listener.onSyncStop()
                     })
 
             disposables.add(disposable)

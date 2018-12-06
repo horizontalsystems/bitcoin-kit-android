@@ -4,6 +4,7 @@ import com.nhaarman.mockito_kotlin.check
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.RxTestRule
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
+import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
@@ -19,6 +20,7 @@ class InitialSyncerTest {
 
     private val factories = RealmFactoryMock()
     private val initialSyncerApi = mock(InitialSyncerApi::class.java)
+    private val kitStateListener = mock(ISyncStateListener::class.java)
 
     private val stateManager = mock(StateManager::class.java)
     private val peerGroup = mock(PeerGroup::class.java)
@@ -31,7 +33,7 @@ class InitialSyncerTest {
     fun setup() {
         RxTestRule.setup()
 
-        initialSyncer = InitialSyncer(factories.realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup)
+        initialSyncer = InitialSyncer(factories.realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateListener)
     }
 
     @After
