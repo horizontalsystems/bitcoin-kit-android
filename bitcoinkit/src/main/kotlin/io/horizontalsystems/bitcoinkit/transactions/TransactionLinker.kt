@@ -12,8 +12,11 @@ class TransactionLinker {
                     .findFirst()
 
             if (previousTransaction != null && previousTransaction.outputs.size > input.previousOutputIndex) {
-                input.previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
-                if (input.previousOutput?.publicKey != null) {
+                val previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
+                if (previousOutput?.publicKey != null) {
+                    input.previousOutput = previousOutput
+                    input.address = previousOutput.address
+                    input.keyHash = previousOutput.keyHash
                     transaction.isMine = true
                     transaction.isOutgoing = true
                 }
