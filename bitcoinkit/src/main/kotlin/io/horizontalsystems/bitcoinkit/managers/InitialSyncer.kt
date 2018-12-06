@@ -4,7 +4,6 @@ import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
-import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -15,8 +14,7 @@ class InitialSyncer(
         private val syncerApi: InitialSyncerApi,
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
-        private val peerGroup: PeerGroup,
-        private val scheduler: Scheduler = Schedulers.io()) {
+        private val peerGroup: PeerGroup) {
 
     private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
@@ -34,7 +32,7 @@ class InitialSyncer(
             val disposable = Single
                     .merge(externalObservable, internalObservable)
                     .toList()
-                    .subscribeOn(scheduler)
+                    .subscribeOn(Schedulers.io())
                     .subscribe({ pairsList ->
                         val publicKeys = mutableListOf<PublicKey>()
                         val blockHashes = mutableListOf<BlockHash>()
