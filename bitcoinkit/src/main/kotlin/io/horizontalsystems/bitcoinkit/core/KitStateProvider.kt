@@ -5,8 +5,9 @@ import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
 interface ISyncStateListener {
     fun onSyncStart()
     fun onSyncStop()
-    fun onInitialBestBlockHeight(height: Int)
-    fun onCurrentBestBlockHeight(height: Int, maxBlockHeight: Int)
+    fun onSyncFinish()
+    fun onInitialBestBlockHeightUpdate(height: Int)
+    fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
 }
 
 class KitStateProvider(private val listener: Listener) : ISyncStateListener {
@@ -29,12 +30,16 @@ class KitStateProvider(private val listener: Listener) : ISyncStateListener {
         listener.onKitStateUpdate(KitState.NotSynced)
     }
 
-    override fun onInitialBestBlockHeight(height: Int) {
+    override fun onSyncFinish() {
+        listener.onKitStateUpdate(KitState.Synced)
+    }
+
+    override fun onInitialBestBlockHeightUpdate(height: Int) {
         initialBestBlockHeight = height
         currentBestBlockHeight = height
     }
 
-    override fun onCurrentBestBlockHeight(height: Int, maxBlockHeight: Int) {
+    override fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int) {
         currentBestBlockHeight = Math.max(currentBestBlockHeight, height)
 
         val blocksDownloaded = currentBestBlockHeight - initialBestBlockHeight

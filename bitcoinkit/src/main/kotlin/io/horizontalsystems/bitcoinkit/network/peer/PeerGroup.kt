@@ -257,6 +257,7 @@ class PeerGroup(
 
                 if (syncPeer.synced) {
                     blockSyncer.downloadCompleted()
+                    syncStateListener?.onSyncFinish()
                     syncPeer.sendMempoolMessage()
                     logger.info("Peer synced ${syncPeer.host}")
                     peerManager.syncPeer = null
