@@ -18,7 +18,6 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
         fun onBalanceUpdate(balance: Long)
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
-        fun onProgressUpdate(progress: Double)
     }
 
     private val transactionRealmResults = getMyTransactions()

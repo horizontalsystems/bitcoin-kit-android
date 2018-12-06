@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
+import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.BlockHash
@@ -19,7 +20,7 @@ class BlockSyncerTest_localKnownBestBlockHeight {
     private val transactionProcessor = mock(TransactionProcessor::class.java)
     private val addressManager = mock(AddressManager::class.java)
     private val bloomFilterManager = mock(BloomFilterManager::class.java)
-    private val processSyncer = mock(ProgressSyncer::class.java)
+    private val processSyncer = mock(KitStateProvider::class.java)
 
     private lateinit var blockSyncer: BlockSyncer
 

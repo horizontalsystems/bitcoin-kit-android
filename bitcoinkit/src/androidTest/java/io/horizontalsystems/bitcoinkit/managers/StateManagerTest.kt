@@ -26,39 +26,39 @@ class StateManagerTest {
 
     @Test
     fun apiSynced_RegTest() {
-        assertFalse(stateManager.apiSynced)
+        assertFalse(stateManager.restored)
 
         stateManager = StateManager(factory.realmFactory, RegTest(), newWallet = false)
-        assertTrue(stateManager.apiSynced)
+        assertTrue(stateManager.restored)
     }
 
     @Test
     fun apiSynced_newWallet() {
-        assertFalse(stateManager.apiSynced)
+        assertFalse(stateManager.restored)
 
         stateManager = StateManager(factory.realmFactory, MainNet(), newWallet = true)
-        assertTrue(stateManager.apiSynced)
+        assertTrue(stateManager.restored)
     }
 
     @Test
     fun apiSynced_SetTrue() {
-        stateManager.apiSynced = true
+        stateManager.restored = true
 
-        assertTrue(stateManager.apiSynced)
+        assertTrue(stateManager.restored)
     }
 
     @Test
     fun apiSynced_NotSet() {
-        assertFalse(stateManager.apiSynced)
+        assertFalse(stateManager.restored)
     }
 
     @Test
     fun apiSynced_Update() {
-        stateManager.apiSynced = true
-        assertTrue(stateManager.apiSynced)
+        stateManager.restored = true
+        assertTrue(stateManager.restored)
 
-        stateManager.apiSynced = false
-        assertFalse(stateManager.apiSynced)
+        stateManager.restored = false
+        assertFalse(stateManager.restored)
     }
 
 }

@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.demo
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoinkit.BitcoinKit
+import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 
@@ -73,7 +74,17 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         this.lastBlockHeight.value = blockInfo.height
     }
 
-    override fun onProgressUpdate(bitcoinKit: BitcoinKit, progress: Double) {
-        this.progress.value = progress
+    override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
+        when (state) {
+            is KitState.Synced -> {
+                this.progress.value = 1.0
+            }
+            is KitState.Syncing -> {
+                this.progress.value = state.progress
+            }
+            is KitState.NotSynced -> {
+                this.progress.value = 0.0
+            }
+        }
     }
 }

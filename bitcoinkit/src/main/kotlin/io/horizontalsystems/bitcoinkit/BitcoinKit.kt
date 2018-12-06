@@ -4,8 +4,8 @@ import android.content.Context
 import android.os.Handler
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
-import io.horizontalsystems.bitcoinkit.blocks.ProgressSyncer
 import io.horizontalsystems.bitcoinkit.core.DataProvider
+import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
@@ -26,13 +26,13 @@ import io.realm.annotations.RealmModule
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : ProgressSyncer.Listener, DataProvider.Listener {
+class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
         fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long)
         fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo)
-        fun onProgressUpdate(bitcoinKit: BitcoinKit, progress: Double)
+        fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState)
     }
 
     var listener: Listener? = null
@@ -72,7 +72,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
-        val progressSyncer = ProgressSyncer(this)
+        val kitStateProvider = KitStateProvider(this)
         val peerHostManager = PeerHostManager(network, realmFactory)
         val transactionLinker = TransactionLinker()
         val transactionExtractor = TransactionExtractor(addressConverter)
@@ -81,9 +81,9 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val addressSelector: IAddressSelector
 
         peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = peerSize)
-        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, progressSyncer, network)
+        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
-        peerGroup.lastBlockHeightListener = progressSyncer
+        peerGroup.syncStateListener = kitStateProvider
 
         when (networkType) {
             NetworkType.MainNet,
@@ -103,7 +103,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
-        initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup)
+        initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }
@@ -156,10 +156,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     }
 
     //
-    // ProgressSyncer Listener implementations
+    // KitStateProvider Listener implementations
     //
-    override fun onProgressUpdate(progress: Double) {
-        handler.post { listener?.onProgressUpdate(this, progress) }
+    override fun onKitStateUpdate(state: KitState) {
+        handler.post { listener?.onKitStateUpdate(this, state) }
     }
 
     enum class NetworkType {
@@ -168,6 +168,12 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         RegTest,
         MainNetBitCash,
         TestNetBitCash
+    }
+
+    sealed class KitState {
+        object Synced : KitState()
+        object NotSynced : KitState()
+        class Syncing(val progress: Double) : KitState()
     }
 
     companion object {

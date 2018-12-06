@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.network.peer
 
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
+import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
@@ -20,13 +21,9 @@ class PeerGroup(
         private val peerManager: PeerManager = PeerManager(),
         private val peerSize: Int) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
-    interface LastBlockHeightListener {
-        fun onReceiveMaxBlockHeight(height: Int)
-    }
-
     var blockSyncer: BlockSyncer? = null
     var transactionSyncer: TransactionSyncer? = null
-    var lastBlockHeightListener: LastBlockHeightListener? = null
+    var syncStateListener: ISyncStateListener? = null
 
     @Volatile
     private var running = false
@@ -55,6 +52,8 @@ class PeerGroup(
 
     fun close() {
         running = false
+        syncStateListener?.onSyncStop()
+
         interrupt()
         try {
             join(5000)
@@ -68,6 +67,7 @@ class PeerGroup(
     override fun run() {
         running = true
 
+        syncStateListener?.onSyncStart()
         blockSyncer?.prepareForDownload()
 
         while (running) {
@@ -154,7 +154,7 @@ class PeerGroup(
 
     override fun onReceiveMerkleBlock(peer: Peer, merkleBlock: MerkleBlock) {
         try {
-            blockSyncer?.handleMerkleBlock(merkleBlock)
+            blockSyncer?.handleMerkleBlock(merkleBlock, peer.announcedLastBlockHeight)
         } catch (e: Exception) {
             peer.close(e)
         }
@@ -233,7 +233,6 @@ class PeerGroup(
 
                     logger.info("Start syncing peer ${nonSyncedPeer.host}")
 
-                    lastBlockHeightListener?.onReceiveMaxBlockHeight(nonSyncedPeer.announcedLastBlockHeight)
                     downloadBlockchain()
                 }
             }

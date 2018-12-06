@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
-import io.reactivex.Scheduler
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
@@ -16,7 +16,7 @@ class InitialSyncer(
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
         private val peerGroup: PeerGroup,
-        private val scheduler: Scheduler = Schedulers.io()) {
+        private val listener: ISyncStateListener) {
 
     private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
@@ -25,16 +25,18 @@ class InitialSyncer(
     fun sync() {
         addressManager.fillGap()
 
-        if (stateManager.apiSynced) {
+        if (stateManager.restored) {
             peerGroup.start()
         } else {
+            listener.onSyncStart()
+
             val externalObservable = syncerApi.fetchFromApi(true)
             val internalObservable = syncerApi.fetchFromApi(false)
 
             val disposable = Single
                     .merge(externalObservable, internalObservable)
                     .toList()
-                    .subscribeOn(scheduler)
+                    .subscribeOn(Schedulers.io())
                     .subscribe({ pairsList ->
                         val publicKeys = mutableListOf<PublicKey>()
                         val blockHashes = mutableListOf<BlockHash>()
@@ -45,6 +47,7 @@ class InitialSyncer(
                         handle(publicKeys, blockHashes)
                     }, {
                         logger.severe("Initial Sync Error: $it")
+                        listener.onSyncStop()
                     })
 
             disposables.add(disposable)
@@ -62,7 +65,7 @@ class InitialSyncer(
 
         addressManager.addKeys(keys)
 
-        stateManager.apiSynced = true
+        stateManager.restored = true
         peerGroup.start()
     }
 

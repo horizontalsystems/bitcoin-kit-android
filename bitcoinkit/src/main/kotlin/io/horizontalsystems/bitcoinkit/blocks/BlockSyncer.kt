@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
@@ -15,13 +16,8 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                   private val transactionProcessor: TransactionProcessor,
                   private val addressManager: AddressManager,
                   private val bloomFilterManager: BloomFilterManager,
-                  private val listener: Listener,
+                  private val listener: ISyncStateListener,
                   private val network: Network) {
-
-    interface Listener {
-        fun onInitialBestBlockHeight(height: Int)
-        fun onCurrentBestBlockHeight(height: Int)
-    }
 
     val localDownloadedBestBlockHeight: Int?
         get() = realmFactory.realm.use {
@@ -171,7 +167,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
         realm.close()
     }
 
-    fun handleMerkleBlock(merkleBlock: MerkleBlock) {
+    fun handleMerkleBlock(merkleBlock: MerkleBlock, maxBlockHeight: Int) {
         val realm = realmFactory.realm
 
         realm.executeTransaction {
@@ -195,7 +191,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                         ?.deleteFromRealm()
             }
 
-            listener.onCurrentBestBlockHeight(block.height)
+            listener.onCurrentBestBlockHeight(block.height, maxBlockHeight)
         }
 
         realm.close()
