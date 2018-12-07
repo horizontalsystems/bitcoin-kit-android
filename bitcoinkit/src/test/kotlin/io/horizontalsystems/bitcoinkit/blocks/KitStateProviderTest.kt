@@ -35,6 +35,13 @@ class KitStateProviderTest {
     }
 
     @Test
+    fun onSyncFinish() {
+        kitStateProvider.onSyncFinish()
+
+        verify(kitStateListener).onKitStateUpdate(KitState.Synced)
+    }
+
+    @Test
     fun onSyncStop() {
         kitStateProvider.onSyncStop()
 
@@ -43,38 +50,38 @@ class KitStateProviderTest {
 
     @Test
     fun onInitialBestBlockHeight() {
-        kitStateProvider.onInitialBestBlockHeight(100)
+        kitStateProvider.onInitialBestBlockHeightUpdate(100)
         verifyNoMoreInteractions(kitStateListener)
     }
 
     @Test
     fun onCurrentBestBlockHeight() {
-        kitStateProvider.onInitialBestBlockHeight(100)
-        kitStateProvider.onCurrentBestBlockHeight(101, 200)
+        kitStateProvider.onInitialBestBlockHeightUpdate(100)
+        kitStateProvider.onCurrentBestBlockHeightUpdate(101, 200)
 
         verifyNew(KitState.Syncing::class.java).withArguments(0.01)
     }
 
     @Test
-    fun onCurrentBestBlockHeightUpdated_heightLessThanInitialHeight() {
-        kitStateProvider.onInitialBestBlockHeight(100)
-        kitStateProvider.onCurrentBestBlockHeight(99, 200)
+    fun onCurrentBestBlockHeightUpdate_heightLessThanInitialHeight() {
+        kitStateProvider.onInitialBestBlockHeightUpdate(100)
+        kitStateProvider.onCurrentBestBlockHeightUpdate(99, 200)
 
         verifyNew(KitState.Syncing::class.java).withArguments(0.0)
     }
 
     @Test
-    fun onCurrentBestBlockHeightUpdated_heightMoreThanMaxHeight() {
-        kitStateProvider.onInitialBestBlockHeight(100)
-        kitStateProvider.onCurrentBestBlockHeight(201, 200)
+    fun onCurrentBestBlockHeightUpdate_heightMoreThanMaxHeight() {
+        kitStateProvider.onInitialBestBlockHeightUpdate(100)
+        kitStateProvider.onCurrentBestBlockHeightUpdate(201, 200)
 
         verify(kitStateListener).onKitStateUpdate(KitState.Synced)
     }
 
     @Test
-    fun onCurrentBestBlockHeightUpdated_MaxHeightLessThanInitialHeight() {
-        kitStateProvider.onInitialBestBlockHeight(100)
-        kitStateProvider.onCurrentBestBlockHeight(99, 99)
+    fun onCurrentBestBlockHeightUpdate_MaxHeightLessThanInitialHeight() {
+        kitStateProvider.onInitialBestBlockHeightUpdate(100)
+        kitStateProvider.onCurrentBestBlockHeightUpdate(99, 99)
 
         verify(kitStateListener).onKitStateUpdate(KitState.Synced)
     }

@@ -48,7 +48,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
             }
         }
 
-        listener.onInitialBestBlockHeight(localDownloadedBestBlockHeight ?: 0)
+        listener.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight ?: 0)
 
         realm.close()
     }
@@ -191,7 +191,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
                         ?.deleteFromRealm()
             }
 
-            listener.onCurrentBestBlockHeight(block.height, maxBlockHeight)
+            listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
         }
 
         realm.close()
