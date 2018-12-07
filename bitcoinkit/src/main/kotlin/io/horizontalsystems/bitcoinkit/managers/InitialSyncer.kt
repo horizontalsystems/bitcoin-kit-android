@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
+import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
@@ -52,6 +52,10 @@ class InitialSyncer(
 
             disposables.add(disposable)
         }
+    }
+
+    fun stop() {
+        disposables.clear()
     }
 
     @Throws

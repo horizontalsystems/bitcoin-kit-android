@@ -116,10 +116,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         feeRateSyncer.start()
     }
 
-    fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {
-        return paymentAddressParser.parse(paymentAddress)
-    }
-
     fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
         return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
     }
@@ -136,8 +132,19 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         addressConverter.convert(address)
     }
 
-    fun clear() = realmFactory.realm.use { realm ->
-        realm.executeTransaction { realm.deleteAll() }
+    fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {
+        return paymentAddressParser.parse(paymentAddress)
+    }
+
+    fun clear() {
+        peerGroup.close()
+        dataProvider.clear()
+        initialSyncer.stop()
+        feeRateSyncer.stop()
+
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction { it.deleteAll() }
+        }
     }
 
     //
