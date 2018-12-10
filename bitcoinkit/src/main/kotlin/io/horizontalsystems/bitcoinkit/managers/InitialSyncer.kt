@@ -24,9 +24,10 @@ class InitialSyncer(
 
     @Throws
     fun sync() {
-        if (isRunning) return
+        if (isRunning) return else {
+            isRunning = true
+        }
 
-        isRunning = true
         addressManager.fillGap()
 
         try {
@@ -65,6 +66,7 @@ class InitialSyncer(
     }
 
     fun stop() {
+        peerGroup.close()
         disposables.clear()
     }
 

@@ -69,7 +69,7 @@ class InitialSyncerTest {
         initialSyncer.sync()
         initialSyncer.stop()
 
-        verifyNoMoreInteractions(peerGroup)
+        verify(peerGroup).close()
     }
 
     // @Test
