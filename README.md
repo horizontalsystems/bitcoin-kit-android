@@ -86,6 +86,8 @@ bitcoinKit.receiveAddress()
 
 You can get all your transactions as follows:
 ```kotlin
+bitcoinKit.transactions
+
 TransactionInfo(
     transactionHash=baede6420b4b2869cba87d768a7b4e2eef2a9899149f24c5c3d3ff66b8ad1405,
     from=[TransactionAddress(address=my1ysPMHdeQD6kwnimipbvFrr5NRHDvNgz, mine=false)],
@@ -113,7 +115,7 @@ TransactionInfo(
 ...
 ```
 
-### Creating new transaction
+### Sending new transaction
 
 In order to create new transaction, call `send(address: String, value: Int, senderPay: Boolean = true)` method on `BitcoinKit`
  - `senderPay`: parameter defines who pays the fee
