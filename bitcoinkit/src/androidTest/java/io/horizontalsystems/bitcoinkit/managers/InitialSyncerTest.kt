@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.managers
 
-import com.nhaarman.mockito_kotlin.check
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockito_kotlin.*
 import helpers.RxTestRule
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
@@ -11,10 +10,12 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.reactivex.Single
 import org.junit.After
-import org.junit.Assert
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mockito.*
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
+import java.util.concurrent.TimeUnit
 
 class InitialSyncerTest {
 
@@ -26,6 +27,7 @@ class InitialSyncerTest {
     private val peerGroup = mock(PeerGroup::class.java)
     private val addressManager = mock(AddressManager::class.java)
     private val realm = factories.realmFactory.realm
+    private val apiRespStub = Single.just(Pair(listOf(PublicKey()), listOf(BlockHash())))
 
     private lateinit var initialSyncer: InitialSyncer
 
@@ -42,6 +44,47 @@ class InitialSyncerTest {
             it.deleteAll()
         }
     }
+
+    @Test
+    fun sync() {
+        whenever(stateManager.restored).thenReturn(false)
+        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(apiRespStub)
+        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(apiRespStub)
+
+        initialSyncer.sync()
+
+        verify(peerGroup).start()
+        verify(kitStateListener).onSyncStart()
+        verify(addressManager).addKeys(any())
+    }
+
+    @Test
+    fun stop() {
+        val responseWithTimeout = apiRespStub.timeout(1, TimeUnit.SECONDS)
+
+        whenever(stateManager.restored).thenReturn(false)
+        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(responseWithTimeout)
+        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(responseWithTimeout)
+
+        initialSyncer.sync()
+        initialSyncer.stop()
+
+        verifyNoMoreInteractions(peerGroup)
+    }
+
+    // @Test
+    // fun refresh() {
+    //     whenever(stateManager.restored).thenReturn(false)
+    //     whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(apiRespStub)
+    //     whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(apiRespStub)
+    //
+    //     initialSyncer.sync()
+    //     initialSyncer.sync() // refresh
+    //
+    //     verify(peerGroup).start()
+    //     verify(kitStateListener).onSyncStart()
+    //     verify(addressManager).addKeys(any())
+    // }
 
     @Test
     fun sync_apiSynced() {
@@ -93,16 +136,16 @@ class InitialSyncerTest {
         verify(stateManager).restored = true
         verify(peerGroup).start()
         verify(addressManager).addKeys(check { actualPublicKeys ->
-            Assert.assertTrue(containsKey(actualPublicKeys, externalPublicKey1))
-            Assert.assertTrue(containsKey(actualPublicKeys, internalPublicKey1))
+            assertTrue(containsKey(actualPublicKeys, externalPublicKey1))
+            assertTrue(containsKey(actualPublicKeys, internalPublicKey1))
         })
 
         val actualBlocks = realm.where(BlockHash::class.java).findAll()
 
-        Assert.assertTrue(containsBlock(actualBlocks, blockExternal1))
-        Assert.assertTrue(containsBlock(actualBlocks, blockExternal2))
-        Assert.assertTrue(containsBlock(actualBlocks, blockInternal1))
-        Assert.assertTrue(containsBlock(actualBlocks, blockInternal2))
+        assertTrue(containsBlock(actualBlocks, blockExternal1))
+        assertTrue(containsBlock(actualBlocks, blockExternal2))
+        assertTrue(containsBlock(actualBlocks, blockInternal1))
+        assertTrue(containsBlock(actualBlocks, blockInternal2))
     }
 
     @Test
@@ -117,8 +160,8 @@ class InitialSyncerTest {
         verify(stateManager, never()).restored = true
         verifyNoMoreInteractions(peerGroup)
 
-        Assert.assertTrue(realm.where(PublicKey::class.java).findAll().isEmpty())
-        Assert.assertTrue(realm.where(Block::class.java).findAll().isEmpty())
+        assertTrue(realm.where(PublicKey::class.java).findAll().isEmpty())
+        assertTrue(realm.where(Block::class.java).findAll().isEmpty())
     }
 
     private fun containsKey(keys: List<PublicKey>, key: PublicKey) =

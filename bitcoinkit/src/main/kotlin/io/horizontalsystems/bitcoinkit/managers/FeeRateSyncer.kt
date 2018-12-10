@@ -17,6 +17,10 @@ class FeeRateSyncer(private val realmFactory: RealmFactory, private val apiFeeRa
     }
 
     fun start() {
+        if (timerDisposable != null && timerDisposable?.isDisposed == false) {
+            return
+        }
+
         timerDisposable = timer.subscribe {
             if (feeRateDisposable == null || feeRateDisposable?.isDisposed == true) {
                 updateFeeRate()

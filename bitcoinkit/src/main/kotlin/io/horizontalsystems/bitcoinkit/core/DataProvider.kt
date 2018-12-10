@@ -22,6 +22,8 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
 
     private val transactionRealmResults = getMyTransactions()
     private val blockRealmResults = getBlocks()
+    private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
+    private val balanceSubjectDisposable: Disposable
 
     //  Getters
     val balance
@@ -32,9 +34,6 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
     val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
     val lastBlockHeight get() = blockRealmResults.lastOrNull()?.height ?: 0
     val feeRate get() = realm.where(FeeRate::class.java).findFirst() ?: FeeRate.defaultFeeRate
-
-    private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
-    private val balanceSubjectDisposable: Disposable
 
     init {
         transactionRealmResults.addChangeListener { transactions, changeSet ->
@@ -51,6 +50,12 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
                 .subscribe {
                     listener.onBalanceUpdate(balance)
                 }
+    }
+
+    fun clear() {
+        transactionRealmResults.removeAllChangeListeners()
+        blockRealmResults.removeAllChangeListeners()
+        balanceSubjectDisposable.dispose()
     }
 
     private fun handleTransactions(transactions: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
