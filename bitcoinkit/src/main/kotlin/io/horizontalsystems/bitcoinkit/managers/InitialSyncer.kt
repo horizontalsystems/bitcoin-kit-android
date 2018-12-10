@@ -20,42 +20,48 @@ class InitialSyncer(
 
     private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
-    private var isSyncing = false
+    private var isRunning = false
 
     @Throws
     fun sync() {
+        if (isRunning) return
+
+        isRunning = true
         addressManager.fillGap()
 
-        if (stateManager.restored) return peerGroup.start()
-        if (isSyncing) return else {
-            isSyncing = true
+        try {
+            if (stateManager.restored) {
+                peerGroup.start()
+            } else {
+                listener.onSyncStart()
+
+                val externalObservable = syncerApi.fetchFromApi(true)
+                val internalObservable = syncerApi.fetchFromApi(false)
+
+                val disposable = Single
+                        .merge(externalObservable, internalObservable)
+                        .toList()
+                        .subscribeOn(Schedulers.io())
+                        .subscribe({ pairsList ->
+                            val publicKeys = mutableListOf<PublicKey>()
+                            val blockHashes = mutableListOf<BlockHash>()
+                            pairsList.forEach { (keys, hashes) ->
+                                publicKeys.addAll(keys)
+                                blockHashes.addAll(hashes)
+                            }
+                            handle(publicKeys, blockHashes)
+                        }, {
+                            isRunning = false
+                            logger.severe("Initial Sync Error: $it")
+                            listener.onSyncStop()
+                        })
+
+                disposables.add(disposable)
+            }
+        } catch (e: Exception) {
+            isRunning = false
+            throw e
         }
-
-        listener.onSyncStart()
-
-        val externalObservable = syncerApi.fetchFromApi(true)
-        val internalObservable = syncerApi.fetchFromApi(false)
-
-        val disposable = Single
-                .merge(externalObservable, internalObservable)
-                .toList()
-                .subscribeOn(Schedulers.io())
-                .subscribe({ pairsList ->
-                    val publicKeys = mutableListOf<PublicKey>()
-                    val blockHashes = mutableListOf<BlockHash>()
-                    pairsList.forEach { (keys, hashes) ->
-                        publicKeys.addAll(keys)
-                        blockHashes.addAll(hashes)
-                    }
-                    isSyncing = false
-                    handle(publicKeys, blockHashes)
-                }, {
-                    isSyncing = false
-                    logger.severe("Initial Sync Error: $it")
-                    listener.onSyncStop()
-                })
-
-        disposables.add(disposable)
     }
 
     fun stop() {
