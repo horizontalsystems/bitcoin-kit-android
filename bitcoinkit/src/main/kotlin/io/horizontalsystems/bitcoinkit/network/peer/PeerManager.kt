@@ -1,23 +1,24 @@
 package io.horizontalsystems.bitcoinkit.network.peer
 
+import java.util.concurrent.ConcurrentHashMap
+
 class PeerManager {
 
     @Volatile
     var syncPeer: Peer? = null
 
-    @Volatile
-    private var peers = mutableListOf<Peer>()
+    private var peers = ConcurrentHashMap<String, Peer>()
 
     fun add(peer: Peer) {
-        peers.add(peer)
+        peers[peer.host] = peer
     }
 
     fun remove(peer: Peer) {
-        peers.removeAll { it == peer }
+        peers.remove(peer.host)
     }
 
     fun disconnectAll() {
-        peers.forEach { it.close() }
+        peers.values.forEach { it.close() }
         peers.clear()
     }
 
@@ -26,7 +27,7 @@ class PeerManager {
     }
 
     fun someReadyPeers(): List<Peer> {
-        val readyPeers = peers.filter { it.ready }
+        val readyPeers = peers.values.filter { it.ready }
         if (readyPeers.isEmpty()) {
             return listOf()
         }
@@ -39,11 +40,11 @@ class PeerManager {
     }
 
     fun connected(): List<Peer> {
-        return peers.filter { it.connected }
+        return peers.values.filter { it.connected }
     }
 
     fun nonSyncedPeer(): Peer? {
-        return peers.find { it.connected && !it.synced }
+        return peers.values.find { it.connected && !it.synced }
     }
 
     fun isSyncPeer(peer: Peer): Boolean {
