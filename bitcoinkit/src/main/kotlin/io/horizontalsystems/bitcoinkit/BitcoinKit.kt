@@ -141,7 +141,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     }
 
     fun clear() {
-        peerGroup.close()
         dataProvider.clear()
         initialSyncer.stop()
         feeRateSyncer.stop()
