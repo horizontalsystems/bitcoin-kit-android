@@ -72,6 +72,20 @@ class InitialSyncerTest {
         verifyNoMoreInteractions(peerGroup)
     }
 
+    // @Test
+    // fun refresh() {
+    //     whenever(stateManager.restored).thenReturn(false)
+    //     whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(apiRespStub)
+    //     whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(apiRespStub)
+    //
+    //     initialSyncer.sync()
+    //     initialSyncer.sync() // refresh
+    //
+    //     verify(peerGroup).start()
+    //     verify(kitStateListener).onSyncStart()
+    //     verify(addressManager).addKeys(any())
+    // }
+
     @Test
     fun sync_apiSynced() {
         whenever(stateManager.restored).thenReturn(true)

@@ -38,7 +38,6 @@ class FeeRateSyncerTest {
         verify(apiFeeRate).getFeeRate()
     }
 
-
     @Test
     fun start_getRateTwice() {
         timer = PublishSubject.create()
@@ -70,5 +69,16 @@ class FeeRateSyncerTest {
         timer.onNext(1)
 
         verifyNoMoreInteractions(apiFeeRate)
+    }
+
+    @Test
+    fun start_refresh() {
+        timer = PublishSubject.create()
+        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer)
+        feeRateSyncer.start()
+        feeRateSyncer.start()
+        timer.onNext(1)
+
+        verify(apiFeeRate).getFeeRate()
     }
 }

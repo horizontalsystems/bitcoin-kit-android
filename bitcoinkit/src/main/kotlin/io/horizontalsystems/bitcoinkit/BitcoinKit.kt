@@ -116,6 +116,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         feeRateSyncer.start()
     }
 
+    fun refresh() {
+        start()
+    }
+
     fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
         return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
     }
