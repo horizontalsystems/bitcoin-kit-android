@@ -29,4 +29,6 @@ class UnspentOutputProvider(private val realmFactory: RealmFactory, private val 
                     .toList()
         }
     }
+
+    fun getBalance(): Long = allUnspentOutputs().map { it.value }.sum()
 }
