@@ -1,7 +1,9 @@
 package io.horizontalsystems.bitcoinkit.core
 
+import android.os.Looper
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import io.realm.OrderedCollectionChangeSet
@@ -50,6 +52,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         }
 
         balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.from(Looper.myLooper()))
                 .subscribe {
                     balance = unspentOutputProvider.getBalance()
                     listener.onBalanceUpdate(balance)

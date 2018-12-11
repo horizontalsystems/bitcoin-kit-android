@@ -55,6 +55,8 @@ class TransactionBuilder {
             true
         }
 
+        val realm = realmFactory.realm
+
         if (estimatedFee) {
             return unspentOutputsSelector.select(
                     value = value,
@@ -62,11 +64,10 @@ class TransactionBuilder {
                     outputType = ScriptType.P2PKH,
                     changeType = ScriptType.P2PKH,
                     senderPay = senderPay,
-                    outputs = unspentOutputProvider.allUnspentOutputs()
+                    outputs = unspentOutputProvider.allUnspentOutputs(realm)
             ).fee
         }
 
-        val realm = realmFactory.realm
         val transaction = buildTransaction(
                 realm = realm,
                 value = value,
@@ -90,7 +91,7 @@ class TransactionBuilder {
                 outputType = address.scriptType,
                 changeType = changeScriptType,
                 senderPay = senderPay,
-                outputs = unspentOutputProvider.allUnspentOutputs()
+                outputs = unspentOutputProvider.allUnspentOutputs(realm)
         )
 
         if (!senderPay && selectedOutputsInfo.fee > value) {
