@@ -74,7 +74,7 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
                 val tx = item.asObject()
                 val txBlockHash = tx["block"]
                 val txBlockHeight = tx["height"]
-                if (txBlockHash == null || txBlockHeight == null) {
+                if (txBlockHash.isNull || txBlockHeight.isNull) {
                     continue
                 }
 
