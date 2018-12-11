@@ -72,7 +72,13 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
 
             for (item in data) {
                 val tx = item.asObject()
-                list.add(BlockResponse(tx["block"].asString(), tx["height"].asInt()))
+                val txBlockHash = tx["block"]
+                val txBlockHeight = tx["height"]
+                if (txBlockHash == null || txBlockHeight == null) {
+                    continue
+                }
+
+                list.add(BlockResponse(txBlockHash.asString(), txBlockHeight.asInt()))
             }
 
             emitter.onNext(list)
