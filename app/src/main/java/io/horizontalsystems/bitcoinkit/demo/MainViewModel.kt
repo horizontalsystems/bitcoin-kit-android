@@ -77,13 +77,13 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
         when (state) {
             is KitState.Synced -> {
-                this.progress.value = 1.0
+                this.progress.postValue(1.0)
             }
             is KitState.Syncing -> {
-                this.progress.value = state.progress
+                this.progress.postValue(state.progress)
             }
             is KitState.NotSynced -> {
-                this.progress.value = 0.0
+                this.progress.postValue(0.0)
             }
         }
     }
