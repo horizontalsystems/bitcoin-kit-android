@@ -3,6 +3,8 @@ package io.horizontalsystems.bitcoinkit.demo
 import android.arch.lifecycle.ViewModelProviders
 import android.os.Bundle
 import android.support.v4.app.Fragment
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -21,6 +23,7 @@ class SendReceiveFragment : Fragment() {
     private lateinit var sendButton: Button
     private lateinit var sendAmount: EditText
     private lateinit var sendAddress: EditText
+    private lateinit var txFeeValue: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +37,6 @@ class SendReceiveFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_send_receive, null)
     }
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -44,6 +46,7 @@ class SendReceiveFragment : Fragment() {
             receiveAddressText.text = viewModel.receiveAddress()
         }
 
+        txFeeValue = view.findViewById(R.id.txFeeValue)
         sendAddress = view.findViewById(R.id.sendAddress)
         sendAmount = view.findViewById(R.id.sendAmount)
         sendButton = view.findViewById(R.id.sendButton)
@@ -56,6 +59,8 @@ class SendReceiveFragment : Fragment() {
                 send()
             }
         }
+
+        sendAmount.addTextChangedListener(textChangeListener)
     }
 
     private fun send() {
@@ -70,5 +75,26 @@ class SendReceiveFragment : Fragment() {
 
             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
+    }
+
+    private val textChangeListener = object : TextWatcher {
+        override fun afterTextChanged(s: Editable?) {
+            if (sendAddress.text.isEmpty() || sendAmount.text.isEmpty()) {
+                return
+            }
+
+            try {
+                val fee = viewModel.fee(
+                        value = sendAmount.text.toString().toInt(),
+                        address = sendAddress.text.toString()
+                )
+
+                txFeeValue.text = fee.toString()
+            } catch (e: Exception) {
+            }
+        }
+
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
     }
 }

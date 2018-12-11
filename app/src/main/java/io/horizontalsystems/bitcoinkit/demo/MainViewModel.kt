@@ -59,6 +59,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         bitcoinKit.send(address, amount)
     }
 
+    fun fee(value: Int, address: String? = null): Int {
+        return bitcoinKit.fee(value, address)
+    }
+
     //
     // BitcoinKit Listener implementations
     //
