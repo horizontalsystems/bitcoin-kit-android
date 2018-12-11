@@ -64,17 +64,22 @@ class SendReceiveFragment : Fragment() {
     }
 
     private fun send() {
+        var message: String
         try {
             viewModel.send(sendAddress.text.toString(), sendAmount.text.toString().toInt())
+            sendAmount.text = null
+            txFeeValue.text = null
+            sendAddress.text = null
+            message = "Transaction sent"
         } catch (e: Exception) {
-            val message = when (e) {
+            message = when (e) {
                 is UnspentOutputSelector.InsufficientUnspentOutputs,
                 is UnspentOutputSelector.EmptyUnspentOutputs -> "Insufficient balance"
-                else -> e.message
+                else -> e.message ?: "Failed to send transaction"
             }
-
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
         }
+
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
     private val textChangeListener = object : TextWatcher {
