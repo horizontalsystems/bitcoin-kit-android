@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.core
 
+import android.os.Looper
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
 import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
@@ -22,18 +22,21 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
 
     private val transactionRealmResults = getMyTransactions()
     private val blockRealmResults = getBlocks()
+    private val feeRateRealmResults = getFeeRate()
     private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
     private val balanceSubjectDisposable: Disposable
 
     //  Getters
-    val balance
-        get() = unspentOutputProvider.allUnspentOutputs()
-                .map { it.value }
-                .sum()
+    var balance: Long = unspentOutputProvider.getBalance()
+        private set
 
     val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
-    val lastBlockHeight get() = blockRealmResults.lastOrNull()?.height ?: 0
-    val feeRate get() = realm.where(FeeRate::class.java).findFirst() ?: FeeRate.defaultFeeRate
+
+    var lastBlockHeight: Int = blockRealmResults.lastOrNull()?.height ?: 0
+        private set
+
+    var feeRate: FeeRate = feeRateRealmResults.firstOrNull() ?: FeeRate.defaultFeeRate
+        private set
 
     init {
         transactionRealmResults.addChangeListener { transactions, changeSet ->
@@ -44,10 +47,14 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
             handleBlocks(blocks, changeSet)
         }
 
+        feeRateRealmResults.addChangeListener { feeRates, _ ->
+            feeRate = feeRates.firstOrNull()?.let { realm.copyFromRealm(it) } ?: FeeRate.defaultFeeRate
+        }
+
         balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.from(Looper.myLooper()))
                 .subscribe {
+                    balance = unspentOutputProvider.getBalance()
                     listener.onBalanceUpdate(balance)
                 }
     }
@@ -75,6 +82,9 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
     private fun handleBlocks(blocks: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == State.UPDATE && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
             blocks.lastOrNull()?.let { block ->
+
+                lastBlockHeight = block.height
+
                 listener.onLastBlockInfoUpdate(BlockInfo(
                         block.reversedHeaderHashHex,
                         block.height,
@@ -132,6 +142,10 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         return realm.where(Block::class.java)
                 .sort("height")
                 .findAll()
+    }
+
+    private fun getFeeRate(): RealmResults<FeeRate> {
+        return realm.where(FeeRate::class.java).findAll()
     }
 
     private fun getMyTransactions(): RealmResults<Transaction> {

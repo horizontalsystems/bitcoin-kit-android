@@ -48,7 +48,7 @@ class UnspentOutputProviderTest {
 
     @Test
     fun allUnspentOutputs_allPublicKeysNull() {
-        assertEquals(0, unspentOutputProvider.allUnspentOutputs().size)
+        assertEquals(0, unspentOutputProvider.allUnspentOutputs(realm).size)
     }
 
     @Test
@@ -74,7 +74,7 @@ class UnspentOutputProviderTest {
             })
         }
 
-        val unspents = unspentOutputProvider.allUnspentOutputs()
+        val unspents = unspentOutputProvider.allUnspentOutputs(realm)
 
         assertEquals(4, unspents.size)
 
@@ -97,7 +97,7 @@ class UnspentOutputProviderTest {
             })
         }
 
-        assertEquals(5, unspentOutputProvider.allUnspentOutputs().size)
+        assertEquals(5, unspentOutputProvider.allUnspentOutputs(realm).size)
     }
 
     @Test
@@ -132,7 +132,7 @@ class UnspentOutputProviderTest {
             })
         }
 
-        assertEquals(0, unspentOutputProvider.allUnspentOutputs().size)
+        assertEquals(0, unspentOutputProvider.allUnspentOutputs(realm).size)
     }
 
     @Test
@@ -148,7 +148,7 @@ class UnspentOutputProviderTest {
 
         }
 
-        assertEquals(0, unspentOutputProvider.allUnspentOutputs().size)
+        assertEquals(0, unspentOutputProvider.allUnspentOutputs(realm).size)
     }
 
     @Test
@@ -165,7 +165,7 @@ class UnspentOutputProviderTest {
 
         }
 
-        assertEquals(5, unspentOutputProvider.allUnspentOutputs().size)
+        assertEquals(5, unspentOutputProvider.allUnspentOutputs(realm).size)
     }
 
 
@@ -179,6 +179,6 @@ class UnspentOutputProviderTest {
             })
         }
 
-        assertEquals(0, unspentOutputProvider.allUnspentOutputs().size)
+        assertEquals(0, unspentOutputProvider.allUnspentOutputs(realm).size)
     }
 }

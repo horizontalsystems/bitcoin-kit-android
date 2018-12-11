@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit
 
 import android.content.Context
-import android.os.Handler
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.core.DataProvider
@@ -54,7 +53,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}")
 
-    private val handler = Handler()
     private val network = when (networkType) {
         NetworkType.MainNet -> MainNet()
         NetworkType.MainNetBitCash -> MainNetBitcoinCash()
@@ -169,7 +167,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     // KitStateProvider Listener implementations
     //
     override fun onKitStateUpdate(state: KitState) {
-        handler.post { listener?.onKitStateUpdate(this, state) }
+        listener?.onKitStateUpdate(this, state)
     }
 
     enum class NetworkType {
