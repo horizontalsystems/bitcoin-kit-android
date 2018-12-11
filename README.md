@@ -1,6 +1,6 @@
 # BitcoinKit
 
-Bitcoin and Bitcoin Cash(ABC) SPV wallet toolkit inplemented in Kotlin. This is a full implementation of SPV node including wallet creation/restore, syncronzation with network, send/receive transactions, and more.
+Bitcoin and Bitcoin Cash(ABC) SPV wallet toolkit implemented in Kotlin. This is a full implementation of SPV node including wallet creation/restore, syncronzation with network, send/receive transactions, and more.
 
 ## Features
 
@@ -59,7 +59,6 @@ bitcoinKit.start()
 ```kotlin
 bitcoinKit.clear()
 ```
-
 
 ### Getting wallet data
 
@@ -137,10 +136,9 @@ bitcoinKit.fee(value = 1000000, address = "mrjQyzbX9SiJxRC2mQhT4LvxFEmt9KEeRY", 
 - `senderPay`: parameter defines who pays the fee
 
 
-
 ### Parsing BIP21 URI
 
-You can use `parse` method to parse a BIP21 URI:
+You can use `parsePaymentAddress` method to parse a BIP21 URI:
 
 ```kotlin
 bitcoinKit.parsePaymentAddress("bitcoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=50&label=Luke-Jr&message=Donation%20for%20project%20xyz")
@@ -189,7 +187,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
             }
             is KitState.Syncing -> {
-
+                // val progress: Double = state.progress
             }
             is KitState.NotSynced -> {
                 
@@ -223,8 +221,8 @@ All features of the library are used in example project. It can be referred as a
 * [Example App](https://github.com/horizontalsystems/bitcoin-kit-android/tree/master/app)
 
 ## Dependencies
-* [HD WalletKit](https://github.com/horizontalsystems/hd-wallet-kit-android) - HD Wallet related features, mnemonic phrase 
+* [HDWalletKit](https://github.com/horizontalsystems/hd-wallet-kit-android) - HD Wallet related features, mnemonic phrase 
 
 ## License
 
-The `BitcoinKit` toolkit is open source and available under the terms of the [MIT License](https://github.com/horizontalsystems/bitcoin-kit-android/blob/master/LICENSE)
+The `BitcoinKit` is open source and available under the terms of the [MIT License](https://github.com/horizontalsystems/bitcoin-kit-android/blob/master/LICENSE)
