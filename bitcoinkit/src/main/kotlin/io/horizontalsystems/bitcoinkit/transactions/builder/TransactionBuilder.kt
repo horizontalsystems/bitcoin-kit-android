@@ -55,29 +55,28 @@ class TransactionBuilder {
             true
         }
 
-        val realm = realmFactory.realm
+        realmFactory.realm.use { realm ->
+            if (estimatedFee) {
+                return unspentOutputsSelector.select(
+                        value = value,
+                        feeRate = feeRate,
+                        outputType = ScriptType.P2PKH,
+                        changeType = ScriptType.P2PKH,
+                        senderPay = senderPay,
+                        outputs = unspentOutputProvider.allUnspentOutputs(realm)
+                ).fee
+            }
 
-        if (estimatedFee) {
-            return unspentOutputsSelector.select(
+            val transaction = buildTransaction(
+                    realm = realm,
                     value = value,
                     feeRate = feeRate,
-                    outputType = ScriptType.P2PKH,
-                    changeType = ScriptType.P2PKH,
                     senderPay = senderPay,
-                    outputs = unspentOutputProvider.allUnspentOutputs(realm)
-            ).fee
+                    toAddress = address!!
+            )
+
+            return transaction.toByteArray().size * feeRate
         }
-
-        val transaction = buildTransaction(
-                realm = realm,
-                value = value,
-                feeRate = feeRate,
-                senderPay = senderPay,
-                toAddress = address!!
-        )
-        realm.close()
-
-        return transaction.toByteArray().size * feeRate
     }
 
     fun buildTransaction(value: Int, toAddress: String, feeRate: Int, senderPay: Boolean, realm: Realm): Transaction {
