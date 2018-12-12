@@ -23,8 +23,8 @@ class TransactionCreator(
             }
 
             realm.executeTransaction {
-                realm.insert(transaction)
                 processor.process(transaction, realm)
+                realm.insert(transaction)
             }
         }
 
