@@ -36,7 +36,7 @@ class BloomFilterManager(private val realmFactory: RealmFactory) {
         }
 
         var transactionOutputs: List<TransactionOutput> = realm.where(TransactionOutput::class.java)
-                .isNull("publicKey")
+                .isNotNull("publicKey")
                 .`in`("scriptType", arrayOf(ScriptType.P2WPKH, ScriptType.P2PK))
                 .findAll()
 
