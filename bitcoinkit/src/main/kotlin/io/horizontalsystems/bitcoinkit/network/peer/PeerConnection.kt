@@ -69,19 +69,19 @@ class PeerConnection(private val host: String, private val network: Network, pri
 
             listener.disconnected(disconnectError)
         } catch (e: SocketTimeoutException) {
-            logger.log(Level.SEVERE, "Connect timeout exception: ${e.message}", e)
+            logger.warning("Socket timeout exception: ${e.message}")
             listener.disconnected(e)
         } catch (e: ConnectException) {
-            logger.log(Level.SEVERE, "Connect exception: ${e.message}", e)
+            logger.warning("Connect exception: ${e.message}")
             listener.disconnected(e)
         } catch (e: IOException) {
-            logger.log(Level.SEVERE, "IOException: ${e.message}", e)
+            logger.warning("IOException: ${e.message}")
             listener.disconnected(e)
         } catch (e: InterruptedException) {
-            logger.log(Level.SEVERE, "Peer connection thread interrupted.")
+            logger.warning("Peer connection thread interrupted: ${e.message}")
             listener.disconnected()
         } catch (e: Exception) {
-            logger.log(Level.SEVERE, "Peer connection exception.", e)
+            logger.warning("Peer connection exception: ${e.message}")
             listener.disconnected()
         } finally {
             isRunning = false

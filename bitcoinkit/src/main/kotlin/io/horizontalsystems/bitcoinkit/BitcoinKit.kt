@@ -6,15 +6,19 @@ import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
+import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -145,6 +149,31 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
 
         realmFactory.realm.use { realm ->
             realm.executeTransaction { it.deleteAll() }
+        }
+    }
+
+    fun showDebugInfo() {
+        addressManager.fillGap()
+        realmFactory.realm.use { realm ->
+            realm.where(PublicKey::class.java).findAll().forEach { pubKey ->
+                try {
+                    val scriptType = if (network is MainNetBitcoinCash || network is TestNetBitcoinCash)
+                        ScriptType.P2PKH else
+                        ScriptType.P2WPKH
+
+                    val legacy = addressConverter.convert(pubKey.publicKeyHash, ScriptType.P2PKH).string
+                    val wpkh = addressConverter.convert(pubKey.scriptHashP2WPKH, ScriptType.P2SH).string
+                    val bechAddress = try {
+                        addressConverter.convert(OpCodes.push(0) + OpCodes.push(pubKey.publicKeyHash), scriptType).string
+                    } catch (e: Exception) {
+                        ""
+                    }
+                    println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHex} --- p2wkph(SH) hash: ${pubKey.scriptHashP2WPKH.toHexString()}")
+                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
+                } catch (e: Exception) {
+                    println(e.message)
+                }
+            }
         }
     }
 

@@ -63,6 +63,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         return bitcoinKit.fee(value, address)
     }
 
+    fun showDebugInfo() {
+        bitcoinKit.showDebugInfo()
+    }
+
     //
     // BitcoinKit Listener implementations
     //
