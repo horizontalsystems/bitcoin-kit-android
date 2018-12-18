@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
-import junit.framework.Assert.assertTrue
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock

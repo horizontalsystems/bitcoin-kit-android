@@ -39,19 +39,19 @@ class TransactionLinkerTest {
         realm.commitTransaction()
     }
 
-    @Test
-    fun listOutputs() {
-        val savedNextTransaction = savedNextTx()
-        realm.executeTransaction { it.insert(savedNextTransaction) }
-
-        assertEquals(savedNextTransaction.inputs[0]?.previousOutput, null)
-        linker.handle(savedNextTransaction, realm)
-
-        assertOutputEqual(
-                savedNextTransaction.inputs[0]!!.previousOutput!!,
-                transactionP2PK.outputs[0]!!
-        )
-    }
+//    @Test
+//    fun listOutputs() {
+//        val savedNextTransaction = savedNextTx()
+//        realm.executeTransaction { it.insert(savedNextTransaction) }
+//
+//        assertEquals(savedNextTransaction.inputs[0]?.previousOutput, null)
+//        linker.handle(savedNextTransaction, realm)
+//
+//        assertOutputEqual(
+//                savedNextTransaction.inputs[0]!!.previousOutput!!,
+//                transactionP2PK.outputs[0]!!
+//        )
+//    }
 
 //    TODO
 //    @Test
