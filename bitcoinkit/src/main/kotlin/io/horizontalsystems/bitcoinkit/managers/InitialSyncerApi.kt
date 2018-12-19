@@ -26,8 +26,8 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
     private val apiManager = ApiManager(host)
 
     @Throws
-    fun fetchFromApi(external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> {
-        return requestApiRecursive(external)
+    fun fetchFromApi(account: Int, external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> {
+        return requestApiRecursive(account, external)
                 .map { (publicKeys, blockResponses) ->
                     publicKeys to blockResponses.mapNotNull { blockResponse ->
                         try {
@@ -40,6 +40,7 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
     }
 
     private fun requestApiRecursive(
+            account: Int,
             external: Boolean,
             index: Int = 0,
             emptyResponsesInRow: Int = 0,
@@ -48,7 +49,7 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
     ): Single<Pair<List<PublicKey>, List<BlockResponse>>> {
 
         if (emptyResponsesInRow < gapLimit) {
-            val publicKey = wallet.publicKey(index, external)
+            val publicKey = wallet.publicKey(account, index, external)
             val addresses = addressSelector.getAddressVariants(publicKey)
 
             return Flowable.merge(addresses.map { getBlockHashes(it) })
@@ -58,7 +59,7 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
                         allKeys.add(publicKey)
                         allBlockResponses.addAll(blockResponses.filter { it.height <= maxHeight })
 
-                        requestApiRecursive(external, index + 1, if (blockResponses.isEmpty()) emptyResponsesInRow + 1 else 0, allKeys, allBlockResponses)
+                        requestApiRecursive(account, external, index + 1, if (blockResponses.isEmpty()) emptyResponsesInRow + 1 else 0, allKeys, allBlockResponses)
                     }
         }
 

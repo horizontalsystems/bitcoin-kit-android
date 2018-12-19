@@ -28,6 +28,7 @@ class InitialSyncerApiTest {
     private val network = mock(Network::class.java)
     private val checkpointBlock = mock(Block::class.java)
     private val addressSelector = mock(IAddressSelector::class.java)
+    private val account = 0
 
     private lateinit var initialSyncerApi: InitialSyncerApi
 
@@ -40,9 +41,9 @@ class InitialSyncerApiTest {
         whenever(addressSelector.getAddressVariants(any())).thenReturn(
                 listOf("1A282zR9uMz84P9vQNwCBCqfwGtKEu3K3v", "37QxhC4rF4nuJgikxY2MdKRupnXjomyuoU", "a0"))
 
-        whenever(wallet.hdPublicKey(0, true)).thenReturn(getPubKey(1))
-        whenever(wallet.hdPublicKey(1, true)).thenReturn(getPubKey(2))
-        whenever(wallet.hdPublicKey(2, true)).thenReturn(getPubKey(3))
+        whenever(wallet.hdPublicKey(account, 0, true)).thenReturn(getPubKey(1))
+        whenever(wallet.hdPublicKey(account, 1, true)).thenReturn(getPubKey(2))
+        whenever(wallet.hdPublicKey(account, 2, true)).thenReturn(getPubKey(3))
 
         PowerMockito
                 .whenNew(ApiManager::class.java)
@@ -54,7 +55,7 @@ class InitialSyncerApiTest {
 
     @Test
     fun fetchFromApi() {
-        initialSyncerApi.fetchFromApi(true).test()
+        initialSyncerApi.fetchFromApi(account, true).test()
 
         verify(apiManager).getJsonArray("tx/address/1A282zR9uMz84P9vQNwCBCqfwGtKEu3K3v")
     }
@@ -70,7 +71,7 @@ class InitialSyncerApiTest {
                         JsonArray() // response for second call
                 )
 
-        initialSyncerApi.fetchFromApi(true)
+        initialSyncerApi.fetchFromApi(account, true)
                 .test()
                 .assertValue {
                     val keys = it.first
