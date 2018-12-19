@@ -48,14 +48,16 @@ class InitialSyncerTest {
     @Test
     fun sync() {
         whenever(stateManager.restored).thenReturn(false)
-        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(apiRespStub)
-        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(apiRespStub)
+        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(apiRespStub)
+        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(apiRespStub)
+        whenever(initialSyncerApi.fetchFromApi(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
+        whenever(initialSyncerApi.fetchFromApi(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
 
         initialSyncer.sync()
 
         verify(peerGroup).start()
         verify(kitStateListener).onSyncStart()
-        verify(addressManager).addKeys(any())
+        verify(addressManager, times(2)).addKeys(any())
     }
 
     @Test
@@ -63,8 +65,8 @@ class InitialSyncerTest {
         val responseWithTimeout = apiRespStub.timeout(1, TimeUnit.SECONDS)
 
         whenever(stateManager.restored).thenReturn(false)
-        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(responseWithTimeout)
-        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(responseWithTimeout)
+        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(responseWithTimeout)
+        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(responseWithTimeout)
 
         initialSyncer.sync()
         initialSyncer.stop()
@@ -128,17 +130,19 @@ class InitialSyncerTest {
 
         whenever(stateManager.restored).thenReturn(false)
 
-        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(externalObservable)
-        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(internalObservable)
+        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(externalObservable)
+        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(internalObservable)
+        whenever(initialSyncerApi.fetchFromApi(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
+        whenever(initialSyncerApi.fetchFromApi(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
 
         initialSyncer.sync()
 
         verify(stateManager).restored = true
         verify(peerGroup).start()
-        verify(addressManager).addKeys(check { actualPublicKeys ->
-            assertTrue(containsKey(actualPublicKeys, externalPublicKey1))
-            assertTrue(containsKey(actualPublicKeys, internalPublicKey1))
-        })
+        inOrder(addressManager).let {
+            it.verify(addressManager).addKeys(listOf(externalPublicKey1, internalPublicKey1))
+            it.verify(addressManager).addKeys(listOf())
+        }
 
         val actualBlocks = realm.where(BlockHash::class.java).findAll()
 
@@ -152,8 +156,8 @@ class InitialSyncerTest {
     fun sync_apiNotSynced_blocksDiscoveredFail() {
         whenever(stateManager.restored).thenReturn(false)
 
-        whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(Single.error(Exception()))
-        whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(Single.error(Exception()))
+        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(Single.error(Exception()))
+        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(Single.error(Exception()))
 
         initialSyncer.sync()
 
@@ -163,9 +167,6 @@ class InitialSyncerTest {
         assertTrue(realm.where(PublicKey::class.java).findAll().isEmpty())
         assertTrue(realm.where(Block::class.java).findAll().isEmpty())
     }
-
-    private fun containsKey(keys: List<PublicKey>, key: PublicKey) =
-            keys.any { it.external == key.external && it.index == key.index }
 
     private fun containsBlock(blocks: List<BlockHash>, block: BlockHash) =
             blocks.any { it.reversedHeaderHashHex == block.reversedHeaderHashHex }

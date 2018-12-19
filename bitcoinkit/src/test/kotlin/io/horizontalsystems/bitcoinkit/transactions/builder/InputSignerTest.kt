@@ -29,7 +29,7 @@ class InputSignerTest {
     @Before
     fun setUp() {
         whenever(privateKey.createSignature(any())).thenReturn(derEncodedSignature)
-        whenever(hdWallet.privateKey(any(), anyBoolean())).thenReturn(privateKey)
+        whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(privateKey)
 
         inputSigner = InputSigner(hdWallet, network)
     }
@@ -57,7 +57,7 @@ class InputSignerTest {
 
     @Test(expected = InputSigner.Error.NoPrivateKey::class)
     fun sigScriptData_NoPrivateKey() {
-        whenever(hdWallet.privateKey(any(), anyBoolean())).thenReturn(null)
+        whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(null)
 
         inputSigner.sigScriptData(transaction, 0)
     }

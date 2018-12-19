@@ -21,7 +21,7 @@ class InputSigner(private val hdWallet: HDWallet, val network: Network) {
             throw Error.NoPreviousOutputAddress()
         }
 
-        val privateKey = checkNotNull(hdWallet.privateKey(publicKey.index, publicKey.external)) {
+        val privateKey = checkNotNull(hdWallet.privateKey(publicKey.account, publicKey.index, publicKey.external)) {
             throw Error.NoPrivateKey()
         }
 

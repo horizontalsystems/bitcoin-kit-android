@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.core
 
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.hdwalletkit.HDPublicKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 // https://gist.github.com/fabiomsr/845664a9c7e92bafb6fb0ca70d4e44fd
@@ -18,10 +17,7 @@ fun String.hexStringToByteArray(): ByteArray {
     }
 }
 
-fun HDWallet.publicKey(index: Int, external: Boolean) = publicKey(index, hdPublicKey(index, external))
-
-fun HDWallet.receivePublicKey(index: Int) = publicKey(index, hdPublicKey(index, true))
-
-fun HDWallet.changePublicKey(index: Int) = publicKey(index, hdPublicKey(index, false))
-
-private fun publicKey(index: Int, hdPubKey: HDPublicKey): PublicKey = PublicKey(index, hdPubKey.external, hdPubKey.publicKey, hdPubKey.publicKeyHash)
+fun HDWallet.publicKey(account: Int, index: Int, external: Boolean): PublicKey {
+    val hdPubKey = hdPublicKey(account, index, external)
+    return PublicKey(account, index, hdPubKey.external, hdPubKey.publicKey, hdPubKey.publicKeyHash)
+}
