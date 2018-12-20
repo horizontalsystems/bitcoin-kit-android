@@ -57,7 +57,8 @@ class AddressConverter(private val network: Network) {
                 addressType = AddressType.P2PKH
                 addressVersion = network.addressVersion
             }
-            ScriptType.P2SH -> {
+            ScriptType.P2SH,
+            ScriptType.P2WPKHSH -> {
                 addressType = AddressType.P2SH
                 addressVersion = network.addressScriptVersion
             }

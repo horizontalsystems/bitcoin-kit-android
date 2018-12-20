@@ -10,8 +10,13 @@ import io.realm.Realm
 class TransactionProcessor(private val extractor: TransactionExtractor, private val linker: TransactionLinker, private val addressManager: AddressManager) {
 
     fun process(transaction: Transaction, realm: Realm) {
-        extractor.extract(transaction, realm)
+        extractor.extract(transaction, realm, outputsOnly = true)
         linker.handle(transaction, realm)
+
+        if (transaction.isMine) {
+            extractor.extractAddress(transaction)
+            extractor.extract(transaction, realm, outputsOnly = false)
+        }
     }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)

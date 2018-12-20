@@ -22,6 +22,7 @@ class TransactionCreatorTest {
     private val transactionProcessor = mock(TransactionProcessor::class.java)
     private val peerGroup = mock(PeerGroup::class.java)
 
+    private val transactionP2PKH = Fixtures.transactionP2PKH
     private val transactionCreator = TransactionCreator(realmFactoryMock.realmFactory, transactionBuilder, transactionProcessor, peerGroup)
 
     @Before
@@ -30,17 +31,17 @@ class TransactionCreatorTest {
         realm.deleteAll()
         realm.commitTransaction()
 
-        whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any())).thenReturn(Fixtures.transactionP2PKH)
+        whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any())).thenReturn(transactionP2PKH)
     }
 
     @Test
     fun create_Success() {
         transactionCreator.create("address", 10_000_000, 8, true)
 
-        val insertedTx = realm.where(Transaction::class.java).equalTo("hashHexReversed", Fixtures.transactionP2PKH.hashHexReversed).findFirst()
+        val insertedTx = realm.where(Transaction::class.java).equalTo("hashHexReversed", transactionP2PKH.hashHexReversed).findFirst()
 
         assertTrue(insertedTx != null)
-        verify(transactionProcessor).process(Fixtures.transactionP2PKH, realm)
+        verify(transactionProcessor).process(transactionP2PKH, realm)
         verify(peerGroup).sendPendingTransactions()
     }
 

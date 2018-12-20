@@ -72,7 +72,8 @@ object Fixtures {
     }
 
     // P2PKH: TestNet tx => 68f297d8a8c9af30cd5a9d6d1eeec5ed3df7be1e4b62f2ced135af6ffe7814c2
-    val transactionP2PKH = Transaction().apply {
+    val transactionP2PKH
+        get() = Transaction().apply {
         version = 1
         lockTime = 0
         inputs.add(TransactionInput().apply {
@@ -100,7 +101,8 @@ object Fixtures {
     }
 
     // P2SH: TestNet tx => 761cc7102efe24f4353ae7dc816fbed5e15963d11ca93e36449d521bda21ac4d
-    val transactionP2SH = Transaction().apply {
+    val transactionP2SH
+        get() = Transaction().apply {
         version = 1
         lockTime = 0
         inputs.add(TransactionInput().apply {
@@ -128,7 +130,8 @@ object Fixtures {
     }
 
     // P2PK: TestNet tx => 75b84cb54351866cb5248158735e801d9b2c56592633157ba10d08affa2ffbab
-    val transactionP2PK = Transaction().apply {
+    val transactionP2PK
+        get() = Transaction().apply {
         version = 1
         lockTime = 0
         inputs.add(TransactionInput().apply {
@@ -155,7 +158,8 @@ object Fixtures {
         setHashes()
     }
 
-    val transactionP2WPKH = Transaction().apply {
+    val transactionP2WPKH
+        get() = Transaction().apply {
         version = 1
         inputs.add(TransactionInput().apply {
             previousOutputHash = "a6d1ce683f38a84cfd88a9d48b0ba2d7a8def00f8517e3da02c86fce6c7863d7".hexStringToByteArray()

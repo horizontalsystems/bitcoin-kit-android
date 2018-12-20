@@ -15,8 +15,6 @@ class TransactionLinker {
                 val previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
                 if (previousOutput?.publicKey != null) {
                     input.previousOutput = previousOutput
-                    input.address = previousOutput.address
-                    input.keyHash = previousOutput.keyHash
                     transaction.isMine = true
                     transaction.isOutgoing = true
                 }
