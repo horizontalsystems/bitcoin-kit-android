@@ -55,7 +55,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
     private val unspentOutputProvider: UnspentOutputProvider
-    private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}")
+    private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-${(words.first() + words.last()).hashCode()}")
 
     private val network = when (networkType) {
         NetworkType.MainNet -> MainNet()
