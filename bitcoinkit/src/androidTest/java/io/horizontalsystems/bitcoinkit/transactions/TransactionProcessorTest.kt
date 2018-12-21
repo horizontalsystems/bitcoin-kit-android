@@ -31,7 +31,7 @@ class TransactionProcessorTest {
         whenever(transaction.isMine).thenReturn(false)
         processor.process(transaction, realm)
 
-        verify(extractor).extract(transaction, realm, outputsOnly = true)
+        verify(extractor).extractOutputs(transaction, realm)
         verify(linker).handle(transaction, realm)
     }
 
@@ -40,8 +40,8 @@ class TransactionProcessorTest {
         whenever(transaction.isMine).thenReturn(true)
         processor.process(transaction, realm)
 
-        verify(extractor).extract(transaction, realm, outputsOnly = true)
-        verify(extractor).extract(transaction, realm, outputsOnly = false)
+        verify(extractor).extractOutputs(transaction, realm)
+        verify(extractor).extractInputs(transaction)
         verify(extractor).extractAddress(transaction)
         verify(linker).handle(transaction, realm)
     }

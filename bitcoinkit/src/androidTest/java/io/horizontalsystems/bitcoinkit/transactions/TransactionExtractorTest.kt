@@ -42,42 +42,42 @@ class TransactionExtractorTest {
     //
 
     @Test
-    fun extract_fromP2SH() {
+    fun extractInputs_P2SH() {
         val address = LegacyAddress("00112233", byteArrayOf(1), AddressType.P2SH)
         val signScript = "004830450221008c203a0881f75c731d9a3a2e6d2ffa37da7095b7dde61a9e7a906659219cd0fa02202677097ca7f7e164f73924fe8f84e1e6fc6611450efcda360ce771e98af9f73d0147304402201cba9b641483476f67a4cef08d7280f51de8d7615fcce76642d944dc07132a990220323d13175477bbf67c8c36fb243bec0e4c410bc9173a186d9f8e98ce3445363601475221025b64f7c63e30f315259393f64dcca269d18386997b1cc93da1388c4021e3ea8e210386d42d5d7027ac08ddcbb066e2140575091fe7dc1d202a008eb5e036725e975652ae"
 
         whenever(addressConverter.convert(any(), any())).thenReturn(address)
 
         transactionInput.sigScript = signScript.hexStringToByteArray()
-        extractor.extract(transaction, realm, outputsOnly = false)
+        extractor.extractInputs(transaction)
 
         assertEquals(address.hash, transaction.inputs[0]?.keyHash)
         assertEquals(address.string, transaction.inputs[0]?.address)
     }
 
     @Test
-    fun extract_fromP2PKH() {
+    fun extractInputs_P2PKH() {
         val address = LegacyAddress("00112233", byteArrayOf(1), AddressType.P2PKH)
         val signScript = "483045022100907103d70cd2215bc76e27e07cafa39e975cbf4a7f5897402883dbd59b42ed5e022000bbaeb898d2f5c687a420ad51e001080035ee9690b19d6af4bc192f1e0a8b17012103aac540428b6955a53bb01fcae6d4279df45253b2c61684fb993b5545935dac7a"
 
         whenever(addressConverter.convert(any(), any())).thenReturn(address)
 
         transactionInput.sigScript = signScript.hexStringToByteArray()
-        extractor.extract(transaction, realm, outputsOnly = false)
+        extractor.extractInputs(transaction)
 
         assertEquals(address.hash, transaction.inputs[0]?.keyHash)
         assertEquals(address.string, transaction.inputs[0]?.address)
     }
 
     @Test
-    fun extract_fromP2WPKHSH() {
+    fun extractInputs_P2WPKHSH() {
         val address = LegacyAddress("00112233", byteArrayOf(1), AddressType.P2SH)
         val signScript = "1600148749115073ad59a6f3587f1f9e468adedf01473f"
 
         whenever(addressConverter.convert(any(), any())).thenReturn(address)
 
         transactionInput.sigScript = signScript.hexStringToByteArray()
-        extractor.extract(transaction, realm, outputsOnly = false)
+        extractor.extractInputs(transaction)
 
         assertEquals(address.hash, transaction.inputs[0]?.keyHash)
         assertEquals(address.string, transaction.inputs[0]?.address)
@@ -88,48 +88,48 @@ class TransactionExtractorTest {
     //
 
     @Test
-    fun extract_toP2PKH() {
+    fun extractOutputs_P2PKH() {
         assertNull(transaction.outputs[0]?.keyHash)
 
         val keyHash = "1ec865abcb88cec71c484d4dadec3d7dc0271a7b"
         transactionOutput.lockingScript = "76a914${keyHash}88AC".hexStringToByteArray()
-        extractor.extract(transaction, realm, outputsOnly = true)
+        extractor.extractOutputs(transaction, realm)
 
         assertEquals(keyHash, transaction.outputs[0]?.keyHash?.toHexString())
         assertEquals(ScriptType.P2PKH, transaction.outputs[0]?.scriptType)
     }
 
     @Test
-    fun extract_toP2PK() {
+    fun extractOutputs_P2PK() {
         assertNull(transaction.outputs[0]?.keyHash)
 
         val keyHash = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15"
         transactionOutput.lockingScript = "21${keyHash}AC".hexStringToByteArray()
-        extractor.extract(transaction, realm, outputsOnly = true)
+        extractor.extractOutputs(transaction, realm)
 
         assertEquals(keyHash, transaction.outputs[0]?.keyHash?.toHexString())
         assertEquals(ScriptType.P2PK, transaction.outputs[0]?.scriptType)
     }
 
     @Test
-    fun extract_toP2SH() {
+    fun extractOutputs_P2SH() {
         assertNull(transaction.outputs[0]?.keyHash)
 
         val keyHash = "bd82ef4973ebfcbc8f7cb1d540ef0503a791970b"
         transactionOutput.lockingScript = "A914${keyHash}87".hexStringToByteArray()
-        extractor.extract(transaction, realm, outputsOnly = true)
+        extractor.extractOutputs(transaction, realm)
 
         assertEquals(keyHash, transaction.outputs[0]?.keyHash?.toHexString())
         assertEquals(ScriptType.P2SH, transaction.outputs[0]?.scriptType)
     }
 
     @Test
-    fun extract_toP2WPKH() {
+    fun extractOutputs_P2WPKH() {
         assertNull(transaction.outputs[0]?.keyHash)
 
         val keyHash = "00148749115073ad59a6f3587f1f9e468adedf01473f".hexStringToByteArray()
         transactionOutput.lockingScript = keyHash
-        extractor.extract(transaction, realm, outputsOnly = true)
+        extractor.extractOutputs(transaction, realm)
 
         assertEquals(keyHash, transaction.outputs[0]?.keyHash)
         assertEquals(ScriptType.P2WPKH, transaction.outputs[0]?.scriptType)
@@ -146,7 +146,7 @@ class TransactionExtractorTest {
         assertNull(transaction.outputs[0]?.keyHash)
         assertNull(transaction.outputs[1]?.keyHash)
 
-        extractor.extract(transaction, realm)
+        extractor.extractOutputs(transaction, realm)
 
         // output
         assertEquals(ScriptType.P2PKH, transaction.outputs[0]?.scriptType)
@@ -170,7 +170,7 @@ class TransactionExtractorTest {
         assertNull(transaction.outputs[0]?.keyHash)
         assertNull(transaction.outputs[1]?.keyHash)
 
-        extractor.extract(transaction, realm)
+        extractor.extractOutputs(transaction, realm)
 
         // output
         assertEquals(ScriptType.P2SH, transaction.outputs[0]?.scriptType)
@@ -194,7 +194,7 @@ class TransactionExtractorTest {
         assertNull(transaction.outputs[0]?.keyHash)
         assertNull(transaction.outputs[1]?.keyHash)
 
-        extractor.extract(transaction, realm)
+        extractor.extractOutputs(transaction, realm)
 
         assertEquals(ScriptType.P2PK, transaction.outputs[0]?.scriptType)
         assertEquals("04ae1a62fe09c5f51b13905f07f06b99a2f7159b2225f374cd378d71302fa28414e7aab37397f554a7df5f142c21c1b7303b8a0626f1baded5c72a704f7e6cd84c", transaction.outputs[0]?.keyHash?.toHexString())

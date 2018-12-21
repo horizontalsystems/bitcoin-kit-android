@@ -10,31 +10,8 @@ import io.realm.Realm
 import java.util.*
 
 class TransactionExtractor(private val addressConverter: AddressConverter) {
-    fun extract(transaction: Transaction, realm: Realm, outputsOnly: Boolean = true) = when (outputsOnly) {
-        true -> parseOutputs(transaction, realm)
-        false -> parseInputs(transaction)
-    }
 
-    fun extractAddress(transaction: Transaction) {
-        for (output in transaction.outputs) {
-            val outKeyHash = output.keyHash ?: continue
-            val scriptType = output.scriptType
-
-            val pubkeyHash = when (scriptType) {
-                ScriptType.P2PK -> {
-                    output.publicKey?.publicKeyHash ?: Utils.sha256Hash160(outKeyHash)
-                }
-                else -> outKeyHash
-            }
-
-            try {
-                output.address = addressConverter.convert(pubkeyHash, scriptType).string
-            } catch (e: Exception) {
-            }
-        }
-    }
-
-    private fun parseOutputs(transaction: Transaction, realm: Realm) {
+    fun extractOutputs(transaction: Transaction, realm: Realm) {
         for (output in transaction.outputs) {
             val payload: ByteArray
             val scriptType: Int
@@ -62,11 +39,15 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
             getPublicKey(output, realm)?.let { pubKey ->
                 transaction.isMine = true
                 output.publicKey = pubKey
+
+                if (scriptType == ScriptType.P2WPKH) {
+                    output.scriptType = ScriptType.P2WPKHSH
+                }
             }
         }
     }
 
-    private fun parseInputs(transaction: Transaction) {
+    fun extractInputs(transaction: Transaction) {
         for (input in transaction.inputs) {
             if (input.previousOutput != null) {
                 input.address = input.previousOutput?.address
@@ -104,7 +85,8 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
             } else continue
 
             try {
-                val address = addressConverter.convert(payload, scriptType)
+                val keyHash = Utils.sha256Hash160(payload)
+                val address = addressConverter.convert(keyHash, scriptType)
                 input.keyHash = address.hash
                 input.address = address.string
 
@@ -113,13 +95,36 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
         }
     }
 
+    fun extractAddress(transaction: Transaction) {
+        for (output in transaction.outputs) {
+            val outKeyHash = output.keyHash ?: continue
+            val scriptType = output.scriptType
+
+            val pubkeyHash = when (scriptType) {
+                ScriptType.P2PK -> {
+                    output.publicKey?.publicKeyHash ?: Utils.sha256Hash160(outKeyHash)
+                }
+                else -> outKeyHash
+            }
+
+            try {
+                output.address = addressConverter.convert(pubkeyHash, scriptType).string
+            } catch (e: Exception) {
+            }
+        }
+    }
+
     private fun getPublicKey(output: TransactionOutput, realm: Realm): PublicKey? {
         val query = realm.where(PublicKey::class.java)
+        var keyHash = output.keyHash
+
         if (output.scriptType == ScriptType.P2WPKH) {
-            query.equalTo("scriptHashP2WPKH", output.keyHash)
+            keyHash = keyHash?.drop(2)?.toByteArray()
+
+            query.equalTo("scriptHashP2WPKH", keyHash)
         } else {
-            query.equalTo("publicKey", output.keyHash).or()
-            query.equalTo("publicKeyHash", output.keyHash)
+            query.equalTo("publicKey", keyHash).or()
+            query.equalTo("publicKeyHash", keyHash)
         }
 
         return query.findFirst()
@@ -159,7 +164,7 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
     // 22 bytes script: {version-byte 00/81-96} 14 {20-byte-key-hash}
     private fun isP2WPKH(lockingScript: ByteArray): Boolean {
         return (lockingScript.size == 22 &&
-                lockingScript[0] == 0.toByte() &&
+                lockingScript[0] == 0.toByte() || lockingScript[1] in 0x50..0x61 &&
                 lockingScript[1] == 20.toByte())
     }
 
