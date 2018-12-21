@@ -82,10 +82,9 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val bloomFilterManager = BloomFilterManager(realmFactory)
         val addressSelector: IAddressSelector
 
-        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = peerSize)
+        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
-        peerGroup.syncStateListener = kitStateProvider
 
         when (networkType) {
             NetworkType.MainNet,

@@ -1,15 +1,16 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
-import io.horizontalsystems.bitcoinkit.network.peer.task.SendTransactionTask
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
 import io.horizontalsystems.bitcoinkit.network.peer.PeerManager
+import io.horizontalsystems.bitcoinkit.network.peer.task.SendTransactionTask
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Before
@@ -33,6 +34,7 @@ class PeerGroupTest {
     private var hostManager = mock(PeerHostManager::class.java)
     private var peerManager = mock(PeerManager::class.java)
     private var bloomFilterManager = mock(BloomFilterManager::class.java)
+    private var kitStateProvider = mock(KitStateProvider::class.java)
     private var relayTransactionTask = mock(SendTransactionTask::class.java)
 
     private val peerIp = "8.8.8.8"
@@ -51,12 +53,17 @@ class PeerGroupTest {
                 .withAnyArguments()
                 .thenReturn(peer1, peer2)
 
+        // PeerManager
+        PowerMockito.whenNew(PeerManager::class.java)
+                .withAnyArguments()
+                .thenReturn(peerManager)
+
         // RelayTransactionTask
         PowerMockito.whenNew(SendTransactionTask::class.java)
                 .withAnyArguments()
                 .thenReturn(relayTransactionTask)
 
-        peerGroup = PeerGroup(hostManager, bloomFilterManager, network, peerManager, 2)
+        peerGroup = PeerGroup(hostManager, bloomFilterManager, network, kitStateProvider, 2)
     }
 
     @Test

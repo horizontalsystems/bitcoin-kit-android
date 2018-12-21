@@ -18,17 +18,17 @@ class PeerGroup(
         private val hostManager: PeerHostManager,
         private val bloomFilterManager: BloomFilterManager,
         private val network: Network,
-        private val peerManager: PeerManager = PeerManager(),
+        private val syncStateListener: ISyncStateListener,
         private val peerSize: Int) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     var blockSyncer: BlockSyncer? = null
     var transactionSyncer: TransactionSyncer? = null
-    var syncStateListener: ISyncStateListener? = null
 
     @Volatile
     private var running = false
-    private val peersQueue = Executors.newSingleThreadExecutor()
     private val logger = Logger.getLogger("PeerGroup")
+    private val peersQueue = Executors.newSingleThreadExecutor()
+    private val peerManager = PeerManager()
 
     init {
         bloomFilterManager.listener = this
@@ -52,7 +52,7 @@ class PeerGroup(
 
     fun close() {
         running = false
-        syncStateListener?.onSyncStop()
+        syncStateListener.onSyncStop()
 
         interrupt()
         try {
@@ -67,7 +67,7 @@ class PeerGroup(
     override fun run() {
         running = true
 
-        syncStateListener?.onSyncStart()
+        syncStateListener.onSyncStart()
         blockSyncer?.prepareForDownload()
 
         while (running) {
@@ -257,7 +257,7 @@ class PeerGroup(
 
                 if (syncPeer.synced) {
                     blockSyncer.downloadCompleted()
-                    syncStateListener?.onSyncFinish()
+                    syncStateListener.onSyncFinish()
                     syncPeer.sendMempoolMessage()
                     logger.info("Peer synced ${syncPeer.host}")
                     peerManager.syncPeer = null
