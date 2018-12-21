@@ -6,19 +6,25 @@ import io.realm.Realm
 class TransactionLinker {
 
     fun handle(transaction: Transaction, realm: Realm) {
-        transaction.inputs.forEach { input ->
+        for (input in transaction.inputs) {
             val previousTransaction = realm.where(Transaction::class.java)
                     .equalTo("hashHexReversed", input.previousOutputHexReversed)
                     .findFirst()
 
-            if (previousTransaction != null && previousTransaction.outputs.size > input.previousOutputIndex) {
-                val previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
-                if (previousOutput?.publicKey != null) {
-                    input.previousOutput = previousOutput
-                    transaction.isMine = true
-                    transaction.isOutgoing = true
-                }
+            if (previousTransaction == null || previousTransaction.outputs.size <= input.previousOutputIndex) {
+                continue
             }
+
+            val previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
+            if (previousOutput?.publicKey == null) {
+                continue
+            }
+
+            transaction.isMine = true
+            transaction.isOutgoing = true
+
+            // Link previousOutput to this input
+            input.previousOutput = previousOutput
         }
     }
 
