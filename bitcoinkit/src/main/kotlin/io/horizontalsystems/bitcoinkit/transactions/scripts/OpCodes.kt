@@ -266,26 +266,19 @@ object OpCodes {
             OP_NOP10 to "NOP10"
     )
 
-    private val opCodeNameMap = opCodeMap.entries.associateBy({ it.value }) { it.key }
-
     val p2pkhStart = byteArrayOf(OP_DUP.toByte(), OP_HASH160.toByte())
     val p2pkhEnd = byteArrayOf(OP_EQUALVERIFY.toByte(), OP_CHECKSIG.toByte())
     val p2pshStart = byteArrayOf(OP_HASH160.toByte())
     val p2pshEnd = byteArrayOf(OP_EQUAL.toByte())
 
-    // Converts the given OpCode into a string (eg "0", "PUSHDATA", or "NON_OP(10)")
+    //  Converts the given OpCode into a string (eg "0", "PUSHDATA", or "NON_OP(10)")
     fun getOpCodeName(opcode: Int): String {
         return opCodeMap[opcode] ?: "NON_OP($opcode)"
     }
 
-    // Converts the given pushdata OpCode into a string (eg "PUSHDATA2", or "PUSHDATA(23)")
+    //  Converts the given pushdata OpCode into a string (eg "PUSHDATA2", or "PUSHDATA(23)")
     fun getPushDataName(opcode: Int): String {
         return opCodeMap[opcode] ?: "PUSHDATA($opcode)"
-    }
-
-    // Converts the given OpCodeName into an int
-    fun getOpCode(opCodeName: String): Int {
-        return opCodeNameMap[opCodeName] ?: OP_INVALIDOPCODE
     }
 
     fun push(value: Int) = when (value) {

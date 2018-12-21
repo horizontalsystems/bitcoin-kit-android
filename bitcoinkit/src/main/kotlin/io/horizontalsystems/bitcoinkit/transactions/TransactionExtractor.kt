@@ -183,7 +183,7 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
             return null
 
         var chunkLast = redeemScript.chunks.last()
-        if (chunkLast.equalsOpCode(OP_ENDIF) && redeemScript.chunks.size > 1) {
+        if (chunkLast.opcode == OP_ENDIF && redeemScript.chunks.size > 1) {
             val chunk = redeemScript.chunks.takeLast(2).firstOrNull()
             if (chunk != null) {
                 chunkLast = chunk
