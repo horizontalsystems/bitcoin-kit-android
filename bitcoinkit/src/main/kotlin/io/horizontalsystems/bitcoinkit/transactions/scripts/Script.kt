@@ -1,6 +1,8 @@
 package io.horizontalsystems.bitcoinkit.transactions.scripts
 
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.utils.Utils
+import java.io.ByteArrayInputStream
 
 object ScriptType {
     const val P2PKH = 1     // pay to pubkey hash (aka pay to address)
@@ -12,80 +14,78 @@ object ScriptType {
     const val UNKNOWN = 0
 }
 
-class Script(private val bytes: ByteArray) {
+class Script(bytes: ByteArray) {
     val chunks = try {
-        ScriptParser.parseChunks(bytes)
+        parseChunks(bytes)
     } catch (e: Exception) {
-        listOf<ScriptChunk>()
+        listOf<Chunk>()
     }
 
-    fun getPubKeyHashIn(): ByteArray? {
-        if (ScriptParser.isPKHashInput(this))
-            return Utils.sha256Hash160(chunks[1].data)
-        if (ScriptParser.isSHashInput(this) || ScriptParser.isMultiSigInput(this))
-            return Utils.sha256Hash160(chunks.last().data)
-        if (ScriptParser.isP2WPKH(this))
-            return bytes
+    private fun parseChunks(bytes: ByteArray): List<Chunk> {
+        val chunks = mutableListOf<Chunk>()
+        val stream = ByteArrayInputStream(bytes)
 
-        return null
-    }
+        while (stream.available() > 0) {
+            var dataToRead: Long = -1
 
-    fun getPubKeyHash(): ByteArray? {
-        if (ScriptParser.isP2PKH(this))
-            return chunks[2].data
-        if (ScriptParser.isP2PK(this))
-            return Utils.sha256Hash160(chunks[0].data)
-        if (ScriptParser.isP2SH(this))
-            return chunks[1].data
-        if (ScriptParser.isPayToWitnessHash(this))
-            return bytes
+            val opcode = stream.read()
+            if (opcode >= 0 && opcode < OP_PUSHDATA1) {
+                // Read some bytes of data, where how many is the opcode value itself.
+                dataToRead = opcode.toLong()
+            } else if (opcode == OP_PUSHDATA1) {
+                if (stream.available() < 1) throw Exception("Unexpected end of script")
 
-        return null
-    }
+                dataToRead = stream.read().toLong()
+            } else if (opcode == OP_PUSHDATA2) {
+                // Read a short, then read that many bytes of data.
+                if (stream.available() < 2) throw Exception("Unexpected end of script")
 
-    fun getScriptType(): Int {
-        if (ScriptParser.isP2PKH(this) || ScriptParser.isPKHashInput(this))
-            return ScriptType.P2PKH
-        if (ScriptParser.isP2PK(this) || ScriptParser.isPubKeyInput(this))
-            return ScriptType.P2PK
-        if (ScriptParser.isP2SH(this) || ScriptParser.isMultiSigInput(this))
-            return ScriptType.P2SH
-        if (ScriptParser.isP2WPKH(this))
-            return ScriptType.P2WPKH
-        if (ScriptParser.isP2WSH(this))
-            return ScriptType.P2WSH
+                dataToRead = Utils.readUint16FromStream(stream).toLong()
+            } else if (opcode == OP_PUSHDATA4) {
+                // Read a uint32, then read that many bytes of data.
+                // Though this is allowed, because its value cannot be > 520, it should never actually be used
+                if (stream.available() < 4) throw Exception("Unexpected end of script")
 
-        return ScriptType.UNKNOWN
-    }
+                dataToRead = Utils.readUint32FromStream(stream)
+            }
 
-    fun isCode(): Boolean {
-        for (chunk in chunks) {
-            if (chunk.opcode == -1)
-                return false
+            var chunk: Chunk
+            if (dataToRead < 0) {
+                chunk = Chunk(opcode)
+            } else if (dataToRead > stream.available()) {
+                throw Exception("Push of data element that is larger than remaining data")
+            } else {
+                val data = ByteArray(dataToRead.toInt())
+                check(dataToRead == 0L || stream.read(data, 0, dataToRead.toInt()).toLong() == dataToRead)
+                chunk = Chunk(opcode, data)
+            }
 
-            if (chunk.isOpcodeDisabled())
-                return false
-
-            if (chunk.opcode == OP_RESERVED || chunk.opcode == OP_NOP || chunk.opcode == OP_VER || chunk.opcode == OP_VERIF || chunk.opcode == OP_VERNOTIF || chunk.opcode == OP_RESERVED1 || chunk.opcode == OP_RESERVED2 || chunk.opcode == OP_NOP1)
-                return false
-
-            if (chunk.opcode > OP_CHECKSEQUENCEVERIFY)
-                return false
+            chunks.add(chunk)
         }
 
-        return true
+        return chunks
     }
 
-    fun isPushOnly(): Boolean {
-        for (chunk in chunks) {
-            if (chunk.opcode == -1)
-                return false
+    class Chunk(val opcode: Int, val data: ByteArray? = null) {
 
-            if (chunk.opcode > OP_16)
-                return false
+        override fun toString(): String {
+            val buf = StringBuilder()
+            //  opcode is a single byte of non-pushdata content
+            if (opcode > OP_PUSHDATA4) {
+                buf.append(OpCodes.getOpCodeName(opcode))
+            } else if (data != null) {
+                // Data chunk
+                buf.append(OpCodes.getPushDataName(opcode))
+                        .append("[")
+                        .append(data.toHexString())
+                        .append("]")
+            } else {
+                // Small num
+                buf.append(opcode)
+            }
+
+            return buf.toString()
         }
-
-        return true
     }
 
     override fun toString() = chunks.joinToString(" ")

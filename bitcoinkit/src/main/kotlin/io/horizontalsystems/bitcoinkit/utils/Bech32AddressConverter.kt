@@ -39,10 +39,6 @@ class SegwitAddressConverter : Bech32AddressConverter() {
 
         val script = Script(bytes)
         val version = witnessVersion(script.chunks[0].opcode)
-        if (version == 0 && script.getScriptType() != scriptType) {
-            throw AddressFormatException("Invalid script type")
-        }
-
         val keyHash = script.chunks[1].data
         if (keyHash == null || version == null) {
             throw AddressFormatException("Invalid address size")

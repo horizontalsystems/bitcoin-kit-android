@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.network.MainNet
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
-import junit.framework.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -38,7 +38,7 @@ class BlockSyncerTest_localKnownBestBlockHeight {
     fun localKnownBestBlockHeight_noBlockHashes() {
         val expectedKnownBestBlockHeight = network.checkpointBlock.height
 
-        Assert.assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
+        assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
     }
 
     @Test
@@ -50,7 +50,7 @@ class BlockSyncerTest_localKnownBestBlockHeight {
             realm.insert(BlockHash(byteArrayOf(2), 0, 2))
         }
 
-        Assert.assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
+        assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
     }
 
     @Test
@@ -63,7 +63,7 @@ class BlockSyncerTest_localKnownBestBlockHeight {
             realm.insert(BlockHash(byteArrayOf(2), 0, 3))
         }
 
-        Assert.assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
+        assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
     }
 
     @Test
@@ -75,6 +75,6 @@ class BlockSyncerTest_localKnownBestBlockHeight {
             realm.insert(BlockHash(byteArrayOf(2), 0, 5))
         }
 
-        Assert.assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
+        assertEquals(expectedKnownBestBlockHeight, blockSyncer.localKnownBestBlockHeight)
     }
 }

@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.realm.Realm
 import org.junit.Assert.assertEquals
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
@@ -42,55 +43,21 @@ class TransactionLinkerTest {
     @Test
     fun listOutputs() {
         val savedNextTransaction = savedNextTx()
-        realm.executeTransaction { it.insert(savedNextTransaction) }
+        realm.executeTransaction {
+            transactionP2PK.outputs[0]!!.publicKey = pubKey
+            it.insert(savedNextTransaction)
+        }
 
-        assertEquals(savedNextTransaction.inputs[0]?.previousOutput, null)
+        assertEquals(null, savedNextTransaction.inputs[0]?.previousOutput)
+        assertEquals(false, savedNextTransaction.isMine)
+        assertEquals(false, savedNextTransaction.isOutgoing)
+
         linker.handle(savedNextTransaction, realm)
 
-        assertOutputEqual(
-                savedNextTransaction.inputs[0]!!.previousOutput!!,
-                transactionP2PK.outputs[0]!!
-        )
+        assertOutputEqual(savedNextTransaction.inputs[0]?.previousOutput, transactionP2PK.outputs[0])
+        assertEquals(true, savedNextTransaction.isMine)
+        assertEquals(true, savedNextTransaction.isOutgoing)
     }
-
-//    TODO
-//    @Test
-//    fun listInputs() {
-//        realm.beginTransaction()
-//
-//        val savedPreviousTransaction = realm.copyToRealm(Transaction().apply {
-//            hashHexReversed = transactionP2PK.inputs[0]!!.previousOutputHexReversed
-//            outputs.add(TransactionOutput().apply {
-//                index = transactionP2PK.inputs[0]!!.previousOutputIndex.toInt()
-//                value = 100000
-//            })
-//        })
-//
-//        realm.commitTransaction()
-//
-//        assertEquals(transactionP2PK.inputs[0]!!.previousOutput, null)
-//        realm.executeTransaction { linker.handle(savedPreviousTransaction, it) }
-//        assertOutputEqual(
-//                transactionP2PK.inputs[0]!!.previousOutput!!,
-//                savedPreviousTransaction.outputs[0]!!
-//        )
-//    }
-
-//    TODO
-//    @Test
-//    fun transactionAndOutput_isMine() {
-//        realm.executeTransaction {
-//            transactionP2PK.outputs[0]!!.scriptType = ScriptType.P2PKH
-//            transactionP2PK.outputs[0]!!.keyHash = pubKeyHash
-//        }
-//
-//        assertEquals(transactionP2PK.isMine, false)
-//        assertEquals(transactionP2PK.outputs[0]!!.publicKey, null)
-//
-//        realm.executeTransaction { linker.handle(transactionP2PK, it) }
-//        assertEquals(transactionP2PK.isMine, true)
-//        assertEquals(transactionP2PK.outputs[0]!!.publicKey, pubKey)
-//    }
 
     @Test
     fun dontSetTransactionAndOutputIsMine() {
@@ -100,26 +67,12 @@ class TransactionLinkerTest {
 
         assertEquals(transactionP2PK.isMine, false)
         assertEquals(transactionP2PK.outputs[0]!!.publicKey, null)
+
         realm.executeTransaction { linker.handle(transactionP2PK, it) }
+
         assertEquals(transactionP2PK.isMine, false)
         assertEquals(transactionP2PK.outputs[0]!!.publicKey, null)
     }
-
-//    TODO
-//    @Test
-//    fun setNextTransactionIsMine() {
-//        realm.beginTransaction()
-//
-//        val savedNextTransaction = realm.copyToRealm(savedNextTx())
-//
-//        transactionP2PK.outputs[0]!!.scriptType = ScriptType.P2PKH
-//        transactionP2PK.outputs[0]!!.keyHash = pubKeyHash
-//        realm.commitTransaction()
-//
-//        assertEquals(savedNextTransaction.isMine, false)
-//        realm.executeTransaction { linker.handle(transactionP2PK, it) }
-//        assertEquals(savedNextTransaction.isMine, true)
-//    }
 
     @Test
     fun dontSetNextTransactionIsMine() {
@@ -145,7 +98,11 @@ class TransactionLinkerTest {
         }
     }
 
-    private fun assertOutputEqual(out1: TransactionOutput, out2: TransactionOutput) {
+    private fun assertOutputEqual(out1: TransactionOutput?, out2: TransactionOutput?) {
+        if (out1 == null || out2 == null) {
+            return fail("TransactionOutput is null")
+        }
+
         assertEquals(out1.value, out2.value)
         assertEquals(out1.lockingScript.toHexString(), out2.lockingScript.toHexString())
         assertEquals(out1.index, out2.index)

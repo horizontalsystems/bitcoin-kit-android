@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.realm.Realm
-import junit.framework.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -102,22 +102,22 @@ class BlockchainTest {
 
     private fun assertBlocksPresent(blocksInChain: Map<Int, String>, realm: Realm) {
         blocksInChain.forEach { (height, id) ->
-            Assert.assertEquals("Block $id($height) not found", 1, realm.where(Block::class.java).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
-            Assert.assertEquals("Transaction $id($height) not found", 1, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
+            assertEquals("Block $id($height) not found", 1, realm.where(Block::class.java).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
+            assertEquals("Transaction $id($height) not found", 1, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
         }
     }
 
     private fun assertBlocksNotPresent(blocksInChain: Map<Int, String>, realm: Realm) {
         blocksInChain.forEach { (height, id) ->
-            Assert.assertEquals("Block $id($height) should not present", 0, realm.where(Block::class.java).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
-            Assert.assertEquals("Transaction $id($height) should not present", 0, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
+            assertEquals("Block $id($height) should not present", 0, realm.where(Block::class.java).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
+            assertEquals("Transaction $id($height) should not present", 0, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
         }
     }
 
     private fun assertNotStaleBlocksPresent(blocksInChain: Map<Int, String>, realm: Realm) {
         blocksInChain.forEach { (height, id) ->
-            Assert.assertEquals("Not stale block $id($height) not found", 1, realm.where(Block::class.java).equalTo("stale", false).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
-            Assert.assertEquals("Transaction $id($height) not found", 1, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
+            assertEquals("Not stale block $id($height) not found", 1, realm.where(Block::class.java).equalTo("stale", false).equalTo("height", height).equalTo("reversedHeaderHashHex", id).count())
+            assertEquals("Transaction $id($height) not found", 1, realm.where(Transaction::class.java).equalTo("hashHexReversed", id).count())
         }
     }
 
