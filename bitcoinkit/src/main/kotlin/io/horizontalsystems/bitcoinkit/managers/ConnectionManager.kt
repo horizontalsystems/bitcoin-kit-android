@@ -7,5 +7,5 @@ class ConnectionManager(context: Context) {
     val isOnline: Boolean
         get() = connectivityManager.activeNetworkInfo?.isConnected ?: false
 
-    private var connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+    private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 }

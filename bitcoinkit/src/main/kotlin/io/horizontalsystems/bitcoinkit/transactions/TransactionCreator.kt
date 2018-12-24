@@ -13,7 +13,7 @@ class TransactionCreator(
 
     @Throws
     fun create(address: String, value: Int, feeRate: Int, senderPay: Boolean) {
-        peerGroup.checkSendReadiness()
+        peerGroup.checkPeersSynced()
 
         realmFactory.realm.use { realm ->
             val transaction = builder.buildTransaction(value, address, feeRate, senderPay, realm)

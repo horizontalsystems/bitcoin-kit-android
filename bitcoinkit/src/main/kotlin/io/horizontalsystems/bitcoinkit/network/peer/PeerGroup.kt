@@ -42,7 +42,7 @@ class PeerGroup(
     }
 
     @Throws
-    fun checkSendReadiness() {
+    fun checkPeersSynced() {
         if (peerManager.peersCount() < 1) {
             throw Error("No peers connected")
         }
@@ -271,7 +271,7 @@ class PeerGroup(
 
     @Throws
     private fun handlePendingTransactions() {
-        checkSendReadiness()
+        checkPeersSynced()
 
         peerManager.someReadyPeers().forEach { peer ->
             transactionSyncer?.getPendingTransactions()?.forEach { pendingTransaction ->
