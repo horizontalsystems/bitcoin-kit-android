@@ -13,6 +13,7 @@ import org.mockito.Mockito.*
 class FeeRateSyncerTest {
     private val factory = RealmFactoryMock()
     private val apiFeeRate = mock(ApiFeeRate::class.java)
+    private val connectionManager = mock(ConnectionManager::class.java)
 
     private lateinit var realm: Realm
     private lateinit var timer: PublishSubject<Long>
@@ -26,12 +27,13 @@ class FeeRateSyncerTest {
         realm.executeTransaction { it.deleteAll() }
 
         whenever(apiFeeRate.getFeeRate()).thenReturn(Observable.empty())
+        whenever(connectionManager.isOnline).thenReturn(true)
     }
 
     @Test
     fun start_getRateOnce() {
         timer = PublishSubject.create()
-        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer)
+        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer, connectionManager)
         feeRateSyncer.start()
         timer.onNext(1)
 
@@ -41,7 +43,7 @@ class FeeRateSyncerTest {
     @Test
     fun start_getRateTwice() {
         timer = PublishSubject.create()
-        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer)
+        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer, connectionManager)
         feeRateSyncer.start()
         timer.onNext(1)
         timer.onNext(1)
@@ -53,7 +55,7 @@ class FeeRateSyncerTest {
     fun start_getRateNone() {
         timer = PublishSubject.create()
 
-        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer)
+        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer, connectionManager)
         feeRateSyncer.start()
 
         verifyNoMoreInteractions(apiFeeRate)
@@ -63,7 +65,7 @@ class FeeRateSyncerTest {
     fun stop_cancelTimer() {
         timer = PublishSubject.create()
 
-        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer)
+        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer, connectionManager)
         feeRateSyncer.start()
         feeRateSyncer.stop()
         timer.onNext(1)
@@ -74,7 +76,7 @@ class FeeRateSyncerTest {
     @Test
     fun start_refresh() {
         timer = PublishSubject.create()
-        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer)
+        feeRateSyncer = FeeRateSyncer(factory.realmFactory, apiFeeRate, timer, connectionManager)
         feeRateSyncer.start()
         feeRateSyncer.start()
         timer.onNext(1)

@@ -82,10 +82,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val bloomFilterManager = BloomFilterManager(realmFactory)
         val addressSelector: IAddressSelector
 
-        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = peerSize)
+        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
-        peerGroup.syncStateListener = kitStateProvider
+        peerGroup.connectionManager = connectionManager
 
         when (networkType) {
             NetworkType.MainNet,
@@ -104,7 +104,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
         val stateManager = StateManager(realmFactory, network, newWallet)
         val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
-        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
+        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
         initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
@@ -214,7 +214,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     }
 
     companion object {
+        private var connectionManager: ConnectionManager? = null
+
         fun init(context: Context) {
+            connectionManager = ConnectionManager(context)
             Realm.init(context)
         }
     }

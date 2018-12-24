@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
+import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
@@ -18,17 +19,18 @@ class PeerGroup(
         private val hostManager: PeerHostManager,
         private val bloomFilterManager: BloomFilterManager,
         private val network: Network,
-        private val peerManager: PeerManager = PeerManager(),
+        private val syncStateListener: ISyncStateListener,
         private val peerSize: Int) : Thread(), Peer.Listener, BloomFilterManager.Listener {
 
     var blockSyncer: BlockSyncer? = null
     var transactionSyncer: TransactionSyncer? = null
-    var syncStateListener: ISyncStateListener? = null
+    var connectionManager: ConnectionManager? = null
 
     @Volatile
     private var running = false
-    private val peersQueue = Executors.newSingleThreadExecutor()
     private val logger = Logger.getLogger("PeerGroup")
+    private val peersQueue = Executors.newSingleThreadExecutor()
+    private val peerManager = PeerManager()
 
     init {
         bloomFilterManager.listener = this
@@ -40,7 +42,7 @@ class PeerGroup(
     }
 
     @Throws
-    fun checkSendReadiness() {
+    fun checkPeersSynced() {
         if (peerManager.peersCount() < 1) {
             throw Error("No peers connected")
         }
@@ -52,7 +54,7 @@ class PeerGroup(
 
     fun close() {
         running = false
-        syncStateListener?.onSyncStop()
+        syncStateListener.onSyncStop()
 
         interrupt()
         try {
@@ -67,11 +69,11 @@ class PeerGroup(
     override fun run() {
         running = true
 
-        syncStateListener?.onSyncStart()
+        syncStateListener.onSyncStart()
         blockSyncer?.prepareForDownload()
 
         while (running) {
-            if (peerManager.peersCount() < peerSize) {
+            if (connectionManager?.isOnline == true && peerManager.peersCount() < peerSize) {
                 startConnection()
             }
 
@@ -257,7 +259,7 @@ class PeerGroup(
 
                 if (syncPeer.synced) {
                     blockSyncer.downloadCompleted()
-                    syncStateListener?.onSyncFinish()
+                    syncStateListener.onSyncFinish()
                     syncPeer.sendMempoolMessage()
                     logger.info("Peer synced ${syncPeer.host}")
                     peerManager.syncPeer = null
@@ -269,7 +271,7 @@ class PeerGroup(
 
     @Throws
     private fun handlePendingTransactions() {
-        checkSendReadiness()
+        checkPeersSynced()
 
         peerManager.someReadyPeers().forEach { peer ->
             transactionSyncer?.getPendingTransactions()?.forEach { pendingTransaction ->
