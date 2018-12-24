@@ -29,7 +29,7 @@ import io.realm.annotations.RealmModule
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
+class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -55,7 +55,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, peerSize: Int = 
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
     private val unspentOutputProvider: UnspentOutputProvider
-    private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}")
+    private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
 
     private val network = when (networkType) {
         NetworkType.MainNet -> MainNet()
