@@ -6,13 +6,13 @@ import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import java.util.concurrent.TimeUnit
 
-class FeeRateSyncer(private val realmFactory: RealmFactory, private val apiFeeRate: ApiFeeRate) {
+class FeeRateSyncer(private val realmFactory: RealmFactory, private val apiFeeRate: ApiFeeRate, private val connectionManager: ConnectionManager? = null) {
 
     private var timer = Observable.interval(0, 3, TimeUnit.MINUTES)
     private var feeRateDisposable: Disposable? = null
     private var timerDisposable: Disposable? = null
 
-    constructor(realmFactory: RealmFactory, apiFeeRate: ApiFeeRate, timer: Observable<Long>) : this(realmFactory, apiFeeRate) {
+    constructor(realmFactory: RealmFactory, apiFeeRate: ApiFeeRate, timer: Observable<Long>, connectionManager: ConnectionManager) : this(realmFactory, apiFeeRate, connectionManager) {
         this.timer = timer
     }
 
@@ -22,7 +22,7 @@ class FeeRateSyncer(private val realmFactory: RealmFactory, private val apiFeeRa
         }
 
         timerDisposable = timer.subscribe {
-            if (feeRateDisposable == null || feeRateDisposable?.isDisposed == true) {
+            if (connectionManager?.isOnline == true && (feeRateDisposable == null || feeRateDisposable?.isDisposed == true)) {
                 updateFeeRate()
             }
         }
