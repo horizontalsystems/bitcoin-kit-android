@@ -60,9 +60,9 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
     }
 
     fun clear() {
-        realm.close()
         transactionRealmResults.removeAllChangeListeners()
         blockRealmResults.removeAllChangeListeners()
+        realm.close()
         balanceSubjectDisposable.dispose()
     }
 

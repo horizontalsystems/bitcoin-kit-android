@@ -54,7 +54,6 @@ class PeerGroup(
 
     fun close() {
         running = false
-        syncStateListener.onSyncStop()
 
         interrupt()
         try {
@@ -84,6 +83,8 @@ class PeerGroup(
             }
         }
 
+        syncStateListener.onSyncStop()
+        blockSyncer = null
         logger.info("Closing all peer connections...")
 
         peerManager.disconnectAll()
