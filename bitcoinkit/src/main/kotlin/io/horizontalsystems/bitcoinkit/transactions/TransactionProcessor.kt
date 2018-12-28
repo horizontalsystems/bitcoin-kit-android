@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
+import io.horizontalsystems.bitcoinkit.core.inTopologicalOrder
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
@@ -18,7 +19,7 @@ class TransactionProcessor(private val extractor: TransactionExtractor, private 
     fun process(transactions: List<Transaction>, block: Block?, skipCheckBloomFilter: Boolean, realm: Realm) {
         var needToUpdateBloomFilter = false
 
-        for (transaction in transactions) {
+        for (transaction in transactions.inTopologicalOrder()) {
             val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
 
             if (transactionInDB != null) {
