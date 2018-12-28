@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
+import java.math.BigInteger
 
 open class BlockValidator(private val network: Network) {
 
@@ -59,6 +60,10 @@ open class BlockValidator(private val network: Network) {
             throw BlockValidatorException.NoHeader()
         }
 
+        check(BigInteger(block.reversedHeaderHashHex, 16) < CompactBits.decode(blockHeader.bits)) {
+            throw BlockValidatorException.InvalidProveOfWork()
+        }
+
         check(blockHeader.prevHash.contentEquals(previousBlock.headerHash)) {
             throw BlockValidatorException.WrongPreviousHeader()
         }
@@ -103,4 +108,5 @@ open class BlockValidatorException(msg: String) : RuntimeException(msg) {
     class WrongPreviousHeader : BlockValidatorException("Wrong Previous Header Hash")
     class NotEqualBits : BlockValidatorException("Not Equal Bits")
     class NotDifficultyTransitionEqualBits : BlockValidatorException("Not Difficulty Transition Equal Bits")
+    class InvalidProveOfWork : BlockValidatorException("Invalid Prove of Work")
 }

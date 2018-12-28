@@ -3,12 +3,14 @@ package io.horizontalsystems.bitcoinkit.network
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import java.math.BigInteger
 
 class BlockValidatorTest {
     private val network = MainNet()
@@ -30,6 +32,17 @@ class BlockValidatorTest {
             fail("Header validation failed with: ${e.message}")
         }
     }
+
+    @Test(expected = BlockValidatorException.InvalidProveOfWork::class)
+    fun validateHeader_invalidPOW() {
+        val block1 = Block(Fixtures.block1.header!!, 1)
+        val block2 = Block(Fixtures.block2.header!!, block1)
+
+        block2.header?.bits = CompactBits.encode(BigInteger(block2.reversedHeaderHashHex, 16).minus(BigInteger.valueOf(1L)))
+
+        validator.validateHeader(block2, block1)
+    }
+
 
     @Test
     fun validateHeader_invalidHeader() {
