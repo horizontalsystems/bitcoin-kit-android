@@ -70,15 +70,14 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
                 val signOffset = sigScript[0].toInt()
                 val pubKeySize = sigScript[signOffset + 1].toInt()
 
-                if (pubKeySize == 33 || pubKeySize == 65 && sigScript.size == signOffset + pubKeySize + 2) {
+                if ((pubKeySize == 33 || pubKeySize == 65) && sigScript.size == signOffset + pubKeySize + 2) {
                     scriptType = ScriptType.P2PKH
                     payload = Arrays.copyOfRange(sigScript, signOffset + 2, sigScript.size)
                 } else continue
             }
             //  P2WPKHSH 0x16 00 14 {20-byte-key-hash}
-            else if (sigScript.size == 23 &&
-                    sigScript[0] == 0x16.toByte() &&
-                    sigScript[1] == 0.toByte() || sigScript[1] in 0x50..0x61 &&
+            else if (sigScript.size == 23 && sigScript[0] == 0x16.toByte() &&
+                    (sigScript[1] == 0.toByte() || sigScript[1] in 0x50..0x61) &&
                     sigScript[2] == 0x14.toByte()) {
                 payload = sigScript
                 scriptType = ScriptType.P2WPKHSH
@@ -146,10 +145,8 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
 
     // 35/67 bytes script: {push-length-byte 33/65}{33/65-byte-public-key} AC
     private fun isP2PK(lockingScript: ByteArray): Boolean {
-        return (lockingScript.size == 35 ||
-                lockingScript.size == 67 &&
-                lockingScript[0] == 33.toByte() ||
-                lockingScript[0] == 65.toByte() &&
+        return ((lockingScript.size == 35 || lockingScript.size == 67) &&
+                (lockingScript[0] == 33.toByte() || lockingScript[0] == 65.toByte()) &&
                 lockingScript[lockingScript.size - 1] == OP_CHECKSIG.toByte())
     }
 
@@ -164,7 +161,7 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
     // 22 bytes script: {version-byte 00/81-96} 14 {20-byte-key-hash}
     private fun isP2WPKH(lockingScript: ByteArray): Boolean {
         return (lockingScript.size == 22 &&
-                lockingScript[0] == 0.toByte() || lockingScript[1] in 0x50..0x61 &&
+                (lockingScript[0] == 0.toByte() || lockingScript[1] in 0x50..0x61) &&
                 lockingScript[1] == 20.toByte())
     }
 
