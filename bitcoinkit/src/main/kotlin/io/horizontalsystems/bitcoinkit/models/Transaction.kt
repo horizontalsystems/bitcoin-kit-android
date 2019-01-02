@@ -82,11 +82,11 @@ open class Transaction : RealmObject {
         setHashes()
     }
 
-    fun toByteArray(): ByteArray {
+    fun toByteArray(withWitness: Boolean = true): ByteArray {
         val buffer = BitcoinOutput()
         buffer.writeInt(version)
 
-        if (segwit) {
+        if (segwit && withWitness) {
             buffer.writeByte(0) // marker 0x00
             buffer.writeByte(1) // flag 0x01
         }
@@ -100,7 +100,7 @@ open class Transaction : RealmObject {
         outputs.forEach { buffer.write(it.toByteArray()) }
 
         //  serialize witness data
-        if (segwit) {
+        if (segwit && withWitness) {
             inputs.forEach { buffer.write(it.toByteArrayWitness()) }
         }
 
@@ -153,7 +153,7 @@ open class Transaction : RealmObject {
     }
 
     fun setHashes() {
-        hash = HashUtils.doubleSha256(toByteArray())
+        hash = HashUtils.doubleSha256(toByteArray(withWitness = false))
         hashHexReversed = HashUtils.toHexStringAsLE(hash)
     }
 
