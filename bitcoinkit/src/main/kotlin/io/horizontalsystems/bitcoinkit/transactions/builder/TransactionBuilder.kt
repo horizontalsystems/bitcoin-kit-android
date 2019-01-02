@@ -75,7 +75,7 @@ class TransactionBuilder {
                     toAddress = address!!
             )
 
-            return transaction.toByteArray().size * feeRate
+            return transaction.toByteArray(withWitness = false).size * feeRate
         }
     }
 

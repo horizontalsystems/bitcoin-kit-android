@@ -139,9 +139,9 @@ class BlockValidatorTest {
 
     @Test
     fun getPreviousWindow() {
-        val block1 = Fixtures.block1
-        val block2 = Fixtures.block2
         val block3 = Fixtures.block3
+        val block2 = block3.previousBlock
+        val block1 = block2?.previousBlock
 
         val previousWindow = validator.getPreviousWindow(block3, 2)
         assertArrayEquals(
