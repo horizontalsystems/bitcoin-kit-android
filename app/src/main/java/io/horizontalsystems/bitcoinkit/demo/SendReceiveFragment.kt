@@ -73,8 +73,8 @@ class SendReceiveFragment : Fragment() {
             message = "Transaction sent"
         } catch (e: Exception) {
             message = when (e) {
-                is UnspentOutputSelector.InsufficientUnspentOutputs,
-                is UnspentOutputSelector.EmptyUnspentOutputs -> "Insufficient balance"
+                is UnspentOutputSelector.Error.InsufficientUnspentOutputs,
+                is UnspentOutputSelector.Error.EmptyUnspentOutputs -> "Insufficient balance"
                 else -> e.message ?: "Failed to send transaction"
             }
         }

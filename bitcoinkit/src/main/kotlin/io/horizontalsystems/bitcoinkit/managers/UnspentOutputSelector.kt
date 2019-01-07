@@ -1,18 +1,15 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 
 class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
-
-    class EmptyUnspentOutputs : Exception()
-    class InsufficientUnspentOutputs : Exception()
 
     fun select(value: Int, feeRate: Int, outputType: Int = P2PKH, changeType: Int = P2PKH, senderPay: Boolean, outputs: List<TransactionOutput>): SelectedUnspentOutputInfo {
 
         if (outputs.isEmpty()) {
-            throw EmptyUnspentOutputs()
+            throw Error.EmptyUnspentOutputs
         }
 
         val dust = (calculator.inputSize(changeType) + calculator.outputSize(changeType)) * feeRate
@@ -56,7 +53,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
 
         // if all outputs are selected and total value less than needed throw error
         if (totalValue < value + fee) {
-            throw InsufficientUnspentOutputs()
+            throw Error.InsufficientUnspentOutputs(fee)
         }
 
         //  if total selected outputs value more than value and fee for transaction with change output + change input -> add fee for change output and mark as need change address
@@ -69,6 +66,11 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
         }
 
         return SelectedUnspentOutputInfo(selectedOutputs, totalValue, lastCalculatedFee, addChangeOutput)
+    }
+
+    sealed class Error: Exception() {
+        object EmptyUnspentOutputs : Error()
+        class InsufficientUnspentOutputs(val fee: Int) : Error()
     }
 }
 
