@@ -32,8 +32,6 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
     var balance: Long = unspentOutputProvider.getBalance()
         private set
 
-    val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
-
     var lastBlockHeight: Int = blockRealmResults.lastOrNull()?.height ?: 0
         private set
 
