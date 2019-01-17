@@ -24,7 +24,7 @@ class DataProviderTest {
         realm.executeTransaction {
             it.deleteAll()
         }
-        dataProvider = DataProvider(realm, listener, unspentOutputProvider)
+        dataProvider = DataProvider(factory.realmFactory, listener, unspentOutputProvider)
     }
 
     @Test

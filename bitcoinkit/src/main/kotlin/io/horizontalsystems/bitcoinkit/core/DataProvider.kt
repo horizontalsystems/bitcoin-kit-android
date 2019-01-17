@@ -9,12 +9,11 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
-import io.realm.Realm
 import io.realm.RealmResults
 import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val realm: Realm, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
+class DataProvider(private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -22,6 +21,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
 
+    private val realm = realmFactory.realm
     private val transactionRealmResults = getMyTransactions()
     private val blockRealmResults = getBlocks()
     private val feeRateRealmResults = getFeeRate()
@@ -68,21 +68,23 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
 
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
             Single.create { emitter ->
-                var results = realm.where(Transaction::class.java)
-                        .sort("timestamp", Sort.DESCENDING, "order", Sort.DESCENDING)
-                        .findAll()
-                        .toList()
-                fromHash?.let { fromHash ->
-                    realm.where(Transaction::class.java).equalTo("hashHexReversed", fromHash).findFirst()?.let { fromTransaction ->
-                        results = results.filter { tx ->
-                            tx.timestamp < fromTransaction.timestamp || (tx.timestamp == fromTransaction.timestamp && tx.order < fromTransaction.order)
+                realmFactory.realm.use { realm ->
+                    var results = realm.where(Transaction::class.java)
+                            .sort("timestamp", Sort.DESCENDING, "order", Sort.DESCENDING)
+                            .findAll()
+                            .toList()
+                    fromHash?.let { fromHash ->
+                        realm.where(Transaction::class.java).equalTo("hashHexReversed", fromHash).findFirst()?.let { fromTransaction ->
+                            results = results.filter { tx ->
+                                tx.timestamp < fromTransaction.timestamp || (tx.timestamp == fromTransaction.timestamp && tx.order < fromTransaction.order)
+                            }
                         }
                     }
+                    limit?.let {
+                        results = results.take(it)
+                    }
+                    emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
                 }
-                limit?.let {
-                    results = results.take(it)
-                }
-                emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
             }
 
     private fun handleTransactions(transactions: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {

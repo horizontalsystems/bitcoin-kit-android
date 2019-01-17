@@ -66,11 +66,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
     }
 
     init {
-        val realm = realmFactory.realm
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
-        dataProvider = DataProvider(realm, this, unspentOutputProvider)
+        dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
