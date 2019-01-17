@@ -32,6 +32,8 @@ object Fixtures {
                 bits = 388763047
                 nonce = 2295801359
             }
+            headerHash = header?.hash ?: byteArrayOf()
+            reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
         }
 
     val block2

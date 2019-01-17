@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.core
 import android.os.Looper
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
@@ -10,6 +11,7 @@ import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
 import io.realm.Realm
 import io.realm.RealmResults
+import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
 class DataProvider(private val realm: Realm, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
@@ -65,6 +67,25 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         realm.close()
         balanceSubjectDisposable.dispose()
     }
+
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
+            Single.create { emitter ->
+                var results = realm.where(Transaction::class.java)
+                        .sort("timestamp", Sort.DESCENDING, "order", Sort.DESCENDING)
+                        .findAll()
+                        .toList()
+                fromHash?.let { fromHash ->
+                    realm.where(Transaction::class.java).equalTo("hashHexReversed", fromHash).findFirst()?.let { fromTransaction ->
+                        results = results.filter { tx ->
+                            tx.timestamp < fromTransaction.timestamp || (tx.timestamp == fromTransaction.timestamp && tx.order < fromTransaction.order)
+                        }
+                    }
+                }
+                limit?.let {
+                    results = results.take(it)
+                }
+                emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
+            }
 
     private fun handleTransactions(transactions: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == State.UPDATE) {
@@ -134,7 +155,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
                 to = toAddresses,
                 amount = totalMineOutput - totalMineInput,
                 blockHeight = transaction.block?.height,
-                timestamp = transaction.block?.header?.timestamp
+                timestamp = transaction.timestamp
         )
     }
 

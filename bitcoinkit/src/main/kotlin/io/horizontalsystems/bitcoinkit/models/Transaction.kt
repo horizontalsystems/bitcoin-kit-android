@@ -41,6 +41,8 @@ open class Transaction : RealmObject {
     var isMine = false
     var isOutgoing = false
     var segwit = false
+    var timestamp: Long = 0
+    var order: Int = 0 //topological order
 
     constructor()
 
