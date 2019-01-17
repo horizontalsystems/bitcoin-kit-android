@@ -69,21 +69,29 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
             Single.create { emitter ->
                 realmFactory.realm.use { realm ->
+
                     var results = realm.where(Transaction::class.java)
                             .sort("timestamp", Sort.DESCENDING, "order", Sort.DESCENDING)
-                            .findAll()
-                            .toList()
+
                     fromHash?.let { fromHash ->
                         realm.where(Transaction::class.java).equalTo("hashHexReversed", fromHash).findFirst()?.let { fromTransaction ->
-                            results = results.filter { tx ->
-                                tx.timestamp < fromTransaction.timestamp || (tx.timestamp == fromTransaction.timestamp && tx.order < fromTransaction.order)
-                            }
+                            results = results
+                                    .beginGroup()
+                                        .lessThan("timestamp", fromTransaction.timestamp)
+                                        .or()
+                                        .beginGroup()
+                                            .equalTo("timestamp", fromTransaction.timestamp)
+                                            .lessThan("order", fromTransaction.order)
+                                        .endGroup()
+                                    .endGroup()
                         }
                     }
+
                     limit?.let {
-                        results = results.take(it)
+                        results = results.limit(it.toLong())
                     }
-                    emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
+
+                    emitter.onSuccess(results.findAll().mapNotNull { transactionInfo(it) })
                 }
             }
 
