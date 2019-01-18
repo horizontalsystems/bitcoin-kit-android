@@ -23,6 +23,7 @@ import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.reactivex.Single
 import io.realm.Realm
 import io.realm.annotations.RealmModule
 
@@ -42,7 +43,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
 
     //  DataProvider getters
     val balance get() = dataProvider.balance
-    val transactions get() = dataProvider.transactions
     val lastBlockHeight get() = dataProvider.lastBlockHeight
 
     private val peerGroup: PeerGroup
@@ -66,11 +66,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
     }
 
     init {
-        val realm = realmFactory.realm
         val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
-        dataProvider = DataProvider(realm, this, unspentOutputProvider)
+        dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
@@ -121,6 +120,9 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
     fun refresh() {
         start()
     }
+
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
+            dataProvider.transactions(fromHash, limit)
 
     fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
         return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)

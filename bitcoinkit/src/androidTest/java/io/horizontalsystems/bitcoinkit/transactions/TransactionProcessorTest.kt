@@ -2,11 +2,14 @@ package io.horizontalsystems.bitcoinkit.transactions
 
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.whenever
+import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.realm.Realm
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -16,8 +19,7 @@ import org.mockito.Mockito.verify
 class TransactionProcessorTest {
 
     private val factory = RealmFactoryMock()
-    private val realmFactory = factory.realmFactory
-    private var realm = realmFactory.realm
+    private lateinit var realm: Realm
     private val transaction = mock(Transaction::class.java)
     private val linker = mock(TransactionLinker::class.java)
     private val extractor = mock(TransactionExtractor::class.java)
@@ -27,6 +29,10 @@ class TransactionProcessorTest {
 
     @Before
     fun setup() {
+        realm = factory.realmFactory.realm
+        realm.executeTransaction {
+            it.deleteAll()
+        }
         processor = TransactionProcessor(extractor, linker, addressManager)
     }
 
@@ -84,6 +90,69 @@ class TransactionProcessorTest {
                     }
                 }
             }
+        }
+    }
+
+    @Test
+    fun testProcessTransactions_SeveralMempoolTransactions() {
+        val transactions = transactions()
+
+        for (transaction in transactions) {
+            transaction.isMine = true
+            transaction.timestamp = 0
+            transaction.order = 0
+        }
+
+        realm.executeTransaction {
+            transactions[1].status = Transaction.Status.NEW
+            it.insert(transactions[1])
+            it.insert(transactions[3])
+
+            processor.process(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), null, false, it)
+        }
+
+        val realmTransactions = realm.where(Transaction::class.java).sort("order").findAll()
+
+        assertEquals(4, realmTransactions.count())
+
+        transactions.forEachIndexed { index, transaction ->
+            assertArrayEquals(realmTransactions[index]?.hash, transaction.hash)
+            assertEquals(realmTransactions[index]?.status, Transaction.Status.RELAYED)
+            assertEquals(realmTransactions[index]?.order, index)
+        }
+    }
+
+    @Test
+    fun testProcessTransactions_SeveralTransactionsInBlock() {
+        val transactions = transactions()
+
+        val block = Fixtures.block1
+
+        for (transaction in transactions) {
+            transaction.isMine = true
+            transaction.timestamp = 0
+            transaction.order = 0
+        }
+
+        realm.executeTransaction {
+            transactions[1].status = Transaction.Status.NEW
+            it.insert(transactions[1])
+            it.insert(transactions[3])
+            val managedBlock = it.copyToRealm(block)
+
+            processor.process(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), managedBlock, false, it)
+        }
+
+        val realmTransactions = realm.where(Transaction::class.java).sort("order").findAll()
+
+        assertEquals(4, realmTransactions.count())
+
+        transactions.forEachIndexed { index, transaction ->
+            assertArrayEquals(realmTransactions[index]?.hash, transaction.hash)
+            assertEquals(realmTransactions[index]?.block?.reversedHeaderHashHex, block.reversedHeaderHashHex)
+            assertEquals(realmTransactions[index]?.status, Transaction.Status.RELAYED)
+            assertEquals(realmTransactions[index]?.order, index)
+            assertEquals(realmTransactions[index]?.timestamp, block.header?.timestamp)
         }
     }
 

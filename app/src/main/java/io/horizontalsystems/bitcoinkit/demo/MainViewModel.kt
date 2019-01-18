@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
+import io.reactivex.disposables.CompositeDisposable
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
@@ -19,6 +20,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val progress = MutableLiveData<Double>()
     val status = MutableLiveData<State>()
     val networkName: String
+    private val disposables = CompositeDisposable()
 
     private var started = false
         set(value) {
@@ -37,7 +39,13 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
         networkName = networkType.name
         balance.value = bitcoinKit.balance
-        transactions.value = bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
+
+        bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
+            transactions.value = txList.sortedByDescending { it.blockHeight }
+        }.let {
+            disposables.add(it)
+        }
+
         lastBlockHeight.value = bitcoinKit.lastBlockHeight
         progress.value = 0.0
 
@@ -71,7 +79,11 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     // BitcoinKit Listener implementations
     //
     override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        transactions.value = this.bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
+        bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
+            transactions.value = txList.sortedByDescending { it.blockHeight }
+        }.let {
+            disposables.add(it)
+        }
     }
 
     override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {

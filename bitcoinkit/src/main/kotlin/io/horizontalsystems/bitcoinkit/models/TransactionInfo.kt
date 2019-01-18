@@ -6,7 +6,7 @@ data class TransactionInfo(
         val to: List<TransactionAddress>,
         val amount: Long,
         val blockHeight: Int?,
-        val timestamp: Long?
+        val timestamp: Long
 )
 
 data class TransactionAddress(
