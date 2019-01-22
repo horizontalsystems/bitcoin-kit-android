@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.utils;
 
-import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.Digest;
+import org.spongycastle.crypto.digests.SHA256Digest;
 import org.spongycastle.util.Arrays;
 
 public class HashUtils {
@@ -11,7 +12,7 @@ public class HashUtils {
      * Get SHA-256 hash.
      */
     public static byte[] sha256(byte[] input) {
-        org.bouncycastle.crypto.Digest d = new SHA256Digest();
+        Digest d = new SHA256Digest();
         d.update(input, 0, input.length);
         byte[] out = new byte[d.getDigestSize()];
         d.doFinal(out, 0);
