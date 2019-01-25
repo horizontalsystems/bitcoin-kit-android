@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
+import java.util.*
 
 /**
  * Transaction
@@ -49,6 +50,7 @@ open class Transaction : RealmObject {
     constructor(version: Int, lockTime: Long) {
         this.version = version
         this.lockTime = lockTime
+        timestamp = Date().time / 1000
     }
 
     constructor(input: BitcoinInput) {
