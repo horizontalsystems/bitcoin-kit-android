@@ -14,11 +14,11 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
     private val gapLimit = wallet.gapLimit
 
     private val host = when (network) {
-        is MainNet -> "https://btc.horizontalsystems.xyz"
-        is TestNet -> "http://btc-testnet.horizontalsystems.xyz/apih"
-        is MainNetBitcoinCash -> "https://bch.horizontalsystems.xyz"
-        is TestNetBitcoinCash -> "http://bch-testnet.horizontalsystems.xyz/apih"
-        else -> "http://btc-testnet.horizontalsystems.xyz/apih"
+        is MainNet -> "https://btc.horizontalsystems.xyz/apg"
+        is TestNet -> "http://btc-testnet.horizontalsystems.xyz/apg"
+        is MainNetBitcoinCash -> "https://bch.horizontalsystems.xyz/apg"
+        is TestNetBitcoinCash -> "http://bch-testnet.horizontalsystems.xyz/apg"
+        else -> "http://btc-testnet.horizontalsystems.xyz/apg"
     }
 
     private val apiManager = ApiManager(host)
