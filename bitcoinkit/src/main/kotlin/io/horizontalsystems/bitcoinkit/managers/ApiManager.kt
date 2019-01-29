@@ -15,7 +15,7 @@ class ApiManager(private val host: String) {
         return getJsonValue(file).asObject()
     }
 
-    @Throws
+    @Throws(Exception::class)
     fun getJsonArray(file: String): JsonArray {
         return getJsonValue(file).asArray()
     }
@@ -44,6 +44,6 @@ data class BlockResponse(val hash: String, val height: Int) {
     }
 
     override fun hashCode(): Int {
-        return 31 * hash.hashCode() + height.hashCode()
+        return 31 * hash.hashCode() + height
     }
 }

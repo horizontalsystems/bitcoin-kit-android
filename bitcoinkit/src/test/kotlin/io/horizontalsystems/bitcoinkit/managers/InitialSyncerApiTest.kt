@@ -61,6 +61,17 @@ class InitialSyncerApiTest {
     }
 
     @Test
+    fun fetchFromApi_onError() {
+        val error = Exception()
+
+        whenever(apiManager.getJsonArray(any())).thenThrow(error)
+
+        initialSyncerApi.fetchFromApi(account, true)
+                .test()
+                .assertError(error)
+    }
+
+    @Test
     fun fetchFromApi_handleResponse() {
         val obj1 = JsonObject().add("block", "001").add("height", 1)
         val obj2 = JsonObject().add("block", "002").add("height", 2)
