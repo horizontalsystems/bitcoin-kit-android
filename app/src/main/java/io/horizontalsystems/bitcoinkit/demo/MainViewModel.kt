@@ -59,6 +59,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         bitcoinKit.start()
     }
 
+    fun clear() {
+        bitcoinKit.clear()
+    }
+
     fun receiveAddress(): String {
         return bitcoinKit.receiveAddress()
     }

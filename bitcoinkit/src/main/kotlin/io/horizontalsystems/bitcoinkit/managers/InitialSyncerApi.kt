@@ -26,8 +26,8 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
     @Throws
     fun fetchFromApi(account: Int, external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> =
             Single.create<Pair<List<PublicKey>, List<BlockHash>>> { emitter ->
-                val (publicKeys, blockResponses) = requestApiRecursive(account, external)
                 try {
+                    val (publicKeys, blockResponses) = requestApiRecursive(account, external)
                     val accountData = publicKeys to blockResponses.mapNotNull { blockResponse ->
                         try {
                             BlockHash(blockResponse.hash.hexStringToByteArray().reversedArray(), blockResponse.height)
@@ -37,7 +37,7 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
                     }
                     emitter.onSuccess(accountData)
                 } catch (e: Exception) {
-                    emitter.onError(e)
+                    emitter.tryOnError(e)
                 }
             }
 

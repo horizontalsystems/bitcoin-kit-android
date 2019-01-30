@@ -18,6 +18,7 @@ class BalanceFragment : Fragment() {
     lateinit var lastBlockValue: TextView
     lateinit var progressValue: TextView
     lateinit var startButton: Button
+    lateinit var clearButton: Button
     lateinit var buttonDebug: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,10 +71,15 @@ class BalanceFragment : Fragment() {
         lastBlockValue = view.findViewById(R.id.lastBlockValue)
         progressValue = view.findViewById(R.id.progressValue)
         startButton = view.findViewById(R.id.buttonStart)
+        clearButton = view.findViewById(R.id.buttonClear)
         buttonDebug = view.findViewById(R.id.buttonDebug)
 
         startButton.setOnClickListener {
             viewModel.start()
+        }
+
+        clearButton.setOnClickListener {
+            viewModel.clear()
         }
 
         buttonDebug.setOnClickListener {
