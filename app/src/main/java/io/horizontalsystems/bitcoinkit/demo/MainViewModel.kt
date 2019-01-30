@@ -63,11 +63,11 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         return bitcoinKit.receiveAddress()
     }
 
-    fun send(address: String, amount: Int) {
+    fun send(address: String, amount: Long) {
         bitcoinKit.send(address, amount)
     }
 
-    fun fee(value: Int, address: String? = null): Int {
+    fun fee(value: Long, address: String? = null): Long {
         return bitcoinKit.fee(value, address)
     }
 

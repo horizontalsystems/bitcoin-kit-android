@@ -31,7 +31,7 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun select_ExactlyValueReceiverPay() {
-        fun check(value: Int, feeRate: Int, fee: Int, senderPay: Boolean, output: TransactionOutput) {
+        fun check(value: Long, feeRate: Int, fee: Long, senderPay: Boolean, output: TransactionOutput) {
             try {
                 val selectedOutputs = unspentOutputSelector.select(value = value, feeRate = feeRate, senderPay = senderPay, outputs = outputs)
 
@@ -63,8 +63,8 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun select_receiverPayNoChangeOutput() {
-        val expectedFee = 100 + 10 + 2  // fee for tx + fee for change input + fee for change output
-        val selectedOutputs = unspentOutputSelector.select(value = 15000 - expectedFee, feeRate = 1, senderPay = true, outputs = outputs)
+        val expectedFee = (100 + 10 + 2).toLong()  // fee for tx + fee for change input + fee for change output
+        val selectedOutputs = unspentOutputSelector.select(value = 15000L - expectedFee, feeRate = 1, senderPay = true, outputs = outputs)
 
         assertEquals(listOf(outputs[0], outputs[1], outputs[2], outputs[3]), selectedOutputs.outputs)
         assertEquals(15000, selectedOutputs.totalValue)
