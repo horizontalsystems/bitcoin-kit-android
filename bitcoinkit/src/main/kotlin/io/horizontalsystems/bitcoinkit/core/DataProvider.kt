@@ -35,7 +35,7 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     var lastBlockHeight: Int = blockRealmResults.lastOrNull()?.height ?: 0
         private set
 
-    var feeRate: FeeRate = feeRateRealmResults.firstOrNull() ?: FeeRate.defaultFeeRate
+    var feeRate: FeeRate = feeRateRealmResults.firstOrNull()?.let { realm.copyFromRealm(it) } ?: FeeRate.defaultFeeRate
         private set
 
     init {
