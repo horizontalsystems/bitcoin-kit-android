@@ -121,14 +121,15 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
         start()
     }
 
-    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
-            dataProvider.transactions(fromHash, limit)
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return dataProvider.transactions(fromHash, limit)
+    }
 
-    fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true): Long {
         return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
     }
 
-    fun send(address: String, value: Int, senderPay: Boolean = true) {
+    fun send(address: String, value: Long, senderPay: Boolean = true) {
         transactionCreator.create(address, value, dataProvider.feeRate.medium, senderPay)
     }
 

@@ -12,7 +12,7 @@ class TransactionCreator(
         private val peerGroup: PeerGroup) {
 
     @Throws
-    fun create(address: String, value: Int, feeRate: Int, senderPay: Boolean) {
+    fun create(address: String, value: Long, feeRate: Int, senderPay: Boolean) {
         peerGroup.checkPeersSynced()
 
         realmFactory.realm.use { realm ->

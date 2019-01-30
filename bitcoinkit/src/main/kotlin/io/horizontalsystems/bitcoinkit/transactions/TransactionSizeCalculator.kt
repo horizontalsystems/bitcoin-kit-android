@@ -30,7 +30,7 @@ class TransactionSizeCalculator {
         return 32 + 4 + 1 + sigLength + 4 // PreviousOutputHex + OutputIndex + sigLength + sigScript + sequence
     }
 
-    fun transactionSize(inputs: List<Int>, outputs: List<Int>): Int {
+    fun transactionSize(inputs: List<Int>, outputs: List<Int>): Long {
         var segwit = false
         var inputWeight = 0
 
@@ -51,7 +51,7 @@ class TransactionSizeCalculator {
         val outputWeight = outputs.fold(0) { memo, next -> memo + outputSize(next) } * 4 // to vbytes
         val txWeight = if (segwit) witnessTx else legacyTx
 
-        return toBytes(txWeight + inputWeight + outputWeight)
+        return toBytes(txWeight + inputWeight + outputWeight).toLong()
     }
 
     private fun witnessSize(type: Int): Int {  // in vbytes
