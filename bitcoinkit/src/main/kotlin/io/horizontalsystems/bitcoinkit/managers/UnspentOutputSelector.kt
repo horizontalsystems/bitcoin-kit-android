@@ -37,6 +37,10 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
         var fee = 0
         var lastCalculatedFee = 0
         for (output in sortedOutputs) {
+            selectedOutputs.add(output)
+            selectedOutputTypes.add(output.scriptType)
+            totalValue += output.value
+
             lastCalculatedFee = calculator.transactionSize(inputs = selectedOutputTypes, outputs = listOf(outputType)) * feeRate
             if (senderPay) {
                 fee = lastCalculatedFee
@@ -45,10 +49,6 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
             if (totalValue >= lastCalculatedFee && totalValue >= value + fee) {
                 break
             }
-
-            selectedOutputs.add(output)
-            selectedOutputTypes.add(output.scriptType)
-            totalValue += output.value
         }
 
         // if all outputs are selected and total value less than needed throw error
