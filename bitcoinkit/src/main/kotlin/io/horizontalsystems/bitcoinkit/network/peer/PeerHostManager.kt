@@ -36,30 +36,36 @@ class PeerHostManager(private val network: Network, private val realmFactory: Re
                 return null
             }
 
-            // mark peer as "using"
-            usingPeers.add(peerAddress.ip)
+            synchronized(usingPeers) {
+                // mark peer as "using"
+                usingPeers.add(peerAddress.ip)
+            }
 
             return peerAddress.ip
         }
     }
 
     fun markFailed(peerIp: String) {
-        realmFactory.realm.use { realm ->
-            getPeer(realm, peerIp)?.let { peer ->
-                usingPeers.removeAll { it == peerIp }
-                realm.executeTransaction {
-                    peer.deleteFromRealm()
+        synchronized(usingPeers) {
+            realmFactory.realm.use { realm ->
+                getPeer(realm, peerIp)?.let { peer ->
+                    usingPeers.removeAll { it == peerIp }
+                    realm.executeTransaction {
+                        peer.deleteFromRealm()
+                    }
                 }
             }
         }
     }
 
     fun markSuccess(peerIp: String) {
-        realmFactory.realm.use { realm ->
-            getPeer(realm, peerIp)?.let { peer ->
-                usingPeers.removeAll { it == peerIp }
-                realm.executeTransaction {
-                    peer.score += 3
+        synchronized(usingPeers) {
+            realmFactory.realm.use { realm ->
+                getPeer(realm, peerIp)?.let { peer ->
+                    usingPeers.removeAll { it == peerIp }
+                    realm.executeTransaction {
+                        peer.score += 3
+                    }
                 }
             }
         }
