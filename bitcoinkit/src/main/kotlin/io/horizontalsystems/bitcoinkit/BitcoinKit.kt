@@ -117,6 +117,19 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
         feeRateSyncer.start()
     }
 
+    fun stop() {
+        initialSyncer.stop()
+        feeRateSyncer.stop()
+        dataProvider.clear()
+    }
+
+    fun clear() {
+        stop()
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction { it.deleteAll() }
+        }
+    }
+
     fun refresh() {
         start()
     }
@@ -143,16 +156,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
 
     fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {
         return paymentAddressParser.parse(paymentAddress)
-    }
-
-    fun clear() {
-        dataProvider.clear()
-        initialSyncer.stop()
-        feeRateSyncer.stop()
-
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction { it.deleteAll() }
-        }
     }
 
     fun showDebugInfo() {
