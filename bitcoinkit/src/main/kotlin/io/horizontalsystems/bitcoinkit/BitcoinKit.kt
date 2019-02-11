@@ -43,7 +43,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
 
     //  DataProvider getters
     val balance get() = dataProvider.balance
-    val lastBlockHeight get() = dataProvider.lastBlockHeight
+    val lastBlockInfo get() = dataProvider.lastBlockInfo
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer

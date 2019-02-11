@@ -32,7 +32,7 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     var balance: Long = unspentOutputProvider.getBalance()
         private set
 
-    var lastBlockHeight: Int = blockRealmResults.lastOrNull()?.height ?: 0
+    var lastBlockInfo: BlockInfo? = blockRealmResults.lastOrNull()?.let { blockInfo(it) }
         private set
 
     var feeRate: FeeRate = feeRateRealmResults.firstOrNull()?.let { realm.copyFromRealm(it) } ?: FeeRate.defaultFeeRate
@@ -111,18 +111,19 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     private fun handleBlocks(blocks: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == State.UPDATE && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
             blocks.lastOrNull()?.let { block ->
+                val blockInfo = blockInfo(block)
+                lastBlockInfo = blockInfo
 
-                lastBlockHeight = block.height
-
-                listener.onLastBlockInfoUpdate(BlockInfo(
-                        block.reversedHeaderHashHex,
-                        block.height,
-                        block.header?.timestamp
-                ))
+                listener.onLastBlockInfoUpdate(blockInfo)
             }
             balanceUpdateSubject.onNext(true)
         }
     }
+
+    private fun blockInfo(block: Block) = BlockInfo(
+            block.reversedHeaderHashHex,
+            block.height,
+            block.header?.timestamp)
 
     private fun transactionInfo(transaction: Transaction?): TransactionInfo? {
         if (transaction == null) return null
