@@ -46,7 +46,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             disposables.add(it)
         }
 
-        lastBlockHeight.value = bitcoinKit.lastBlockHeight
+        lastBlockHeight.value = bitcoinKit.lastBlockInfo?.height ?: 0
         progress.value = 0.0
 
         started = false
