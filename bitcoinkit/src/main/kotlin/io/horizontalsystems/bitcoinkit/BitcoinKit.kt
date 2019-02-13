@@ -23,13 +23,14 @@ import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.reactivex.Single
 import io.realm.Realm
 import io.realm.annotations.RealmModule
 
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
+class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -42,8 +43,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
 
     //  DataProvider getters
     val balance get() = dataProvider.balance
-    val transactions get() = dataProvider.transactions
-    val lastBlockHeight get() = dataProvider.lastBlockHeight
+    val lastBlockInfo get() = dataProvider.lastBlockInfo
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
@@ -65,12 +65,14 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
         NetworkType.RegTest -> RegTest()
     }
 
+    constructor(words: List<String>, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
+            this(Mnemonic().toSeed(words), networkType, walletId, peerSize, newWallet, confirmationsThreshold)
+
     init {
-        val realm = realmFactory.realm
-        val wallet = HDWallet(Mnemonic().toSeed(words), network.coinType)
+        val wallet = HDWallet(seed, network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
-        dataProvider = DataProvider(realm, this, unspentOutputProvider)
+        dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, wallet, addressConverter)
 
@@ -82,10 +84,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
         val bloomFilterManager = BloomFilterManager(realmFactory)
         val addressSelector: IAddressSelector
 
-        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, peerSize = peerSize)
+        peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
         peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
-        peerGroup.syncStateListener = kitStateProvider
+        peerGroup.connectionManager = connectionManager
 
         when (networkType) {
             NetworkType.MainNet,
@@ -104,7 +106,7 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
         val stateManager = StateManager(realmFactory, network, newWallet)
         val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
-        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType))
+        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
         initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
@@ -118,15 +120,32 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
         feeRateSyncer.start()
     }
 
+    fun stop() {
+        initialSyncer.stop()
+        feeRateSyncer.stop()
+        dataProvider.clear()
+    }
+
+    fun clear() {
+        stop()
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction { it.deleteAll() }
+        }
+    }
+
     fun refresh() {
         start()
     }
 
-    fun fee(value: Int, address: String? = null, senderPay: Boolean = true): Int {
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return dataProvider.transactions(fromHash, limit)
+    }
+
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true): Long {
         return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
     }
 
-    fun send(address: String, value: Int, senderPay: Boolean = true) {
+    fun send(address: String, value: Long, senderPay: Boolean = true) {
         transactionCreator.create(address, value, dataProvider.feeRate.medium, senderPay)
     }
 
@@ -140,16 +159,6 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
 
     fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {
         return paymentAddressParser.parse(paymentAddress)
-    }
-
-    fun clear() {
-        dataProvider.clear()
-        initialSyncer.stop()
-        feeRateSyncer.stop()
-
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction { it.deleteAll() }
-        }
     }
 
     fun showDebugInfo() {
@@ -214,7 +223,10 @@ class BitcoinKit(words: List<String>, networkType: NetworkType, walletId: String
     }
 
     companion object {
+        private var connectionManager: ConnectionManager? = null
+
         fun init(context: Context) {
+            connectionManager = ConnectionManager(context)
             Realm.init(context)
         }
     }

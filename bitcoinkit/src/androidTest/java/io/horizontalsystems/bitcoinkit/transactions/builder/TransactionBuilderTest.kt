@@ -19,7 +19,7 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.realm.Realm
-import junit.framework.Assert.*
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -51,9 +51,9 @@ class TransactionBuilderTest {
     private val toAddressP2PKH = "mmLB5DvGbsb4krT9PJ7WrKmv8DkyvNx1ne"
     private val toAddressP2SH = "2MyQWMrsLsqAMSUeusduAzN6pWuH2V27ykE"
 
-    private val txValue = 93_417_732
+    private val txValue = 93_417_732L
     private val feeRate = 5406
-    private val fee = 1_032_655
+    private val fee = 1_032_655L
     private val unlockingScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexStringToByteArray()
 
     @Before
@@ -100,7 +100,7 @@ class TransactionBuilderTest {
         assertEquals(1, transaction.outputs.size)
 
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
-        assertEquals(txValue.toLong(), transaction.outputs[0]?.value)
+        assertEquals(txValue, transaction.outputs[0]?.value)
     }
 
     @Test
@@ -117,7 +117,7 @@ class TransactionBuilderTest {
         assertEquals(1, transaction.outputs.size)
 
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
-        assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
+        assertEquals((txValue - fee), transaction.outputs[0]?.value)
     }
 
     @Test
@@ -133,12 +133,12 @@ class TransactionBuilderTest {
         assertEquals(1, transaction.outputs.size)
 
         assertEquals(toAddressP2SH, transaction.outputs[0]?.address)
-        assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
+        assertEquals((txValue - fee), transaction.outputs[0]?.value)
     }
 
     @Test
     fun buildTransaction_WithoutChangeOutput() {
-        val txValue = unspentOutputs.outputs[0].value.toInt()
+        val txValue = unspentOutputs.outputs[0].value
 
         val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, realm)
 
@@ -147,21 +147,21 @@ class TransactionBuilderTest {
 
         assertEquals(1, transaction.outputs.size)
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
-        assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
+        assertEquals((txValue - fee), transaction.outputs[0]?.value)
     }
 
     @Test
     fun buildTransaction_ChangeNotAddedForDust() {
         val txValue = unspentOutputs.outputs[0].value.toInt() - transactionSizeCalculator.outputSize(scripType = ScriptType.P2PKH) * feeRate
 
-        val transaction = transactionBuilder.buildTransaction(txValue, toAddressP2PKH, feeRate, false, realm)
+        val transaction = transactionBuilder.buildTransaction(txValue.toLong(), toAddressP2PKH, feeRate, false, realm)
 
         assertEquals(1, transaction.inputs.size)
         assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
 
         assertEquals(1, transaction.outputs.size)
         assertEquals(toAddressP2PKH, transaction.outputs[0]?.address)
-        assertEquals((txValue - fee).toLong(), transaction.outputs[0]?.value)
+        assertEquals((txValue - fee), transaction.outputs[0]?.value)
     }
 
     @Test

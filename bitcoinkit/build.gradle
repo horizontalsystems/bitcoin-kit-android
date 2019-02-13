@@ -10,7 +10,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
-        versionName "0.1.1"
+        versionName "0.1.2"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +33,14 @@ android {
     }
 
     lintOptions { abortOnError false }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -43,12 +51,11 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
 
     // For cryptocurrency
-    implementation 'org.bouncycastle:bcprov-jdk16:1.45'
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
 
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
-    implementation 'com.github.horizontalsystems:hd-wallet-kit-android:1.0.0'
+    implementation 'com.github.horizontalsystems:hd-wallet-kit-android:a3666d8'
 
     // Test helpers
     testImplementation 'junit:junit:4.12'

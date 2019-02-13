@@ -10,6 +10,7 @@ import io.realm.annotations.PrimaryKey
 
 open class PublicKey() : RealmObject() {
 
+    var account = 0
     var index = 0
     var external = true
 
@@ -22,7 +23,8 @@ open class PublicKey() : RealmObject() {
     @LinkingObjects("publicKey")
     val outputs: RealmResults<TransactionOutput>? = null
 
-    constructor(index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) : this() {
+    constructor(account: Int, index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) : this() {
+        this.account = account
         this.index = index
         this.external = external
         this.publicKey = publicKey

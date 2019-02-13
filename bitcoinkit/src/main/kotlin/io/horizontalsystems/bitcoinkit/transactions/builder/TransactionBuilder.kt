@@ -45,7 +45,7 @@ class TransactionBuilder {
         this.inputSigner = inputSigner
     }
 
-    fun fee(value: Int, feeRate: Int, senderPay: Boolean, address: String? = null): Int {
+    fun fee(value: Long, feeRate: Int, senderPay: Boolean, address: String? = null): Long {
         val estimatedFee = if (address == null) {
             true
         } else try { // if address is valid then calculate actual fee
@@ -75,11 +75,11 @@ class TransactionBuilder {
                     toAddress = address!!
             )
 
-            return transaction.toByteArray().size * feeRate
+            return transaction.toByteArray(withWitness = false).size * feeRate.toLong()
         }
     }
 
-    fun buildTransaction(value: Int, toAddress: String, feeRate: Int, senderPay: Boolean, realm: Realm): Transaction {
+    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean, realm: Realm): Transaction {
 
         val address = addressConverter.convert(toAddress)
         val changePubKey = addressManager.changePublicKey(realm)

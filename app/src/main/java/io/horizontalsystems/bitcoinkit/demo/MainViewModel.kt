@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
+import io.reactivex.disposables.CompositeDisposable
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
@@ -19,6 +20,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val progress = MutableLiveData<Double>()
     val status = MutableLiveData<State>()
     val networkName: String
+    private val disposables = CompositeDisposable()
 
     private var started = false
         set(value) {
@@ -37,8 +39,14 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
         networkName = networkType.name
         balance.value = bitcoinKit.balance
-        transactions.value = bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
-        lastBlockHeight.value = bitcoinKit.lastBlockHeight
+
+        bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
+            transactions.value = txList.sortedByDescending { it.blockHeight }
+        }.let {
+            disposables.add(it)
+        }
+
+        lastBlockHeight.value = bitcoinKit.lastBlockInfo?.height ?: 0
         progress.value = 0.0
 
         started = false
@@ -51,15 +59,19 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         bitcoinKit.start()
     }
 
+    fun clear() {
+        bitcoinKit.clear()
+    }
+
     fun receiveAddress(): String {
         return bitcoinKit.receiveAddress()
     }
 
-    fun send(address: String, amount: Int) {
+    fun send(address: String, amount: Long) {
         bitcoinKit.send(address, amount)
     }
 
-    fun fee(value: Int, address: String? = null): Int {
+    fun fee(value: Long, address: String? = null): Long {
         return bitcoinKit.fee(value, address)
     }
 
@@ -71,7 +83,11 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     // BitcoinKit Listener implementations
     //
     override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        transactions.value = this.bitcoinKit.transactions.sortedBy { it.blockHeight?.times(-1) }
+        bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
+            transactions.value = txList.sortedByDescending { it.blockHeight }
+        }.let {
+            disposables.add(it)
+        }
     }
 
     override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {

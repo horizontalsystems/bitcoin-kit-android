@@ -66,15 +66,15 @@ class SendReceiveFragment : Fragment() {
     private fun send() {
         var message: String
         try {
-            viewModel.send(sendAddress.text.toString(), sendAmount.text.toString().toInt())
+            viewModel.send(sendAddress.text.toString(), sendAmount.text.toString().toLong())
             sendAmount.text = null
             txFeeValue.text = null
             sendAddress.text = null
             message = "Transaction sent"
         } catch (e: Exception) {
             message = when (e) {
-                is UnspentOutputSelector.InsufficientUnspentOutputs,
-                is UnspentOutputSelector.EmptyUnspentOutputs -> "Insufficient balance"
+                is UnspentOutputSelector.Error.InsufficientUnspentOutputs,
+                is UnspentOutputSelector.Error.EmptyUnspentOutputs -> "Insufficient balance"
                 else -> e.message ?: "Failed to send transaction"
             }
         }
@@ -89,13 +89,12 @@ class SendReceiveFragment : Fragment() {
             }
 
             try {
-                val fee = viewModel.fee(
-                        value = sendAmount.text.toString().toInt(),
+                txFeeValue.text = viewModel.fee(
+                        value = sendAmount.text.toString().toLong(),
                         address = sendAddress.text.toString()
-                )
-
-                txFeeValue.text = fee.toString()
+                ).toString()
             } catch (e: Exception) {
+                Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
             }
         }
 

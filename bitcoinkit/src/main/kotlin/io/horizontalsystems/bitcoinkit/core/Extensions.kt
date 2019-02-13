@@ -20,13 +20,10 @@ fun String.hexStringToByteArray(): ByteArray {
     }
 }
 
-fun HDWallet.publicKey(index: Int, external: Boolean) = publicKey(index, hdPublicKey(index, external))
-
-fun HDWallet.receivePublicKey(index: Int) = publicKey(index, hdPublicKey(index, true))
-
-fun HDWallet.changePublicKey(index: Int) = publicKey(index, hdPublicKey(index, false))
-
-private fun publicKey(index: Int, hdPubKey: HDPublicKey): PublicKey = PublicKey(index, hdPubKey.external, hdPubKey.publicKey, hdPubKey.publicKeyHash)
+fun HDWallet.publicKey(account: Int, index: Int, external: Boolean): PublicKey {
+    val hdPubKey = hdPublicKey(account, index, external)
+    return PublicKey(account, index, hdPubKey.external, hdPubKey.publicKey, hdPubKey.publicKeyHash)
+}
 
 fun List<Transaction>.inTopologicalOrder(): List<Transaction> {
 

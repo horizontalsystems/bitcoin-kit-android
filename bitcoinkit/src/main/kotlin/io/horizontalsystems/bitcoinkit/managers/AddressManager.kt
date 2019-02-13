@@ -29,8 +29,18 @@ class AddressManager(private val realmFactory: RealmFactory,
 
     fun fillGap() {
         realmFactory.realm.use { realm ->
-            fillGap(true, realm)
-            fillGap(false, realm)
+            val lastUsedAccount = realm.where(PublicKey::class.java)
+                    .sort("account", Sort.DESCENDING)
+                    .findAll()
+                    .find { (it.outputs?.size ?: 0) > 0 }
+                    ?.account
+
+            val requiredAccountsCount = lastUsedAccount?.let { it + 4 } ?: 1
+
+            repeat(requiredAccountsCount) { account ->
+                fillGap(account, true, realm)
+                fillGap(account, false, realm)
+            }
         }
     }
 
@@ -45,19 +55,33 @@ class AddressManager(private val realmFactory: RealmFactory,
     }
 
     fun gapShifts(realm: Realm): Boolean {
-        return gapKeysCount(true, realm) < hdWallet.gapLimit || gapKeysCount(false, realm) < hdWallet.gapLimit
+        val lastAccount = realm.where(PublicKey::class.java).sort("account", Sort.DESCENDING).findFirst()?.account ?: return false
+
+        for (i in 0..lastAccount) {
+            if (gapKeysCount(i, true, realm) < hdWallet.gapLimit) {
+                return true
+            }
+
+            if (gapKeysCount(i, false, realm) < hdWallet.gapLimit) {
+                return true
+            }
+        }
+
+        return false
     }
 
-    private fun fillGap(external: Boolean, realm: Realm) {
-        val gapKeysCount = gapKeysCount(external, realm)
+    private fun fillGap(account: Int, external: Boolean, realm: Realm) {
+        val gapKeysCount = gapKeysCount(account, external, realm)
         val keys = mutableListOf<PublicKey>()
         if (gapKeysCount < hdWallet.gapLimit) {
-            val lastIndex = realm.where(PublicKey::class.java).equalTo("external", external)
+            val lastIndex = realm.where(PublicKey::class.java)
+                    .equalTo("account", account)
+                    .equalTo("external", external)
                     .sort("index", Sort.DESCENDING)
                     .findFirst()?.index ?: -1
 
             for (i in 1..hdWallet.gapLimit - gapKeysCount) {
-                val publicKey = hdWallet.publicKey(lastIndex + i, external)
+                val publicKey = hdWallet.publicKey(account, lastIndex + i, external)
                 keys.add(publicKey)
             }
         }
@@ -65,8 +89,8 @@ class AddressManager(private val realmFactory: RealmFactory,
         addKeys(keys)
     }
 
-    private fun gapKeysCount(external: Boolean, realm: Realm): Int {
-        val publicKeys = realm.where(PublicKey::class.java).equalTo("external", external)
+    private fun gapKeysCount(account: Int, external: Boolean, realm: Realm): Int {
+        val publicKeys = realm.where(PublicKey::class.java).equalTo("account", account).equalTo("external", external)
         val lastUsedKey = publicKeys.sort("index").findAll().lastOrNull { it.outputs?.size ?: 0 > 0 }
 
         return when (lastUsedKey) {
@@ -78,6 +102,7 @@ class AddressManager(private val realmFactory: RealmFactory,
     @Throws
     private fun getPublicKey(chain: HDWallet.Chain, realm: Realm): PublicKey {
         val existingKeys = realm.where(PublicKey::class.java)
+                .equalTo("account", 0L)
                 .equalTo("external", chain == HDWallet.Chain.EXTERNAL)
                 .sort("index")
                 .findAll()

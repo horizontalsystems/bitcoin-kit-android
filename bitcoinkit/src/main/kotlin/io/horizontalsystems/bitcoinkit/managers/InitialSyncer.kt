@@ -24,9 +24,9 @@ class InitialSyncer(
 
     @Throws
     fun sync() {
-        if (isRunning) return else {
-            isRunning = true
-        }
+        if (isRunning) return
+
+        isRunning = true
 
         addressManager.fillGap()
 
@@ -36,33 +36,39 @@ class InitialSyncer(
             } else {
                 listener.onSyncStart()
 
-                val externalObservable = syncerApi.fetchFromApi(true)
-                val internalObservable = syncerApi.fetchFromApi(false)
+                syncForAccount(0)
+            }
+        } catch (e: Exception) {
+            isRunning = false
+            throw e
+        }
+    }
 
-                val disposable = Single
-                        .merge(externalObservable, internalObservable)
-                        .toList()
-                        .subscribeOn(Schedulers.io())
-                        .subscribe({ pairsList ->
+    private fun syncForAccount(account: Int) {
+        val externalObservable = syncerApi.fetchFromApi(account, true)
+        val internalObservable = syncerApi.fetchFromApi(account, false)
+
+        val disposable = Single
+                .merge(externalObservable, internalObservable)
+                .toList()
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        { pairsList ->
                             val publicKeys = mutableListOf<PublicKey>()
                             val blockHashes = mutableListOf<BlockHash>()
                             pairsList.forEach { (keys, hashes) ->
                                 publicKeys.addAll(keys)
                                 blockHashes.addAll(hashes)
                             }
-                            handle(publicKeys, blockHashes)
-                        }, {
+                            handle(account, publicKeys, blockHashes)
+                        },
+                        {
                             isRunning = false
                             logger.severe("Initial Sync Error: $it")
                             listener.onSyncStop()
                         })
 
-                disposables.add(disposable)
-            }
-        } catch (e: Exception) {
-            isRunning = false
-            throw e
-        }
+        disposables.add(disposable)
     }
 
     fun stop() {
@@ -71,18 +77,20 @@ class InitialSyncer(
     }
 
     @Throws
-    private fun handle(keys: List<PublicKey>, blockHashes: List<BlockHash>) {
-
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction {
-                it.insertOrUpdate(blockHashes)
-            }
-        }
-
+    private fun handle(account: Int, keys: List<PublicKey>, blockHashes: List<BlockHash>) {
         addressManager.addKeys(keys)
 
-        stateManager.restored = true
-        peerGroup.start()
+        if (blockHashes.isNotEmpty()) {
+            realmFactory.realm.use { realm ->
+                realm.executeTransaction {
+                    it.insertOrUpdate(blockHashes)
+                }
+            }
+            syncForAccount(account + 1)
+        } else {
+            stateManager.restored = true
+            peerGroup.start()
+        }
     }
 
 }

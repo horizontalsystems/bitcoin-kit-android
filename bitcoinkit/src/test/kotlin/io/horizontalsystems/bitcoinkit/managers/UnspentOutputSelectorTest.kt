@@ -3,8 +3,8 @@ package io.horizontalsystems.bitcoinkit.managers
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
-import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -31,7 +31,7 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun select_ExactlyValueReceiverPay() {
-        fun check(value: Int, feeRate: Int, fee: Int, senderPay: Boolean, output: TransactionOutput) {
+        fun check(value: Long, feeRate: Int, fee: Long, senderPay: Boolean, output: TransactionOutput) {
             try {
                 val selectedOutputs = unspentOutputSelector.select(value = value, feeRate = feeRate, senderPay = senderPay, outputs = outputs)
 
@@ -63,8 +63,8 @@ class UnspentOutputSelectorTest {
 
     @Test
     fun select_receiverPayNoChangeOutput() {
-        val expectedFee = 100 + 10 + 2  // fee for tx + fee for change input + fee for change output
-        val selectedOutputs = unspentOutputSelector.select(value = 15000 - expectedFee, feeRate = 1, senderPay = true, outputs = outputs)
+        val expectedFee = (100 + 10 + 2).toLong()  // fee for tx + fee for change input + fee for change output
+        val selectedOutputs = unspentOutputSelector.select(value = 15000L - expectedFee, feeRate = 1, senderPay = true, outputs = outputs)
 
         assertEquals(listOf(outputs[0], outputs[1], outputs[2], outputs[3]), selectedOutputs.outputs)
         assertEquals(15000, selectedOutputs.totalValue)
@@ -72,12 +72,12 @@ class UnspentOutputSelectorTest {
         assertEquals(false, selectedOutputs.addChangeOutput)
     }
 
-    @Test(expected = UnspentOutputSelector.InsufficientUnspentOutputs::class)
+    @Test(expected = UnspentOutputSelector.Error.InsufficientUnspentOutputs::class)
     fun testNotEnoughErrorReceiverPay() {
         unspentOutputSelector.select(value = 3_100_100, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = false, outputs = outputs)
     }
 
-    @Test(expected = UnspentOutputSelector.EmptyUnspentOutputs::class)
+    @Test(expected = UnspentOutputSelector.Error.EmptyUnspentOutputs::class)
     fun testEmptyOutputsError() {
         unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = true, outputs = listOf())
     }

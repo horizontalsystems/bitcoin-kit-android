@@ -3,16 +3,17 @@ package io.horizontalsystems.bitcoinkit.core
 import android.os.Looper
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
+import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import io.realm.OrderedCollectionChangeSet
 import io.realm.OrderedCollectionChangeSet.State
-import io.realm.Realm
 import io.realm.RealmResults
+import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val realm: Realm, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
+class DataProvider(private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
@@ -20,6 +21,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
 
+    private val realm = realmFactory.realm
     private val transactionRealmResults = getMyTransactions()
     private val blockRealmResults = getBlocks()
     private val feeRateRealmResults = getFeeRate()
@@ -30,12 +32,10 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
     var balance: Long = unspentOutputProvider.getBalance()
         private set
 
-    val transactions get() = transactionRealmResults.mapNotNull { transactionInfo(it) }
-
-    var lastBlockHeight: Int = blockRealmResults.lastOrNull()?.height ?: 0
+    var lastBlockInfo: BlockInfo? = blockRealmResults.lastOrNull()?.let { blockInfo(it) }
         private set
 
-    var feeRate: FeeRate = feeRateRealmResults.firstOrNull() ?: FeeRate.defaultFeeRate
+    var feeRate: FeeRate = feeRateRealmResults.firstOrNull()?.let { realm.copyFromRealm(it) } ?: FeeRate.defaultFeeRate
         private set
 
     init {
@@ -66,6 +66,35 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
         balanceSubjectDisposable.dispose()
     }
 
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
+            Single.create { emitter ->
+                realmFactory.realm.use { realm ->
+
+                    var results = realm.where(Transaction::class.java)
+                            .sort("timestamp", Sort.DESCENDING, "order", Sort.DESCENDING)
+
+                    fromHash?.let { fromHash ->
+                        realm.where(Transaction::class.java).equalTo("hashHexReversed", fromHash).findFirst()?.let { fromTransaction ->
+                            results = results
+                                    .beginGroup()
+                                        .lessThan("timestamp", fromTransaction.timestamp)
+                                        .or()
+                                        .beginGroup()
+                                            .equalTo("timestamp", fromTransaction.timestamp)
+                                            .lessThan("order", fromTransaction.order)
+                                        .endGroup()
+                                    .endGroup()
+                        }
+                    }
+
+                    limit?.let {
+                        results = results.limit(it.toLong())
+                    }
+
+                    emitter.onSuccess(results.findAll().mapNotNull { transactionInfo(it) })
+                }
+            }
+
     private fun handleTransactions(transactions: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == State.UPDATE) {
             listener.let { listener ->
@@ -82,18 +111,19 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
     private fun handleBlocks(blocks: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
         if (changeSet.state == State.UPDATE && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
             blocks.lastOrNull()?.let { block ->
+                val blockInfo = blockInfo(block)
+                lastBlockInfo = blockInfo
 
-                lastBlockHeight = block.height
-
-                listener.onLastBlockInfoUpdate(BlockInfo(
-                        block.reversedHeaderHashHex,
-                        block.height,
-                        block.header?.timestamp
-                ))
+                listener.onLastBlockInfoUpdate(blockInfo)
             }
             balanceUpdateSubject.onNext(true)
         }
     }
+
+    private fun blockInfo(block: Block) = BlockInfo(
+            block.reversedHeaderHashHex,
+            block.height,
+            block.header?.timestamp)
 
     private fun transactionInfo(transaction: Transaction?): TransactionInfo? {
         if (transaction == null) return null
@@ -134,7 +164,7 @@ class DataProvider(private val realm: Realm, private val listener: Listener, pri
                 to = toAddresses,
                 amount = totalMineOutput - totalMineInput,
                 blockHeight = transaction.block?.height,
-                timestamp = transaction.block?.header?.timestamp
+                timestamp = transaction.timestamp
         )
     }
 

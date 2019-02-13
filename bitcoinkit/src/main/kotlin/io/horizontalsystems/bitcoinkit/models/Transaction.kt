@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
+import java.util.*
 
 /**
  * Transaction
@@ -41,12 +42,15 @@ open class Transaction : RealmObject {
     var isMine = false
     var isOutgoing = false
     var segwit = false
+    var timestamp: Long = 0
+    var order: Int = 0 //topological order
 
     constructor()
 
     constructor(version: Int, lockTime: Long) {
         this.version = version
         this.lockTime = lockTime
+        timestamp = Date().time / 1000
     }
 
     constructor(input: BitcoinInput) {
@@ -82,11 +86,11 @@ open class Transaction : RealmObject {
         setHashes()
     }
 
-    fun toByteArray(): ByteArray {
+    fun toByteArray(withWitness: Boolean = true): ByteArray {
         val buffer = BitcoinOutput()
         buffer.writeInt(version)
 
-        if (segwit) {
+        if (segwit && withWitness) {
             buffer.writeByte(0) // marker 0x00
             buffer.writeByte(1) // flag 0x01
         }
@@ -100,7 +104,7 @@ open class Transaction : RealmObject {
         outputs.forEach { buffer.write(it.toByteArray()) }
 
         //  serialize witness data
-        if (segwit) {
+        if (segwit && withWitness) {
             inputs.forEach { buffer.write(it.toByteArrayWitness()) }
         }
 
@@ -153,7 +157,7 @@ open class Transaction : RealmObject {
     }
 
     fun setHashes() {
-        hash = HashUtils.doubleSha256(toByteArray())
+        hash = HashUtils.doubleSha256(toByteArray(withWitness = false))
         hashHexReversed = HashUtils.toHexStringAsLE(hash)
     }
 

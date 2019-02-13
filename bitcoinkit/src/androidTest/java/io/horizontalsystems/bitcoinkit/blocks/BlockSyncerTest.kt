@@ -11,7 +11,7 @@ import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.network.MainNet
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Realm
-import junit.framework.Assert
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -93,7 +93,7 @@ class BlockSyncerTest {
 
         try {
             blockSyncer.handleMerkleBlock(merkleBlock, 100)
-            Assert.fail("Expected exception")
+            fail("Expected exception")
         } catch (e: BlockValidatorException.NoPreviousBlock) {
         }
     }
@@ -123,12 +123,12 @@ class BlockSyncerTest {
 
     private fun assertBlockHashPresent(reversedHeaderHashHex: String, realm: Realm) {
         val blockHash = realm.where(BlockHash::class.java).equalTo("reversedHeaderHashHex", reversedHeaderHashHex).findFirst()
-        Assert.assertNotNull(blockHash)
+        assertNotNull(blockHash)
     }
 
     private fun assertBlockHashNotPresent(reversedHeaderHashHex: String, realm: Realm) {
         val blockHash = realm.where(BlockHash::class.java).equalTo("reversedHeaderHashHex", reversedHeaderHashHex).findFirst()
-        Assert.assertNull(blockHash)
+        assertNull(blockHash)
     }
 
 }

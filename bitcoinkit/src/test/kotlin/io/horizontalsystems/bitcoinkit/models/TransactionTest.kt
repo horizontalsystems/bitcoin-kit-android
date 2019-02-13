@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.models
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
+import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -28,7 +29,7 @@ class TransactionTest {
     }
 
     @Test
-    fun init_witness() {
+    fun withWitness() {
         val witness = arrayOf(
                 "3045022100df7b7e5cda14ddf91290e02ea10786e03eb11ee36ec02dd862fe9a326bbcb7fd02203f5b4496b667e6e281cc654a2da9e4f08660c620a1051337fa8965f727eb191901",
                 "038262a6c6cec93c2d3ecd6c6072efea86d02ff8e3328bbd0242b20af3425990ac"
@@ -56,6 +57,20 @@ class TransactionTest {
         assertEquals(transaction.segwit, true)
 
         assertEquals(txRaw, transaction.toByteArray().toHexString())
+    }
+
+    @Test
+    fun withoutWitness() {
+        val txHash = "8530de8e771c830c4e76909b1fdf0e055ee8872fa1ebbf7c4279375591061a62"
+        val txWitnessHash = "f5b5c6fc1b199ecfa04d192a9f81a9cc6ec78bd848e163a80b2d077b4fe1d097"
+
+        txRaw = "01000000000101dbf198515cebea6e248a212c63299e63a2a35a2def0a42e43e0106c2efff12860100000000ffffffff02e6988102000000001976a914d1b4380d709e9ea54943a083b1208d6d991893d988ac58271101000000001600149063d7cc1cf2d55f6c0076e65587c755dbe96ed702483045022100fa18145855d55b221c0df4cd72b12dcb26f451aa4b8ca2148ef535d3e374baff02205b13c14fbd8665be6a6da4fb65b46a737679e988956ec353a7c7e40cbe43f7a40121038d0705f4511adf850b16baf4f689d3d92fe63cc9a5f6d5d00d2e4ed699e511f800000000"
+        transaction = Transaction(BitcoinInput(txRaw.hexStringToByteArray()))
+        assertEquals(txHash, transaction.hashHexReversed)
+
+        val bytes = HashUtils.doubleSha256(transaction.toByteArray(withWitness = true))
+
+        assertEquals(txWitnessHash, HashUtils.toHexStringAsLE(bytes))
     }
 
 }

@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.message
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.network.messages.TransactionMessage
-import junit.framework.Assert
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class TransactionMessageTest {
@@ -16,7 +16,7 @@ class TransactionMessageTest {
         val message = TransactionMessage(data)
         val transaction = message.transaction
 
-        Assert.assertEquals(expectedTransactionHex, transaction.hash.toHexString())
+        assertEquals(expectedTransactionHex, transaction.hash.toHexString())
     }
 
 }

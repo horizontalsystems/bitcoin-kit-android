@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.models
 
-import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptParser
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 
 enum class AddressType {
@@ -19,7 +18,7 @@ abstract class Address {
             AddressType.P2PKH -> ScriptType.P2PKH
             AddressType.P2SH -> ScriptType.P2SH
             AddressType.WITNESS ->
-                if (hash.size == ScriptParser.WITNESS_PKH_LENGTH) ScriptType.P2WPKH else ScriptType.P2WSH
+                if (hash.size == 20) ScriptType.P2WPKH else ScriptType.P2WSH
         }
 }
 
