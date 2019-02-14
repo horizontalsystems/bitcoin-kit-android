@@ -84,7 +84,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.value = txList.sortedByDescending { it.blockHeight }
+            transactions.postValue(txList.sortedByDescending { it.blockHeight })
         }.let {
             disposables.add(it)
         }
@@ -95,7 +95,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
-        this.lastBlockHeight.value = blockInfo.height
+        this.lastBlockHeight.postValue(blockInfo.height)
     }
 
     override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
