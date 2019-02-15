@@ -68,6 +68,7 @@ class BitcoinKitTest {
 
     @Test
     fun mnemonicToSeed() {
+        whenever(mnemonic.toSeed(words)).thenReturn(byteArrayOf())
         bitcoinKit = BitcoinKit(words, NetworkType.TestNet)
 
         // converts mnemonic words to seed
