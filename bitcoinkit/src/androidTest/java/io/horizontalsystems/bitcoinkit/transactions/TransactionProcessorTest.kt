@@ -1,14 +1,18 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
 import com.nhaarman.mockito_kotlin.any
+import com.nhaarman.mockito_kotlin.check
+import com.nhaarman.mockito_kotlin.eq
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
+import io.horizontalsystems.bitcoinkit.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.realm.Realm
+import org.junit.Assert
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -20,10 +24,11 @@ class TransactionProcessorTest {
 
     private val factory = RealmFactoryMock()
     private lateinit var realm: Realm
-    private val transaction = mock(Transaction::class.java)
+    private val transaction = Fixtures.transactionP2PKH
     private val linker = mock(TransactionLinker::class.java)
     private val extractor = mock(TransactionExtractor::class.java)
     private val addressManager = mock(AddressManager::class.java)
+    private val blockchainDataListener = mock(IBlockchainDataListener::class.java)
 
     private lateinit var processor: TransactionProcessor
 
@@ -33,22 +38,25 @@ class TransactionProcessorTest {
         realm.executeTransaction {
             it.deleteAll()
         }
-        processor = TransactionProcessor(extractor, linker, addressManager)
+        processor = TransactionProcessor(extractor, linker, addressManager, blockchainDataListener)
     }
 
     @Test
     fun process() {
-        whenever(transaction.isMine).thenReturn(false)
-        processor.process(transaction, realm)
+        processor.processOutgoing(transaction, realm)
 
         verify(extractor).extractOutputs(transaction, realm)
         verify(linker).handle(transaction, realm)
+        verify(blockchainDataListener).onTransactionsUpdate(check {
+            Assert.assertEquals(transaction.hashHexReversed, it.firstOrNull()?.hashHexReversed)
+        }, eq(listOf()))
     }
 
     @Test
     fun process_isMine() {
-        whenever(transaction.isMine).thenReturn(true)
-        processor.process(transaction, realm)
+        transaction.isMine = true
+
+        processor.processOutgoing(transaction, realm)
 
         verify(extractor).extractOutputs(transaction, realm)
         verify(extractor).extractInputs(transaction)

@@ -22,7 +22,7 @@ class TransactionProcessor(private val extractor: TransactionExtractor, private 
         }
     }
 
-    fun process(transaction: Transaction, realm: Realm) {
+    private fun process(transaction: Transaction, realm: Realm) {
         extractor.extractOutputs(transaction, realm)
         linker.handle(transaction, realm)
 

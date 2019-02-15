@@ -5,10 +5,8 @@ import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
-import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -38,10 +36,7 @@ class TransactionCreatorTest {
     fun create_Success() {
         transactionCreator.create("address", 10_000_000, 8, true)
 
-        val insertedTx = realm.where(Transaction::class.java).equalTo("hashHexReversed", transactionP2PKH.hashHexReversed).findFirst()
-
-        assertTrue(insertedTx != null)
-        verify(transactionProcessor).process(transactionP2PKH, realm)
+        verify(transactionProcessor).processOutgoing(transactionP2PKH, realm)
         verify(peerGroup).sendPendingTransactions()
     }
 

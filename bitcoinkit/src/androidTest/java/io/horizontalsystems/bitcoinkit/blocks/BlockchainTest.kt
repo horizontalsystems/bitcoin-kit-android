@@ -14,7 +14,8 @@ class BlockchainTest {
     private val factories = RealmFactoryMock()
     private val realm = factories.realmFactory.realm
     private val network = mock(Network::class.java)
-    private val blockchain = Blockchain(network)
+    private val blockchainDataListener = mock(IBlockchainDataListener::class.java)
+    private val blockchain = Blockchain(network, blockchainDataListener)
 
     @Before
     fun setup() {
