@@ -14,7 +14,8 @@ import java.util.concurrent.TimeUnit
 class DataProvider(private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) : IBlockchainDataListener {
 
     interface Listener {
-        fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
+        fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
+        fun onTransactionsDelete(hashes: List<String>)
         fun onBalanceUpdate(balance: Long)
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
@@ -61,12 +62,12 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     }
 
     override fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>) {
-        listener.onTransactionsUpdate(inserted.mapNotNull { transactionInfo(it) }, updated.mapNotNull { transactionInfo(it) }, listOf())
+        listener.onTransactionsUpdate(inserted.mapNotNull { transactionInfo(it) }, updated.mapNotNull { transactionInfo(it) })
         balanceUpdateSubject.onNext(true)
     }
 
     override fun onTransactionsDelete(ids: List<String>) {
-        listener.onTransactionsUpdate(listOf(), listOf(), listOf())
+        listener.onTransactionsDelete(ids)
         balanceUpdateSubject.onNext(true)
     }
 

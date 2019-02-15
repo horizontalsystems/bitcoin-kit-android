@@ -33,7 +33,8 @@ class BitcoinKitModule
 class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
-        fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
+        fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
+        fun onTransactionsDelete(hashes: List<String>)
         fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long)
         fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo)
         fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState)
@@ -189,8 +190,12 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     //
     // DataProvider Listener implementations
     //
-    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        listener?.onTransactionsUpdate(this, inserted, updated, deleted)
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+        listener?.onTransactionsUpdate(this, inserted, updated)
+    }
+
+    override fun onTransactionsDelete(hashes: List<String>) {
+        listener?.onTransactionsDelete(hashes)
     }
 
     override fun onBalanceUpdate(balance: Long) {
