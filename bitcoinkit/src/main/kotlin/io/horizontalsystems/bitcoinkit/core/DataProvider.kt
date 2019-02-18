@@ -42,7 +42,6 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
         }
 
         balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
-//                .observeOn(AndroidSchedulers.from(Looper.myLooper()))
                 .subscribe {
                     balance = unspentOutputProvider.getBalance()
                     listener.onBalanceUpdate(balance)
