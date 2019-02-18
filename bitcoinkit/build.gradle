@@ -48,7 +48,6 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
     implementation 'io.reactivex.rxjava2:rxjava:2.2.0'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
 
     // For cryptocurrency
     implementation 'com.madgag.spongycastle:core:1.58.0.0'

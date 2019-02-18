@@ -82,20 +82,22 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     // BitcoinKit Listener implementations
     //
-    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
+    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.value = txList.sortedByDescending { it.blockHeight }
+            transactions.postValue(txList.sortedByDescending { it.blockHeight })
         }.let {
             disposables.add(it)
         }
     }
+
+    override fun onTransactionsDelete(hashes: List<String>) = Unit
 
     override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {
         this.balance.value = balance
     }
 
     override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
-        this.lastBlockHeight.value = blockInfo.height
+        this.lastBlockHeight.postValue(blockInfo.height)
     }
 
     override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {

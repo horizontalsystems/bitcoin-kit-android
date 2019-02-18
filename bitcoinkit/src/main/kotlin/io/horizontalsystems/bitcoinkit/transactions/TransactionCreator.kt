@@ -22,10 +22,7 @@ class TransactionCreator(
                 throw TransactionAlreadyExists("hashHexReversed = ${transaction.hashHexReversed}")
             }
 
-            realm.executeTransaction {
-                processor.process(transaction, realm)
-                realm.insert(transaction)
-            }
+            processor.processOutgoing(transaction, realm)
         }
 
         peerGroup.sendPendingTransactions()

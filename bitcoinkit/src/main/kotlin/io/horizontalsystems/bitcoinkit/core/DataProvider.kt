@@ -1,30 +1,23 @@
 package io.horizontalsystems.bitcoinkit.core
 
-import android.os.Looper
+import io.horizontalsystems.bitcoinkit.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
 import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
-import io.realm.OrderedCollectionChangeSet
-import io.realm.OrderedCollectionChangeSet.State
-import io.realm.RealmResults
 import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) {
+class DataProvider(private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) : IBlockchainDataListener {
 
     interface Listener {
-        fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
+        fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
+        fun onTransactionsDelete(hashes: List<String>)
         fun onBalanceUpdate(balance: Long)
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
 
-    private val realm = realmFactory.realm
-    private val transactionRealmResults = getMyTransactions()
-    private val blockRealmResults = getBlocks()
-    private val feeRateRealmResults = getFeeRate()
     private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
     private val balanceSubjectDisposable: Disposable
 
@@ -32,37 +25,50 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     var balance: Long = unspentOutputProvider.getBalance()
         private set
 
-    var lastBlockInfo: BlockInfo? = blockRealmResults.lastOrNull()?.let { blockInfo(it) }
+    var lastBlockInfo: BlockInfo?
         private set
 
-    var feeRate: FeeRate = feeRateRealmResults.firstOrNull()?.let { realm.copyFromRealm(it) } ?: FeeRate.defaultFeeRate
-        private set
+    val feeRate: FeeRate
+        get() = realmFactory.realm.use { realm ->
+            realm.where(FeeRate::class.java).findAll().firstOrNull()?.let { realm.copyFromRealm(it) }
+                    ?: FeeRate.defaultFeeRate
+        }
 
     init {
-        transactionRealmResults.addChangeListener { transactions, changeSet ->
-            handleTransactions(transactions, changeSet)
-        }
-
-        blockRealmResults.addChangeListener { blocks, changeSet ->
-            handleBlocks(blocks, changeSet)
-        }
-
-        feeRateRealmResults.addChangeListener { feeRates, _ ->
-            feeRate = feeRates.firstOrNull()?.let { realm.copyFromRealm(it) } ?: FeeRate.defaultFeeRate
+        lastBlockInfo = realmFactory.realm.use { realm ->
+            realm.where(Block::class.java)
+                    .sort("height", Sort.DESCENDING)
+                    .findFirst()?.let { blockInfo(it) }
         }
 
         balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.from(Looper.myLooper()))
                 .subscribe {
                     balance = unspentOutputProvider.getBalance()
                     listener.onBalanceUpdate(balance)
                 }
     }
 
+    override fun onBlockInsert(block: Block) {
+        if (block.height > lastBlockInfo?.height ?: 0) {
+            val blockInfo = blockInfo(block)
+
+            lastBlockInfo = blockInfo
+            listener.onLastBlockInfoUpdate(blockInfo)
+            balanceUpdateSubject.onNext(true)
+        }
+    }
+
+    override fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>) {
+        listener.onTransactionsUpdate(inserted.mapNotNull { transactionInfo(it) }, updated.mapNotNull { transactionInfo(it) })
+        balanceUpdateSubject.onNext(true)
+    }
+
+    override fun onTransactionsDelete(ids: List<String>) {
+        listener.onTransactionsDelete(ids)
+        balanceUpdateSubject.onNext(true)
+    }
+
     fun clear() {
-        transactionRealmResults.removeAllChangeListeners()
-        blockRealmResults.removeAllChangeListeners()
-        realm.close()
         balanceSubjectDisposable.dispose()
     }
 
@@ -94,31 +100,6 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
                     emitter.onSuccess(results.findAll().mapNotNull { transactionInfo(it) })
                 }
             }
-
-    private fun handleTransactions(transactions: RealmResults<Transaction>, changeSet: OrderedCollectionChangeSet) {
-        if (changeSet.state == State.UPDATE) {
-            listener.let { listener ->
-                val inserted = changeSet.insertions.asList().mapNotNull { transactionInfo(transactions[it]) }
-                val updated = changeSet.changes.asList().mapNotNull { transactionInfo(transactions[it]) }
-                val deleted = changeSet.deletions.asList()
-
-                listener.onTransactionsUpdate(inserted, updated, deleted)
-            }
-            balanceUpdateSubject.onNext(true)
-        }
-    }
-
-    private fun handleBlocks(blocks: RealmResults<Block>, changeSet: OrderedCollectionChangeSet) {
-        if (changeSet.state == State.UPDATE && (changeSet.deletions.isNotEmpty() || changeSet.insertions.isNotEmpty())) {
-            blocks.lastOrNull()?.let { block ->
-                val blockInfo = blockInfo(block)
-                lastBlockInfo = blockInfo
-
-                listener.onLastBlockInfoUpdate(blockInfo)
-            }
-            balanceUpdateSubject.onNext(true)
-        }
-    }
 
     private fun blockInfo(block: Block) = BlockInfo(
             block.reversedHeaderHashHex,
@@ -168,19 +149,4 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
         )
     }
 
-    private fun getBlocks(): RealmResults<Block> {
-        return realm.where(Block::class.java)
-                .sort("height")
-                .findAll()
-    }
-
-    private fun getFeeRate(): RealmResults<FeeRate> {
-        return realm.where(FeeRate::class.java).findAll()
-    }
-
-    private fun getMyTransactions(): RealmResults<Transaction> {
-        return realm.where(Transaction::class.java)
-                .equalTo("isMine", true)
-                .findAll()
-    }
 }
