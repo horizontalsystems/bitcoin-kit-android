@@ -26,6 +26,8 @@ import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 import io.realm.Realm
 import io.realm.annotations.RealmModule
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
@@ -41,6 +43,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     }
 
     var listener: Listener? = null
+    var listenerExecutor: Executor = Executors.newSingleThreadExecutor()
 
     //  DataProvider getters
     val balance get() = dataProvider.balance
@@ -191,26 +194,36 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     // DataProvider Listener implementations
     //
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
-        listener?.onTransactionsUpdate(this, inserted, updated)
+        listenerExecutor.execute {
+            listener?.onTransactionsUpdate(this, inserted, updated)
+        }
     }
 
     override fun onTransactionsDelete(hashes: List<String>) {
-        listener?.onTransactionsDelete(hashes)
+        listenerExecutor.execute {
+            listener?.onTransactionsDelete(hashes)
+        }
     }
 
     override fun onBalanceUpdate(balance: Long) {
-        listener?.onBalanceUpdate(this, balance)
+        listenerExecutor.execute {
+            listener?.onBalanceUpdate(this, balance)
+        }
     }
 
     override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
-        listener?.onLastBlockInfoUpdate(this, blockInfo)
+        listenerExecutor.execute {
+            listener?.onLastBlockInfoUpdate(this, blockInfo)
+        }
     }
 
     //
     // KitStateProvider Listener implementations
     //
     override fun onKitStateUpdate(state: KitState) {
-        listener?.onKitStateUpdate(this, state)
+        listenerExecutor.execute {
+            listener?.onKitStateUpdate(this, state)
+        }
     }
 
     enum class NetworkType {
