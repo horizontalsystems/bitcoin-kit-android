@@ -30,7 +30,7 @@ open class TransactionInput : RealmObject {
     var sigScript: ByteArray = byteArrayOf()
 
     // Input sequence number
-    var sequence: Long = 0
+    var sequence: Long = 0xffffffff
 
     // Internal fields
     var previousOutput: TransactionOutput? = null
