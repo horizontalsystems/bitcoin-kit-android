@@ -204,8 +204,9 @@ class Peer(val host: String, private val network: Network, private val listener:
     // Private methods
     //
     private fun handleInvMessage(message: InvMessage) {
-        tasks.any { it.handleInventoryItems(message.inventory) }
-        listener.onReceiveInventoryItems(this, message.inventory)
+        if (tasks.none { it.handleInventoryItems(message.inventory) }) {
+            listener.onReceiveInventoryItems(this, message.inventory)
+        }
     }
 
     private fun handleMerkleBlockMessage(message: MerkleBlockMessage) {
