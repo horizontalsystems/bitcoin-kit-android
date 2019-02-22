@@ -12,7 +12,7 @@ import java.util.logging.Logger
 
 class InitialSyncer(
         private val realmFactory: RealmFactory,
-        private val syncerApi: InitialSyncerApi,
+        private val syncerApi: InitialSyncerApiBatch,
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
         private val peerGroup: PeerGroup,

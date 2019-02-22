@@ -108,7 +108,18 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         }
 
         val stateManager = StateManager(realmFactory, network, newWallet)
-        val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
+        val host = when (network) {
+            is MainNet -> "https://btc.horizontalsystems.xyz/apg"
+            is TestNet -> "http://btc-testnet.horizontalsystems.xyz/apg"
+            is MainNetBitcoinCash -> "https://bch.horizontalsystems.xyz/apg"
+            is TestNetBitcoinCash -> "http://bch-testnet.horizontalsystems.xyz/apg"
+            else -> "http://btc-testnet.horizontalsystems.xyz/apg"
+        }
+
+        val apiManager = ApiManager(host)
+
+        val initialSyncerApi = InitialSyncerApiBatch(Wallet(wallet), BlockHashFetcher(addressSelector, apiManager, BlockHashFetcherHelper()), network)
+//        val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
         initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateProvider)
