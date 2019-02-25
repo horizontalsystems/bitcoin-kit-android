@@ -45,6 +45,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     //  DataProvider getters
     val balance get() = dataProvider.balance
     val lastBlockInfo get() = dataProvider.lastBlockInfo
+    val syncState get() = kitStateProvider.syncState
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
@@ -55,6 +56,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     private val transactionCreator: TransactionCreator
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
+    private val kitStateProvider: KitStateProvider
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
 
@@ -76,8 +78,8 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
         addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
+        kitStateProvider = KitStateProvider(this)
 
-        val kitStateProvider = KitStateProvider(this)
         val peerHostManager = PeerHostManager(network, realmFactory)
         val transactionLinker = TransactionLinker()
         val transactionExtractor = TransactionExtractor(addressConverter)
@@ -237,6 +239,17 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         object Synced : KitState()
         object NotSynced : KitState()
         class Syncing(val progress: Double) : KitState()
+
+        override fun equals(other: Any?) = when {
+            this is Synced && other is Synced -> true
+            this is NotSynced && other is NotSynced -> true
+            this is Syncing && other is Syncing -> this.progress == other.progress
+            else -> false
+        }
+
+        override fun hashCode(): Int {
+            return javaClass.hashCode()
+        }
     }
 
     companion object {

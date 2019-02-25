@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.core
 
+import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
 
 interface ISyncStateListener {
@@ -19,19 +20,27 @@ class KitStateProvider(private val listener: Listener) : ISyncStateListener {
     private var initialBestBlockHeight = 0
     private var currentBestBlockHeight = 0
 
+    var syncState: BitcoinKit.KitState = KitState.NotSynced
+        private set(value) {
+            if (value != field) {
+                field = value
+                listener.onKitStateUpdate(field)
+            }
+        }
+
     //
     // SyncStateListener implementations
     //
     override fun onSyncStart() {
-        listener.onKitStateUpdate(KitState.Syncing(0.0))
+        syncState = KitState.Syncing(0.0)
     }
 
     override fun onSyncStop() {
-        listener.onKitStateUpdate(KitState.NotSynced)
+        syncState = KitState.NotSynced
     }
 
     override fun onSyncFinish() {
-        listener.onKitStateUpdate(KitState.Synced)
+        syncState = KitState.Synced
     }
 
     override fun onInitialBestBlockHeightUpdate(height: Int) {
@@ -51,9 +60,9 @@ class KitStateProvider(private val listener: Listener) : ISyncStateListener {
         }
 
         if (progress >= 1) {
-            listener.onKitStateUpdate(KitState.Synced)
+            syncState = KitState.Synced
         } else {
-            listener.onKitStateUpdate(KitState.Syncing(progress))
+            syncState = KitState.Syncing(progress)
         }
 
     }
