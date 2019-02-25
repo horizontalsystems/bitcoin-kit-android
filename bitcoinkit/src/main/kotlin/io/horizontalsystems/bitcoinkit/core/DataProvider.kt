@@ -23,7 +23,12 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
 
     //  Getters
     var balance: Long = unspentOutputProvider.getBalance()
-        private set
+        private set(value) {
+            if (value != field) {
+                field = value
+                listener.onBalanceUpdate(field)
+            }
+        }
 
     var lastBlockInfo: BlockInfo?
         private set
@@ -44,7 +49,6 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
         balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
                 .subscribe {
                     balance = unspentOutputProvider.getBalance()
-                    listener.onBalanceUpdate(balance)
                 }
     }
 
