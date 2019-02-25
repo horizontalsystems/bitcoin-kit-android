@@ -14,8 +14,8 @@ class BlockHashFetcherHelperTest {
                 listOf("address1_0", "address1_1")
         )
         val outputs = listOf(
-                BCoinTransactionOutput("asdasd", "asdasd"),
-                BCoinTransactionOutput("tyrty", "sdfasdf")
+                BCoinApi.TransactionOutputItem("asdasd", "asdasd"),
+                BCoinApi.TransactionOutputItem("tyrty", "sdfasdf")
         )
 
         val result = fetcherHelper.lastUsedIndex(addresses, outputs)
@@ -30,8 +30,8 @@ class BlockHashFetcherHelperTest {
                 listOf("address1_0", "address1_1")
         )
         val outputs = listOf(
-                BCoinTransactionOutput("asdasd", "address0_0"),
-                BCoinTransactionOutput("tyrty", "sdfasdf")
+                BCoinApi.TransactionOutputItem("asdasd", "address0_0"),
+                BCoinApi.TransactionOutputItem("tyrty", "sdfasdf")
         )
 
         val result = fetcherHelper.lastUsedIndex(addresses, outputs)
@@ -46,8 +46,8 @@ class BlockHashFetcherHelperTest {
                 listOf("address1_0", "address1_1")
         )
         val outputs = listOf(
-                BCoinTransactionOutput("asdasd", "address0_0"),
-                BCoinTransactionOutput("ssfdaddress1_1aaqqw", "sdfasdf")
+                BCoinApi.TransactionOutputItem("asdasd", "address0_0"),
+                BCoinApi.TransactionOutputItem("ssfdaddress1_1aaqqw", "sdfasdf")
         )
 
         val result = fetcherHelper.lastUsedIndex(addresses, outputs)

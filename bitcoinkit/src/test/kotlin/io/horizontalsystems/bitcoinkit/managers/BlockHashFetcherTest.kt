@@ -8,10 +8,10 @@ import org.junit.Test
 import org.mockito.Mockito
 
 class BlockHashFetcherTest {
-    private val apiManager = Mockito.mock(ApiManager::class.java)
+    private val apiManager = Mockito.mock(BCoinApi::class.java)
     private val addressSelector = Mockito.mock(IAddressSelector::class.java)
     private val yyy = Mockito.mock(BlockHashFetcherHelper::class.java)
-    private val blockHashFetcher = BlockHashFetcher(addressSelector, apiManager, yyy)
+    private val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, apiManager, yyy)
 
 
     @Test
@@ -54,12 +54,12 @@ class BlockHashFetcherTest {
         whenever(addressSelector.getAddressVariants(publicKey1)).thenReturn(addresses1)
         whenever(addressSelector.getAddressVariants(publicKey2)).thenReturn(addresses2)
 
-        val transactionResponse0 = mock<BCoinTransactionResponse>()
+        val transactionResponse0 = mock<BCoinApi.TransactionItem>()
         whenever(transactionResponse0.blockHeight).thenReturn(1234)
         whenever(transactionResponse0.blockHash).thenReturn("1234")
         whenever(transactionResponse0.txOutputs).thenReturn(listOf())
 
-        val transactionResponse1 = mock<BCoinTransactionResponse>()
+        val transactionResponse1 = mock<BCoinApi.TransactionItem>()
         whenever(transactionResponse1.blockHeight).thenReturn(5678)
         whenever(transactionResponse1.blockHash).thenReturn("5678")
         whenever(transactionResponse1.txOutputs).thenReturn(listOf())
