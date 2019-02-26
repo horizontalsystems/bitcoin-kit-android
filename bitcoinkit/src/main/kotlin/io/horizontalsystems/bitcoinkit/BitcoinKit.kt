@@ -248,7 +248,11 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         }
 
         override fun hashCode(): Int {
-            return javaClass.hashCode()
+            var result = javaClass.hashCode()
+            if (this is Syncing) {
+                result = 31 * result + progress.hashCode()
+            }
+            return result
         }
     }
 
