@@ -55,7 +55,7 @@ class InitialSyncerApiTest {
 
     @Test
     fun fetchFromApi() {
-        initialSyncerApi.fetchFromApi(account, true).test()
+        initialSyncerApi.discoverBlockHashes(account, true).test()
 
         verify(apiManager).getJsonArray("tx/address/1A282zR9uMz84P9vQNwCBCqfwGtKEu3K3v")
     }
@@ -66,7 +66,7 @@ class InitialSyncerApiTest {
 
         whenever(apiManager.getJsonArray(any())).thenThrow(error)
 
-        initialSyncerApi.fetchFromApi(account, true)
+        initialSyncerApi.discoverBlockHashes(account, true)
                 .test()
                 .assertError(error)
     }
@@ -82,7 +82,7 @@ class InitialSyncerApiTest {
                         JsonArray() // response for second call
                 )
 
-        initialSyncerApi.fetchFromApi(account, true)
+        initialSyncerApi.discoverBlockHashes(account, true)
                 .test()
                 .assertValue {
                     val keys = it.first
