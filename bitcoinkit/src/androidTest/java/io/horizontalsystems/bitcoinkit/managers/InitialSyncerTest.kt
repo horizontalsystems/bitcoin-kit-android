@@ -4,7 +4,6 @@ import com.nhaarman.mockito_kotlin.*
 import helpers.RxTestRule
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
-import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
@@ -165,7 +164,7 @@ class InitialSyncerTest {
         verifyNoMoreInteractions(peerGroup)
 
         assertTrue(realm.where(PublicKey::class.java).findAll().isEmpty())
-        assertTrue(realm.where(Block::class.java).findAll().isEmpty())
+        assertTrue(realm.where(BlockHash::class.java).findAll().isEmpty())
     }
 
     private fun containsBlock(blocks: List<BlockHash>, block: BlockHash) =
