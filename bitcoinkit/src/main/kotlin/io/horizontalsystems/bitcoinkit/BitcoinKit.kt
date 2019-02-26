@@ -3,10 +3,7 @@ package io.horizontalsystems.bitcoinkit
 import android.content.Context
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
-import io.horizontalsystems.bitcoinkit.core.DataProvider
-import io.horizontalsystems.bitcoinkit.core.KitStateProvider
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
-import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.core.*
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
@@ -73,12 +70,12 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
             this(Mnemonic().toSeed(words), networkType, walletId, peerSize, newWallet, confirmationsThreshold)
 
     init {
-        val wallet = HDWallet(seed, network.coinType)
+        val hdWallet = HDWallet(seed, network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
         dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
-        addressManager = AddressManager(realmFactory, wallet, addressConverter)
+        addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
 
         val kitStateProvider = KitStateProvider(this)
         val peerHostManager = PeerHostManager(network, realmFactory)
@@ -108,11 +105,13 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         }
 
         val stateManager = StateManager(realmFactory, network, newWallet)
-        val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
+
+        val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
+        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
-        initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateProvider)
-        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager, unspentOutputProvider)
+        initialSyncer = InitialSyncer(realmFactory, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
+        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }
 

@@ -36,6 +36,7 @@ class ApiManager(private val host: String) {
                     Json.parse(it.bufferedReader())
                 }
     }
+
 }
 
 data class BlockResponse(val hash: String, val height: Int) {
