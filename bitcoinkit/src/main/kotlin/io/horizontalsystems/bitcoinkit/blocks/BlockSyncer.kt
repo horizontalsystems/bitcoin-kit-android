@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
+import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
@@ -128,6 +128,7 @@ class BlockSyncer(private val realmFactory: RealmFactory,
 
         if (result.isEmpty()) {
             realm.where(Block::class.java)
+                    .greaterThan("height", network.checkpointBlock.height)
                     .sort("height", Sort.DESCENDING)
                     .findAll()
                     .take(10)
