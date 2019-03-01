@@ -35,7 +35,7 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
         private set
 
     val feeRate: FeeRate
-        get() = storage.getFeeRate() ?: FeeRate.defaultFeeRate
+        get() = storage.feeRate ?: FeeRate.defaultFeeRate
 
     init {
         lastBlockInfo = realmFactory.realm.use { realm ->

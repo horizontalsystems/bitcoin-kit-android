@@ -12,7 +12,7 @@ class FeeRateSyncer(private val storage: IStorage, private val apiFeeRate: ApiFe
         disposable = apiFeeRate.getFeeRate()
                 .onErrorResumeNext(Observable.empty())
                 .subscribe {
-                    storage.saveFeeRate(it)
+                    storage.setFeeRate(it)
                 }
     }
 }

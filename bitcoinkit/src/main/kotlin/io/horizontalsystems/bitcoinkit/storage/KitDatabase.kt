@@ -4,13 +4,14 @@ import android.arch.persistence.room.Database
 import android.arch.persistence.room.Room
 import android.arch.persistence.room.RoomDatabase
 import android.content.Context
+import io.horizontalsystems.bitcoinkit.models.BlockchainState
 import io.horizontalsystems.bitcoinkit.models.FeeRate
 
-@Database(entities = [FeeRate::class], version = 1, exportSchema = false)
+@Database(entities = [FeeRate::class, BlockchainState::class], version = 3, exportSchema = false)
 abstract class KitDatabase : RoomDatabase() {
 
-    // Data access objects
-    abstract fun feeRateDao(): FeeRateDao
+    abstract fun feeRate(): FeeRateDao
+    abstract fun blockchainState(): BlockchainStateDao
 
     companion object {
 

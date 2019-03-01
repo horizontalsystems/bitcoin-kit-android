@@ -3,6 +3,11 @@ package io.horizontalsystems.bitcoinkit.core
 import io.horizontalsystems.bitcoinkit.models.FeeRate
 
 interface IStorage {
-    fun getFeeRate(): FeeRate?
-    fun saveFeeRate(feeRate: FeeRate)
+    val feeRate: FeeRate?
+    fun setFeeRate(feeRate: FeeRate)
+
+    val initialRestored: Boolean?
+    fun setInitialRestored(isRestored: Boolean)
+
+    fun clear()
 }

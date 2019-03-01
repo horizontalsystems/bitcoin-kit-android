@@ -62,6 +62,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
     private val kitStateProvider: KitStateProvider
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
+    private val storage = Storage(content, "bitcoinkit-${networkType.name}-$walletId")
     private val connectionManager = ConnectionManager(content)
 
     private val network = when (networkType) {
@@ -76,7 +77,6 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
             this(content, Mnemonic().toSeed(words), networkType, walletId, peerSize, newWallet, threshold)
 
     init {
-        val storage = Storage(content, "bitcoinkit-${networkType.name}-$walletId")
         val hdWallet = HDWallet(seed, network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
@@ -111,7 +111,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
             }
         }
 
-        val stateManager = StateManager(realmFactory, network, newWallet)
+        val stateManager = StateManager(storage, network, newWallet)
 
         val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
@@ -135,6 +135,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
         dataProvider.clear()
         initialSyncer.stop()
         syncManager.stop()
+        storage.clear()
     }
 
     fun clear() {
