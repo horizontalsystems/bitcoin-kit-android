@@ -14,9 +14,17 @@ class App : Application() {
             // You should not init your app in this process.
             return
         }
+
         LeakCanary.install(this)
 
         BitcoinKit.init(this)
+
+        instance = this
+    }
+
+    companion object {
+        lateinit var instance: App
+            private set
     }
 
 }

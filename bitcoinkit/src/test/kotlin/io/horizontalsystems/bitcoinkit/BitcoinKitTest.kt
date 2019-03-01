@@ -7,9 +7,9 @@ import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
+import io.horizontalsystems.bitcoinkit.managers.BlockDiscoveryBatch
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
-import io.horizontalsystems.bitcoinkit.managers.BlockDiscoveryBatch
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
@@ -69,7 +69,7 @@ class BitcoinKitTest {
     @Test
     fun mnemonicToSeed() {
         whenever(mnemonic.toSeed(words)).thenReturn(byteArrayOf())
-        bitcoinKit = BitcoinKit(words, NetworkType.TestNet)
+        bitcoinKit = BitcoinKit(context, words, NetworkType.TestNet, "ABC")
 
         // converts mnemonic words to seed
         verify(mnemonic).toSeed(words)
