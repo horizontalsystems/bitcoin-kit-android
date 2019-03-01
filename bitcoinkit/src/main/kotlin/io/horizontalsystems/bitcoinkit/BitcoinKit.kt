@@ -3,10 +3,7 @@ package io.horizontalsystems.bitcoinkit
 import android.content.Context
 import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
-import io.horizontalsystems.bitcoinkit.core.DataProvider
-import io.horizontalsystems.bitcoinkit.core.KitStateProvider
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
-import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.core.*
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
@@ -26,6 +23,8 @@ import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 import io.realm.Realm
 import io.realm.annotations.RealmModule
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
@@ -33,17 +32,20 @@ class BitcoinKitModule
 class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
-        fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>)
+        fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
+        fun onTransactionsDelete(hashes: List<String>)
         fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long)
         fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo)
         fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState)
     }
 
     var listener: Listener? = null
+    var listenerExecutor: Executor = Executors.newSingleThreadExecutor()
 
     //  DataProvider getters
     val balance get() = dataProvider.balance
     val lastBlockInfo get() = dataProvider.lastBlockInfo
+    val syncState get() = kitStateProvider.syncState
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
@@ -54,6 +56,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     private val transactionCreator: TransactionCreator
     private val transactionBuilder: TransactionBuilder
     private val dataProvider: DataProvider
+    private val kitStateProvider: KitStateProvider
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
 
@@ -69,23 +72,23 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
             this(Mnemonic().toSeed(words), networkType, walletId, peerSize, newWallet, confirmationsThreshold)
 
     init {
-        val wallet = HDWallet(seed, network.coinType)
+        val hdWallet = HDWallet(seed, network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
         dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
-        addressManager = AddressManager(realmFactory, wallet, addressConverter)
+        addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
+        kitStateProvider = KitStateProvider(this)
 
-        val kitStateProvider = KitStateProvider(this)
         val peerHostManager = PeerHostManager(network, realmFactory)
         val transactionLinker = TransactionLinker()
         val transactionExtractor = TransactionExtractor(addressConverter)
-        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager)
+        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager, dataProvider)
         val bloomFilterManager = BloomFilterManager(realmFactory)
         val addressSelector: IAddressSelector
 
         peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
-        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
+        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.connectionManager = connectionManager
 
@@ -104,11 +107,13 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         }
 
         val stateManager = StateManager(realmFactory, network, newWallet)
-        val initialSyncerApi = InitialSyncerApi(wallet, addressSelector, network)
+
+        val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
+        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
 
         feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
-        initialSyncer = InitialSyncer(realmFactory, initialSyncerApi, stateManager, addressManager, peerGroup, kitStateProvider)
-        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, wallet, network, addressManager, unspentOutputProvider)
+        initialSyncer = InitialSyncer(realmFactory, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
+        transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }
 
@@ -189,23 +194,37 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     //
     // DataProvider Listener implementations
     //
-    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
-        listener?.onTransactionsUpdate(this, inserted, updated, deleted)
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+        listenerExecutor.execute {
+            listener?.onTransactionsUpdate(this, inserted, updated)
+        }
+    }
+
+    override fun onTransactionsDelete(hashes: List<String>) {
+        listenerExecutor.execute {
+            listener?.onTransactionsDelete(hashes)
+        }
     }
 
     override fun onBalanceUpdate(balance: Long) {
-        listener?.onBalanceUpdate(this, balance)
+        listenerExecutor.execute {
+            listener?.onBalanceUpdate(this, balance)
+        }
     }
 
     override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
-        listener?.onLastBlockInfoUpdate(this, blockInfo)
+        listenerExecutor.execute {
+            listener?.onLastBlockInfoUpdate(this, blockInfo)
+        }
     }
 
     //
     // KitStateProvider Listener implementations
     //
     override fun onKitStateUpdate(state: KitState) {
-        listener?.onKitStateUpdate(this, state)
+        listenerExecutor.execute {
+            listener?.onKitStateUpdate(this, state)
+        }
     }
 
     enum class NetworkType {
@@ -220,6 +239,21 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         object Synced : KitState()
         object NotSynced : KitState()
         class Syncing(val progress: Double) : KitState()
+
+        override fun equals(other: Any?) = when {
+            this is Synced && other is Synced -> true
+            this is NotSynced && other is NotSynced -> true
+            this is Syncing && other is Syncing -> this.progress == other.progress
+            else -> false
+        }
+
+        override fun hashCode(): Int {
+            var result = javaClass.hashCode()
+            if (this is Syncing) {
+                result = 31 * result + progress.hashCode()
+            }
+            return result
+        }
     }
 
     companion object {

@@ -4,7 +4,6 @@ import com.nhaarman.mockito_kotlin.*
 import helpers.RxTestRule
 import io.horizontalsystems.bitcoinkit.RealmFactoryMock
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
-import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
@@ -20,7 +19,7 @@ import java.util.concurrent.TimeUnit
 class InitialSyncerTest {
 
     private val factories = RealmFactoryMock()
-    private val initialSyncerApi = mock(InitialSyncerApi::class.java)
+    private val initialSyncerApi = mock(BlockDiscoveryBatch::class.java)
     private val kitStateListener = mock(ISyncStateListener::class.java)
 
     private val stateManager = mock(StateManager::class.java)
@@ -48,10 +47,10 @@ class InitialSyncerTest {
     @Test
     fun sync() {
         whenever(stateManager.restored).thenReturn(false)
-        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(apiRespStub)
-        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(apiRespStub)
-        whenever(initialSyncerApi.fetchFromApi(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
-        whenever(initialSyncerApi.fetchFromApi(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
+        whenever(initialSyncerApi.discoverBlockHashes(0, true)).thenReturn(apiRespStub)
+        whenever(initialSyncerApi.discoverBlockHashes(0, false)).thenReturn(apiRespStub)
+        whenever(initialSyncerApi.discoverBlockHashes(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
+        whenever(initialSyncerApi.discoverBlockHashes(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
 
         initialSyncer.sync()
 
@@ -65,8 +64,8 @@ class InitialSyncerTest {
         val responseWithTimeout = apiRespStub.timeout(1, TimeUnit.SECONDS)
 
         whenever(stateManager.restored).thenReturn(false)
-        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(responseWithTimeout)
-        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(responseWithTimeout)
+        whenever(initialSyncerApi.discoverBlockHashes(0, true)).thenReturn(responseWithTimeout)
+        whenever(initialSyncerApi.discoverBlockHashes(0, false)).thenReturn(responseWithTimeout)
 
         initialSyncer.sync()
         initialSyncer.stop()
@@ -77,8 +76,8 @@ class InitialSyncerTest {
     // @Test
     // fun refresh() {
     //     whenever(stateManager.restored).thenReturn(false)
-    //     whenever(initialSyncerApi.fetchFromApi(true)).thenReturn(apiRespStub)
-    //     whenever(initialSyncerApi.fetchFromApi(false)).thenReturn(apiRespStub)
+    //     whenever(initialSyncerApi.discoverBlockHashes(true)).thenReturn(apiRespStub)
+    //     whenever(initialSyncerApi.discoverBlockHashes(false)).thenReturn(apiRespStub)
     //
     //     initialSyncer.sync()
     //     initialSyncer.sync() // refresh
@@ -130,10 +129,10 @@ class InitialSyncerTest {
 
         whenever(stateManager.restored).thenReturn(false)
 
-        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(externalObservable)
-        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(internalObservable)
-        whenever(initialSyncerApi.fetchFromApi(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
-        whenever(initialSyncerApi.fetchFromApi(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
+        whenever(initialSyncerApi.discoverBlockHashes(0, true)).thenReturn(externalObservable)
+        whenever(initialSyncerApi.discoverBlockHashes(0, false)).thenReturn(internalObservable)
+        whenever(initialSyncerApi.discoverBlockHashes(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
+        whenever(initialSyncerApi.discoverBlockHashes(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
 
         initialSyncer.sync()
 
@@ -156,8 +155,8 @@ class InitialSyncerTest {
     fun sync_apiNotSynced_blocksDiscoveredFail() {
         whenever(stateManager.restored).thenReturn(false)
 
-        whenever(initialSyncerApi.fetchFromApi(0, true)).thenReturn(Single.error(Exception()))
-        whenever(initialSyncerApi.fetchFromApi(0, false)).thenReturn(Single.error(Exception()))
+        whenever(initialSyncerApi.discoverBlockHashes(0, true)).thenReturn(Single.error(Exception()))
+        whenever(initialSyncerApi.discoverBlockHashes(0, false)).thenReturn(Single.error(Exception()))
 
         initialSyncer.sync()
 
@@ -165,7 +164,7 @@ class InitialSyncerTest {
         verifyNoMoreInteractions(peerGroup)
 
         assertTrue(realm.where(PublicKey::class.java).findAll().isEmpty())
-        assertTrue(realm.where(Block::class.java).findAll().isEmpty())
+        assertTrue(realm.where(BlockHash::class.java).findAll().isEmpty())
     }
 
     private fun containsBlock(blocks: List<BlockHash>, block: BlockHash) =

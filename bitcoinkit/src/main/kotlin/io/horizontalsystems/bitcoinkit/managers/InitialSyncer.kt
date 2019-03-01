@@ -12,7 +12,7 @@ import java.util.logging.Logger
 
 class InitialSyncer(
         private val realmFactory: RealmFactory,
-        private val syncerApi: InitialSyncerApi,
+        private val blockDiscovery: IBlockDiscovery,
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
         private val peerGroup: PeerGroup,
@@ -45,8 +45,8 @@ class InitialSyncer(
     }
 
     private fun syncForAccount(account: Int) {
-        val externalObservable = syncerApi.fetchFromApi(account, true)
-        val internalObservable = syncerApi.fetchFromApi(account, false)
+        val externalObservable = blockDiscovery.discoverBlockHashes(account, true)
+        val internalObservable = blockDiscovery.discoverBlockHashes(account, false)
 
         val disposable = Single
                 .merge(externalObservable, internalObservable)

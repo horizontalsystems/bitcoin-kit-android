@@ -29,15 +29,15 @@ class MainNetBitcoinCash : Network() {
     )
 
     private val blockHeader = Header().apply {
-        version = 536870912
-        prevHash = HashUtils.toBytesAsLE("0000000000000000012408c48907f199f8155330e4464dea078b34cd2633d1a4")
-        merkleHash = HashUtils.toBytesAsLE("c3e1dcd7029186671cab622b3f444a2ab9bf738ca73d86e28a1202fbe0e2555e")
-        timestamp = 1543990229
-        bits = 403016521
-        nonce = 1766777490
+        version = 549453824
+        prevHash = HashUtils.toBytesAsLE("000000000000000002e4009667ba236d52f605cd44c12ebd79208c14b520968e")
+        merkleHash = HashUtils.toBytesAsLE("65822e3caa2a4709abd37df7de6464a58830da0f8e308af44586114e1c73914f")
+        timestamp = 1551084121
+        bits = 403013590
+        nonce = 2244691553
     }
 
-    override val checkpointBlock = Block(blockHeader, 559478)
+    override val checkpointBlock = Block(blockHeader, 571268)
     override val blockValidator = BitcoinCashValidator(this)
 
     override fun validateBlock(block: Block, previousBlock: Block) {

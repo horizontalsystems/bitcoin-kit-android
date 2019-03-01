@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
-import io.horizontalsystems.bitcoinkit.managers.InitialSyncerApi
+import io.horizontalsystems.bitcoinkit.managers.BlockDiscoveryBatch
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
@@ -39,7 +39,7 @@ class BitcoinKitTest {
     private val network = mock(Network::class.java)
     private val dataProvider = mock(DataProvider::class.java)
     private val peerHostManager = mock(PeerHostManager::class.java)
-    private val initialSyncerApi = mock(InitialSyncerApi::class.java)
+    private val initialSyncerApi = mock(BlockDiscoveryBatch::class.java)
     private val bloomFilterManager = mock(BloomFilterManager::class.java)
     private val blockSyncer = mock(BlockSyncer::class.java)
     private val addressManager = mock(AddressManager::class.java)
@@ -52,7 +52,7 @@ class BitcoinKitTest {
     fun setup() {
         whenNew(ConnectionManager::class.java).thenReturn(connectionManager)
         whenNew(PeerGroup::class.java).thenReturn(peerGroup)
-        whenNew(InitialSyncerApi::class.java).thenReturn(initialSyncerApi)
+        whenNew(BlockDiscoveryBatch::class.java).thenReturn(initialSyncerApi)
         whenNew(Network::class.java).thenReturn(network)
         whenNew(RealmFactory::class.java).thenReturn(realmFactory)
         whenNew(DataProvider::class.java).thenReturn(dataProvider)
@@ -68,6 +68,7 @@ class BitcoinKitTest {
 
     @Test
     fun mnemonicToSeed() {
+        whenever(mnemonic.toSeed(words)).thenReturn(byteArrayOf())
         bitcoinKit = BitcoinKit(words, NetworkType.TestNet)
 
         // converts mnemonic words to seed

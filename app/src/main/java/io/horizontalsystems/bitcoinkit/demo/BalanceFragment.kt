@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import io.horizontalsystems.bitcoinkit.BitcoinKit
 
 class BalanceFragment : Fragment() {
 
@@ -16,7 +17,7 @@ class BalanceFragment : Fragment() {
     lateinit var networkName: TextView
     lateinit var balanceValue: TextView
     lateinit var lastBlockValue: TextView
-    lateinit var progressValue: TextView
+    lateinit var stateValue: TextView
     lateinit var startButton: Button
     lateinit var clearButton: Button
     lateinit var buttonDebug: Button
@@ -38,9 +39,18 @@ class BalanceFragment : Fragment() {
                 lastBlockValue.text = (it ?: 0).toString()
             })
 
-            viewModel.progress.observe(this, Observer {
-                val percentage = (it ?: 0.0) * 100
-                progressValue.text = "${percentage}%"
+            viewModel.state.observe(this, Observer {
+                when (it) {
+                    is BitcoinKit.KitState.Synced -> {
+                        stateValue.text = "synced"
+                    }
+                    is BitcoinKit.KitState.Syncing -> {
+                        stateValue.text = "syncing ${it.progress}"
+                    }
+                    is BitcoinKit.KitState.NotSynced -> {
+                        stateValue.text = "not synced"
+                    }
+                }
             })
 
             viewModel.status.observe(this, Observer {
@@ -69,7 +79,7 @@ class BalanceFragment : Fragment() {
 
         balanceValue = view.findViewById(R.id.balanceValue)
         lastBlockValue = view.findViewById(R.id.lastBlockValue)
-        progressValue = view.findViewById(R.id.progressValue)
+        stateValue = view.findViewById(R.id.stateValue)
         startButton = view.findViewById(R.id.buttonStart)
         clearButton = view.findViewById(R.id.buttonClear)
         buttonDebug = view.findViewById(R.id.buttonDebug)

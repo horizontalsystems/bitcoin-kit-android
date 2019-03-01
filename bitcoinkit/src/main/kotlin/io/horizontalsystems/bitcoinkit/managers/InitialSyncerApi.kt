@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.reactivex.Single
 
-class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector: IAddressSelector, network: Network) {
+class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector: IAddressSelector, network: Network) : IBlockDiscovery {
 
     private val maxHeight: Int = network.checkpointBlock.height
     private val gapLimit = wallet.gapLimit
@@ -24,7 +24,7 @@ class InitialSyncerApi(private val wallet: HDWallet, private val addressSelector
     private val apiManager = ApiManager(host)
 
     @Throws
-    fun fetchFromApi(account: Int, external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> =
+    override fun discoverBlockHashes(account: Int, external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> =
             Single.create<Pair<List<PublicKey>, List<BlockHash>>> { emitter ->
                 try {
                     val (publicKeys, blockResponses) = requestApiRecursive(account, external)

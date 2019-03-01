@@ -17,7 +17,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val transactions = MutableLiveData<List<TransactionInfo>>()
     val balance = MutableLiveData<Long>()
     val lastBlockHeight = MutableLiveData<Int>()
-    val progress = MutableLiveData<Double>()
+    val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
     val networkName: String
     private val disposables = CompositeDisposable()
@@ -47,7 +47,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         }
 
         lastBlockHeight.value = bitcoinKit.lastBlockInfo?.height ?: 0
-        progress.value = 0.0
+        state.value = KitState.NotSynced
 
         started = false
     }
@@ -82,33 +82,26 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     // BitcoinKit Listener implementations
     //
-    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
+    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.value = txList.sortedByDescending { it.blockHeight }
+            transactions.postValue(txList.sortedByDescending { it.blockHeight })
         }.let {
             disposables.add(it)
         }
     }
 
+    override fun onTransactionsDelete(hashes: List<String>) {
+    }
+
     override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {
-        this.balance.value = balance
+        this.balance.postValue(balance)
     }
 
     override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
-        this.lastBlockHeight.value = blockInfo.height
+        this.lastBlockHeight.postValue(blockInfo.height)
     }
 
     override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
-        when (state) {
-            is KitState.Synced -> {
-                this.progress.postValue(1.0)
-            }
-            is KitState.Syncing -> {
-                this.progress.postValue(state.progress)
-            }
-            is KitState.NotSynced -> {
-                this.progress.postValue(0.0)
-            }
-        }
+        this.state.postValue(state)
     }
 }

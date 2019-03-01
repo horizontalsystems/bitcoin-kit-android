@@ -43,6 +43,7 @@ class KitStateProviderTest {
 
     @Test
     fun onSyncStop() {
+        kitStateProvider.onSyncStart()
         kitStateProvider.onSyncStop()
 
         verify(kitStateListener).onKitStateUpdate(KitState.NotSynced)

@@ -46,34 +46,34 @@
         tools:text="100.0" />
 
     <TextView
-        android:id="@+id/progressTitle"
+        android:id="@+id/stateTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Sync Progress: "
+        android:text="State:"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/balanceTitle" />
 
     <TextView
-        android:id="@+id/progressValue"
+        android:id="@+id/stateValue"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
-        app:layout_constraintStart_toEndOf="@+id/progressTitle"
-        app:layout_constraintTop_toTopOf="@+id/progressTitle"
-        tools:text="12%" />
+        app:layout_constraintStart_toEndOf="@+id/stateTitle"
+        app:layout_constraintTop_toTopOf="@+id/stateTitle"
+        tools:text="syncing" />
 
     <TextView
         android:id="@+id/lastBlockTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:text="Last Block: "
+        android:text="Last Block:"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progressTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/stateTitle" />
 
     <TextView
         android:id="@+id/lastBlockValue"

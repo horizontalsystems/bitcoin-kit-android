@@ -168,7 +168,11 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         bitcoinKit.listener = this
     }
     
-    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>, deleted: List<Int>) {
+    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+        // do something with transactions
+    }
+
+    override fun onTransactionsDelete(hashes: List<String>) {
         // do something with transactions
     }
 
@@ -196,6 +200,14 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 }
 ```
+
+Listener events are run in a dedicated background thread. It can be switched to main thread by setting the ```listenerExecutor``` property to ```MainThreadExecutor()```
+
+```kotlin
+
+bitcoinKit.listenerExecutor = MainThreadExecutor()
+
+``` 
 
 ## Prerequisites
 * JDK >= 1.8

@@ -28,15 +28,15 @@ class TestNet : Network() {
     )
 
     private val blockHeader = Header().apply {
-        version = 536870912
-        prevHash = HashUtils.toBytesAsLE("000000000000003105650f0b8e7b4cb466cd32ff5608f59906879aff5cad64a7")
-        merkleHash = HashUtils.toBytesAsLE("288eee5b0966470f726c056959e2028f2e56e176c60b198c38ede84a48a504be")
-        timestamp = 1543315333
-        bits = 436289080
-        nonce = 3736759723
+        version = 2079170560
+        prevHash = HashUtils.toBytesAsLE("00000000000007524a71cc81cadbd1ddf9d38848fa8081ad2a72eade4b70d1c1")
+        merkleHash = HashUtils.toBytesAsLE("975b76235d1a9b97fbf4a4f203a762728fb404d568dd33921e328e2d5a712c46")
+        timestamp = 1550688527
+        bits = 436465680
+        nonce = 489544448
     }
 
-    override val checkpointBlock = Block(blockHeader, 1445472)
+    override val checkpointBlock = Block(blockHeader, 1479744)
     override val blockValidator = TestnetValidator(this)
 
     override fun validateBlock(block: Block, previousBlock: Block) {
