@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
-import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
+import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoinkit.network.peer.PeerManager
 import io.horizontalsystems.bitcoinkit.network.peer.task.SendTransactionTask
 import org.junit.Assert.assertEquals
@@ -31,7 +31,7 @@ class PeerGroupTest {
 
     private var peer1 = mock(Peer::class.java)
     private var peer2 = mock(Peer::class.java)
-    private var hostManager = mock(PeerHostManager::class.java)
+    private var hostManager = mock(PeerAddressManager::class.java)
     private var peerManager = mock(PeerManager::class.java)
     private var bloomFilterManager = mock(BloomFilterManager::class.java)
     private var kitStateProvider = mock(KitStateProvider::class.java)
@@ -48,7 +48,7 @@ class PeerGroupTest {
     fun setup() {
         whenever(peer1.host).thenReturn(peerIp)
         whenever(peer2.host).thenReturn(peerIp2)
-        whenever(hostManager.getPeerIp()).thenReturn(peerIp, peerIp2)
+        whenever(hostManager.getIp()).thenReturn(peerIp, peerIp2)
         whenever(connectionManager.isOnline).thenReturn(true)
 
         // Peer
@@ -112,7 +112,7 @@ class PeerGroupTest {
 
         peerGroup.onReceiveAddress(arrayOf(netAddress))
 
-        verify(hostManager).addPeers(arrayOf("10.0.0.1"))
+        verify(hostManager).addIps(arrayOf("10.0.0.1"))
     }
 
     @Test

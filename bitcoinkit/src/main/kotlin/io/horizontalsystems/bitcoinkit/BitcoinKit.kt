@@ -11,7 +11,7 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
-import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
+import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoinkit.storage.Storage
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
@@ -85,7 +85,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
         addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
         kitStateProvider = KitStateProvider(this)
 
-        val peerHostManager = PeerHostManager(network, realmFactory)
+        val peerHostManager = PeerAddressManager(network, storage)
         val transactionLinker = TransactionLinker()
         val transactionExtractor = TransactionExtractor(addressConverter)
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager, dataProvider)

@@ -12,7 +12,7 @@ import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
-import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
+import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.realm.Realm
@@ -38,7 +38,7 @@ class BitcoinKitTest {
     private val peerGroup = mock(PeerGroup::class.java)
     private val network = mock(Network::class.java)
     private val dataProvider = mock(DataProvider::class.java)
-    private val peerHostManager = mock(PeerHostManager::class.java)
+    private val peerHostManager = mock(PeerAddressManager::class.java)
     private val initialSyncerApi = mock(BlockDiscoveryBatch::class.java)
     private val bloomFilterManager = mock(BloomFilterManager::class.java)
     private val blockSyncer = mock(BlockSyncer::class.java)
@@ -61,7 +61,7 @@ class BitcoinKitTest {
         whenNew(BloomFilterManager::class.java).thenReturn(bloomFilterManager)
         whenNew(BlockSyncer::class.java).thenReturn(blockSyncer)
         whenNew(AddressManager::class.java).thenReturn(addressManager)
-        whenNew(PeerHostManager::class.java).thenReturn(peerHostManager)
+        whenNew(PeerAddressManager::class.java).thenReturn(peerHostManager)
 
         whenever(realmFactory.realm).thenReturn(realm)
     }
