@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
@@ -11,7 +11,7 @@ import io.reactivex.schedulers.Schedulers
 import java.util.logging.Logger
 
 class InitialSyncer(
-        private val realmFactory: RealmFactory,
+        private val storage: IStorage,
         private val blockDiscovery: IBlockDiscovery,
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
@@ -81,11 +81,7 @@ class InitialSyncer(
         addressManager.addKeys(keys)
 
         if (blockHashes.isNotEmpty()) {
-            realmFactory.realm.use { realm ->
-                realm.executeTransaction {
-                    it.insertOrUpdate(blockHashes)
-                }
-            }
+            storage.addBlockHashes(blockHashes)
             syncForAccount(account + 1)
         } else {
             stateManager.restored = true

@@ -10,8 +10,8 @@ import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
-import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.storage.Storage
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
@@ -62,7 +62,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
     private val kitStateProvider: KitStateProvider
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
-    private val storage = Storage(content, "bitcoinkit-${networkType.name}-$walletId")
+    private val storage = Storage(content, "bitcoinkit-${networkType.name}-$walletId", realmFactory)
     private val connectionManager = ConnectionManager(content)
 
     private val network = when (networkType) {
@@ -93,7 +93,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
         val addressSelector: IAddressSelector
 
         peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
-        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
+        peerGroup.blockSyncer = BlockSyncer(storage, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.connectionManager = connectionManager
 
@@ -118,7 +118,7 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
 
         feeRateSyncer = FeeRateSyncer(storage, ApiFeeRate(networkType))
         syncManager = SyncManager(connectionManager, feeRateSyncer)
-        initialSyncer = InitialSyncer(realmFactory, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
+        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
     }

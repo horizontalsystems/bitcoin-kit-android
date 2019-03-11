@@ -1,9 +1,6 @@
 package io.horizontalsystems.bitcoinkit.storage
 
-import android.arch.persistence.room.Dao
-import android.arch.persistence.room.Insert
-import android.arch.persistence.room.OnConflictStrategy
-import android.arch.persistence.room.Query
+import android.arch.persistence.room.*
 import io.horizontalsystems.bitcoinkit.models.PeerAddress
 
 @Dao
@@ -20,6 +17,6 @@ interface PeerAddressDao {
     @Query("UPDATE PeerAddress SET score = score + 1 WHERE ip = :ip")
     fun increaseScore(ip: String)
 
-    @Query("DELETE FROM PeerAddress where ip = :ip")
-    fun delete(ip: String)
+    @Delete
+    fun delete(peerAddress: PeerAddress)
 }

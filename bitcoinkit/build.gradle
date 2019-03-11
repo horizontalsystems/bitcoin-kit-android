@@ -43,6 +43,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation 'com.android.support:support-annotations:28.0.0'
 
     // RxJava
     implementation 'io.reactivex.rxjava2:rxjava:2.2.2'
@@ -67,6 +68,11 @@ dependencies {
     testImplementation 'com.nhaarman:mockito-kotlin-kt1.1:1.6.0'
     testImplementation 'org.powermock:powermock-api-mockito2:2.0.0-beta.5'
     testImplementation 'org.powermock:powermock-module-junit4:2.0.0-beta.5'
+
+    // Spek
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:2.0.1"
+    testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:2.0.1"
+    testRuntimeOnly "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     // Android Instrumentation Test
     androidTestImplementation 'com.android.support.test:runner:1.0.2'

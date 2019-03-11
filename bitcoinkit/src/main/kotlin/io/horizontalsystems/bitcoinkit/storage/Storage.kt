@@ -2,12 +2,28 @@ package io.horizontalsystems.bitcoinkit.storage
 
 import android.content.Context
 import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.models.BlockchainState
-import io.horizontalsystems.bitcoinkit.models.FeeRate
-import io.horizontalsystems.bitcoinkit.models.PeerAddress
+import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.models.*
+import io.realm.Realm
+import io.realm.RealmResults
+import io.realm.Sort
 
-class Storage(context: Context, dbName: String) : IStorage {
+class Storage(context: Context, dbName: String, val realmFactory: RealmFactory) : IStorage {
     private val store = KitDatabase.getInstance(context, dbName)
+
+    override fun inTransaction(callback: (Realm) -> Unit) {
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction {
+                callback.invoke(it)
+            }
+        }
+    }
+
+    override fun realmInstance(callback: (Realm) -> Unit) {
+        realmFactory.realm.use {
+            callback.invoke(it)
+        }
+    }
 
     // FeeRate
     override val feeRate: FeeRate?
@@ -39,14 +55,114 @@ class Storage(context: Context, dbName: String) : IStorage {
     }
 
     override fun deletePeerAddress(ip: String) {
-        store.peerAddress.delete(ip)
+        store.peerAddress.delete(PeerAddress(ip))
     }
 
     override fun setPeerAddresses(list: List<PeerAddress>) {
         store.peerAddress.insertAll(list)
     }
 
+    // BlockHash
+
+    override fun getBlockHashesSortedBySequenceAndHeight(limit: Int): List<BlockHash> {
+        return store.blockHash.getBlockHashesSortedSequenceHeight(limit)
+    }
+
+    override fun getBlockHashHeaderHashes(): List<ByteArray> {
+        return store.blockHash.allBlockHashes()
+    }
+
+    override fun getBlockHashHeaderHashHexes(except: String): List<String> {
+        return store.blockHash.allBlockHashes(except)
+    }
+
+    override fun getLastBlockHash(): BlockHash? {
+        return store.blockHash.getLastBlockHash()
+    }
+
+    override fun getBlockchainBlockHashes(): List<BlockHash> {
+        return store.blockHash.getBlockchainBlockHashes()
+    }
+
+    override fun addBlockHashes(hashes: List<BlockHash>) {
+        store.blockHash.insertAll(hashes)
+    }
+
+    override fun getLastBlockchainBlockHash(): BlockHash? {
+        return store.blockHash.getLastBlockchainBlockHash()
+    }
+
+    override fun deleteBlockchainBlockHashes() {
+        store.blockHash.delete(height = 0)
+    }
+
+    override fun deleteBlockHash(hashHex: String) {
+        store.blockHash.delete(hashHex)
+    }
+
+    // Block
+
+    override fun getBlock(height: Int): Block? {
+        realmFactory.realm.use {
+            val block = it.where(Block::class.java)
+                    .equalTo("height", height)
+                    .findFirst() ?: return null
+
+            return it.copyFromRealm(block)
+        }
+    }
+
+    override fun getBlock(headerHash: ByteArray): Block? {
+        realmFactory.realm.use {
+            return it.where(Block::class.java).equalTo("headerHash", headerHash).findFirst()
+        }
+    }
+
+    override fun getBlocks(heightGreaterThan: Int, sortedBy: String, limit: Int): List<Block> {
+        realmFactory.realm.use {
+            val blocks = it.where(Block::class.java)
+                    .greaterThan("height", heightGreaterThan)
+                    .sort(sortedBy, Sort.DESCENDING)
+                    .findAll()
+                    .take(limit)
+
+            return it.copyFromRealm(blocks)
+        }
+    }
+
+    override fun getBlocks(realm: Realm, hashHexes: List<String>): RealmResults<Block> {
+        return realm.where(Block::class.java).`in`("reversedHeaderHashHex", hashHexes.toTypedArray()).findAll()
+    }
+
+    override fun blocksCount(headerHexes: List<String>?): Int {
+        realmFactory.realm.use {
+            val realmQuery = it.where(Block::class.java)
+            if (headerHexes != null) {
+                realmQuery.`in`("reversedHeaderHashHex", headerHexes.toTypedArray())
+            }
+
+            return realmQuery.count().toInt()
+        }
+    }
+
+    override fun saveBlock(block: Block) {
+        realmFactory.realm.use { realm ->
+            realm.executeTransaction { it.insert(block) }
+        }
+    }
+
+    override fun lastBlock(): Block? {
+        realmFactory.realm.use {
+            val block = it.where(Block::class.java)
+                    .sort("height", Sort.DESCENDING)
+                    .findFirst() ?: return null
+
+            return it.copyFromRealm(block)
+        }
+    }
+
     override fun clear() {
         store.clearAllTables()
     }
+
 }
