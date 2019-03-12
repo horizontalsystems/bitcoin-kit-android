@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.reactivex.Single
 
-class BlockDiscoveryBatch(private val wallet: Wallet, private val blockHashFetcher: BlockHashFetcherBCoin, private val maxHeight: Int) : IBlockDiscovery {
+class BlockDiscoveryBatch(private val wallet: Wallet, private val blockHashFetcher: BlockHashFetcher, private val maxHeight: Int) : IBlockDiscovery {
 
     private val gapLimit = wallet.gapLimit
 

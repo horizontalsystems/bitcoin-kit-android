@@ -1,28 +1,47 @@
 package io.horizontalsystems.bitcoinkit.managers
 
+import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import java.util.concurrent.TimeUnit
 
-class SyncManager(private val connectionManager: ConnectionManager, private val feeRateSyncer: FeeRateSyncer) {
+class SyncManager(
+        private val connectionManager: ConnectionManager,
+        private val feeRateSyncer: FeeRateSyncer,
+        private val peerGroup: PeerGroup,
+        private val initialSyncer: InitialSyncer,
+        private val timer: Observable<Long> = Observable.interval(0, 3, TimeUnit.MINUTES))
+    : InitialSyncer.Listener {
 
     private var disposable: Disposable? = null
 
     fun start() {
+        initialSyncer.sync()
+
         if (disposable != null && disposable?.isDisposed == false) {
             return
         }
 
-        disposable = Observable
-                .interval(0, 3, TimeUnit.MINUTES)
-                .subscribe {
-                    syncFeeRate()
-                }
+        disposable = timer.subscribe {
+            syncFeeRate()
+        }
     }
 
     fun stop() {
+        peerGroup.close()
+
+        initialSyncer.stop()
+
         disposable?.dispose()
         disposable = null
+    }
+
+    //
+    // InitialSyncer Listener
+    //
+
+    override fun onSyncingFinished() {
+        peerGroup.start()
     }
 
     private fun syncFeeRate() {

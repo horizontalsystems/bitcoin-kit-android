@@ -11,7 +11,7 @@ class BlockHashFetcherTest {
     private val apiManager = Mockito.mock(BCoinApi::class.java)
     private val addressSelector = Mockito.mock(IAddressSelector::class.java)
     private val yyy = Mockito.mock(BlockHashFetcherHelper::class.java)
-    private val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, apiManager, yyy)
+    private val blockHashFetcher = BlockHashFetcher(addressSelector, apiManager, yyy)
 
 
     @Test

@@ -30,7 +30,7 @@ import java.util.concurrent.Executors
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, walletId: String, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6)
+class BitcoinKit(context: Context, seed: ByteArray, networkType: NetworkType, walletId: String, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -62,8 +62,8 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
     private val kitStateProvider: KitStateProvider
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
-    private val storage = Storage(content, "bitcoinkit-${networkType.name}-$walletId", realmFactory)
-    private val connectionManager = ConnectionManager(content)
+    private val storage = Storage(context, "bitcoinkit-${networkType.name}-$walletId", realmFactory)
+    private val connectionManager = ConnectionManager(context)
 
     private val network = when (networkType) {
         NetworkType.MainNet -> MainNet()
@@ -82,8 +82,8 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
         dataProvider = DataProvider(storage, realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
-        addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
         kitStateProvider = KitStateProvider(this)
+        addressManager = AddressManager.create(realmFactory, hdWallet, addressConverter)
 
         val peerHostManager = PeerAddressManager(network, storage)
         val transactionLinker = TransactionLinker()
@@ -111,29 +111,28 @@ class BitcoinKit(content: Context, seed: ByteArray, networkType: NetworkType, wa
             }
         }
 
+        val blockHashFetcher = BlockHashFetcher(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
+        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
         val stateManager = StateManager(storage, network, newWallet)
 
-        val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
-        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
-
         feeRateSyncer = FeeRateSyncer(storage, ApiFeeRate(networkType))
-        syncManager = SyncManager(connectionManager, feeRateSyncer)
-        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
+        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
+
+        syncManager = SyncManager(connectionManager, feeRateSyncer, peerGroup, initialSyncer)
+        initialSyncer.listener = syncManager
     }
 
     //
     // API methods
     //
     fun start() {
-        initialSyncer.sync()
         syncManager.start()
     }
 
     fun stop() {
         dataProvider.clear()
-        initialSyncer.stop()
         syncManager.stop()
         storage.clear()
     }
