@@ -1,9 +1,10 @@
 package io.horizontalsystems.bitcoinkit.models
 
-import io.realm.RealmObject
-import io.realm.annotations.PrimaryKey
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.PrimaryKey
 
-open class SentTransaction() : RealmObject() {
+@Entity
+class SentTransaction() {
 
     @PrimaryKey
     var hashHexReversed: String = ""

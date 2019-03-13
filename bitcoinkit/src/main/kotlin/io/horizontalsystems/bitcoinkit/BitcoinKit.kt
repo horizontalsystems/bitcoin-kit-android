@@ -94,7 +94,7 @@ class BitcoinKit(context: Context, seed: ByteArray, networkType: NetworkType, wa
 
         peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
         peerGroup.blockSyncer = BlockSyncer(storage, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
-        peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
+        peerGroup.transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.connectionManager = connectionManager
 
         when (networkType) {

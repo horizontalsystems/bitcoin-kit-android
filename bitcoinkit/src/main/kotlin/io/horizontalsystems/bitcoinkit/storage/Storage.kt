@@ -161,6 +161,45 @@ class Storage(context: Context, dbName: String, val realmFactory: RealmFactory) 
         }
     }
 
+    // Transaction
+
+    override fun getNewTransaction(hashHex: String): Transaction? {
+        realmFactory.realm.use {
+            return it.where(Transaction::class.java)
+                    .equalTo("hashHexReversed", hashHex)
+                    .equalTo("status", Transaction.Status.NEW)
+                    .findFirst()
+        }
+    }
+
+    override fun getNewTransactions(): List<Transaction> {
+        realmFactory.realm.use {
+            return it.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW).findAll()
+        }
+    }
+
+    override fun getRelayedTransaction(hash: ByteArray): Transaction? {
+        realmFactory.realm.use {
+            return it.where(Transaction::class.java).equalTo("hash", hash).findFirst()
+        }
+    }
+
+    // SentTransaction
+
+    override fun getSentTransaction(hashHex: String): SentTransaction? {
+        return store.sentTransaction.getTransaction(hashHex)
+    }
+
+    override fun addSentTransaction(transaction: SentTransaction) {
+        store.sentTransaction.insert(transaction)
+    }
+
+    override fun updateSentTransaction(transaction: SentTransaction) {
+        store.sentTransaction.insert(transaction)
+    }
+
+    // Rest
+
     override fun clear() {
         store.clearAllTables()
     }
