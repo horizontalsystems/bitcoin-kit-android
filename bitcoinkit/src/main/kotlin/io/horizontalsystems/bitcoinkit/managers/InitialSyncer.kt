@@ -1,47 +1,53 @@
 package io.horizontalsystems.bitcoinkit.managers
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import java.util.logging.Logger
 
 class InitialSyncer(
-        private val realmFactory: RealmFactory,
+        private val storage: IStorage,
         private val blockDiscovery: IBlockDiscovery,
         private val stateManager: StateManager,
         private val addressManager: AddressManager,
-        private val peerGroup: PeerGroup,
-        private val listener: ISyncStateListener) {
+        private val stateListener: ISyncStateListener) {
+
+    interface Listener {
+        fun onSyncingFinished()
+    }
+
+    var listener: Listener? = null
 
     private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
-    private var isRunning = false
+    private var isRestoring = false
 
-    @Throws
     fun sync() {
-        if (isRunning) return
+        if (stateManager.restored) {
+            listener?.onSyncingFinished()
+            return
+        }
 
-        isRunning = true
-
-        addressManager.fillGap()
+        if (isRestoring) return else {
+            isRestoring = true
+        }
 
         try {
-            if (stateManager.restored) {
-                peerGroup.start()
-            } else {
-                listener.onSyncStart()
-
-                syncForAccount(0)
-            }
+            stateListener.onSyncStart()
+            syncForAccount(0)
         } catch (e: Exception) {
-            isRunning = false
-            throw e
+            isRestoring = false
+            handle(e)
         }
+    }
+
+    fun stop() {
+        isRestoring = false
+        disposables.clear()
     }
 
     private fun syncForAccount(account: Int) {
@@ -56,41 +62,36 @@ class InitialSyncer(
                         { pairsList ->
                             val publicKeys = mutableListOf<PublicKey>()
                             val blockHashes = mutableListOf<BlockHash>()
+
                             pairsList.forEach { (keys, hashes) ->
                                 publicKeys.addAll(keys)
                                 blockHashes.addAll(hashes)
                             }
+
                             handle(account, publicKeys, blockHashes)
                         },
                         {
-                            isRunning = false
-                            logger.severe("Initial Sync Error: $it")
-                            listener.onSyncStop()
+                            handle(it)
                         })
 
         disposables.add(disposable)
     }
 
-    fun stop() {
-        peerGroup.close()
-        disposables.clear()
-    }
-
-    @Throws
     private fun handle(account: Int, keys: List<PublicKey>, blockHashes: List<BlockHash>) {
         addressManager.addKeys(keys)
 
         if (blockHashes.isNotEmpty()) {
-            realmFactory.realm.use { realm ->
-                realm.executeTransaction {
-                    it.insertOrUpdate(blockHashes)
-                }
-            }
+            storage.addBlockHashes(blockHashes)
             syncForAccount(account + 1)
         } else {
             stateManager.restored = true
-            peerGroup.start()
+            listener?.onSyncingFinished()
         }
     }
 
+    private fun handle(error: Throwable) {
+        logger.severe("Initial Sync Error: ${error.message}")
+        isRestoring = false
+        stateListener.onSyncStop()
+    }
 }

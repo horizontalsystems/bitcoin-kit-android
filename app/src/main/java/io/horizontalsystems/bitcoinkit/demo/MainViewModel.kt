@@ -34,7 +34,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
         val networkType = BitcoinKit.NetworkType.TestNet
 
-        bitcoinKit = BitcoinKit(words, networkType)
+        bitcoinKit = BitcoinKit(App.instance, words, networkType, "wallet-id")
         bitcoinKit.listener = this
 
         networkName = networkType.name

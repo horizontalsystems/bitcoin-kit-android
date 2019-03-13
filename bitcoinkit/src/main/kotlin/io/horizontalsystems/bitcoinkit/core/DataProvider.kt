@@ -9,7 +9,8 @@ import io.reactivex.subjects.PublishSubject
 import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider) : IBlockchainDataListener {
+class DataProvider(private val storage: IStorage, private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider)
+    : IBlockchainDataListener {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
@@ -34,10 +35,7 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
         private set
 
     val feeRate: FeeRate
-        get() = realmFactory.realm.use { realm ->
-            realm.where(FeeRate::class.java).findAll().firstOrNull()?.let { realm.copyFromRealm(it) }
-                    ?: FeeRate.defaultFeeRate
-        }
+        get() = storage.feeRate ?: FeeRate.defaultFeeRate
 
     init {
         lastBlockInfo = realmFactory.realm.use { realm ->

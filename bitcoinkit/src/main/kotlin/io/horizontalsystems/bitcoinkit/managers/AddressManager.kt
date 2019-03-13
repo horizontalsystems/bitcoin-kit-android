@@ -8,9 +8,7 @@ import io.horizontalsystems.hdwalletkit.HDWallet
 import io.realm.Realm
 import io.realm.Sort
 
-class AddressManager(private val realmFactory: RealmFactory,
-                     private val hdWallet: HDWallet,
-                     private val addressConverter: AddressConverter) {
+class AddressManager(private val realmFactory: RealmFactory, private val hdWallet: HDWallet, private val addressConverter: AddressConverter) {
 
     @Throws
     fun changePublicKey(realm: Realm): PublicKey {
@@ -55,7 +53,8 @@ class AddressManager(private val realmFactory: RealmFactory,
     }
 
     fun gapShifts(realm: Realm): Boolean {
-        val lastAccount = realm.where(PublicKey::class.java).sort("account", Sort.DESCENDING).findFirst()?.account ?: return false
+        val lastAccount = realm.where(PublicKey::class.java).sort("account", Sort.DESCENDING).findFirst()?.account
+                ?: return false
 
         for (i in 0..lastAccount) {
             if (gapKeysCount(i, true, realm) < hdWallet.gapLimit) {
@@ -108,6 +107,14 @@ class AddressManager(private val realmFactory: RealmFactory,
                 .findAll()
 
         return existingKeys.find { it.outputs?.size == 0 } ?: throw Error.NoUnusedPublicKey
+    }
+
+    companion object {
+        fun create(realmFactory: RealmFactory, hdWallet: HDWallet, addressConverter: AddressConverter): AddressManager {
+            val addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
+            addressManager.fillGap()
+            return addressManager
+        }
     }
 
     object Error {

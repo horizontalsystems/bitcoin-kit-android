@@ -38,13 +38,3 @@ class ApiManager(private val host: String) {
     }
 
 }
-
-data class BlockResponse(val hash: String, val height: Int) {
-    override fun equals(other: Any?): Boolean {
-        return other is BlockResponse && other.height == this.height
-    }
-
-    override fun hashCode(): Int {
-        return 31 * hash.hashCode() + height
-    }
-}

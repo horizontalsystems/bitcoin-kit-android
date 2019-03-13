@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.demo
 
+import android.annotation.SuppressLint
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.graphics.Color
@@ -11,6 +12,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import io.horizontalsystems.bitcoinkit.models.TransactionAddress
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import java.text.DateFormat
 import java.util.*
@@ -67,20 +69,32 @@ class TransactionsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(containerView) {
     private val summary = containerView.findViewById<TextView>(R.id.summary)!!
 
+    @SuppressLint("SetTextI18n")
     fun bind(transactionInfo: TransactionInfo, index: Int) {
         containerView.setBackgroundColor(if (index % 2 == 0) Color.parseColor("#dddddd") else Color.TRANSPARENT)
 
         val timeInMillis = transactionInfo.timestamp.times(1000)
 
         val date = DateFormat.getInstance().format(Date(timeInMillis))
+        val amount = NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)
 
         summary.text = "#$index" +
-                "\nFrom: ${transactionInfo.from.first().address}" +
-                "\nTo: ${transactionInfo.to.first().address}" +
-                "\nAmount: ${NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)}" +
+                "\nFrom: ${mapAddresses(transactionInfo.from)}" +
+                "\nTo: ${mapAddresses(transactionInfo.to)}" +
+                "\nAmount: $amount" +
                 "\nTx hash: ${transactionInfo.transactionHash}" +
                 "\nBlock: ${transactionInfo.blockHeight}" +
                 "\nTimestamp: ${transactionInfo.timestamp}" +
                 "\nDate: $date"
+    }
+
+    private fun mapAddresses(list: List<TransactionAddress>): String {
+        return list.joinToString("\n") {
+            if (it.mine) {
+                "${it.address} (mine)"
+            } else {
+                it.address
+            }
+        }
     }
 }

@@ -10,8 +10,9 @@ import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
+import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
-import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
+import io.horizontalsystems.bitcoinkit.storage.Storage
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
@@ -29,7 +30,8 @@ import java.util.concurrent.Executors
 @RealmModule(library = true, allClasses = true)
 class BitcoinKitModule
 
-class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) : KitStateProvider.Listener, DataProvider.Listener {
+class BitcoinKit(context: Context, seed: ByteArray, networkType: NetworkType, walletId: String, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6)
+    : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
@@ -49,6 +51,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
+    private val syncManager: SyncManager
     private val feeRateSyncer: FeeRateSyncer
     private val addressManager: AddressManager
     private val addressConverter: AddressConverter
@@ -59,6 +62,8 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     private val kitStateProvider: KitStateProvider
     private val unspentOutputProvider: UnspentOutputProvider
     private val realmFactory = RealmFactory("bitcoinkit-${networkType.name}-$walletId")
+    private val storage = Storage(context, "bitcoinkit-${networkType.name}-$walletId", realmFactory)
+    private val connectionManager = ConnectionManager(context)
 
     private val network = when (networkType) {
         NetworkType.MainNet -> MainNet()
@@ -68,19 +73,19 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         NetworkType.RegTest -> RegTest()
     }
 
-    constructor(words: List<String>, networkType: NetworkType, walletId: String? = null, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
-            this(Mnemonic().toSeed(words), networkType, walletId, peerSize, newWallet, confirmationsThreshold)
+    constructor(content: Context, words: List<String>, networkType: NetworkType, walletId: String, peerSize: Int = 10, newWallet: Boolean = false, threshold: Int = 6) :
+            this(content, Mnemonic().toSeed(words), networkType, walletId, peerSize, newWallet, threshold)
 
     init {
         val hdWallet = HDWallet(seed, network.coinType)
 
         unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
-        dataProvider = DataProvider(realmFactory, this, unspentOutputProvider)
+        dataProvider = DataProvider(storage, realmFactory, this, unspentOutputProvider)
         addressConverter = AddressConverter(network)
-        addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
         kitStateProvider = KitStateProvider(this)
+        addressManager = AddressManager.create(realmFactory, hdWallet, addressConverter)
 
-        val peerHostManager = PeerHostManager(network, realmFactory)
+        val peerHostManager = PeerAddressManager(network, storage)
         val transactionLinker = TransactionLinker()
         val transactionExtractor = TransactionExtractor(addressConverter)
         val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager, dataProvider)
@@ -88,7 +93,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         val addressSelector: IAddressSelector
 
         peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
-        peerGroup.blockSyncer = BlockSyncer(realmFactory, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
+        peerGroup.blockSyncer = BlockSyncer(storage, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(realmFactory, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.connectionManager = connectionManager
 
@@ -106,29 +111,30 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
             }
         }
 
-        val stateManager = StateManager(realmFactory, network, newWallet)
-
-        val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
+        val blockHashFetcher = BlockHashFetcher(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
+        val stateManager = StateManager(storage, network, newWallet)
 
-        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
-        initialSyncer = InitialSyncer(realmFactory, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
+        feeRateSyncer = FeeRateSyncer(storage, ApiFeeRate(networkType))
+        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
+
+        syncManager = SyncManager(connectionManager, feeRateSyncer, peerGroup, initialSyncer)
+        initialSyncer.listener = syncManager
     }
 
     //
     // API methods
     //
     fun start() {
-        initialSyncer.sync()
-        feeRateSyncer.start()
+        syncManager.start()
     }
 
     fun stop() {
-        initialSyncer.stop()
-        feeRateSyncer.stop()
         dataProvider.clear()
+        syncManager.stop()
+        storage.clear()
     }
 
     fun clear() {
@@ -257,10 +263,7 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     }
 
     companion object {
-        private var connectionManager: ConnectionManager? = null
-
         fun init(context: Context) {
-            connectionManager = ConnectionManager(context)
             Realm.init(context)
         }
     }

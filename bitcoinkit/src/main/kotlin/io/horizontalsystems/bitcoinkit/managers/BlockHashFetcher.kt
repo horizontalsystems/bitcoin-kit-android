@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.*
 import java.util.logging.Logger
 
-class BlockHashFetcherBCoin(private val addressSelector: IAddressSelector, private val bCoinApi: BCoinApi, private val helper: BlockHashFetcherHelper) {
+class BlockHashFetcher(private val addressSelector: IAddressSelector, private val bCoinApi: BCoinApi, private val helper: BlockHashFetcherHelper) {
 
     fun getBlockHashes(publicKeys: List<PublicKey>): Pair<List<BlockHash>, Int> {
         val addresses = publicKeys.map {
@@ -52,9 +52,6 @@ class BlockHashFetcherHelper {
 
 class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
 
-    data class TransactionItem(val blockHash: String, val blockHeight: Int, val txOutputs: List<TransactionOutputItem>)
-    data class TransactionOutputItem(val script: String, val address: String)
-
     val host = when (network) {
         is MainNet -> "https://btc.horizontalsystems.xyz/apg"
         is TestNet -> "http://btc-testnet.horizontalsystems.xyz/apg"
@@ -62,7 +59,6 @@ class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
         is TestNetBitcoinCash -> "http://bch-testnet.horizontalsystems.xyz/apg"
         else -> "http://btc-testnet.horizontalsystems.xyz/apg"
     }
-
 
     private val logger = Logger.getLogger("BCoinApi")
 
@@ -97,6 +93,9 @@ class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
 
         return transactions
     }
+
+    data class TransactionItem(val blockHash: String, val blockHeight: Int, val txOutputs: List<TransactionOutputItem>)
+    data class TransactionOutputItem(val script: String, val address: String)
 
 }
 

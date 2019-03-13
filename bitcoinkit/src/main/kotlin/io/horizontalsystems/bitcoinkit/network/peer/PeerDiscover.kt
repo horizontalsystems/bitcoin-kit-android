@@ -6,9 +6,9 @@ import java.net.UnknownHostException
 import java.util.*
 import java.util.logging.Logger
 
-class PeerDiscover {
+class PeerDiscover(private val peerAddressManager: PeerAddressManager) {
 
-    private val log = Logger.getLogger("PeerDiscover")
+    private val logger = Logger.getLogger("PeerDiscover")
 
     /**
      * Lookup bitcoin peers by DNS seed.
@@ -16,30 +16,23 @@ class PeerDiscover {
      * @return InetAddress[] contains 1~N peers.
      * @throws BitcoinException If lookup failed.
      */
-    fun lookup(dnsList: Array<String>): Array<String> {
-        log.info("Lookup peers from DNS seed...")
+    fun lookup(dnsList: Array<String>) {
+        logger.info("Lookup peers from DNS seed...")
 
         val ips: MutableList<String> = ArrayList()
 
         dnsList.forEach { host ->
             try {
-                val addresses = InetAddress.getAllByName(host)
-                for (address in addresses) {
-                    if (address is InetAddress) {
-                        ips.add(address.hostAddress)
-                    }
+                InetAddress.getAllByName(host).forEach {
+                    ips.add(it.hostAddress)
                 }
             } catch (e: UnknownHostException) {
-                log.warning("Cannot look up host: $host")
+                logger.warning("Cannot look up host: $host")
             }
         }
 
-        if (ips.isEmpty()) {
-            throw Exception("Cannot lookup pears from all DNS seeds.")
-        }
+        logger.info(ips.size.toString() + " peers found.")
 
-        log.info(ips.size.toString() + " peers found.")
-
-        return ips.toTypedArray()
+        peerAddressManager.addIps(ips.toTypedArray())
     }
 }

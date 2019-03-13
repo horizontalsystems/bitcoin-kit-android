@@ -11,7 +11,7 @@ import org.mockito.Mockito
 
 class BlockDiscoveryBatchTest {
     private val wallet = Mockito.mock(Wallet::class.java)
-    private val blockHashFetcher = Mockito.mock(BlockHashFetcherBCoin::class.java)
+    private val blockHashFetcher = Mockito.mock(BlockHashFetcher::class.java)
 
     private lateinit var syncerApi: BlockDiscoveryBatch
 

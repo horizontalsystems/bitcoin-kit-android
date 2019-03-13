@@ -9,14 +9,18 @@ import io.realm.Realm
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito
+import org.mockito.Mockito.mock
 
 class DataProviderTest {
 
+    private val storage = mock(IStorage::class.java)
     private val factory = RealmFactoryMock()
-    private lateinit var realm: Realm
     private val listener = Mockito.mock(DataProvider.Listener::class.java)
     private val unspentOutputProvider = Mockito.mock(UnspentOutputProvider::class.java)
+
+
     private lateinit var dataProvider: DataProvider
+    private lateinit var realm: Realm
 
     @Before
     fun setUp() {
@@ -24,7 +28,7 @@ class DataProviderTest {
         realm.executeTransaction {
             it.deleteAll()
         }
-        dataProvider = DataProvider(factory.realmFactory, listener, unspentOutputProvider)
+        dataProvider = DataProvider(storage, factory.realmFactory, listener, unspentOutputProvider)
     }
 
     @Test

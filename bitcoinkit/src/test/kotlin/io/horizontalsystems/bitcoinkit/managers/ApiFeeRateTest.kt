@@ -23,19 +23,17 @@ class ApiFeeRateTest {
     private val apiManager = mock(ApiManager::class.java)
     private val resource = "ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain"
 
-    private val feeRate = FeeRate().apply {
-        lowPriority = 0.00001023
-        mediumPriority = 0.00001023
-        highPriority = 0.00001023
-        dateStr = "2018-11-27 09:55"
-        date = 1543312547801
-    }
+    private val feeRate = FeeRate(
+            lowPriority = "0.00001023",
+            mediumPriority = "0.00001023",
+            highPriority = "0.00001023",
+            date = 1543211299660
+    )
 
     private val jsonObject = JsonObject().apply {
-        this.add("low_priority", feeRate.lowPriority.toString())
-        this.add("medium_priority", feeRate.mediumPriority.toString())
-        this.add("high_priority", feeRate.highPriority.toString())
-        this.add("date_str", feeRate.dateStr)
+        this.add("low_priority", feeRate.lowPriority)
+        this.add("medium_priority", feeRate.mediumPriority)
+        this.add("high_priority", feeRate.highPriority)
         this.add("date", feeRate.date)
     }
 
@@ -60,8 +58,7 @@ class ApiFeeRateTest {
             feeRate.lowPriority == it.lowPriority &&
                     feeRate.mediumPriority == it.mediumPriority &&
                     feeRate.highPriority == it.highPriority &&
-                    feeRate.dateStr == it.dateStr &&
-                    feeRate.dateStr == it.dateStr
+                    feeRate.date == it.date
         }
     }
 

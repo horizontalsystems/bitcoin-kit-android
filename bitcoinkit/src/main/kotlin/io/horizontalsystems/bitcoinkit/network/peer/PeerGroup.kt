@@ -16,7 +16,7 @@ import java.util.concurrent.Executors
 import java.util.logging.Logger
 
 class PeerGroup(
-        private val hostManager: PeerHostManager,
+        private val hostManager: PeerAddressManager,
         private val bloomFilterManager: BloomFilterManager,
         private val network: Network,
         private val syncStateListener: ISyncStateListener,
@@ -170,7 +170,7 @@ class PeerGroup(
             peerIps.add(addr.hostAddress)
         }
 
-        hostManager.addPeers(peerIps.toTypedArray())
+        hostManager.addIps(peerIps.toTypedArray())
     }
 
     override fun onTaskComplete(peer: Peer, task: PeerTask) {
@@ -209,7 +209,7 @@ class PeerGroup(
     //
     private fun startConnection() {
         logger.info("Try open new peer connection...")
-        val ip = hostManager.getPeerIp()
+        val ip = hostManager.getIp()
         if (ip != null) {
             logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this)

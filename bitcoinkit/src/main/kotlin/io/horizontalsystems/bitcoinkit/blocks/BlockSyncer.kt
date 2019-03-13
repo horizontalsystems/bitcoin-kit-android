@@ -1,177 +1,113 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
-import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
-import io.realm.Sort
 
-class BlockSyncer(private val realmFactory: RealmFactory,
-                  private val blockchain: Blockchain,
-                  private val transactionProcessor: TransactionProcessor,
-                  private val addressManager: AddressManager,
-                  private val bloomFilterManager: BloomFilterManager,
-                  private val listener: ISyncStateListener,
-                  private val network: Network) {
+class BlockSyncer(
+        private val storage: IStorage,
+        private val blockchain: Blockchain,
+        private val transactionProcessor: TransactionProcessor,
+        private val addressManager: AddressManager,
+        private val bloomFilterManager: BloomFilterManager,
+        private val listener: ISyncStateListener,
+        private val network: Network,
+        private val state: State = State()) {
 
-    val localDownloadedBestBlockHeight: Int?
-        get() = realmFactory.realm.use {
-            it.where(Block::class.java).sort("height", Sort.DESCENDING).findFirst()?.height
-        }
+    val localDownloadedBestBlockHeight: Int
+        get() = storage.lastBlock()?.height ?: 0
 
     val localKnownBestBlockHeight: Int
-        get() = realmFactory.realm.use { realm ->
-            val blockHashesToDownload = realm.where(BlockHash::class.java).findAll().map { it.reversedHeaderHashHex }
-            val alreadyDownloadedBlockHashesCount = realm.where(Block::class.java).`in`("reversedHeaderHashHex", blockHashesToDownload.toTypedArray()).count()
+        get() {
+            val blockHashes = storage.getBlockchainBlockHashes()
+            val existingBlocksCount = storage.blocksCount(blockHashes.map { it.reversedHeaderHashHex })
 
-            val newBlockHashesCount = realm.where(BlockHash::class.java).equalTo("height", 0 as Int).count().minus(alreadyDownloadedBlockHashesCount).toInt()
-
-            return (localDownloadedBestBlockHeight ?: 0).plus(newBlockHashesCount)
+            return localDownloadedBestBlockHeight.plus(blockHashes.size - existingBlocksCount)
         }
-
-    private var needToRedownload = false
 
     init {
-        val realm = realmFactory.realm
-
-        if (realm.where(Block::class.java).count() == 0L) {
-            try {
-                realm.executeTransaction {
-                    realm.insert(network.checkpointBlock)
-                }
-            } catch (e: RuntimeException) {
-            }
+        if (storage.blocksCount() == 0) {
+            storage.saveBlock(network.checkpointBlock)
         }
 
-        listener.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight ?: 0)
-
-        realm.close()
+        listener.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight)
     }
 
     fun prepareForDownload() {
-        needToRedownload = false
-        addressManager.fillGap()
+        handlePartialBlocks()
 
-        clearNotFullBlocks()
-        clearBlockHashes()
+        clearPartialBlocks()
+        clearBlockHashes() // we need to clear block hashes when "syncPeer" is disconnected
 
-        handleFork()
-
-        bloomFilterManager.regenerateBloomFilter()
+        storage.realmInstance {
+            blockchain.handleFork(it)
+        }
     }
 
     fun downloadStarted() {
     }
 
     fun downloadIterationCompleted() {
-        if (needToRedownload) {
-            needToRedownload = false
-            addressManager.fillGap()
-            bloomFilterManager.regenerateBloomFilter()
+        if (state.iterationHasPartialBlocks) {
+            handlePartialBlocks()
         }
     }
 
     fun downloadCompleted() {
-        handleFork()
+        storage.realmInstance {
+            blockchain.handleFork(it)
+        }
     }
 
     fun downloadFailed() {
         prepareForDownload()
     }
 
-    private fun handleFork() {
-        realmFactory.realm.use {
-            blockchain.handleFork(it)
-        }
-    }
-
     fun getBlockHashes(): List<BlockHash> {
-        realmFactory.realm.use { realm ->
-            val blockHashes = realm.where(BlockHash::class.java)
-                    .sort("order", Sort.ASCENDING, "height", Sort.ASCENDING)
-                    .findAll()
-
-            return blockHashes.take(500).map { realm.copyFromRealm(it) }
-        }
-    }
-
-    // we need to clear block hashes when "syncPeer" is disconnected
-    private fun clearBlockHashes() {
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction {
-                realm.where(BlockHash::class.java)
-                        // block hashes except ones taken from API
-                        .equalTo("height", 0L)
-                        .findAll()
-                        .deleteAllFromRealm()
-            }
-        }
+        return storage.getBlockHashesSortedBySequenceAndHeight(limit = 500)
     }
 
     fun getBlockLocatorHashes(peerLastBlockHeight: Int): List<ByteArray> {
         val result = mutableListOf<ByteArray>()
-        val realm = realmFactory.realm
 
-        realm.where(BlockHash::class.java)
-                .equalTo("height", 0L)
-                .sort("order", Sort.DESCENDING)
-                .findFirst()
-                ?.headerHash
-                ?.let {
-                    result.add(it)
-                }
-
-        if (result.isEmpty()) {
-            realm.where(Block::class.java)
-                    .greaterThan("height", network.checkpointBlock.height)
-                    .sort("height", Sort.DESCENDING)
-                    .findAll()
-                    .take(10)
-                    .forEach {
-                        result.add(it.headerHash)
-                    }
+        storage.getLastBlockchainBlockHash()?.headerHash?.let {
+            result.add(it)
         }
 
-        val checkPointHeaderHash = (realm.where(Block::class.java)
-                .equalTo("height", peerLastBlockHeight)
-                .findFirst() ?: network.checkpointBlock).headerHash
+        if (result.isEmpty()) {
+            storage.getBlocks(heightGreaterThan = network.checkpointBlock.height, sortedBy = "height", limit = 10).forEach {
+                result.add(it.headerHash)
+            }
+        }
 
-        result.add(checkPointHeaderHash)
-
-        realm.close()
+        val lastBlock = storage.getBlock(peerLastBlockHeight)
+        if (lastBlock == null) {
+            result.add(network.checkpointBlock.headerHash)
+        } else if (!result.contains(lastBlock.headerHash)) {
+            result.add(lastBlock.headerHash)
+        }
 
         return result
     }
 
     fun addBlockHashes(blockHashes: List<ByteArray>) {
-        val realm = realmFactory.realm
+        var lastSequence = storage.getLastBlockHash()?.sequence ?: 0
 
-        var lastOrder = realm.where(BlockHash::class.java)
-                .sort("order", Sort.DESCENDING)
-                .findFirst()
-                ?.order ?: 0
-
-        realm.executeTransaction {
-            blockHashes.forEach { hash ->
-                val blockHash = realm.where(BlockHash::class.java).equalTo("headerHash", hash).findFirst()
-                if (blockHash == null) {
-                    realm.insert(BlockHash(hash, 0, ++lastOrder))
-                }
-            }
+        val existingHashes = storage.getBlockHashHeaderHashes()
+        val newBlockHashes = blockHashes.filter { existingHashes.none { n -> n.contentEquals(it) } }.map {
+            BlockHash(it, 0, ++lastSequence)
         }
 
-        realm.close()
+        storage.addBlockHashes(newBlockHashes)
     }
 
     fun handleMerkleBlock(merkleBlock: MerkleBlock, maxBlockHeight: Int) {
-        val realm = realmFactory.realm
-
-        realm.executeTransaction {
+        storage.inTransaction { realm ->
             val height = merkleBlock.height
 
             val block = when (height) {
@@ -180,49 +116,42 @@ class BlockSyncer(private val realmFactory: RealmFactory,
             }
 
             try {
-                transactionProcessor.process(merkleBlock.associatedTransactions, block, needToRedownload, realm)
+                transactionProcessor.process(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks, realm)
             } catch (e: BloomFilterManager.BloomFilterExpired) {
-                needToRedownload = true
+                state.iterationHasPartialBlocks = true
             }
 
-            if (!needToRedownload) {
-                realm.where(BlockHash::class.java)
-                        .equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex)
-                        .findFirst()
-                        ?.deleteFromRealm()
+            if (!state.iterationHasPartialBlocks) {
+                storage.deleteBlockHash(block.reversedHeaderHashHex)
             }
 
             listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
         }
 
-        realm.close()
-    }
-
-    private fun clearNotFullBlocks() {
-        val realm = realmFactory.realm
-
-        val toDelete = realm.where(BlockHash::class.java)
-                .equalTo("height", 0L)
-                .notEqualTo("reversedHeaderHashHex", network.checkpointBlock.reversedHeaderHashHex)
-                .findAll().map { it.reversedHeaderHashHex }.toTypedArray()
-
-        realm.executeTransaction {
-            blockchain.deleteBlocks(realm.where(Block::class.java).`in`("reversedHeaderHashHex", toDelete).findAll())
-        }
-
-        realm.close()
     }
 
     fun shouldRequest(blockHash: ByteArray): Boolean {
-        val realm = realmFactory.realm
-
-        val blockExist = realm.where(Block::class.java)
-                .equalTo("headerHash", blockHash)
-                .count() > 0
-
-        realm.close()
-
-        return !blockExist
+        return storage.getBlock(blockHash) != null
     }
 
+    private fun clearPartialBlocks() {
+        val toDelete = storage.getBlockHashHeaderHashHexes(except = network.checkpointBlock.reversedHeaderHashHex)
+
+        storage.inTransaction { realm ->
+            val blocksToDelete = storage.getBlocks(realm, hashHexes = toDelete)
+            blockchain.deleteBlocks(blocksToDelete)
+        }
+    }
+
+    private fun handlePartialBlocks() {
+        addressManager.fillGap()
+        bloomFilterManager.regenerateBloomFilter()
+        state.iterationHasPartialBlocks = false
+    }
+
+    private fun clearBlockHashes() {
+        storage.deleteBlockchainBlockHashes()
+    }
+
+    class State(var iterationHasPartialBlocks: Boolean = false)
 }
