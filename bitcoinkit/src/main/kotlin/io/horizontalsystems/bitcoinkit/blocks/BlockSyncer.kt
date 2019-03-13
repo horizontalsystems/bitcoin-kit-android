@@ -118,7 +118,7 @@ class BlockSyncer(
             try {
                 transactionProcessor.process(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks, realm)
             } catch (e: BloomFilterManager.BloomFilterExpired) {
-                state.setIteration(hasPartialBlocks = true)
+                state.iterationHasPartialBlocks = true
             }
 
             if (!state.iterationHasPartialBlocks) {
@@ -146,19 +146,12 @@ class BlockSyncer(
     private fun handlePartialBlocks() {
         addressManager.fillGap()
         bloomFilterManager.regenerateBloomFilter()
-        state.setIteration(hasPartialBlocks = false)
+        state.iterationHasPartialBlocks = false
     }
 
     private fun clearBlockHashes() {
         storage.deleteBlockchainBlockHashes()
     }
 
-    class State {
-        var iterationHasPartialBlocks = false
-            private set
-
-        fun setIteration(hasPartialBlocks: Boolean) {
-            iterationHasPartialBlocks = hasPartialBlocks
-        }
-    }
+    class State(var iterationHasPartialBlocks: Boolean = false)
 }

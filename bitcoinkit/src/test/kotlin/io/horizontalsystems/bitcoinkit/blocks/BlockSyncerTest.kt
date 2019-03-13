@@ -181,7 +181,7 @@ class BlockSyncerTest : Spek({
         it("handles partial blocks") {
             verify(addressManager).fillGap()
             verify(bloomFilterManager).regenerateBloomFilter()
-            verify(state).setIteration(false)
+            verify(state).iterationHasPartialBlocks = false
         }
 
         it("clears partial blocks") {
@@ -209,7 +209,7 @@ class BlockSyncerTest : Spek({
 
                 verify(addressManager).fillGap()
                 verify(bloomFilterManager).regenerateBloomFilter()
-                verify(state).setIteration(false)
+                verify(state).iterationHasPartialBlocks = false
             }
         }
 
@@ -248,7 +248,7 @@ class BlockSyncerTest : Spek({
         it("handles partial blocks") {
             verify(addressManager).fillGap()
             verify(bloomFilterManager).regenerateBloomFilter()
-            verify(state).setIteration(false)
+            verify(state).iterationHasPartialBlocks = false
         }
 
         it("clears partial blocks") {
@@ -443,7 +443,7 @@ class BlockSyncerTest : Spek({
             it("sets state as it left partially handled blocks") {
                 blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
-                verify(state).setIteration(hasPartialBlocks = true)
+                verify(state).iterationHasPartialBlocks = true
             }
         }
 
