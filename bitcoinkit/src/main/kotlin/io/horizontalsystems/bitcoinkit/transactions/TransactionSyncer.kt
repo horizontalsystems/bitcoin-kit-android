@@ -1,13 +1,13 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.SentTransaction
 import io.horizontalsystems.bitcoinkit.models.Transaction
 
 class TransactionSyncer(
-        private val realmFactory: RealmFactory,
+        private val storage: IStorage,
         private val transactionProcessor: TransactionProcessor,
         private val addressManager: AddressManager,
         private val bloomFilterManager: BloomFilterManager) {
@@ -19,74 +19,50 @@ class TransactionSyncer(
     fun handleTransactions(transactions: List<Transaction>) {
         if (transactions.isEmpty()) return
 
-        val realm = realmFactory.realm
-        var needToUpdateBloomFilter = false
+        storage.inTransaction { realm ->
+            var needToUpdateBloomFilter = false
 
-        realm.executeTransaction {
             try {
                 transactionProcessor.process(transactions, null, true, realm)
             } catch (e: BloomFilterManager.BloomFilterExpired) {
                 needToUpdateBloomFilter = true
             }
+
+            if (needToUpdateBloomFilter) {
+                addressManager.fillGap()
+                bloomFilterManager.regenerateBloomFilter()
+            }
+        }
+    }
+
+    fun handleTransaction(sentTransaction: Transaction) {
+        val newTransaction = storage.getNewTransaction(sentTransaction.hashHexReversed) ?: return
+        val sntTransaction = storage.getSentTransaction(newTransaction.hashHexReversed) ?: run {
+            storage.addSentTransaction(SentTransaction(newTransaction.hashHexReversed))
+
+            return
         }
 
-        realm.close()
+        sntTransaction.lastSendTime = System.currentTimeMillis()
+        sntTransaction.retriesCount = sntTransaction.retriesCount + 1
 
-        if (needToUpdateBloomFilter) {
-            addressManager.fillGap()
-            bloomFilterManager.regenerateBloomFilter()
+        storage.updateSentTransaction(sntTransaction)
+    }
+
+    fun getPendingTransactions(): List<Transaction> {
+        return storage.getNewTransactions().filter { transition ->
+            val sentTransaction = storage.getSentTransaction(transition.hashHexReversed)
+            if (sentTransaction == null) {
+                true
+            } else {
+                sentTransaction.retriesCount < maxRetriesCount &&
+                sentTransaction.lastSendTime < System.currentTimeMillis() - retriesPeriod &&
+                sentTransaction.firstSendTime > System.currentTimeMillis() - totalRetriesPeriod
+            }
         }
     }
 
     fun shouldRequestTransaction(hash: ByteArray): Boolean {
-        val realm = realmFactory.realm
-        val exist = realm.where(Transaction::class.java).equalTo("hash", hash).count() > 0
-        realm.close()
-        return !exist
-    }
-
-    fun getPendingTransactions(): List<Transaction> {
-        realmFactory.realm.use { realm ->
-            val filterByTime: (Transaction) -> Boolean = { transition ->
-                val sentTransaction = realm.where(SentTransaction::class.java).equalTo("hashHexReversed", transition.hashHexReversed).findFirst()
-                if (sentTransaction == null) {
-                    true
-                } else {
-                    sentTransaction.retriesCount < maxRetriesCount &&
-                            sentTransaction.lastSendTime < System.currentTimeMillis() - retriesPeriod &&
-                            sentTransaction.firstSendTime > System.currentTimeMillis() - totalRetriesPeriod
-                }
-            }
-
-            val pendingTransactions = realm.where(Transaction::class.java)
-                    .equalTo("status", Transaction.Status.NEW)
-                    .findAll()
-                    .filter(filterByTime)
-
-            return realm.copyFromRealm(pendingTransactions)
-        }
-    }
-
-    fun handleTransaction(transaction: Transaction) {
-        realmFactory.realm.use { realm ->
-            realm.where(Transaction::class.java)
-                    .equalTo("hashHexReversed", transaction.hashHexReversed)
-                    .equalTo("status", Transaction.Status.NEW)
-                    .findFirst() ?: return
-
-            realm.executeTransaction {
-                val sentTransaction = realm.where(SentTransaction::class.java)
-                        .equalTo("hashHexReversed", transaction.hashHexReversed)
-                        .findFirst()
-
-                if (sentTransaction == null) {
-                    realm.insert(SentTransaction(transaction.hashHexReversed))
-                } else {
-                    sentTransaction.lastSendTime = System.currentTimeMillis()
-                    sentTransaction.retriesCount = sentTransaction.retriesCount + 1
-                }
-            }
-        }
-
+        return storage.getRelayedTransaction(hash) != null
     }
 }

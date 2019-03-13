@@ -1,9 +1,6 @@
 package io.horizontalsystems.bitcoinkit.core
 
-import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.models.BlockHash
-import io.horizontalsystems.bitcoinkit.models.FeeRate
-import io.horizontalsystems.bitcoinkit.models.PeerAddress
+import io.horizontalsystems.bitcoinkit.models.*
 import io.realm.Realm
 import io.realm.RealmResults
 
@@ -52,6 +49,18 @@ interface IStorage {
     fun blocksCount(headerHexes: List<String>? = null): Int
     fun saveBlock(block: Block)
     fun lastBlock(): Block?
+
+    //  Transaction
+
+    fun getNewTransactions(): List<Transaction>
+    fun getNewTransaction(hashHex: String): Transaction?
+    fun getRelayedTransaction(hash: ByteArray): Transaction?
+
+    //  SentTransaction
+
+    fun getSentTransaction(hashHex: String): SentTransaction?
+    fun addSentTransaction(transaction: SentTransaction)
+    fun updateSentTransaction(transaction: SentTransaction)
 
     fun clear()
 }
