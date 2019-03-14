@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
@@ -13,6 +14,7 @@ import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Realm
 import io.realm.RealmResults
 import org.junit.Assert.assertEquals
+import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
 import org.mockito.invocation.InvocationOnMock
@@ -187,7 +189,7 @@ class BlockSyncerTest : Spek({
         it("clears partial blocks") {
             verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.reversedHeaderHashHex)
             verify(storage).getBlocks(realm, listOf())
-            verify(blockchain).deleteBlocks(emptyBlocks)
+            verify(blockchain).deleteBlocks(emptyBlocks, realm)
         }
 
         it("clears block hashes") {
@@ -195,7 +197,7 @@ class BlockSyncerTest : Spek({
         }
 
         it("handles fork") {
-            verify(blockchain).handleFork(realm)
+            verify(blockchain).handleFork()
         }
     }
 
@@ -232,7 +234,7 @@ class BlockSyncerTest : Spek({
         it("handles fork") {
             blockSyncer.downloadCompleted()
 
-            verify(blockchain).handleFork(realm)
+            verify(blockchain).handleFork()
         }
     }
 
@@ -254,7 +256,7 @@ class BlockSyncerTest : Spek({
         it("clears partial blocks") {
             verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.reversedHeaderHashHex)
             verify(storage).getBlocks(realm, listOf())
-            verify(blockchain).deleteBlocks(emptyBlocks)
+            verify(blockchain).deleteBlocks(emptyBlocks, realm)
         }
 
         it("clears block hashes") {
@@ -262,7 +264,7 @@ class BlockSyncerTest : Spek({
         }
 
         it("handles fork") {
-            verify(blockchain).handleFork(realm)
+            verify(blockchain).handleFork()
         }
     }
 
@@ -282,7 +284,7 @@ class BlockSyncerTest : Spek({
 
         beforeEach {
             whenever(storage.getLastBlockchainBlockHash()).thenReturn(null)
-            whenever(storage.getBlocks(any(), any(), any())).thenReturn(listOf())
+            whenever(storage.getBlocks(checkpointBlock.height, "height", 10)).thenReturn(listOf())
             whenever(storage.getBlock(peerLastBlockHeight)).thenReturn(null)
         }
 
@@ -462,12 +464,12 @@ class BlockSyncerTest : Spek({
 
     describe("#shouldRequest") {
         val block = mock(Block::class.java)
-        val blockHash = byteArrayOf(1)
+        val hashHex = byteArrayOf(1)
 
         it("returns true if block exists") {
-            whenever(storage.getBlock(blockHash)).thenReturn(block)
+            whenever(storage.getBlock(hashHex.reversedArray().toHexString())).thenReturn(block)
 
-            assertEquals(true, blockSyncer.shouldRequest(blockHash))
+            assertEquals(true, blockSyncer.shouldRequest(hashHex))
         }
     }
 

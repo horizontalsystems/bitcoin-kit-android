@@ -4,7 +4,7 @@ import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.*
 import io.realm.Realm
-import io.realm.RealmResults
+import io.realm.RealmObject
 import io.realm.Sort
 
 class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : IStorage {
@@ -100,6 +100,10 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
 
     // Block
 
+    override fun <E : RealmObject> copyToRealm(obj: E, realm: Realm): E {
+        return realm.copyToRealmOrUpdate(obj)
+    }
+
     override fun getBlock(height: Int): Block? {
         realmFactory.realm.use {
             val block = it.where(Block::class.java)
@@ -110,12 +114,56 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
         }
     }
 
-    override fun getBlock(headerHash: ByteArray): Block? {
+    override fun getBlock(hashHex: String, realm: Realm?): Block? {
+        realm?.let {
+            return it.where(Block::class.java).equalTo("reversedHeaderHashHex", hashHex).findFirst()
+        }
+
         realmFactory.realm.use {
-            val block = it.where(Block::class.java).equalTo("headerHash", headerHash)
+            val block = it.where(Block::class.java).equalTo("reversedHeaderHashHex", hashHex)
                     .findFirst() ?: return null
 
             return it.copyFromRealm(block)
+        }
+    }
+
+    override fun getBlock(stale: Boolean, sortedHeight: String, realm: Realm?): Block? {
+        val sortOrder = if (sortedHeight == "ASC") {
+            Sort.ASCENDING
+        } else {
+            Sort.DESCENDING
+        }
+
+        realm?.let {
+            return realm.where(Block::class.java)
+                    .equalTo("stale", stale)
+                    .sort("height", sortOrder)
+                    .findFirst()
+        }
+
+        realmFactory.realm.use {
+            val result = it.where(Block::class.java)
+                    .equalTo("stale", stale)
+                    .sort("height", sortOrder)
+                    .findFirst() ?: return null
+
+            return it.copyFromRealm(result)
+        }
+    }
+
+    override fun getBlocks(stale: Boolean, realm: Realm?): List<Block> {
+        realm?.let {
+            return it.where(Block::class.java)
+                    .equalTo("stale", stale)
+                    .findAll()
+        }
+
+        realmFactory.realm.use {
+            val results = it.where(Block::class.java)
+                    .equalTo("stale", stale)
+                    .findAll()
+
+            return it.copyFromRealm(results)
         }
     }
 
@@ -131,7 +179,25 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
         }
     }
 
-    override fun getBlocks(realm: Realm, hashHexes: List<String>): RealmResults<Block> {
+    override fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean, realm: Realm?): List<Block> {
+        realm?.let {
+            return it.where(Block::class.java)
+                    .equalTo("stale", false)
+                    .greaterThanOrEqualTo("height", heightGreaterOrEqualTo)
+                    .findAll()
+        }
+
+        realmFactory.realm.use {
+            val results = it.where(Block::class.java)
+                    .equalTo("stale", false)
+                    .greaterThanOrEqualTo("height", heightGreaterOrEqualTo)
+                    .findAll()
+
+            return it.copyFromRealm(results)
+        }
+    }
+
+    override fun getBlocks(realm: Realm, hashHexes: List<String>): List<Block> {
         return realm.where(Block::class.java).`in`("reversedHeaderHashHex", hashHexes.toTypedArray()).findAll()
     }
 
@@ -148,7 +214,7 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
 
     override fun saveBlock(block: Block) {
         realmFactory.realm.use { realm ->
-            realm.executeTransaction { it.insert(block) }
+            realm.executeTransaction { it.insertOrUpdate(block) }
         }
     }
 
@@ -162,23 +228,51 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
         }
     }
 
+    override fun updateBlock(staleBlock: Block, realm: Realm) {
+        realm.copyToRealmOrUpdate(staleBlock)
+    }
+
+    override fun deleteBlocks(blocks: List<Block>, realm: Realm) {
+        val managedBlocks = realm.where(Block::class.java)
+                .`in`("reversedHeaderHashHex", blocks.map { it.reversedHeaderHashHex }.toTypedArray())
+                .findAll()
+
+        managedBlocks.forEach { block ->
+            block.transactions?.forEach { transaction ->
+                transaction.inputs.deleteAllFromRealm()
+                transaction.outputs.deleteAllFromRealm()
+            }
+
+            block.transactions?.deleteAllFromRealm()
+        }
+
+        managedBlocks.deleteAllFromRealm()
+    }
+
     // Transaction
+
+    override fun getBlockTransactions(block: Block, realm: Realm): List<Transaction> {
+        val result = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex).findFirst()
+        if (result?.transactions == null) {
+            return emptyList()
+        }
+
+        return result.transactions
+    }
 
     override fun getNewTransaction(hashHex: String): Transaction? {
         realmFactory.realm.use {
-            val transaction = it.where(Transaction::class.java)
+            return it.where(Transaction::class.java)
                     .equalTo("hashHexReversed", hashHex)
                     .equalTo("status", Transaction.Status.NEW)
-                    .findFirst() ?: return null
-
-            return it.copyFromRealm(transaction)
+                    .findFirst()
         }
     }
 
     override fun getNewTransactions(): List<Transaction> {
         realmFactory.realm.use {
-            val transactions = it.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW).findAll()
-            return it.copyFromRealm(transactions)
+            val results = it.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW).findAll()
+            return it.copyFromRealm(results)
         }
     }
 

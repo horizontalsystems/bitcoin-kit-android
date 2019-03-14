@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.BlockHash
@@ -44,9 +45,7 @@ class BlockSyncer(
         clearPartialBlocks()
         clearBlockHashes() // we need to clear block hashes when "syncPeer" is disconnected
 
-        storage.realmInstance {
-            blockchain.handleFork(it)
-        }
+        blockchain.handleFork()
     }
 
     fun downloadStarted() {
@@ -59,9 +58,7 @@ class BlockSyncer(
     }
 
     fun downloadCompleted() {
-        storage.realmInstance {
-            blockchain.handleFork(it)
-        }
+        blockchain.handleFork()
     }
 
     fun downloadFailed() {
@@ -131,7 +128,9 @@ class BlockSyncer(
     }
 
     fun shouldRequest(blockHash: ByteArray): Boolean {
-        return storage.getBlock(blockHash) != null
+        val hashHex = blockHash.reversedArray().toHexString()
+
+        return storage.getBlock(hashHex) != null
     }
 
     private fun clearPartialBlocks() {
@@ -139,7 +138,7 @@ class BlockSyncer(
 
         storage.inTransaction { realm ->
             val blocksToDelete = storage.getBlocks(realm, hashHexes = toDelete)
-            blockchain.deleteBlocks(blocksToDelete)
+            blockchain.deleteBlocks(blocksToDelete, realm)
         }
     }
 

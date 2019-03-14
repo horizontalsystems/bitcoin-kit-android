@@ -135,7 +135,7 @@ class BitcoinKitBuilder {
         val bloomFilterManager = BloomFilterManager(realmFactory)
 
         val peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
-        peerGroup.blockSyncer = BlockSyncer(storage, Blockchain(network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
+        peerGroup.blockSyncer = BlockSyncer(storage, Blockchain(storage, network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.connectionManager = connectionManager
 
