@@ -114,7 +114,10 @@ class Storage(context: Context, dbName: String, val realmFactory: RealmFactory) 
 
     override fun getBlock(headerHash: ByteArray): Block? {
         realmFactory.realm.use {
-            return it.where(Block::class.java).equalTo("headerHash", headerHash).findFirst()
+            val block = it.where(Block::class.java).equalTo("headerHash", headerHash)
+                    .findFirst() ?: return null
+
+            return it.copyFromRealm(block)
         }
     }
 
@@ -165,22 +168,28 @@ class Storage(context: Context, dbName: String, val realmFactory: RealmFactory) 
 
     override fun getNewTransaction(hashHex: String): Transaction? {
         realmFactory.realm.use {
-            return it.where(Transaction::class.java)
+            val transaction = it.where(Transaction::class.java)
                     .equalTo("hashHexReversed", hashHex)
                     .equalTo("status", Transaction.Status.NEW)
-                    .findFirst()
+                    .findFirst() ?: return null
+
+            return it.copyFromRealm(transaction)
         }
     }
 
     override fun getNewTransactions(): List<Transaction> {
         realmFactory.realm.use {
-            return it.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW).findAll()
+            val transactions = it.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW).findAll()
+            return it.copyFromRealm(transactions)
         }
     }
 
     override fun getRelayedTransaction(hash: ByteArray): Transaction? {
         realmFactory.realm.use {
-            return it.where(Transaction::class.java).equalTo("hash", hash).findFirst()
+            val transaction = it.where(Transaction::class.java).equalTo("hash", hash)
+                    .findFirst() ?: return null
+
+            return it.copyFromRealm(transaction)
         }
     }
 
