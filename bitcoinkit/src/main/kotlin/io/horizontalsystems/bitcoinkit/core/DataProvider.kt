@@ -9,7 +9,7 @@ import io.reactivex.subjects.PublishSubject
 import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val storage: IStorage, private val realmFactory: RealmFactory, private val listener: Listener, private val unspentOutputProvider: UnspentOutputProvider)
+class DataProvider(private val storage: IStorage, private val realmFactory: RealmFactory, private val unspentOutputProvider: UnspentOutputProvider)
     : IBlockchainDataListener {
 
     interface Listener {
@@ -19,6 +19,7 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
 
+    var listener: Listener? = null
     private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
     private val balanceSubjectDisposable: Disposable
 
@@ -27,7 +28,7 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
         private set(value) {
             if (value != field) {
                 field = value
-                listener.onBalanceUpdate(field)
+                listener?.onBalanceUpdate(field)
             }
         }
 
@@ -55,18 +56,18 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
             val blockInfo = blockInfo(block)
 
             lastBlockInfo = blockInfo
-            listener.onLastBlockInfoUpdate(blockInfo)
+            listener?.onLastBlockInfoUpdate(blockInfo)
             balanceUpdateSubject.onNext(true)
         }
     }
 
     override fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>) {
-        listener.onTransactionsUpdate(inserted.mapNotNull { transactionInfo(it) }, updated.mapNotNull { transactionInfo(it) })
+        listener?.onTransactionsUpdate(inserted.mapNotNull { transactionInfo(it) }, updated.mapNotNull { transactionInfo(it) })
         balanceUpdateSubject.onNext(true)
     }
 
     override fun onTransactionsDelete(ids: List<String>) {
-        listener.onTransactionsDelete(ids)
+        listener?.onTransactionsDelete(ids)
         balanceUpdateSubject.onNext(true)
     }
 

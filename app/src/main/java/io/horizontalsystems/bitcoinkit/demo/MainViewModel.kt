@@ -4,6 +4,7 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
+import io.horizontalsystems.bitcoinkit.BitcoinKitBuilder
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.reactivex.disposables.CompositeDisposable
@@ -32,12 +33,17 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
-        val networkType = BitcoinKit.NetworkType.TestNet
 
-        bitcoinKit = BitcoinKit(App.instance, words, networkType, "wallet-id")
+        bitcoinKit = BitcoinKitBuilder()
+                .setContext(App.instance)
+                .setWords(words)
+                .setNetworkType(BitcoinKit.NetworkType.TestNet)
+                .setWalletId("wallet-id")
+                .build()
+
         bitcoinKit.listener = this
 
-        networkName = networkType.name
+        networkName = BitcoinKit.NetworkType.TestNet.name
         balance.value = bitcoinKit.balance
 
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->

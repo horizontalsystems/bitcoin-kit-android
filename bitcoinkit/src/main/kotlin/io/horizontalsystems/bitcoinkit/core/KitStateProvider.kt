@@ -11,12 +11,13 @@ interface ISyncStateListener {
     fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
 }
 
-class KitStateProvider(private val listener: Listener) : ISyncStateListener {
+class KitStateProvider : ISyncStateListener {
 
     interface Listener {
         fun onKitStateUpdate(state: KitState)
     }
 
+    var listener: Listener? = null
     private var initialBestBlockHeight = 0
     private var currentBestBlockHeight = 0
 
@@ -24,7 +25,7 @@ class KitStateProvider(private val listener: Listener) : ISyncStateListener {
         private set(value) {
             if (value != field) {
                 field = value
-                listener.onKitStateUpdate(field)
+                listener?.onKitStateUpdate(field)
             }
         }
 

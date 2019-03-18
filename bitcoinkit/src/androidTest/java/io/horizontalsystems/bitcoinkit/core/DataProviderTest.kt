@@ -15,7 +15,6 @@ class DataProviderTest {
 
     private val storage = mock(IStorage::class.java)
     private val factory = RealmFactoryMock()
-    private val listener = Mockito.mock(DataProvider.Listener::class.java)
     private val unspentOutputProvider = Mockito.mock(UnspentOutputProvider::class.java)
 
 
@@ -28,7 +27,7 @@ class DataProviderTest {
         realm.executeTransaction {
             it.deleteAll()
         }
-        dataProvider = DataProvider(storage, factory.realmFactory, listener, unspentOutputProvider)
+        dataProvider = DataProvider(storage, factory.realmFactory, unspentOutputProvider)
     }
 
     @Test
