@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.storage
 
-import android.content.Context
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.*
@@ -8,8 +7,7 @@ import io.realm.Realm
 import io.realm.RealmResults
 import io.realm.Sort
 
-class Storage(context: Context, dbName: String, val realmFactory: RealmFactory) : IStorage {
-    private val store = KitDatabase.getInstance(context, dbName)
+class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : IStorage {
 
     override fun inTransaction(callback: (Realm) -> Unit) {
         realmFactory.realm.use { realm ->

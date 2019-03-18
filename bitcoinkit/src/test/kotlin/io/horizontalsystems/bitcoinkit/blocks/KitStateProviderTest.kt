@@ -17,11 +17,13 @@ import org.powermock.modules.junit4.PowerMockRunner
 class KitStateProviderTest {
 
     private val kitStateListener = mock(KitStateProvider.Listener::class.java)
-    private val kitStateProvider = KitStateProvider(kitStateListener)
+    private val kitStateProvider = KitStateProvider()
     private val syncing = mock(KitState.Syncing::class.java)
 
     @Before
     fun setup() {
+        kitStateProvider.listener = kitStateListener
+
         PowerMockito.whenNew(KitState.Syncing::class.java)
                 .withAnyArguments()
                 .thenReturn(syncing)
