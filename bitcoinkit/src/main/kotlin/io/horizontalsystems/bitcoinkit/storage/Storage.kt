@@ -182,12 +182,9 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
         }
     }
 
-    override fun getRelayedTransaction(hash: ByteArray): Transaction? {
+    override fun isTransactionExists(hash: ByteArray): Boolean {
         realmFactory.realm.use {
-            val transaction = it.where(Transaction::class.java).equalTo("hash", hash)
-                    .findFirst() ?: return null
-
-            return it.copyFromRealm(transaction)
+            return it.where(Transaction::class.java).equalTo("hash", hash).count() > 0
         }
     }
 

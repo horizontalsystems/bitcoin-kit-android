@@ -54,7 +54,7 @@ interface IStorage {
 
     fun getNewTransactions(): List<Transaction>
     fun getNewTransaction(hashHex: String): Transaction?
-    fun getRelayedTransaction(hash: ByteArray): Transaction?
+    fun isTransactionExists(hash: ByteArray): Boolean
 
     //  SentTransaction
 
