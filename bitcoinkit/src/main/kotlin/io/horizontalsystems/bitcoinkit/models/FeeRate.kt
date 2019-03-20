@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoinkit.models
 
 import io.realm.RealmObject
 import io.realm.annotations.PrimaryKey
-import kotlin.math.max
 
 open class FeeRate : RealmObject() {
 
@@ -15,19 +14,12 @@ open class FeeRate : RealmObject() {
     @PrimaryKey
     var unique = ""
 
-    val lowest get() = satoshiPerByte(lowPriority)
-    val medium get() = satoshiPerByte(mediumPriority)
-    val highest get() = satoshiPerByte(highPriority)
-
-    private fun satoshiPerByte(bitcoinPerKB: Double): Int {
-        return max((bitcoinPerKB * 100_000_000 / 1000).toInt(), 1)
-    }
-
     companion object {
         val defaultFeeRate = FeeRate().apply {
-            lowPriority = 0.00022165
-            mediumPriority = 0.00043505
-            highPriority = 0.00083333
+            lowPriority = 20.0
+            mediumPriority = 42.0
+            highPriority = 81.0
+            date = 1552970862660 //rates for March 19 2019
         }
     }
 }
