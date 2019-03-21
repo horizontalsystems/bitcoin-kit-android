@@ -5,6 +5,7 @@ import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
+import io.horizontalsystems.bitcoinkit.models.FeePriority
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.reactivex.disposables.CompositeDisposable
 
@@ -20,6 +21,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
     val networkName: String
+    var feePriority: FeePriority = FeePriority.Medium
     private val disposables = CompositeDisposable()
 
     private var started = false
@@ -68,11 +70,11 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun send(address: String, amount: Long) {
-        bitcoinKit.send(address, amount)
+        bitcoinKit.send(address, amount, feePriority = feePriority)
     }
 
     fun fee(value: Long, address: String? = null): Long {
-        return bitcoinKit.fee(value, address)
+        return bitcoinKit.fee(value, address, feePriority = feePriority)
     }
 
     fun showDebugInfo() {
