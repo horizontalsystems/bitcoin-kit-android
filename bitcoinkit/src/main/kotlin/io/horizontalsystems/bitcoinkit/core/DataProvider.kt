@@ -6,10 +6,9 @@ import io.horizontalsystems.bitcoinkit.models.*
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
-import io.realm.Sort
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val storage: IStorage, private val realmFactory: RealmFactory, private val unspentOutputProvider: UnspentOutputProvider)
+class DataProvider(private val storage: IStorage, private val unspentOutputProvider: UnspentOutputProvider)
     : IBlockchainDataListener {
 
     interface Listener {
@@ -39,10 +38,8 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
         get() = storage.feeRate ?: FeeRate.defaultFeeRate
 
     init {
-        lastBlockInfo = realmFactory.realm.use { realm ->
-            realm.where(Block::class.java)
-                    .sort("height", Sort.DESCENDING)
-                    .findFirst()?.let { blockInfo(it) }
+        lastBlockInfo = storage.lastBlock()?.let {
+            blockInfo(it)
         }
 
         balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
@@ -77,37 +74,27 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
 
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
             Single.create { emitter ->
-                realmFactory.realm.use { realm ->
+                var results = storage.getTransactionsSortedTimestampAndOrdered()
 
-                    var results = realm.where(Transaction::class.java)
-                            .sort("timestamp", Sort.DESCENDING, "order", Sort.DESCENDING)
-
-                    fromHash?.let { fromHash ->
-                        realm.where(Transaction::class.java).equalTo("hashHexReversed", fromHash).findFirst()?.let { fromTransaction ->
-                            results = results
-                                    .beginGroup()
-                                        .lessThan("timestamp", fromTransaction.timestamp)
-                                        .or()
-                                        .beginGroup()
-                                            .equalTo("timestamp", fromTransaction.timestamp)
-                                            .lessThan("order", fromTransaction.order)
-                                        .endGroup()
-                                    .endGroup()
+                fromHash?.let { fromHash ->
+                    storage.getTransaction(fromHash)?.let { fromTransaction ->
+                        results.filter {
+                            it.timestamp < fromTransaction.timestamp || (it.timestamp == fromTransaction.timestamp && it.order < fromTransaction.order)
                         }
                     }
-
-                    limit?.let {
-                        results = results.limit(it.toLong())
-                    }
-
-                    emitter.onSuccess(results.findAll().mapNotNull { transactionInfo(it) })
                 }
+
+                limit?.let {
+                    results = results.take(limit)
+                }
+
+                emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
             }
 
     private fun blockInfo(block: Block) = BlockInfo(
-            block.reversedHeaderHashHex,
+            block.headerHashReversedHex,
             block.height,
-            block.header?.timestamp)
+            block.timestamp)
 
     private fun transactionInfo(transaction: Transaction?): TransactionInfo? {
         if (transaction == null) return null
@@ -117,22 +104,25 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
         val fromAddresses = mutableListOf<TransactionAddress>()
         val toAddresses = mutableListOf<TransactionAddress>()
 
-        transaction.inputs.forEach { input ->
-            input.previousOutput?.let { previousOutput ->
-                if (previousOutput.publicKey != null) {
-                    totalMineInput += previousOutput.value
-                }
+        storage.getTransactionInputs(transaction).forEach { input ->
+            var mine = false
+
+            val previousOutput = storage.getPreviousOutput(input)
+            if (previousOutput?.publicKeyPath != null) {
+                totalMineInput += previousOutput.value
+                mine = true
+
             }
 
             input.address?.let { address ->
-                fromAddresses.add(TransactionAddress(address, mine = input.previousOutput?.publicKey != null))
+                fromAddresses.add(TransactionAddress(address, mine = mine))
             }
         }
 
-        transaction.outputs.forEach { output ->
+        storage.getTransactionOutputs(transaction).forEach { output ->
             var mine = false
 
-            if (output.publicKey != null) {
+            if (output.publicKeyPath != null) {
                 totalMineOutput += output.value
                 mine = true
             }
@@ -147,7 +137,7 @@ class DataProvider(private val storage: IStorage, private val realmFactory: Real
                 from = fromAddresses,
                 to = toAddresses,
                 amount = totalMineOutput - totalMineInput,
-                blockHeight = transaction.block?.height,
+                blockHeight = transaction.block(storage)?.height,
                 timestamp = transaction.timestamp
         )
     }

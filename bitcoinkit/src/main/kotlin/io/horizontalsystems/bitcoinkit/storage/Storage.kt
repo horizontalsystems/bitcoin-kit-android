@@ -1,26 +1,12 @@
 package io.horizontalsystems.bitcoinkit.storage
 
 import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.models.*
-import io.realm.Realm
-import io.realm.RealmObject
-import io.realm.Sort
 
-class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : IStorage {
+class Storage(private val store: KitDatabase) : IStorage {
 
-    override fun inTransaction(callback: (Realm) -> Unit) {
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction {
-                callback.invoke(it)
-            }
-        }
-    }
-
-    override fun realmInstance(callback: (Realm) -> Unit) {
-        realmFactory.realm.use {
-            callback.invoke(it)
-        }
+    override fun inTransaction(callback: () -> Unit) {
+        store.runInTransaction(callback)
     }
 
     // FeeRate
@@ -100,186 +86,182 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
 
     // Block
 
-    override fun <E : RealmObject> copyToRealm(obj: E, realm: Realm): E {
-        return realm.copyToRealmOrUpdate(obj)
-    }
-
     override fun getBlock(height: Int): Block? {
-        realmFactory.realm.use {
-            val block = it.where(Block::class.java)
-                    .equalTo("height", height)
-                    .findFirst() ?: return null
-
-            return it.copyFromRealm(block)
-        }
+        return store.block.getBlockByHeight(height)
     }
 
-    override fun getBlock(hashHex: String, realm: Realm?): Block? {
-        realm?.let {
-            return it.where(Block::class.java).equalTo("reversedHeaderHashHex", hashHex).findFirst()
-        }
-
-        realmFactory.realm.use {
-            val block = it.where(Block::class.java).equalTo("reversedHeaderHashHex", hashHex)
-                    .findFirst() ?: return null
-
-            return it.copyFromRealm(block)
-        }
+    override fun getBlock(hashHex: String): Block? {
+        return store.block.getBlockByHex(hashHex)
     }
 
-    override fun getBlock(stale: Boolean, sortedHeight: String, realm: Realm?): Block? {
-        val sortOrder = if (sortedHeight == "ASC") {
-            Sort.ASCENDING
+    override fun getBlock(stale: Boolean, sortedHeight: String): Block? {
+        return if (sortedHeight == "DESC") {
+            store.block.getLast(stale)
         } else {
-            Sort.DESCENDING
-        }
-
-        realm?.let {
-            return realm.where(Block::class.java)
-                    .equalTo("stale", stale)
-                    .sort("height", sortOrder)
-                    .findFirst()
-        }
-
-        realmFactory.realm.use {
-            val result = it.where(Block::class.java)
-                    .equalTo("stale", stale)
-                    .sort("height", sortOrder)
-                    .findFirst() ?: return null
-
-            return it.copyFromRealm(result)
+            store.block.getFirst(stale)
         }
     }
 
-    override fun getBlocks(stale: Boolean, realm: Realm?): List<Block> {
-        realm?.let {
-            return it.where(Block::class.java)
-                    .equalTo("stale", stale)
-                    .findAll()
-        }
-
-        realmFactory.realm.use {
-            val results = it.where(Block::class.java)
-                    .equalTo("stale", stale)
-                    .findAll()
-
-            return it.copyFromRealm(results)
-        }
+    override fun getBlocks(stale: Boolean): List<Block> {
+        return store.block.getBlocksByStale(stale)
     }
 
     override fun getBlocks(heightGreaterThan: Int, sortedBy: String, limit: Int): List<Block> {
-        realmFactory.realm.use {
-            val blocks = it.where(Block::class.java)
-                    .greaterThan("height", heightGreaterThan)
-                    .sort(sortedBy, Sort.DESCENDING)
-                    .findAll()
-                    .take(limit)
-
-            return it.copyFromRealm(blocks)
-        }
+        return store.block.getBlocks(heightGreaterThan, limit)
     }
 
-    override fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean, realm: Realm?): List<Block> {
-        realm?.let {
-            return it.where(Block::class.java)
-                    .equalTo("stale", false)
-                    .greaterThanOrEqualTo("height", heightGreaterOrEqualTo)
-                    .findAll()
-        }
-
-        realmFactory.realm.use {
-            val results = it.where(Block::class.java)
-                    .equalTo("stale", false)
-                    .greaterThanOrEqualTo("height", heightGreaterOrEqualTo)
-                    .findAll()
-
-            return it.copyFromRealm(results)
-        }
+    override fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean): List<Block> {
+        return store.block.getBlocks(heightGreaterOrEqualTo, stale)
     }
 
-    override fun getBlocks(realm: Realm, hashHexes: List<String>): List<Block> {
-        return realm.where(Block::class.java).`in`("reversedHeaderHashHex", hashHexes.toTypedArray()).findAll()
+    override fun getBlocks(hashHexes: List<String>): List<Block> {
+        return store.block.getBlocks(hashHexes)
     }
 
     override fun blocksCount(headerHexes: List<String>?): Int {
-        realmFactory.realm.use {
-            val realmQuery = it.where(Block::class.java)
-            if (headerHexes != null) {
-                realmQuery.`in`("reversedHeaderHashHex", headerHexes.toTypedArray())
-            }
-
-            return realmQuery.count().toInt()
+        return if (headerHexes == null) {
+            store.block.count()
+        } else {
+            store.block.getBlocksCount(headerHexes)
         }
+    }
+
+    override fun addBlock(block: Block) {
+        store.block.insert(block)
     }
 
     override fun saveBlock(block: Block) {
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction { it.insertOrUpdate(block) }
-        }
+        store.block.insert(block)
     }
 
     override fun lastBlock(): Block? {
-        realmFactory.realm.use {
-            val block = it.where(Block::class.java)
-                    .sort("height", Sort.DESCENDING)
-                    .findFirst() ?: return null
-
-            return it.copyFromRealm(block)
-        }
+        return store.block.getLastBlock()
     }
 
-    override fun updateBlock(staleBlock: Block, realm: Realm) {
-        realm.copyToRealmOrUpdate(staleBlock)
+    override fun updateBlock(staleBlock: Block) {
+        store.block.update(staleBlock)
     }
 
-    override fun deleteBlocks(blocks: List<Block>, realm: Realm) {
-        val managedBlocks = realm.where(Block::class.java)
-                .`in`("reversedHeaderHashHex", blocks.map { it.reversedHeaderHashHex }.toTypedArray())
-                .findAll()
+    override fun deleteBlocks(blocks: List<Block>) {
+        blocks.forEach { block ->
+            val transactions = store.transaction.getBlockTransactions(block.headerHashReversedHex)
 
-        managedBlocks.forEach { block ->
-            block.transactions?.forEach { transaction ->
-                transaction.inputs.deleteAllFromRealm()
-                transaction.outputs.deleteAllFromRealm()
+            transactions.forEach {
+                store.input.deleteAll(getTransactionInputs(it))
+                store.output.deleteAll(getTransactionOutputs(it))
             }
 
-            block.transactions?.deleteAllFromRealm()
+            store.transaction.deleteAll(transactions)
         }
 
-        managedBlocks.deleteAllFromRealm()
+        store.block.deleteAll(blocks)
     }
 
     // Transaction
 
-    override fun getBlockTransactions(block: Block, realm: Realm): List<Transaction> {
-        val result = realm.where(Block::class.java).equalTo("reversedHeaderHashHex", block.reversedHeaderHashHex).findFirst()
-        if (result?.transactions == null) {
-            return emptyList()
-        }
+    override fun getTransactionsSortedTimestampAndOrdered(): List<Transaction> {
+        return store.transaction.getSortedTimestampAndOrdered()
+    }
 
-        return result.transactions
+    override fun getTransaction(hashHex: String): Transaction? {
+        return store.transaction.getByHashHex(hashHex)
+    }
+
+    override fun getTransactionOfOutput(output: TransactionOutput): Transaction? {
+        return store.transaction.getByHashHex(output.transactionHashReversedHex)
+    }
+
+    override fun addTransaction(transaction: FullTransaction) {
+        inTransaction {
+            store.transaction.insert(transaction.header)
+
+            transaction.inputs.forEach {
+                store.input.insert(it)
+            }
+
+            transaction.outputs.forEach {
+                store.output.insert(it)
+            }
+        }
+    }
+
+    override fun updateTransaction(transaction: Transaction) {
+        store.transaction.update(transaction)
+    }
+
+    override fun getBlockTransactions(block: Block): List<Transaction> {
+        return store.transaction.getBlockTransactions(block.headerHashReversedHex)
     }
 
     override fun getNewTransaction(hashHex: String): Transaction? {
-        realmFactory.realm.use {
-            return it.where(Transaction::class.java)
-                    .equalTo("hashHexReversed", hashHex)
-                    .equalTo("status", Transaction.Status.NEW)
-                    .findFirst()
-        }
+        return store.transaction.getNewTransaction(hashHex)
     }
 
-    override fun getNewTransactions(): List<Transaction> {
-        realmFactory.realm.use {
-            val results = it.where(Transaction::class.java).equalTo("status", Transaction.Status.NEW).findAll()
-            return it.copyFromRealm(results)
+    override fun getNewTransactions(): List<FullTransaction> {
+        return store.transaction.getNewTransactions().map {
+            FullTransaction(header = it, inputs = getTransactionInputs(it), outputs = getTransactionOutputs(it))
         }
     }
 
     override fun isTransactionExists(hash: ByteArray): Boolean {
-        realmFactory.realm.use {
-            return it.where(Transaction::class.java).equalTo("hash", hash).count() > 0
+        return store.transaction.getByHash(hash) != null
+    }
+
+    //  TransactionOutput
+    override fun getUnspentOutputs(): List<UnspentOutput> {
+        return store.output.getUnspents()
+    }
+
+    override fun getPreviousOutput(input: TransactionInput): TransactionOutput? {
+        return store.output.getPreviousOutput(input.previousOutputTxReversedHex, input.previousOutputIndex.toInt())
+    }
+
+    override fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput> {
+        return store.output.getByHashHex(transaction.hashHexReversed)
+    }
+
+    override fun getOutputsWithPublicKeys(): List<OutputWithPublicKey> {
+        return store.output.getOutputsWithPublicKeys()
+    }
+
+    override fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput> {
+        return store.output.getListByPath(publicKey.path)
+    }
+
+    // TransactionInput
+
+    override fun getInputsWithBlock(output: TransactionOutput): List<InputWithBlock> {
+        return store.input.getInputsWithBlock(output.transactionHashReversedHex, output.index)
+    }
+
+    override fun getTransactionInputs(transaction: Transaction): List<TransactionInput> {
+        return store.input.getTransactionInputs(transaction.hashHexReversed)
+    }
+
+    // PublicKey
+
+    override fun hasInputs(ofOutput: TransactionOutput): Boolean {
+        return store.input.getInputsOfOutput(ofOutput.transactionHashReversedHex, ofOutput.index).isNotEmpty()
+    }
+
+    override fun getPublicKey(byPath: String): PublicKey? {
+        return store.publicKey.getByPath(path = byPath)
+    }
+
+    override fun getPublicKeyByHash(keyHash: ByteArray, isWPKH: Boolean): PublicKey? {
+        return if (isWPKH) {
+            store.publicKey.getByScriptHashWPKH(keyHash)
+        } else {
+            store.publicKey.getByKeyOrKeyHash(keyHash)
         }
+    }
+
+    override fun getPublicKeys(): List<PublicKey> {
+        return store.publicKey.getAll()
+    }
+
+    override fun savePublicKeys(keys: List<PublicKey>) {
+        store.publicKey.insertAll(keys)
     }
 
     // SentTransaction
@@ -301,5 +283,6 @@ class Storage(private val store: KitDatabase, val realmFactory: RealmFactory) : 
     override fun clear() {
         store.clearAllTables()
     }
+
 
 }

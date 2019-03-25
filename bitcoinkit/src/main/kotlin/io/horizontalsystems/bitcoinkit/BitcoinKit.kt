@@ -5,12 +5,10 @@ import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
 import io.horizontalsystems.bitcoinkit.core.Wallet
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
-import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
@@ -19,19 +17,15 @@ import io.horizontalsystems.bitcoinkit.storage.KitDatabase
 import io.horizontalsystems.bitcoinkit.storage.Storage
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
-import io.realm.Realm
-import io.realm.annotations.RealmModule
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
-
-@RealmModule(library = true, allClasses = true)
-class BitcoinKitModule
 
 class BitcoinKitBuilder {
 
@@ -98,24 +92,21 @@ class BitcoinKitBuilder {
         checkNotNull(networkType)
         checkNotNull(walletId)
 
+        val dbName = "bitcoinkit-${networkType.name}-$walletId"
+        val database = KitDatabase.getInstance(context, dbName)
+        val storage = Storage(database)
+
         val network: Network = when (networkType) {
-            BitcoinKit.NetworkType.MainNet -> MainNet()
-            BitcoinKit.NetworkType.MainNetBitCash -> MainNetBitcoinCash()
-            BitcoinKit.NetworkType.TestNet -> TestNet()
-            BitcoinKit.NetworkType.TestNetBitCash -> TestNetBitcoinCash()
-            BitcoinKit.NetworkType.RegTest -> RegTest()
+            BitcoinKit.NetworkType.MainNet -> MainNet(storage)
+            BitcoinKit.NetworkType.MainNetBitCash -> MainNetBitcoinCash(storage)
+            BitcoinKit.NetworkType.TestNet -> TestNet(storage)
+            BitcoinKit.NetworkType.TestNetBitCash -> TestNetBitcoinCash(storage)
+            BitcoinKit.NetworkType.RegTest -> RegTest(storage)
         }
 
-        val dbName = "bitcoinkit-${networkType.name}-$walletId"
+        val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold)
 
-        val database = KitDatabase.getInstance(context, dbName)
-
-        val realmFactory = RealmFactory(dbName)
-        val storage = Storage(database, realmFactory)
-
-        val unspentOutputProvider = UnspentOutputProvider(realmFactory, confirmationsThreshold)
-
-        val dataProvider = DataProvider(storage, realmFactory, unspentOutputProvider)
+        val dataProvider = DataProvider(storage, unspentOutputProvider)
 
         val connectionManager = ConnectionManager(context)
 
@@ -123,24 +114,24 @@ class BitcoinKitBuilder {
 
         val addressConverter = AddressConverter(network)
 
-        val addressManager = AddressManager.create(realmFactory, hdWallet, addressConverter)
+        val addressManager = AddressManager.create(storage, hdWallet, addressConverter)
 
-        val transactionLinker = TransactionLinker()
-        val transactionExtractor = TransactionExtractor(addressConverter)
-        val transactionProcessor = TransactionProcessor(transactionExtractor, transactionLinker, addressManager, dataProvider)
+        val transactionLinker = TransactionLinker(storage)
+        val transactionExtractor = TransactionExtractor(addressConverter, storage)
+        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionLinker, addressManager, dataProvider)
 
         val kitStateProvider = KitStateProvider()
 
         val peerHostManager = PeerAddressManager(network, storage)
-        val bloomFilterManager = BloomFilterManager(realmFactory)
+        val bloomFilterManager = BloomFilterManager(storage)
 
         val peerGroup = PeerGroup(peerHostManager, bloomFilterManager, network, kitStateProvider, peerSize)
         peerGroup.blockSyncer = BlockSyncer(storage, Blockchain(storage, network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
         peerGroup.transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
         peerGroup.connectionManager = connectionManager
 
-        val transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
-        val transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
+        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
+        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, peerGroup)
 
         val paymentAddressParser = when (networkType) {
             BitcoinKit.NetworkType.MainNet,
@@ -177,7 +168,6 @@ class BitcoinKitBuilder {
 
         val bitcoinKit = BitcoinKit(
                 storage,
-                realmFactory,
                 dataProvider,
                 addressManager,
                 addressConverter,
@@ -195,7 +185,7 @@ class BitcoinKitBuilder {
 
 }
 
-class BitcoinKit(private val storage: Storage, private val realmFactory: RealmFactory, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverter, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager)
+class BitcoinKit(private val storage: Storage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverter, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -224,14 +214,11 @@ class BitcoinKit(private val storage: Storage, private val realmFactory: RealmFa
     fun stop() {
         dataProvider.clear()
         syncManager.stop()
-        storage.clear()
     }
 
     fun clear() {
         stop()
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction { it.deleteAll() }
-        }
+        storage.clear()
     }
 
     fun refresh() {
@@ -264,25 +251,21 @@ class BitcoinKit(private val storage: Storage, private val realmFactory: RealmFa
 
     fun showDebugInfo() {
         addressManager.fillGap()
-        realmFactory.realm.use { realm ->
-            realm.where(PublicKey::class.java).findAll().forEach { pubKey ->
-                try {
-//                    val scriptType = if (network is MainNetBitcoinCash || network is TestNetBitcoinCash)
-//                        ScriptType.P2PKH else
-//                        ScriptType.P2WPKH
+        storage.getPublicKeys().forEach { pubKey ->
+            try {
+                val scriptType = ScriptType.P2PKH
 
-                    val legacy = addressConverter.convert(pubKey.publicKeyHash, ScriptType.P2PKH).string
-//                    val wpkh = addressConverter.convert(pubKey.scriptHashP2WPKH, ScriptType.P2SH).string
-//                    val bechAddress = try {
-//                        addressConverter.convert(OpCodes.push(0) + OpCodes.push(pubKey.publicKeyHash), scriptType).string
-//                    } catch (e: Exception) {
-//                        ""
-//                    }
-                    println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHex} ---- legacy: $legacy")
-//                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
+                val legacy = addressConverter.convert(pubKey.publicKeyHash, ScriptType.P2PKH).string
+                val wpkh = addressConverter.convert(pubKey.scriptHashP2WPKH, ScriptType.P2SH).string
+                val bechAddress = try {
+                    addressConverter.convert(OpCodes.push(0) + OpCodes.push(pubKey.publicKeyHash), scriptType).string
                 } catch (e: Exception) {
-                    println(e.message)
+                    ""
                 }
+                println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHex} ---- legacy: $legacy")
+                println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
+            } catch (e: Exception) {
+                println(e.message)
             }
         }
     }
@@ -352,9 +335,4 @@ class BitcoinKit(private val storage: Storage, private val realmFactory: RealmFa
         }
     }
 
-    companion object {
-        fun init(context: Context) {
-            Realm.init(context)
-        }
-    }
 }

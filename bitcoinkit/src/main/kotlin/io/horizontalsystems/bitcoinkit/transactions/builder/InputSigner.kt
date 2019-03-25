@@ -1,25 +1,23 @@
 package io.horizontalsystems.bitcoinkit.transactions.builder
 
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
+import io.horizontalsystems.bitcoinkit.serializers.TransactionSerializer
+import io.horizontalsystems.bitcoinkit.storage.InputToSign
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.transactions.scripts.Sighash
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 class InputSigner(private val hdWallet: HDWallet, val network: Network) {
 
-    fun sigScriptData(transaction: Transaction, index: Int): List<ByteArray> {
+    fun sigScriptData(transaction: Transaction, inputsToSign: List<InputToSign>, outputs: List<TransactionOutput>, index: Int): List<ByteArray> {
 
-        val transactionInput = transaction.inputs[index]
-        val prevOutput = checkNotNull(transactionInput?.previousOutput) {
-            throw Error.NoPreviousOutput()
-        }
-
-        val publicKey = checkNotNull(prevOutput.publicKey) {
-            throw Error.NoPreviousOutputAddress()
-        }
+        val input = inputsToSign[index]
+        val prevOutput = input.previousOutput
+        val publicKey = input.previousOutputPublicKey
 
         val privateKey = checkNotNull(hdWallet.privateKey(publicKey.account, publicKey.index, publicKey.external)) {
             throw Error.NoPrivateKey()
@@ -30,7 +28,7 @@ class InputSigner(private val hdWallet: HDWallet, val network: Network) {
                 ScriptType.P2WPKHSH
         )
 
-        val txContent = transaction.toSignatureByteArray(index, isWitness) + sigHashType()
+        val txContent = TransactionSerializer.serializeForSignature(transaction, inputsToSign, outputs, index, isWitness) + sigHashType()
         val signature = privateKey.createSignature(txContent) + sigHashType(true)
 
         if (prevOutput.scriptType == ScriptType.P2PK) {

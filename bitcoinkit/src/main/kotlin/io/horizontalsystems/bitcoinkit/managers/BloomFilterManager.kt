@@ -1,15 +1,12 @@
 package io.horizontalsystems.bitcoinkit.managers
 
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
-import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.horizontalsystems.bitcoinkit.storage.OutputWithPublicKey
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.Utils
-import io.realm.Sort
 
-class BloomFilterManager(private val realmFactory: RealmFactory) {
+class BloomFilterManager(private val storage: IStorage) {
 
     object BloomFilterExpired : Exception()
 
@@ -25,32 +22,25 @@ class BloomFilterManager(private val realmFactory: RealmFactory) {
     }
 
     fun regenerateBloomFilter() {
-        val realm = realmFactory.realm
         val elements = mutableListOf<ByteArray>()
 
-        val publicKeys = realm.where(PublicKey::class.java).findAll()
-        for (publicKey in publicKeys) {
+        for (publicKey in storage.getPublicKeys()) {
             elements.add(publicKey.publicKeyHash)
             elements.add(publicKey.publicKey)
             elements.add(publicKey.scriptHashP2WPKH)
         }
 
-        var transactionOutputs: List<TransactionOutput> = realm.where(TransactionOutput::class.java)
-                .isNotNull("publicKey")
-                .`in`("scriptType", arrayOf(ScriptType.P2WPKH, ScriptType.P2PK))
-                .findAll()
+        var transactionOutputs = storage.getOutputsWithPublicKeys().filter {
+            it.output.scriptType == ScriptType.P2WPKH || it.output.scriptType == ScriptType.P2PK
+        }
 
-        realm.where(Block::class.java)
-                .sort("height", Sort.DESCENDING)
-                .findFirst()
-                ?.height
-                ?.let { bestBlockHeight ->
-                    transactionOutputs = transactionOutputs.filter { needToSetToBloomFilter(it, bestBlockHeight) }
-                }
+        storage.lastBlock()?.height?.let { bestBlockHeight ->
+            transactionOutputs = transactionOutputs.filter { needToSetToBloomFilter(it, bestBlockHeight) }
+        }
 
         for (output in transactionOutputs) {
-            output.transaction?.let { transaction ->
-                val outpoint = transaction.hash + Utils.intToByteArray(output.index).reversedArray()
+            output.output.transaction(storage)?.let { transaction ->
+                val outpoint = transaction.hash + Utils.intToByteArray(output.output.index).reversedArray()
                 elements.add(outpoint)
             }
         }
@@ -63,21 +53,23 @@ class BloomFilterManager(private val realmFactory: RealmFactory) {
                 }
             }
         }
-
-        realm.close()
     }
 
     /**
      * @return false if transaction output is spent more then 100 blocks before, otherwise true
      */
-    private fun needToSetToBloomFilter(output: TransactionOutput, bestBlockHeight: Int): Boolean {
-        if (output.inputs == null || output.inputs.size == 0) {
+    private fun needToSetToBloomFilter(output: OutputWithPublicKey, bestBlockHeight: Int): Boolean {
+        val inputs = storage.getInputsWithBlock(output.output)
+        if (inputs.isEmpty()) {
             return true
         }
 
-        val outputSpentBlockHeight = output.inputs.firstOrNull()?.transaction?.block?.height
+        val outputSpentBlockHeight = inputs.firstOrNull()?.block?.height
+        if (outputSpentBlockHeight != null) {
+            return bestBlockHeight - outputSpentBlockHeight < 100
+        }
 
-        return outputSpentBlockHeight == null || bestBlockHeight - outputSpentBlockHeight < 100
+        return true
     }
 
 }

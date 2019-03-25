@@ -1,27 +1,28 @@
 package io.horizontalsystems.bitcoinkit.managers
 
-import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.horizontalsystems.bitcoinkit.storage.UnspentOutput
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 
 class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
 
-    fun select(value: Long, feeRate: Int, outputType: Int = P2PKH, changeType: Int = P2PKH, senderPay: Boolean, outputs: List<TransactionOutput>): SelectedUnspentOutputInfo {
+    fun select(value: Long, feeRate: Int, outputType: Int = P2PKH, changeType: Int = P2PKH, senderPay: Boolean, unspentOutputs: List<UnspentOutput>): SelectedUnspentOutputInfo {
 
-        if (outputs.isEmpty()) {
+        if (unspentOutputs.isEmpty()) {
             throw Error.EmptyUnspentOutputs
         }
 
         val dust = (calculator.inputSize(changeType) + calculator.outputSize(changeType)) * feeRate
 
         //  try to find 1 unspent output with exactly matching value
-        for (output in outputs) {
+        for (unspentOutput in unspentOutputs) {
+            val output = unspentOutput.output
             val fee = calculator.transactionSize(listOf(output.scriptType), listOf(outputType)) * feeRate
             val totalFee = if (senderPay) fee else 0
 
             if (value + totalFee <= output.value && value + totalFee + dust > output.value) {
                 return SelectedUnspentOutputInfo(
-                        outputs = listOf(output),
+                        outputs = listOf(unspentOutput),
                         totalValue = output.value,
                         fee = if (senderPay) output.value - value else fee,
                         addChangeOutput = false)
@@ -29,17 +30,17 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
         }
 
         //  select outputs with least value until we get needed value
-        val sortedOutputs = outputs.sortedBy { it.value }
-        val selectedOutputs = mutableListOf<TransactionOutput>()
+        val sortedOutputs = unspentOutputs.sortedBy { it.output.value }
+        val selectedOutputs = mutableListOf<UnspentOutput>()
         val selectedOutputTypes = mutableListOf<Int>()
         var totalValue = 0L
 
         var fee = 0L
         var lastCalculatedFee = 0L
-        for (output in sortedOutputs) {
-            selectedOutputs.add(output)
-            selectedOutputTypes.add(output.scriptType)
-            totalValue += output.value
+        for (unspentOutput in sortedOutputs) {
+            selectedOutputs.add(unspentOutput)
+            selectedOutputTypes.add(unspentOutput.output.scriptType)
+            totalValue += unspentOutput.output.value
 
             lastCalculatedFee = calculator.transactionSize(inputs = selectedOutputTypes, outputs = listOf(outputType)) * feeRate
             if (senderPay) {
@@ -75,7 +76,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
 }
 
 data class SelectedUnspentOutputInfo(
-        val outputs: List<TransactionOutput>,
+        val outputs: List<UnspentOutput>,
         val totalValue: Long,
         val fee: Long,
         val addChangeOutput: Boolean

@@ -20,13 +20,18 @@ class BlockSyncer(
         private val network: Network,
         private val state: State = State()) {
 
+    private val sqliteMaxVariableNumber = 999
+
     val localDownloadedBestBlockHeight: Int
         get() = storage.lastBlock()?.height ?: 0
 
     val localKnownBestBlockHeight: Int
         get() {
             val blockHashes = storage.getBlockchainBlockHashes()
-            val existingBlocksCount = storage.blocksCount(blockHashes.map { it.reversedHeaderHashHex })
+            val headerHexes = blockHashes.map { it.headerHashReversedHex }
+            val existingBlocksCount = headerHexes.chunked(sqliteMaxVariableNumber).map {
+                storage.blocksCount(it)
+            }.sum()
 
             return localDownloadedBestBlockHeight.plus(blockHashes.size - existingBlocksCount)
         }
@@ -104,22 +109,22 @@ class BlockSyncer(
     }
 
     fun handleMerkleBlock(merkleBlock: MerkleBlock, maxBlockHeight: Int) {
-        storage.inTransaction { realm ->
+        storage.inTransaction {
             val height = merkleBlock.height
 
             val block = when (height) {
-                null -> blockchain.connect(merkleBlock, realm)
-                else -> blockchain.forceAdd(merkleBlock, height, realm)
+                null -> blockchain.connect(merkleBlock)
+                else -> blockchain.forceAdd(merkleBlock, height)
             }
 
             try {
-                transactionProcessor.process(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks, realm)
+                transactionProcessor.processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
             } catch (e: BloomFilterManager.BloomFilterExpired) {
                 state.iterationHasPartialBlocks = true
             }
 
             if (!state.iterationHasPartialBlocks) {
-                storage.deleteBlockHash(block.reversedHeaderHashHex)
+                storage.deleteBlockHash(block.headerHashReversedHex)
             }
 
             listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
@@ -130,15 +135,17 @@ class BlockSyncer(
     fun shouldRequest(blockHash: ByteArray): Boolean {
         val hashHex = blockHash.reversedArray().toHexString()
 
-        return storage.getBlock(hashHex) != null
+        return storage.getBlock(hashHex) == null
     }
 
     private fun clearPartialBlocks() {
-        val toDelete = storage.getBlockHashHeaderHashHexes(except = network.checkpointBlock.reversedHeaderHashHex)
+        val toDelete = storage.getBlockHashHeaderHashHexes(except = network.checkpointBlock.headerHashReversedHex)
 
-        storage.inTransaction { realm ->
-            val blocksToDelete = storage.getBlocks(realm, hashHexes = toDelete)
-            blockchain.deleteBlocks(blocksToDelete, realm)
+        storage.inTransaction {
+            toDelete.chunked(sqliteMaxVariableNumber).forEach {
+                val blocksToDelete = storage.getBlocks(hashHexes = it)
+                blockchain.deleteBlocks(blocksToDelete)
+            }
         }
     }
 

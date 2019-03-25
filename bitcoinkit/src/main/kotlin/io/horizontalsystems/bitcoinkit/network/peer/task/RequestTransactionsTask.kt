@@ -1,11 +1,11 @@
 package io.horizontalsystems.bitcoinkit.network.peer.task
 
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 
 class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
     val hashes = hashes.toMutableList()
-    var transactions = mutableListOf<Transaction>()
+    var transactions = mutableListOf<FullTransaction>()
 
     override fun start() {
         requester?.getData(hashes.map { hash ->
@@ -13,8 +13,8 @@ class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
         })
     }
 
-    override fun handleTransaction(transaction: Transaction): Boolean {
-        val hash = hashes.firstOrNull { it.contentEquals(transaction.hash) } ?: return false
+    override fun handleTransaction(transaction: FullTransaction): Boolean {
+        val hash = hashes.firstOrNull { it.contentEquals(transaction.header.hash) } ?: return false
 
         hashes.remove(hash)
         transactions.add(transaction)

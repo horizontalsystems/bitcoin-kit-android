@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.transactions.scripts
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.AddressType
@@ -10,10 +11,12 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2SH
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.mockito.Mockito.mock
 
 class ScriptBuilderTest {
 
-    private val network = MainNet()
+    private val storage = mock(IStorage::class.java)
+    private val network = MainNet(storage)
     private val scriptBuilder = ScriptBuilder()
     private val addressConverter = AddressConverter(network)
 

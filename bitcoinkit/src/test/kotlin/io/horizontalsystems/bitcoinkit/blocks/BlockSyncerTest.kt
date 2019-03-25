@@ -4,6 +4,7 @@ import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.extensions.hexToByteArray
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
@@ -12,9 +13,7 @@ import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import io.realm.Realm
-import io.realm.RealmResults
 import org.junit.Assert.assertEquals
-import org.mockito.ArgumentMatchers.anyInt
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
 import org.mockito.invocation.InvocationOnMock
@@ -37,13 +36,12 @@ class BlockSyncerTest : Spek({
     val state = mock(BlockSyncer.State::class.java)
     val checkpointBlock = mock(Block::class.java)
 
-    val answerRealmInstance: (InvocationOnMock) -> Unit = {
-        (it.arguments[0] as (Realm) -> Unit).invoke(realm)
+    val callbackInvoke: (InvocationOnMock) -> Unit = {
+        (it.arguments[0] as () -> Unit).invoke()
     }
 
     beforeEachTest {
-        whenever(storage.realmInstance(any())).then(answerRealmInstance)
-        whenever(storage.inTransaction(any())).then(answerRealmInstance)
+        whenever(storage.inTransaction(any())).then(callbackInvoke)
 
         whenever(checkpointBlock.height).thenReturn(1)
         whenever(network.checkpointBlock).thenReturn(checkpointBlock)
@@ -119,7 +117,7 @@ class BlockSyncerTest : Spek({
     }
 
     describe("#localKnownBestBlockHeight") {
-        val blockHash = BlockHash("abc", 1)
+        val blockHash = BlockHash("abc".hexToByteArray(), 1)
 
         context("when no BlockHashes") {
             beforeEach {
@@ -145,7 +143,7 @@ class BlockSyncerTest : Spek({
         context("when there are some BlockHashes which haven't downloaded blocks") {
             beforeEach {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf(blockHash))
-                whenever(storage.blocksCount(listOf(blockHash.reversedHeaderHashHex))).thenReturn(0)
+                whenever(storage.blocksCount(listOf(blockHash.headerHashReversedHex))).thenReturn(0)
             }
 
             it("returns lastBLock + BlockHashes count") {
@@ -159,7 +157,7 @@ class BlockSyncerTest : Spek({
         context("when there are some BlockHashes which have downloaded blocks") {
             beforeEach {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf(blockHash))
-                whenever(storage.blocksCount(listOf(blockHash.reversedHeaderHashHex))).thenReturn(1)
+                whenever(storage.blocksCount(listOf(blockHash.headerHashReversedHex))).thenReturn(1)
             }
 
             it("returns lastBLock height") {
@@ -172,10 +170,10 @@ class BlockSyncerTest : Spek({
     }
 
     describe("#prepareForDownload") {
-        val emptyBlocks = mock<RealmResults<Block>>()
+        val emptyBlocks = mock<List<Block>>()
 
         beforeEach {
-            whenever(storage.getBlocks(eq(realm), any())).thenReturn(emptyBlocks)
+            whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
 
             blockSyncer.prepareForDownload()
         }
@@ -187,9 +185,9 @@ class BlockSyncerTest : Spek({
         }
 
         it("clears partial blocks") {
-            verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.reversedHeaderHashHex)
-            verify(storage).getBlocks(realm, listOf())
-            verify(blockchain).deleteBlocks(emptyBlocks, realm)
+            verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)
+            verify(storage).getBlocks(listOf())
+            verify(blockchain).deleteBlocks(any())
         }
 
         it("clears block hashes") {
@@ -239,10 +237,10 @@ class BlockSyncerTest : Spek({
     }
 
     describe("#downloadFailed") {
-        val emptyBlocks = mock<RealmResults<Block>>()
+        val emptyBlocks = mock<List<Block>>()
 
         beforeEach {
-            whenever(storage.getBlocks(eq(realm), any())).thenReturn(emptyBlocks)
+            whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
 
             blockSyncer.downloadFailed()
         }
@@ -254,9 +252,9 @@ class BlockSyncerTest : Spek({
         }
 
         it("clears partial blocks") {
-            verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.reversedHeaderHashHex)
-            verify(storage).getBlocks(realm, listOf())
-            verify(blockchain).deleteBlocks(emptyBlocks, realm)
+            verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)
+            verify(storage).getBlocks(listOf())
+            verify(blockchain).deleteBlocks(any())
         }
 
         it("clears block hashes") {
@@ -269,7 +267,7 @@ class BlockSyncerTest : Spek({
     }
 
     describe("#getBlockHashes") {
-        val listOfBlockHashes = listOf(BlockHash("abc", 1))
+        val listOfBlockHashes = listOf(BlockHash("abc".hexToByteArray(), 1))
 
         it("returns first 500 block hashes") {
             whenever(storage.getBlockHashesSortedBySequenceAndHeight(limit = 500))
@@ -295,7 +293,7 @@ class BlockSyncerTest : Spek({
         }
 
         context("when there's blockchain block hashes") {
-            val blockHash = BlockHash("cba", 1)
+            val blockHash = BlockHash("cba".hexToByteArray(), 1)
 
             beforeEach {
                 whenever(storage.getLastBlockchainBlockHash()).thenReturn(blockHash)
@@ -402,11 +400,11 @@ class BlockSyncerTest : Spek({
             whenever(merkleBlock.height).thenReturn(null)
             whenever(merkleBlock.associatedTransactions).thenReturn(mutableListOf())
             whenever(block.height).thenReturn(merkleHeight)
-            whenever(block.reversedHeaderHashHex).thenReturn("abc")
+            whenever(block.headerHashReversedHex).thenReturn("abc")
             whenever(state.iterationHasPartialBlocks).thenReturn(true)
 
-            whenever(blockchain.connect(merkleBlock, realm)).thenReturn(block)
-            whenever(blockchain.forceAdd(merkleBlock, merkleHeight, realm)).thenReturn(block)
+            whenever(blockchain.connect(merkleBlock)).thenReturn(block)
+            whenever(blockchain.forceAdd(merkleBlock, merkleHeight)).thenReturn(block)
         }
 
         afterEach {
@@ -417,8 +415,8 @@ class BlockSyncerTest : Spek({
             blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
             verify(storage).inTransaction(any())
-            verify(blockchain).connect(merkleBlock, realm)
-            verify(transactionProcessor).process(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks, realm)
+            verify(blockchain).connect(merkleBlock)
+            verify(transactionProcessor).processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
             verify(listener).onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
         }
 
@@ -432,13 +430,13 @@ class BlockSyncerTest : Spek({
                 blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
                 verify(storage).inTransaction(any())
-                verify(blockchain).forceAdd(merkleBlock, merkleHeight, realm)
+                verify(blockchain).forceAdd(merkleBlock, merkleHeight)
             }
         }
 
         context("when bloom filter expired while processing transaction") {
             beforeEach {
-                whenever(transactionProcessor.process(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks, realm))
+                whenever(transactionProcessor.processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks))
                         .thenThrow(BloomFilterManager.BloomFilterExpired)
             }
 
@@ -457,7 +455,7 @@ class BlockSyncerTest : Spek({
             it("delete block hash") {
                 blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
-                verify(storage).deleteBlockHash(block.reversedHeaderHashHex)
+                verify(storage).deleteBlockHash(block.headerHashReversedHex)
             }
         }
     }
@@ -469,7 +467,7 @@ class BlockSyncerTest : Spek({
         it("returns true if block exists") {
             whenever(storage.getBlock(hashHex.reversedArray().toHexString())).thenReturn(block)
 
-            assertEquals(true, blockSyncer.shouldRequest(hashHex))
+            assertEquals(false, blockSyncer.shouldRequest(hashHex))
         }
     }
 

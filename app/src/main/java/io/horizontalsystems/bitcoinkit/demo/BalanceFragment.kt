@@ -29,7 +29,7 @@ class BalanceFragment : Fragment() {
             viewModel = ViewModelProviders.of(it).get(MainViewModel::class.java)
 
             viewModel.balance.observe(this, Observer { balance ->
-                balanceValue.text = when(balance) {
+                balanceValue.text = when (balance) {
                     null -> ""
                     else -> NumberFormatHelper.cryptoAmountFormat.format(balance / 100_000_000.0)
                 }
@@ -39,13 +39,13 @@ class BalanceFragment : Fragment() {
                 lastBlockValue.text = (it ?: 0).toString()
             })
 
-            viewModel.state.observe(this, Observer {
-                when (it) {
+            viewModel.state.observe(this, Observer { state ->
+                when (state) {
                     is BitcoinKit.KitState.Synced -> {
                         stateValue.text = "synced"
                     }
                     is BitcoinKit.KitState.Syncing -> {
-                        stateValue.text = "syncing ${it.progress}"
+                        stateValue.text = "syncing ${"%.3f".format(state.progress).toDouble()}"
                     }
                     is BitcoinKit.KitState.NotSynced -> {
                         stateValue.text = "not synced"

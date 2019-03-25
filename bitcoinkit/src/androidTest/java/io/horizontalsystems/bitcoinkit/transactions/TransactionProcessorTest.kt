@@ -89,7 +89,7 @@ class TransactionProcessorTest {
 
                         val passedTransactions = listOf(transactions[i], transactions[j], transactions[k], transactions[l])
 
-                        processor.process(passedTransactions, null, false, realm)
+                        processor.processIncoming(passedTransactions, null, false, realm)
 
                         assertEquals(passedTransactions.size, calledTransactions.size)
                         calledTransactions.forEachIndexed { index, transaction ->
@@ -116,7 +116,7 @@ class TransactionProcessorTest {
             it.insert(transactions[1])
             it.insert(transactions[3])
 
-            processor.process(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), null, false, it)
+            processor.processIncoming(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), null, false, it)
         }
 
         val realmTransactions = realm.where(Transaction::class.java).sort("order").findAll()
@@ -148,7 +148,7 @@ class TransactionProcessorTest {
             it.insert(transactions[3])
             val managedBlock = it.copyToRealm(block)
 
-            processor.process(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), managedBlock, false, it)
+            processor.processIncoming(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), managedBlock, false, it)
         }
 
         val realmTransactions = realm.where(Transaction::class.java).sort("order").findAll()
@@ -157,7 +157,7 @@ class TransactionProcessorTest {
 
         transactions.forEachIndexed { index, transaction ->
             assertArrayEquals(realmTransactions[index]?.hash, transaction.hash)
-            assertEquals(realmTransactions[index]?.block?.reversedHeaderHashHex, block.reversedHeaderHashHex)
+            assertEquals(realmTransactions[index]?.block?.reversedHeaderHashHex, block.headerHashReversedHex)
             assertEquals(realmTransactions[index]?.status, Transaction.Status.RELAYED)
             assertEquals(realmTransactions[index]?.order, index)
             assertEquals(realmTransactions[index]?.timestamp, block.header?.timestamp)

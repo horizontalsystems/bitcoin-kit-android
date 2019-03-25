@@ -5,14 +5,12 @@ import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.Network
-import io.realm.Realm
+import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
-import org.mockito.Mockito.anyObject
 import org.mockito.Mockito.mock
 import org.mockito.invocation.InvocationOnMock
 import org.spekframework.spek2.Spek
@@ -26,29 +24,33 @@ class BlockchainTestSpec : Spek({
     val network = mock(Network::class.java)
     val dataListener = mock(IBlockchainDataListener::class.java)
 
+    val prevHash = byteArrayOf(1)
     val merkleBlock = mock(MerkleBlock::class.java)
-    val header = mock(Header::class.java)
+    val blockHeader = mock(BlockHeader::class.java)
     val block = mock(Block::class.java)
-    val realm = mock(Realm::class.java)
-    val answerRealmInstance: (InvocationOnMock) -> Unit = {
-        (it.arguments[0] as (Realm) -> Unit).invoke(realm)
+
+    val callbackInvoke: (InvocationOnMock) -> Unit = {
+        (it.arguments[0] as () -> Unit).invoke()
     }
 
     beforeEachTest {
-        whenever(storage.realmInstance(any())).then(answerRealmInstance)
-        whenever(storage.inTransaction(any())).then(answerRealmInstance)
+        whenever(storage.inTransaction(any())).then(callbackInvoke)
+        whenever(blockHeader.previousBlockHeaderHash).thenReturn(prevHash)
+        whenever(blockHeader.merkleRoot).thenReturn(byteArrayOf())
+        whenever(merkleBlock.header).thenReturn(blockHeader)
 
         blockchain = Blockchain(storage, network, dataListener)
     }
 
     afterEachTest {
         reset(storage, network, dataListener)
-        reset(merkleBlock, header, block)
+        reset(merkleBlock, blockHeader, block)
     }
 
     describe("#connect") {
         beforeEach {
             whenever(merkleBlock.reversedHeaderHashHex).thenReturn("abc")
+            whenever(merkleBlock.header).thenReturn(blockHeader)
         }
 
         context("when block exists") {
@@ -57,35 +59,30 @@ class BlockchainTestSpec : Spek({
             }
 
             it("returns existing block") {
-                assertEquals(block, blockchain.connect(merkleBlock, realm))
+                assertEquals(block, blockchain.connect(merkleBlock))
             }
 
             it("doesn't add a block to storage") {
-                blockchain.connect(merkleBlock, realm)
+                blockchain.connect(merkleBlock)
 
-                verify(storage, never()).copyToRealm(block, realm)
+                verify(storage, never()).addBlock(block)
                 verify(dataListener, never()).onBlockInsert(block)
             }
         }
 
         context("when block doesn't exist") {
-            val prevHash = byteArrayOf(1)
-
             beforeEach {
-                whenever(header.prevHash).thenReturn(prevHash)
-                whenever(header.hash).thenReturn(prevHash)
-                whenever(merkleBlock.header).thenReturn(header)
                 whenever(storage.getBlock(merkleBlock.reversedHeaderHashHex)).thenReturn(null)
             }
 
             context("when block is not in chain") {
                 beforeEach {
-                    whenever(storage.getBlock(merkleBlock.header.prevHash.reversedArray().toHexString())).thenReturn(null)
+                    whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash.reversedArray().toHexString())).thenReturn(null)
                 }
 
                 it("throws BlockValidatorError.noPreviousBlock error") {
                     try {
-                        blockchain.connect(merkleBlock, realm)
+                        blockchain.connect(merkleBlock)
                     } catch (e: Exception) {
                         if (e !is BlockValidatorException.NoPreviousBlock) {
                             fail("Expected No PreviousBlock exception to be thrown")
@@ -96,7 +93,7 @@ class BlockchainTestSpec : Spek({
 
             context("when block is in chain") {
                 beforeEach {
-                    whenever(storage.getBlock(merkleBlock.header.prevHash.reversedArray().toHexString())).thenReturn(block)
+                    whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash.reversedArray().toHexString())).thenReturn(block)
                 }
 
                 context("when block is invalid") {
@@ -104,28 +101,26 @@ class BlockchainTestSpec : Spek({
                         whenever(network.validateBlock(any(), any())).thenThrow(BlockValidatorException.WrongPreviousHeader())
 
                         try {
-                            blockchain.connect(merkleBlock, realm)
+                            blockchain.connect(merkleBlock)
                         } catch (e: Exception) {
                         }
 
-                        verify(storage, never()).copyToRealm<Block>(any(), any())
+                        verify(storage, never()).addBlock(any())
                     }
                 }
 
                 context("when block is valid") {
-                    beforeEach {
-                        whenever(storage.copyToRealm<Block>(any(), any())).thenReturn(block)
-                    }
 
                     it("adds block to database") {
                         try {
-                            blockchain.connect(merkleBlock, realm)
+                            blockchain.connect(merkleBlock)
                         } catch (e: Exception) {
+                            e.printStackTrace()
                         }
 
-                        verify(storage).copyToRealm(anyObject(), any())
+                        verify(storage).addBlock(any())
                         verify(network).validateBlock(any(), any())
-                        verify(dataListener).onBlockInsert(block)
+                        verify(dataListener).onBlockInsert(any())
                     }
                 }
             }
@@ -136,16 +131,12 @@ class BlockchainTestSpec : Spek({
         lateinit var connectedBlock: Block
 
         val height = 1
-        val prevHash = byteArrayOf(1)
 
         beforeEach {
-            whenever(header.prevHash).thenReturn(prevHash)
-            whenever(header.hash).thenReturn(prevHash)
-            whenever(merkleBlock.header).thenReturn(header)
-            whenever(storage.getBlock(merkleBlock.reversedHeaderHashHex)).thenReturn(null)
-            whenever(storage.copyToRealm<Block>(any(), any())).thenReturn(block)
+            // whenever(storage.getBlock(merkleBlock.reversedHeaderHashHex)).thenReturn(null)
+            // whenever(storage.addBlock(any()))
 
-            connectedBlock = blockchain.forceAdd(merkleBlock, height, realm)
+            connectedBlock = blockchain.forceAdd(merkleBlock, height)
         }
 
         it("doesn't validate block") {
@@ -153,7 +144,7 @@ class BlockchainTestSpec : Spek({
         }
 
         it("adds block to database") {
-            verify(storage).copyToRealm(anyObject(), any())
+            verify(storage).addBlock(any())
             verify(dataListener).onBlockInsert(connectedBlock)
         }
     }
@@ -165,14 +156,14 @@ class BlockchainTestSpec : Spek({
             val newBlocks = sortedMapOf(4 to "NewBlock4", 5 to "NewBlock5", 6 to "NewBlock6")
 
             beforeEach {
-                mockedBlocks = MockedBlocks(storage, realm).create(blocksInChain, newBlocks)
+                mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
             it("makes new blocks not stale") {
                 blockchain.handleFork()
 
                 argumentCaptor<Block>().apply {
-                    verify(storage, times(3)).updateBlock(capture(), any())
+                    verify(storage, times(3)).updateBlock(capture())
 
                     mockedBlocks.newBlocks.forEachIndexed { index, block ->
                         assertEquals(false, allValues[index].stale)
@@ -187,14 +178,14 @@ class BlockchainTestSpec : Spek({
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3", 4 to "NewBlock4")
 
             beforeEach {
-                mockedBlocks = MockedBlocks(storage, realm).create(blocksInChain, newBlocks)
+                mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
             it("deletes old blocks in chain after the fork") {
                 blockchain.handleFork()
 
-                verify(storage).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2), realm)
-                verify(storage, never()).deleteBlocks(mockedBlocks.newBlocks, realm)
+                verify(storage).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2))
+                verify(storage, never()).deleteBlocks(mockedBlocks.newBlocks)
                 verify(dataListener).onTransactionsDelete(mockedBlocks.blocksInChainTransactionHexes.takeLast(2))
             }
 
@@ -202,7 +193,7 @@ class BlockchainTestSpec : Spek({
                 blockchain.handleFork()
 
                 argumentCaptor<Block>().apply {
-                    verify(storage, times(3)).updateBlock(capture(), any())
+                    verify(storage, times(3)).updateBlock(capture())
 
                     mockedBlocks.newBlocks.forEachIndexed { index, block ->
                         assertEquals(false, allValues[index].stale)
@@ -217,14 +208,14 @@ class BlockchainTestSpec : Spek({
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3")
 
             beforeEach {
-                mockedBlocks = MockedBlocks(storage, realm).create(blocksInChain, newBlocks)
+                mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
             it("deletes new blocks") {
                 blockchain.handleFork()
 
-                verify(storage).deleteBlocks(mockedBlocks.newBlocks, realm)
-                verify(storage, never()).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2), realm)
+                verify(storage).deleteBlocks(mockedBlocks.newBlocks)
+                verify(storage, never()).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2))
                 verify(dataListener).onTransactionsDelete(mockedBlocks.newBlocksTransactionHexes)
             }
         }
@@ -234,14 +225,14 @@ class BlockchainTestSpec : Spek({
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3")
 
             beforeEach {
-                mockedBlocks = MockedBlocks(storage, realm).create(blocksInChain, newBlocks)
+                mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
             it("deletes new blocks") {
                 blockchain.handleFork()
 
-                verify(storage).deleteBlocks(mockedBlocks.newBlocks, realm)
-                verify(storage, never()).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2), realm)
+                verify(storage).deleteBlocks(mockedBlocks.newBlocks)
+                verify(storage, never()).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2))
                 verify(dataListener).onTransactionsDelete(mockedBlocks.newBlocksTransactionHexes)
             }
         }
@@ -251,14 +242,14 @@ class BlockchainTestSpec : Spek({
             val newBlocks = sortedMapOf<Int, String>()
 
             beforeEach {
-                MockedBlocks(storage, realm).create(blocksInChain, newBlocks)
+                MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
             it("does not do nothing") {
                 blockchain.handleFork()
 
-                verify(storage, never()).deleteBlocks(any(), any())
-                verify(storage, never()).updateBlock(any(), any())
+                verify(storage, never()).deleteBlocks(any())
+                verify(storage, never()).updateBlock(any())
                 verify(dataListener, never()).onTransactionsDelete(any())
             }
         }
@@ -268,16 +259,16 @@ class BlockchainTestSpec : Spek({
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3", 4 to "NewBlock4")
 
             beforeEach {
-                mockedBlocks = MockedBlocks(storage, realm).create(blocksInChain, newBlocks)
+                mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
             it("makes new blocks not stale") {
                 blockchain.handleFork()
 
-                verify(storage, never()).deleteBlocks(any(), any())
+                verify(storage, never()).deleteBlocks(any())
 
                 argumentCaptor<Block>().apply {
-                    verify(storage, times(3)).updateBlock(capture(), any())
+                    verify(storage, times(3)).updateBlock(capture())
 
                     mockedBlocks.newBlocks.forEachIndexed { index, block ->
                         assertEquals(false, allValues[index].stale)
@@ -290,7 +281,7 @@ class BlockchainTestSpec : Spek({
     }
 })
 
-class MockedBlocks(private val storage: IStorage, private val realm: Realm) {
+class MockedBlocks(private val storage: IStorage, private val blockHeader: BlockHeader) {
     var newBlocks = mutableListOf<Block>()
     var blocksInChain = mutableListOf<Block>()
     var newBlocksTransactionHexes = mutableListOf<String>()
@@ -298,28 +289,28 @@ class MockedBlocks(private val storage: IStorage, private val realm: Realm) {
 
     fun create(_blocksInChain: Map<Int, String>, _newBlocks: Map<Int, String>): MockedBlocks {
         _blocksInChain.forEach { height, id ->
-            val block = Block(id.toByteArray(), height)
+            val block = Block(blockHeader, height)
             block.stale = false
             val transaction = mockTransaction(block)
 
-            whenever(storage.getBlockTransactions(block, realm)).thenReturn(listOf(transaction))
+            whenever(storage.getBlockTransactions(block)).thenReturn(listOf(transaction))
 
             blocksInChain.add(block)
             blocksInChainTransactionHexes.add(transaction.hashHexReversed)
         }
 
         _newBlocks.forEach { height, id ->
-            val block = Block(id.toByteArray(), height)
+            val block = Block(blockHeader, height)
             block.stale = false
 
             val transaction = mockTransaction(block)
-            whenever(storage.getBlockTransactions(block, realm)).thenReturn(listOf(transaction))
+            whenever(storage.getBlockTransactions(block)).thenReturn(listOf(transaction))
 
             newBlocks.add(block)
             newBlocksTransactionHexes.add(transaction.hashHexReversed)
         }
 
-        whenever(storage.getBlocks(stale = true, realm = realm)).thenReturn(newBlocks)
+        whenever(storage.getBlocks(stale = true)).thenReturn(newBlocks)
 
         newBlocks.firstOrNull()?.let { firstStale ->
             whenever(storage.getBlock(stale = true, sortedHeight = "ASC"))
@@ -327,16 +318,16 @@ class MockedBlocks(private val storage: IStorage, private val realm: Realm) {
 
             newBlocks.lastOrNull()?.let { lastStale ->
                 whenever(storage.getBlock(stale = true, sortedHeight = "DESC")).thenReturn(lastStale)
-                whenever(storage.getBlock(stale = true, sortedHeight = "DESC", realm = realm)).thenReturn(lastStale)
+                whenever(storage.getBlock(stale = true, sortedHeight = "DESC")).thenReturn(lastStale)
 
                 val inChainBlocksAfterForkPoint = blocksInChain.filter { it.height >= firstStale.height }
-                whenever(storage.getBlocks(heightGreaterOrEqualTo = firstStale.height, stale = false, realm = realm))
+                whenever(storage.getBlocks(heightGreaterOrEqualTo = firstStale.height, stale = false))
                         .thenReturn(inChainBlocksAfterForkPoint)
             }
         }
 
         blocksInChain.lastOrNull()?.let {
-            whenever(storage.getBlock(stale = eq(false), sortedHeight = eq("DESC"), realm = anyObject())).thenReturn(it)
+            whenever(storage.getBlock(stale = eq(false), sortedHeight = eq("DESC"))).thenReturn(it)
         }
 
         return this
@@ -345,9 +336,9 @@ class MockedBlocks(private val storage: IStorage, private val realm: Realm) {
     private fun mockTransaction(block: Block): Transaction {
         val transaction = mock(Transaction::class.java)
 
-        whenever(transaction.block).thenReturn(block)
+        // whenever(transaction.block).thenReturn(block)
         whenever(transaction.hash).thenReturn(block.headerHash)
-        whenever(transaction.hashHexReversed).thenReturn(block.reversedHeaderHashHex)
+        whenever(transaction.hashHexReversed).thenReturn(block.headerHashReversedHex)
 
         return transaction
     }

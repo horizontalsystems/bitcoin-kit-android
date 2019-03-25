@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.util.*
 
 open class PeerTask {
@@ -19,7 +20,7 @@ open class PeerTask {
         fun ping(nonce: Long)
         fun getData(items: List<InventoryItem>)
         fun sendTransactionInventory(hash: ByteArray)
-        fun send(transaction: Transaction)
+        fun send(transaction: FullTransaction)
     }
 
     var requester: Requester? = null
@@ -37,7 +38,7 @@ open class PeerTask {
         return false
     }
 
-    open fun handleTransaction(transaction: Transaction): Boolean {
+    open fun handleTransaction(transaction: FullTransaction): Boolean {
         return false
     }
 

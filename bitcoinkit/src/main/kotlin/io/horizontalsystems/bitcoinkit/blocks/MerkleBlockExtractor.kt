@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.exceptions.InvalidMerkleBlockException
 import io.horizontalsystems.bitcoinkit.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.utils.MerkleBranch
@@ -25,7 +24,7 @@ class MerkleBlockExtractor(private val maxBlockSize: Int) {
                 throw InvalidMerkleBlockException(String.format("Flag count %d is not valid", flagsCount))
             }
 
-            if (!header.merkleHash.contentEquals(merkleRoot)) {
+            if (!header.merkleRoot.contentEquals(merkleRoot)) {
                 throw InvalidMerkleBlockException("Merkle root is not valid")
             }
         }
@@ -35,5 +34,6 @@ class MerkleBlockExtractor(private val maxBlockSize: Int) {
 
         return merkleBlock
     }
-
 }
+
+class InvalidMerkleBlockException(message: String) : Exception(message)

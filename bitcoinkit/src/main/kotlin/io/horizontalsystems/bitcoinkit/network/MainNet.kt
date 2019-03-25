@@ -1,11 +1,12 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidator
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.models.Header
+import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
-class MainNet : Network() {
+class MainNet(storage: IStorage) : Network() {
 
     override var port: Int = 8333
 
@@ -29,17 +30,17 @@ class MainNet : Network() {
             "seed.bitcoin.sprovoost.nl"         // Sjors Provoost
     )
 
-    private val blockHeader = Header().apply {
-        version = 536870912
-        prevHash = HashUtils.toBytesAsLE("00000000000000000017e5c36734296b27065045f181e028c0d91cebb336d50c")
-        merkleHash = HashUtils.toBytesAsLE("2f9963d6eb332a0dd03ad806f504981e6180226dbca4385dc801db8974b2c17b")
-        timestamp = 1551026038
-        bits = 388914000
-        nonce = 1427093839
-    }
+    private val blockHeader = BlockHeader(
+            version = 536870912,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000000017e5c36734296b27065045f181e028c0d91cebb336d50c"),
+            merkleRoot = HashUtils.toBytesAsLE("2f9963d6eb332a0dd03ad806f504981e6180226dbca4385dc801db8974b2c17b"),
+            timestamp = 1551026038,
+            bits = 388914000,
+            nonce = 1427093839
+    )
 
     override val checkpointBlock = Block(blockHeader, 564480)
-    override val blockValidator = BlockValidator(this)
+    override val blockValidator = BlockValidator(this, storage)
 
     override fun validateBlock(block: Block, previousBlock: Block) {
         blockValidator.validate(block, previousBlock)

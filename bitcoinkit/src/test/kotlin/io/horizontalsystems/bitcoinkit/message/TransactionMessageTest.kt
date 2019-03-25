@@ -16,7 +16,7 @@ class TransactionMessageTest {
         val message = TransactionMessage(data)
         val transaction = message.transaction
 
-        assertEquals(expectedTransactionHex, transaction.hash.toHexString())
+        assertEquals(expectedTransactionHex, transaction.header.hash.toHexString())
     }
 
 }

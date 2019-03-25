@@ -4,7 +4,7 @@ import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.SentTransaction
-import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 
 class TransactionSyncer(
         private val storage: IStorage,
@@ -16,14 +16,14 @@ class TransactionSyncer(
     private val retriesPeriod: Long = 60 * 1000
     private val totalRetriesPeriod: Long = 60 * 60 * 24 * 1000
 
-    fun handleTransactions(transactions: List<Transaction>) {
+    fun handleTransactions(transactions: List<FullTransaction>) {
         if (transactions.isEmpty()) return
 
-        storage.inTransaction { realm ->
+        storage.inTransaction {
             var needToUpdateBloomFilter = false
 
             try {
-                transactionProcessor.process(transactions, null, true, realm)
+                transactionProcessor.processIncoming(transactions, null, true)
             } catch (e: BloomFilterManager.BloomFilterExpired) {
                 needToUpdateBloomFilter = true
             }
@@ -35,8 +35,8 @@ class TransactionSyncer(
         }
     }
 
-    fun handleTransaction(sentTransaction: Transaction) {
-        val newTransaction = storage.getNewTransaction(sentTransaction.hashHexReversed) ?: return
+    fun handleTransaction(sentTransaction: FullTransaction) {
+        val newTransaction = storage.getNewTransaction(sentTransaction.header.hashHexReversed) ?: return
         val sntTransaction = storage.getSentTransaction(newTransaction.hashHexReversed) ?: run {
             storage.addSentTransaction(SentTransaction(newTransaction.hashHexReversed))
 
@@ -49,15 +49,15 @@ class TransactionSyncer(
         storage.updateSentTransaction(sntTransaction)
     }
 
-    fun getPendingTransactions(): List<Transaction> {
+    fun getPendingTransactions(): List<FullTransaction> {
         return storage.getNewTransactions().filter { transition ->
-            val sentTransaction = storage.getSentTransaction(transition.hashHexReversed)
+            val sentTransaction = storage.getSentTransaction(transition.header.hashHexReversed)
             if (sentTransaction == null) {
                 true
             } else {
                 sentTransaction.retriesCount < maxRetriesCount &&
-                sentTransaction.lastSendTime < System.currentTimeMillis() - retriesPeriod &&
-                sentTransaction.firstSendTime > System.currentTimeMillis() - totalRetriesPeriod
+                        sentTransaction.lastSendTime < System.currentTimeMillis() - retriesPeriod &&
+                        sentTransaction.firstSendTime > System.currentTimeMillis() - totalRetriesPeriod
             }
         }
     }

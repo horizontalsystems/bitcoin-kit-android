@@ -1,14 +1,15 @@
 package io.horizontalsystems.bitcoinkit.core
 
 import io.horizontalsystems.bitcoinkit.models.*
-import io.realm.Realm
-import io.realm.RealmObject
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
+import io.horizontalsystems.bitcoinkit.storage.InputWithBlock
+import io.horizontalsystems.bitcoinkit.storage.OutputWithPublicKey
+import io.horizontalsystems.bitcoinkit.storage.UnspentOutput
 
 interface IStorage {
-    //  realm
+    //  Database transaction
 
-    fun inTransaction(callback: (Realm) -> Unit)
-    fun realmInstance(callback: (Realm) -> Unit)
+    fun inTransaction(callback: () -> Unit)
 
     //  FeeRate
 
@@ -34,6 +35,7 @@ interface IStorage {
     fun getBlockHashHeaderHashes(): List<ByteArray>
     fun getBlockHashHeaderHashHexes(except: String): List<String>
     fun getLastBlockHash(): BlockHash?
+
     fun getBlockchainBlockHashes(): List<BlockHash>
     fun getLastBlockchainBlockHash(): BlockHash?
     fun deleteBlockchainBlockHashes()
@@ -42,29 +44,56 @@ interface IStorage {
 
     //  Block
 
-    fun <E : RealmObject> copyToRealm(obj: E, realm: Realm): E
-
     fun getBlock(height: Int): Block?
-    fun getBlock(hashHex: String, realm: Realm? = null): Block?
-    fun getBlock(stale: Boolean, sortedHeight: String, realm: Realm? = null): Block?
+    fun getBlock(hashHex: String): Block?
+    fun getBlock(stale: Boolean, sortedHeight: String): Block?
 
-    fun getBlocks(stale: Boolean, realm: Realm? = null): List<Block>
+    fun getBlocks(stale: Boolean): List<Block>
     fun getBlocks(heightGreaterThan: Int, sortedBy: String, limit: Int): List<Block>
-    fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean, realm: Realm? = null): List<Block>
-    fun getBlocks(realm: Realm, hashHexes: List<String>): List<Block>
+    fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean): List<Block>
+    fun getBlocks(hashHexes: List<String>): List<Block>
+
+    fun addBlock(block: Block)
+    fun saveBlock(block: Block)
 
     fun blocksCount(headerHexes: List<String>? = null): Int
-    fun saveBlock(block: Block)
     fun lastBlock(): Block?
-    fun updateBlock(staleBlock: Block, realm: Realm)
-    fun deleteBlocks(blocks: List<Block>, realm: Realm)
+    fun updateBlock(staleBlock: Block)
+    fun deleteBlocks(blocks: List<Block>)
 
     //  Transaction
 
-    fun getBlockTransactions(block: Block, realm: Realm): List<Transaction>
-    fun getNewTransactions(): List<Transaction>
+    fun getTransactionsSortedTimestampAndOrdered(): List<Transaction>
+
+    fun getTransaction(hashHex: String): Transaction?
+    fun getTransactionOfOutput(output: TransactionOutput): Transaction?
+    fun addTransaction(transaction: FullTransaction)
+    fun updateTransaction(transaction: Transaction)
+    fun getBlockTransactions(block: Block): List<Transaction>
+    fun getNewTransactions(): List<FullTransaction>
     fun getNewTransaction(hashHex: String): Transaction?
     fun isTransactionExists(hash: ByteArray): Boolean
+
+    //  Transaction Output
+
+    fun getUnspentOutputs(): List<UnspentOutput>
+    fun getPreviousOutput(input: TransactionInput): TransactionOutput?
+    fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
+    fun getOutputsWithPublicKeys(): List<OutputWithPublicKey>
+    fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
+
+    // Transaction Input
+
+    fun getInputsWithBlock(output: TransactionOutput): List<InputWithBlock>
+    fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
+
+    // PublicKey
+
+    fun getPublicKey(byPath: String): PublicKey?
+    fun getPublicKeyByHash(keyHash: ByteArray, isWPKH: Boolean = false): PublicKey?
+    fun getPublicKeys(): List<PublicKey>
+    fun hasInputs(ofOutput: TransactionOutput): Boolean
+    fun savePublicKeys(keys: List<PublicKey>)
 
     //  SentTransaction
 
@@ -73,4 +102,5 @@ interface IStorage {
     fun updateSentTransaction(transaction: SentTransaction)
 
     fun clear()
+
 }

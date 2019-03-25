@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
@@ -31,6 +32,7 @@ class PeerGroupTest {
 
     private var peer1 = mock(Peer::class.java)
     private var peer2 = mock(Peer::class.java)
+    private var storage = mock(IStorage::class.java)
     private var hostManager = mock(PeerAddressManager::class.java)
     private var peerManager = mock(PeerManager::class.java)
     private var bloomFilterManager = mock(BloomFilterManager::class.java)
@@ -40,7 +42,7 @@ class PeerGroupTest {
 
     private val peerIp = "8.8.8.8"
     private val peerIp2 = "5.5.5.5"
-    private val network = MainNet()
+    private val network = MainNet(storage)
 
     private lateinit var peerGroup: PeerGroup
 

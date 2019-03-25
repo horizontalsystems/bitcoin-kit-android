@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoinkit.network.peer
 
+import io.horizontalsystems.bitcoinkit.blocks.InvalidMerkleBlockException
 import io.horizontalsystems.bitcoinkit.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
-import io.horizontalsystems.bitcoinkit.exceptions.InvalidMerkleBlockException
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.net.InetAddress
 
 class Peer(val host: String, private val network: Network, private val listener: Listener) : PeerConnection.Listener, PeerTask.Listener, PeerTask.Requester {
@@ -196,7 +197,7 @@ class Peer(val host: String, private val network: Network, private val listener:
         peerConnection.sendMessage(InvMessage(InventoryItem.MSG_TX, hash))
     }
 
-    override fun send(transaction: Transaction) {
+    override fun send(transaction: FullTransaction) {
         peerConnection.sendMessage(TransactionMessage(transaction))
     }
 

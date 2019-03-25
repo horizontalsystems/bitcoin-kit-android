@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonObject
+import io.horizontalsystems.bitcoinkit.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.network.*
@@ -23,7 +24,7 @@ class BlockHashFetcher(private val addressSelector: IAddressSelector, private va
         val lastUsedIndex = helper.lastUsedIndex(addresses, transactions.map { it.txOutputs }.flatten())
 
         val blockHashes = transactions.map {
-            BlockHash(it.blockHash, it.blockHeight)
+            BlockHash(it.blockHash.toReversedByteArray(), it.blockHeight, 0)
         }
 
         return Pair(blockHashes, lastUsedIndex)
