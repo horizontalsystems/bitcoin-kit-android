@@ -89,7 +89,9 @@ class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
                 val scriptJson = outputJson["script"] ?: continue
                 val addressJson = outputJson["address"] ?: continue
 
-                outputs.add(TransactionOutputItem(scriptJson.asString(), addressJson.asString()))
+                if (scriptJson.isString && addressJson.isString) {
+                    outputs.add(TransactionOutputItem(scriptJson.asString(), addressJson.asString()))
+                }
             }
 
             transactions.add(TransactionItem(tx["block"].asString(), tx["height"].asInt(), outputs))
