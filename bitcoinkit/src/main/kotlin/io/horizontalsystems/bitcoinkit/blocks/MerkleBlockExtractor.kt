@@ -9,7 +9,7 @@ class MerkleBlockExtractor(private val maxBlockSize: Int) {
 
     fun extract(message: MerkleBlockMessage): MerkleBlock {
         val matchedHashes = mutableListOf<ByteArray>()
-        val merkleRoot = MerkleBranch(message.txCount, message.hashes, message.flags).calculateMerkleRoot(matchedHashes)
+        val merkleRoot = MerkleBranch().calculateMerkleRoot(message.txCount, message.hashes, message.flags, matchedHashes)
 
         message.apply {
             if (txCount < 1 || txCount > maxBlockSize / 60) {
