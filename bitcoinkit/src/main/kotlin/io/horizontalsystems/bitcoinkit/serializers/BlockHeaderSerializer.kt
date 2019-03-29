@@ -2,10 +2,13 @@ package io.horizontalsystems.bitcoinkit.serializers
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
 object BlockHeaderSerializer {
+
+    // TODO: temp solution, should be removed
+    lateinit var network: Network
 
     fun deserialize(input: BitcoinInput): BlockHeader {
         val version = input.readInt()
@@ -17,7 +20,7 @@ object BlockHeaderSerializer {
 
         val payload = serialize(version, previousBlockHeaderHash, merkleRoot, timestamp, bits, nonce)
 
-        val hash = HashUtils.doubleSha256(payload)
+        val hash = network.generateBlockHeaderHash(payload)
 
         return BlockHeader(version, previousBlockHeaderHash, merkleRoot, timestamp, bits, nonce, hash)
     }

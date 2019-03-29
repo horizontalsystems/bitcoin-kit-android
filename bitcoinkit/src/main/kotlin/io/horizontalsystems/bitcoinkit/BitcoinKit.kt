@@ -13,6 +13,7 @@ import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
 import io.horizontalsystems.bitcoinkit.storage.KitDatabase
 import io.horizontalsystems.bitcoinkit.storage.Storage
 import io.horizontalsystems.bitcoinkit.transactions.*
@@ -103,6 +104,8 @@ class BitcoinKitBuilder {
             BitcoinKit.NetworkType.TestNetBitCash -> TestNetBitcoinCash(storage)
             BitcoinKit.NetworkType.RegTest -> RegTest(storage)
         }
+
+        BlockHeaderSerializer.network = network
 
         val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold)
 
