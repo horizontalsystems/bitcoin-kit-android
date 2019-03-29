@@ -34,7 +34,8 @@ class RegTest(storage: IStorage) : Network() {
             merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
             timestamp = 1296688602,
             bits = 545259519,
-            nonce = 2
+            nonce = 2,
+            hash = byteArrayOf()
     )
 
     override val checkpointBlock = Block(blockHeader, 0)

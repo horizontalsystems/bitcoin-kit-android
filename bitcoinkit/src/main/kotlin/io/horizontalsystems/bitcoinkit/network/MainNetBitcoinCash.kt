@@ -35,7 +35,8 @@ class MainNetBitcoinCash(storage: IStorage) : Network() {
             merkleRoot = HashUtils.toBytesAsLE("65822e3caa2a4709abd37df7de6464a58830da0f8e308af44586114e1c73914f"),
             timestamp = 1551084121,
             bits = 403013590,
-            nonce = 2244691553
+            nonce = 2244691553,
+            hash = HashUtils.toBytesAsLE("00000000000000000356c9c3f92f22b88bd8d0544f40a09260235d6cf95d491b")
     )
 
     override val checkpointBlock = Block(blockHeader, 571268)

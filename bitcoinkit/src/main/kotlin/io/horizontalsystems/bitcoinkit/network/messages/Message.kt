@@ -37,7 +37,6 @@ abstract class Message(cmd: String) {
         private fun initMessages(): Map<String, Class<*>> {
             val map = HashMap<String, Class<*>>()
             map["addr"] = AddrMessage::class.java
-            map["block"] = BlockMessage::class.java
             map["getaddr"] = GetAddrMessage::class.java
             map["getblocks"] = GetBlocksMessage::class.java
             map["getdata"] = GetDataMessage::class.java
@@ -47,7 +46,6 @@ abstract class Message(cmd: String) {
             map["pong"] = PongMessage::class.java
             map["verack"] = VerAckMessage::class.java
             map["version"] = VersionMessage::class.java
-            map["headers"] = HeadersMessage::class.java
             map["merkleblock"] = MerkleBlockMessage::class.java
             map["tx"] = TransactionMessage::class.java
             map["filterload"] = FilterLoadMessage::class.java

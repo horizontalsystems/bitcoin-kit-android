@@ -5,9 +5,7 @@ import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
-import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
 /**
  * Block
@@ -53,7 +51,7 @@ class Block() {
         bits = header.bits
         nonce = header.nonce
 
-        headerHash = HashUtils.doubleSha256(BlockHeaderSerializer.serialize(header))
+        headerHash = header.hash
         headerHashReversedHex = headerHash.toReversedHex()
         this.height = height
     }

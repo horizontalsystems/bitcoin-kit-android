@@ -36,7 +36,8 @@ class MainNet(storage: IStorage) : Network() {
             merkleRoot = HashUtils.toBytesAsLE("2f9963d6eb332a0dd03ad806f504981e6180226dbca4385dc801db8974b2c17b"),
             timestamp = 1551026038,
             bits = 388914000,
-            nonce = 1427093839
+            nonce = 1427093839,
+            hash = HashUtils.toBytesAsLE("0000000000000000002567dc317da20ddb0d7ef922fe1f9c2375671654f9006c")
     )
 
     override val checkpointBlock = Block(blockHeader, 564480)

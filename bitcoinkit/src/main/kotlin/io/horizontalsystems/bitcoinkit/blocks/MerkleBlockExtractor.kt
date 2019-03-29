@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
+import io.horizontalsystems.bitcoinkit.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoinkit.utils.MerkleBranch
 
 class MerkleBlockExtractor(private val maxBlockSize: Int) {
@@ -29,10 +29,7 @@ class MerkleBlockExtractor(private val maxBlockSize: Int) {
             }
         }
 
-        val merkleBlock = MerkleBlock(message.header, message.hashes, listOf())
-        merkleBlock.associatedTransactionHexes = matchedHashes.map { it.toHexString() }
-
-        return merkleBlock
+        return MerkleBlock(message.header, matchedHashes.map { it.toHexString() })
     }
 }
 

@@ -9,7 +9,8 @@ class BlockHeader(
         val merkleRoot: ByteArray,
         val timestamp: Long,
         val bits: Long,
-        val nonce: Long)
+        val nonce: Long,
+        val hash: ByteArray)
 
 class FullTransaction(
         val header: Transaction,
