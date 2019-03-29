@@ -1,11 +1,12 @@
 package io.horizontalsystems.bitcoinkit.blocks.validators
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.network.Network
 
-open class BitcoinCashValidator(private val network: Network) : BlockValidator(network) {
+open class BitcoinCashValidator(private val network: Network, private val storage: IStorage) : BlockValidator(network, storage) {
     private val largestHash = 1.toBigInteger() shl 256
     private val diffDate = 1510600000
 
@@ -27,8 +28,8 @@ open class BitcoinCashValidator(private val network: Network) : BlockValidator(n
     fun getSuitableBlock(block: Block): Block {
         val blocks: MutableList<Block> = mutableListOf()
         blocks.add(block)
-        blocks.add(blocks[0].previousBlock ?: throw BlockValidatorException.NoPreviousBlock())
-        blocks.add(blocks[1].previousBlock ?: throw BlockValidatorException.NoPreviousBlock())
+        blocks.add(blocks[0].previousBlock(storage) ?: throw BlockValidatorException.NoPreviousBlock())
+        blocks.add(blocks[1].previousBlock(storage) ?: throw BlockValidatorException.NoPreviousBlock())
 
         blocks.reverse()
 
@@ -53,26 +54,17 @@ open class BitcoinCashValidator(private val network: Network) : BlockValidator(n
         this[index2] = tmp
     }
 
-    private fun blockTimestamp(block: Block) = block.header?.timestamp ?: 0
+    private fun blockTimestamp(block: Block) = block.timestamp
 
     //  Difficulty adjustment algorithm
     open fun validateDAA(candidate: Block, previousBlock: Block) {
-        val candidateHeader = checkNotNull(candidate.header) {
-            throw BlockValidatorException.NoHeader()
-        }
 
         val lstBlock = getSuitableBlock(previousBlock)
         val previous = checkNotNull(getPrevious(previousBlock, 144)) { throw BlockValidatorException.NoPreviousBlock() }
         val fstBLock = getSuitableBlock(previous)
-        val lstBlockHeader = lstBlock.header
-        val fstBLockHeader = fstBLock.header
         val heightInterval = lstBlock.height - fstBLock.height
 
-        if (lstBlockHeader == null || fstBLockHeader == null) {
-            throw BlockValidatorException.NoHeader()
-        }
-
-        var actualTimespan = lstBlockHeader.timestamp - fstBLockHeader.timestamp
+        var actualTimespan = lstBlock.timestamp - fstBLock.timestamp
         if (actualTimespan > 288 * network.targetSpacing)
             actualTimespan = 288 * network.targetSpacing.toLong()
         if (actualTimespan < 72 * network.targetSpacing)
@@ -85,7 +77,7 @@ open class BitcoinCashValidator(private val network: Network) : BlockValidator(n
         var chainWork = 0.toBigInteger()
         blocks += lstBlock
         blocks.forEach {
-            val target = CompactBits.decode(it.header!!.bits)
+            val target = CompactBits.decode(it.bits)
             chainWork += largestHash / (target + 1.toBigInteger())
         }
 
@@ -93,18 +85,15 @@ open class BitcoinCashValidator(private val network: Network) : BlockValidator(n
 
         val target = largestHash / chainWork - 1.toBigInteger()
         val bits = CompactBits.encode(target)
-        if (bits != candidateHeader.bits) {
+        if (bits != candidate.bits) {
             throw BlockValidatorException.NotEqualBits()
         }
     }
 
     //  Emergency Difficulty Adjustement
     fun validateEDA(candidate: Block, previousBlock: Block) {
-        val candidateHeader = checkNotNull(candidate.header)
-        val blockHeader = checkNotNull(previousBlock.header)
-
-        if (blockHeader.bits.toBigInteger() == network.maxTargetBits) {
-            if (candidateHeader.bits.toBigInteger() != network.maxTargetBits) {
+        if (previousBlock.bits.toBigInteger() == network.maxTargetBits) {
+            if (candidate.bits.toBigInteger() != network.maxTargetBits) {
                 throw BlockValidatorException.NotEqualBits()
             }
 
@@ -117,14 +106,14 @@ open class BitcoinCashValidator(private val network: Network) : BlockValidator(n
 
         val mpt6blocks = medianTimePast(previousBlock) - medianTimePast(cursorBlock)
         if (mpt6blocks >= 12 * 3600) {
-            val pow = CompactBits.decode(blockHeader.bits) shr 2
+            val pow = CompactBits.decode(previousBlock.bits) shr 2
             var powBits = CompactBits.encode(pow).toBigInteger()
             if (powBits > network.maxTargetBits)
                 powBits = network.maxTargetBits
-            if (powBits != candidateHeader.bits.toBigInteger()) {
+            if (powBits != candidate.bits.toBigInteger()) {
                 throw BlockValidatorException.NotEqualBits()
             }
-        } else if (blockHeader.bits == candidateHeader.bits) {
+        } else if (previousBlock.bits == candidate.bits) {
             throw BlockValidatorException.NotEqualBits()
         }
     }
@@ -133,16 +122,13 @@ open class BitcoinCashValidator(private val network: Network) : BlockValidator(n
         val median = mutableListOf<Long>()
         var currentBlock = block
 
-        var header: Header
         for (i in 0 until 11) {
-            header = checkNotNull(currentBlock.header) { throw Exception() }
-            median.add(header.timestamp)
-            currentBlock = currentBlock.previousBlock ?: break
+            median.add(currentBlock.timestamp)
+            currentBlock = currentBlock.previousBlock(storage) ?: break
         }
 
         if (median.isEmpty()) {
-            header = checkNotNull(currentBlock.header) { throw Exception() }
-            return header.timestamp
+            return currentBlock.timestamp
         }
 
         median.sort()

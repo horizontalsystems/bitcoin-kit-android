@@ -1,105 +1,83 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.network.Network
-import io.realm.Realm
-import io.realm.RealmResults
-import io.realm.Sort
 
-class Blockchain(private val network: Network, private val dataListener: IBlockchainDataListener) {
+class Blockchain(private val storage: IStorage, private val network: Network, private val dataListener: IBlockchainDataListener) {
 
-    fun connect(merkleBlock: MerkleBlock, realm: Realm): Block {
-        val blockInDB = realm.where(Block::class.java)
-                .equalTo("headerHash", merkleBlock.blockHash)
-                .findFirst()
-
+    fun connect(merkleBlock: MerkleBlock): Block {
+        val blockInDB = storage.getBlock(merkleBlock.reversedHeaderHashHex)
         if (blockInDB != null) {
             return blockInDB
         }
 
-        val parentBlock = realm.where(Block::class.java)
-                .equalTo("headerHash", merkleBlock.header.prevHash)
-                .findFirst() ?: throw BlockValidatorException.NoPreviousBlock()
+        val parentBlock = storage.getBlock(merkleBlock.header.previousBlockHeaderHash.toReversedHex())
+                ?: throw BlockValidatorException.NoPreviousBlock()
 
         val block = Block(merkleBlock.header, parentBlock)
         network.validateBlock(block, parentBlock)
 
         block.stale = true
 
-        return addBlockAndNotify(block, realm)
+        return addBlockAndNotify(block)
     }
 
-    fun forceAdd(merkleBlock: MerkleBlock, height: Int, realm: Realm): Block {
-        return addBlockAndNotify(Block(merkleBlock.header, height), realm)
+    fun forceAdd(merkleBlock: MerkleBlock, height: Int): Block {
+        return addBlockAndNotify(Block(merkleBlock.header, height))
     }
 
-    fun handleFork(realm: Realm) {
-        val firstStaleHeight = realm.where(Block::class.java)
-                .equalTo("stale", true)
-                .sort("height")
-                .findFirst()?.height ?: return
+    fun handleFork() {
+        val firstStaleHeight = storage.getBlock(stale = true, sortedHeight = "ASC")
+                ?.height ?: return
 
-        val lastNotStaleHeight = realm.where(Block::class.java)
-                .equalTo("stale", false)
-                .sort("height", Sort.DESCENDING)
-                .findFirst()?.height ?: 0
+        val lastNotStaleHeight = storage.getBlock(stale = false, sortedHeight = "DESC")
+                ?.height ?: 0
 
-        realm.executeTransaction {
+        storage.inTransaction {
             if (firstStaleHeight <= lastNotStaleHeight) {
-                val lastStaleHeight = realm.where(Block::class.java)
-                        .equalTo("stale", true)
-                        .sort("height", Sort.DESCENDING)
-                        .findFirst()?.height!!
+                val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height ?: firstStaleHeight
 
-                val blocksToDelete = if (lastStaleHeight > lastNotStaleHeight) {
-                    realm.where(Block::class.java)
-                            .equalTo("stale", false)
-                            .greaterThanOrEqualTo("height", firstStaleHeight)
-                            .findAll()
+                if (lastStaleHeight > lastNotStaleHeight) {
+                    val notStaleBlocks = storage.getBlocks(heightGreaterOrEqualTo = firstStaleHeight, stale = false)
+                    deleteBlocks(notStaleBlocks)
+                    unstaleAllBlocks()
                 } else {
-                    realm.where(Block::class.java)
-                            .equalTo("stale", true)
-                            .findAll()
+                    val staleBlocks = storage.getBlocks(stale = true)
+                    deleteBlocks(staleBlocks)
                 }
-
-                deleteBlocks(blocksToDelete)
+            } else {
+                unstaleAllBlocks()
             }
-
-            realm.where(Block::class.java)
-                    .equalTo("stale", true)
-                    .findAll()
-                    .forEach { staleBlock ->
-                        staleBlock.stale = false
-                    }
         }
     }
 
-    fun deleteBlocks(blocksToDelete: RealmResults<Block>) {
+    fun deleteBlocks(blocksToDelete: List<Block>) {
         val deletedTransactionIds = mutableListOf<String>()
 
         blocksToDelete.forEach { block ->
-            block.transactions?.let { transactions ->
-                transactions.forEach { transaction ->
-                    transaction.inputs.deleteAllFromRealm()
-                    transaction.outputs.deleteAllFromRealm()
-                }
-                deletedTransactionIds.addAll(transactions.map { it.hashHexReversed })
-
-                transactions.deleteAllFromRealm()
-            }
+            deletedTransactionIds.addAll(storage.getBlockTransactions(block).map { it.hashHexReversed })
         }
-        blocksToDelete.deleteAllFromRealm()
+
+        storage.deleteBlocks(blocksToDelete)
 
         dataListener.onTransactionsDelete(deletedTransactionIds)
     }
 
-    private fun addBlockAndNotify(block: Block, realm: Realm): Block {
-        val managedBlock = realm.copyToRealm(block)
+    private fun addBlockAndNotify(block: Block): Block {
+        storage.addBlock(block)
+        dataListener.onBlockInsert(block)
 
-        dataListener.onBlockInsert(managedBlock)
-        return managedBlock
+        return block
     }
 
+    private fun unstaleAllBlocks() {
+        storage.getBlocks(stale = true).forEach { staleBlock ->
+            staleBlock.stale = false
+            storage.updateBlock(staleBlock)
+        }
+    }
 }

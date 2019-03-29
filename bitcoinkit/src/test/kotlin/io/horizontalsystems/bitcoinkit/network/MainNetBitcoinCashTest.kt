@@ -1,8 +1,9 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import com.nhaarman.mockito_kotlin.any
-import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.blocks.validators.BitcoinCashValidator
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.models.Block
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,6 +17,9 @@ import org.powermock.modules.junit4.PowerMockRunner
 @PrepareForTest(MainNetBitcoinCash::class)
 
 class MainNetBitcoinCashTest {
+    private val storage = mock(IStorage::class.java)
+    private val block1 = mock(Block::class.java)
+    private val block2 = mock(Block::class.java)
     private val blockValidator = mock(BitcoinCashValidator::class.java)
 
     lateinit var network: MainNetBitcoinCash
@@ -27,15 +31,12 @@ class MainNetBitcoinCashTest {
                 .withAnyArguments()
                 .thenReturn(blockValidator)
 
-        network = MainNetBitcoinCash()
+        network = MainNetBitcoinCash(storage)
     }
 
     @Test
     fun validate() {
-        val block1 = Fixtures.checkpointBlock2
-        val blockPrev = block1.previousBlock!!
-
-        network.validateBlock(block1, blockPrev)
+        network.validateBlock(block1, block2)
 
         verify(blockValidator).validate(any(), any())
     }

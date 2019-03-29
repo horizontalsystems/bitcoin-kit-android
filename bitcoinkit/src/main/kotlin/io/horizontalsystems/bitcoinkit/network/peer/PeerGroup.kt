@@ -116,6 +116,8 @@ class PeerGroup(
             logger.info("Peer ${peer.host} disconnected.")
             hostManager.markSuccess(peer.host)
         } else {
+            e.printStackTrace()
+
             logger.warning("Peer ${peer.host} disconnected with error ${e.message}.")
             hostManager.markFailed(peer.host)
         }

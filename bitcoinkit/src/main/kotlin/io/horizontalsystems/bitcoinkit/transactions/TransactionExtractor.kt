@@ -1,17 +1,17 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.bitcoinkit.transactions.scripts.*
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.bitcoinkit.utils.Utils
-import io.realm.Realm
 import java.util.*
 
-class TransactionExtractor(private val addressConverter: AddressConverter) {
+class TransactionExtractor(private val addressConverter: AddressConverter, private val storage: IStorage) {
 
-    fun extractOutputs(transaction: Transaction, realm: Realm) {
+    fun extractOutputs(transaction: FullTransaction) {
         for (output in transaction.outputs) {
             val payload: ByteArray
             val scriptType: Int
@@ -36,9 +36,9 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
             output.keyHash = payload
 
             // Set public key if exist
-            getPublicKey(output, realm)?.let { pubKey ->
-                transaction.isMine = true
-                output.publicKey = pubKey
+            getPublicKey(output)?.let {
+                transaction.header.isMine = true
+                output.publicKeyPath = it.path
 
                 if (scriptType == ScriptType.P2WPKH) {
                     output.scriptType = ScriptType.P2WPKHSH
@@ -47,11 +47,12 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
         }
     }
 
-    fun extractInputs(transaction: Transaction) {
+    fun extractInputs(transaction: FullTransaction) {
         for (input in transaction.inputs) {
-            if (input.previousOutput != null) {
-                input.address = input.previousOutput?.address
-                input.keyHash = input.previousOutput?.keyHash
+            val previousOutput = storage.getPreviousOutput(input)
+            if (previousOutput != null) {
+                input.address = previousOutput.address
+                input.keyHash = previousOutput.keyHash
                 continue
             }
 
@@ -94,14 +95,14 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
         }
     }
 
-    fun extractAddress(transaction: Transaction) {
+    fun extractAddress(transaction: FullTransaction) {
         for (output in transaction.outputs) {
             val outKeyHash = output.keyHash ?: continue
             val scriptType = output.scriptType
 
             val pubkeyHash = when (scriptType) {
                 ScriptType.P2PK -> {
-                    output.publicKey?.publicKeyHash ?: Utils.sha256Hash160(outKeyHash)
+                    output.publicKey(storage)?.publicKeyHash ?: Utils.sha256Hash160(outKeyHash)
                 }
                 else -> outKeyHash
             }
@@ -113,20 +114,15 @@ class TransactionExtractor(private val addressConverter: AddressConverter) {
         }
     }
 
-    private fun getPublicKey(output: TransactionOutput, realm: Realm): PublicKey? {
-        val query = realm.where(PublicKey::class.java)
-        var keyHash = output.keyHash
+    private fun getPublicKey(output: TransactionOutput): PublicKey? {
+        var keyHash = output.keyHash ?: return null
 
-        if (output.scriptType == ScriptType.P2WPKH) {
-            keyHash = keyHash?.drop(2)?.toByteArray()
-
-            query.equalTo("scriptHashP2WPKH", keyHash)
+        return if (output.scriptType == ScriptType.P2WPKH) {
+            keyHash = keyHash.drop(2).toByteArray()
+            storage.getPublicKeyByHash(keyHash, isWPKH = true)
         } else {
-            query.equalTo("publicKey", keyHash).or()
-            query.equalTo("publicKeyHash", keyHash)
+            storage.getPublicKeyByHash(keyHash, isWPKH = false)
         }
-
-        return query.findFirst()
     }
 
     //

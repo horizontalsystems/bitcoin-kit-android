@@ -1,12 +1,11 @@
 package io.horizontalsystems.bitcoinkit.models
 
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
-import io.realm.RealmList
-import io.realm.RealmObject
-import io.realm.RealmResults
-import io.realm.annotations.LinkingObjects
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.ForeignKey
+import android.arch.persistence.room.Index
+import android.arch.persistence.room.TypeConverters
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.storage.WitnessConverter
 
 /**
  * Transaction input
@@ -19,102 +18,29 @@ import io.realm.annotations.LinkingObjects
  *  Variable    InputScript          Script
  *  4 bytes     InputSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
  */
-open class TransactionInput : RealmObject {
-    // The hash of the referenced transaction
-    var previousOutputHash: ByteArray = byteArrayOf()
 
-    // The index of the specific output in the transaction
-    var previousOutputIndex: Long = 0
+@Entity(indices = [Index("transactionHashReversedHex")],
+        primaryKeys = ["previousOutputTxReversedHex", "previousOutputIndex"],
+        foreignKeys = [ForeignKey(
+                entity = Transaction::class,
+                parentColumns = ["hashHexReversed"],
+                childColumns = ["transactionHashReversedHex"])])
 
-    // Input script
-    var sigScript: ByteArray = byteArrayOf()
+class TransactionInput(
+        val previousOutputTxReversedHex: String,
+        val previousOutputIndex: Long,
+        var sigScript: ByteArray = byteArrayOf(),
+        val sequence: Long = 0xffffffff) {
 
-    // Input sequence number
-    var sequence: Long = 0xffffffff
-
-    // Internal fields
-    var previousOutput: TransactionOutput? = null
-    var previousOutputHexReversed = ""
+    var transactionHashReversedHex: String = ""
     var keyHash: ByteArray? = null
     var address: String? = ""
-    var witness = RealmList<ByteArray>()
 
-    @LinkingObjects("inputs")
-    val transactions: RealmResults<Transaction>? = null
-    val transaction: Transaction?
-        get() = transactions?.first()
+    @TypeConverters(WitnessConverter::class)
+    var witness: List<ByteArray> = listOf()
 
-    constructor()
-    constructor(input: BitcoinInput) {
-        previousOutputHash = input.readBytes(32)
-        previousOutputHexReversed = HashUtils.toHexStringAsLE(previousOutputHash)
-        previousOutputIndex = input.readUnsignedInt()
-        val sigScriptLength = input.readVarInt()
-        sigScript = input.readBytes(sigScriptLength.toInt())
-        sequence = input.readUnsignedInt()
-    }
-
-    fun storeWitness(input: BitcoinInput) {
-        val stackSize = input.readVarInt()
-
-        for (i in 0 until stackSize) {
-            val dataSize = input.readVarInt()
-            val data = input.readBytes(dataSize.toInt())
-            witness.add(data)
-        }
-    }
-
-    fun toByteArray(): ByteArray {
-        return BitcoinOutput()
-                .write(previousOutputHash)
-                .writeUnsignedInt(previousOutputIndex)
-                .writeVarInt(sigScript.size.toLong())
-                .write(sigScript)
-                .writeUnsignedInt(sequence)
-                .toByteArray()
-    }
-
-    fun toOutpointByteArray(): ByteArray {
-        val output = checkNotNull(previousOutput) { throw Exception("No previous output") }
-        val prevTxHash = checkNotNull(output.transaction?.hash) {
-            throw Exception("No previous transaction hash")
-        }
-
-        return BitcoinOutput()
-                .write(prevTxHash)
-                .writeInt(output.index)
-                .toByteArray()
-    }
-
-    fun toByteArrayWitness(): ByteArray {
-        val output = BitcoinOutput()
-                .writeVarInt(witness.size.toLong())
-
-        witness.forEach { data ->
-            output.writeVarInt(data.size.toLong())
-            output.write(data)
-        }
-
-        return output.toByteArray()
-    }
-
-    fun toSignatureByteArray(forCurrentInputSignature: Boolean): ByteArray {
-        val output = BitcoinOutput()
-                .write(previousOutputHash)
-                .writeUnsignedInt(previousOutputIndex)
-
-        if (forCurrentInputSignature) {
-            val prevOutput = checkNotNull(previousOutput) {
-                throw IllegalStateException("No previous output")
-            }
-
-            output.writeVarInt(prevOutput.lockingScript.size.toLong())
-                  .write(prevOutput.lockingScript)
-        } else {
-            output.writeVarInt(0L)
-        }
-
-        return output.writeUnsignedInt(sequence).toByteArray()
+    fun transaction(storage: IStorage): Transaction? {
+        return storage.getTransaction(transactionHashReversedHex)
     }
 
 }

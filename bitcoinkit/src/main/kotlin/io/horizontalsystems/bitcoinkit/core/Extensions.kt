@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoinkit.core
 
+import io.horizontalsystems.bitcoinkit.extensions.hexToByteArray
 import io.horizontalsystems.bitcoinkit.models.PublicKey
-import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.hdwalletkit.HDPublicKey
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.hdwalletkit.HDWallet
 import java.util.*
 
@@ -13,11 +13,8 @@ fun ByteArray.toHexString(): String {
     }
 }
 
-@Throws(NumberFormatException::class)
 fun String.hexStringToByteArray(): ByteArray {
-    return ByteArray(this.length / 2) {
-        this.substring(it * 2, it * 2 + 2).toInt(16).toByte()
-    }
+    return this.hexToByteArray()
 }
 
 fun HDWallet.publicKey(account: Int, index: Int, external: Boolean): PublicKey {
@@ -25,9 +22,9 @@ fun HDWallet.publicKey(account: Int, index: Int, external: Boolean): PublicKey {
     return PublicKey(account, index, hdPubKey.external, hdPubKey.publicKey, hdPubKey.publicKeyHash)
 }
 
-fun List<Transaction>.inTopologicalOrder(): List<Transaction> {
+fun List<FullTransaction>.inTopologicalOrder(): List<FullTransaction> {
 
-    fun visit(v: Int, visited: MutableList<Boolean>, stack: Stack<Transaction>) {
+    fun visit(v: Int, visited: MutableList<Boolean>, stack: Stack<FullTransaction>) {
         if (visited[v])
             return
 
@@ -36,8 +33,7 @@ fun List<Transaction>.inTopologicalOrder(): List<Transaction> {
 
         for (i in 0 until this.size) {
             for (input in this[i].inputs) {
-                if (input.previousOutputHexReversed == currentTx.hashHexReversed &&
-                        input.previousOutputIndex < currentTx.outputs.size) {
+                if (input.previousOutputTxReversedHex == currentTx.header.hashHexReversed && input.previousOutputIndex < currentTx.outputs.size) {
                     visit(i, visited, stack)
                 }
             }
@@ -46,7 +42,7 @@ fun List<Transaction>.inTopologicalOrder(): List<Transaction> {
         stack.push(currentTx)
     }
 
-    val stack = Stack<Transaction>()
+    val stack = Stack<FullTransaction>()
     val visited = MutableList(this.size) { false }
 
     for (i in 0 until this.size) {
@@ -55,7 +51,7 @@ fun List<Transaction>.inTopologicalOrder(): List<Transaction> {
         }
     }
 
-    val ordered = mutableListOf<Transaction>()
+    val ordered = mutableListOf<FullTransaction>()
     while (stack.isNotEmpty()) {
         ordered.add(stack.pop())
     }

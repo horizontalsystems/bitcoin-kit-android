@@ -17,8 +17,6 @@ class App : Application() {
 
         LeakCanary.install(this)
 
-        BitcoinKit.init(this)
-
         instance = this
     }
 

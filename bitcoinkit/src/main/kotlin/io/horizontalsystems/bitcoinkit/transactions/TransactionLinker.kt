@@ -1,31 +1,19 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
-import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.realm.Realm
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 
-class TransactionLinker {
+class TransactionLinker(private val storage: IStorage) {
 
-    fun handle(transaction: Transaction, realm: Realm) {
+    fun handle(transaction: FullTransaction) {
         for (input in transaction.inputs) {
-            val previousTransaction = realm.where(Transaction::class.java)
-                    .equalTo("hashHexReversed", input.previousOutputHexReversed)
-                    .findFirst()
-
-            if (previousTransaction == null || previousTransaction.outputs.size <= input.previousOutputIndex) {
+            val previousOutput = storage.getPreviousOutput(input = input) ?: continue
+            if (previousOutput.publicKey(storage) == null) {
                 continue
             }
 
-            val previousOutput = previousTransaction.outputs[input.previousOutputIndex.toInt()]
-            if (previousOutput?.publicKey == null) {
-                continue
-            }
-
-            transaction.isMine = true
-            transaction.isOutgoing = true
-
-            // Link previousOutput to this input
-            input.previousOutput = previousOutput
+            transaction.header.isMine = true
+            transaction.header.isOutgoing = true
         }
     }
-
 }

@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.SentTransaction
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.realm.Realm
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import org.junit.Assert.assertEquals
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
@@ -22,10 +22,10 @@ class TransactionSyncerTest : Spek({
     val addressManager = mock(AddressManager::class.java)
     val bloomFilterManager = mock(BloomFilterManager::class.java)
 
-    val realm = mock(Realm::class.java)
+    val fullTransaction = mock(FullTransaction::class.java)
     val transaction = mock(Transaction::class.java)
-    val answerRealmInstance: (InvocationOnMock) -> Unit = {
-        (it.arguments[0] as (Realm) -> Unit).invoke(realm)
+    val callbackInvoke: (InvocationOnMock) -> Unit = {
+        (it.arguments[0] as () -> Unit).invoke()
     }
 
     val maxRetriesCount = 3
@@ -33,8 +33,9 @@ class TransactionSyncerTest : Spek({
     val totalRetriesPeriod: Long = 60 * 60 * 24 * 1000
 
     beforeEachTest {
-        whenever(storage.inTransaction(any())).then(answerRealmInstance)
+        whenever(storage.inTransaction(any())).then(callbackInvoke)
         whenever(transaction.hashHexReversed).thenReturn("abc")
+        whenever(fullTransaction.header).thenReturn(transaction)
 
         syncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
     }
@@ -48,25 +49,25 @@ class TransactionSyncerTest : Spek({
             it("doesn't do anything") {
                 syncer.handleTransactions(listOf())
 
-                verify(transactionProcessor, never()).process(any(), any(), any(), any())
+                verify(transactionProcessor, never()).processIncoming(any(), any(), any())
                 verify(addressManager, never()).fillGap()
                 verify(bloomFilterManager, never()).regenerateBloomFilter()
             }
         }
 
         context("when not empty array is given") {
-            val transactions = listOf(transaction)
+            val transactions = listOf(fullTransaction)
 
             context("when need to update bloom filter") {
                 beforeEach {
-                    whenever(transactionProcessor.process(eq(transactions), eq(null), eq(true), eq(realm)))
+                    whenever(transactionProcessor.processIncoming(eq(transactions), eq(null), eq(true)))
                             .thenThrow(BloomFilterManager.BloomFilterExpired)
                 }
 
                 it("fills addresses gap and regenerates bloom filter") {
                     syncer.handleTransactions(transactions)
 
-                    verify(transactionProcessor).process(eq(transactions), eq(null), eq(true), eq(realm))
+                    verify(transactionProcessor).processIncoming(eq(transactions), eq(null), eq(true))
                     verify(addressManager).fillGap()
                     verify(bloomFilterManager).regenerateBloomFilter()
                 }
@@ -76,7 +77,7 @@ class TransactionSyncerTest : Spek({
                 it("doesn't run address fillGap and doesn't regenerate bloom filter") {
                     syncer.handleTransactions(transactions)
 
-                    verify(transactionProcessor).process(eq(transactions), eq(null), eq(true), eq(realm))
+                    verify(transactionProcessor).processIncoming(eq(transactions), eq(null), eq(true))
                     verify(addressManager, never()).fillGap()
                     verify(bloomFilterManager, never()).regenerateBloomFilter()
                 }
@@ -94,7 +95,7 @@ class TransactionSyncerTest : Spek({
 
             it("adds new SentTransaction object") {
                 argumentCaptor<SentTransaction>().apply {
-                    syncer.handleTransaction(transaction)
+                    syncer.handleTransaction(fullTransaction)
 
                     verify(storage).addSentTransaction(capture())
                     firstValue.hashHexReversed = transaction.hashHexReversed
@@ -118,7 +119,7 @@ class TransactionSyncerTest : Spek({
 
             it("updates existing SentTransaction object") {
                 argumentCaptor<SentTransaction>().apply {
-                    syncer.handleTransaction(transaction)
+                    syncer.handleTransaction(fullTransaction)
 
                     verify(storage).updateSentTransaction(capture())
                     firstValue.hashHexReversed = transaction.hashHexReversed
@@ -132,7 +133,7 @@ class TransactionSyncerTest : Spek({
             }
 
             it("neither adds new nor updates existing") {
-                syncer.handleTransaction(transaction)
+                syncer.handleTransaction(fullTransaction)
 
                 verify(storage, never()).addSentTransaction(any())
                 verify(storage, never()).updateSentTransaction(any())
@@ -144,7 +145,7 @@ class TransactionSyncerTest : Spek({
 
         context("when transaction is :NEW") {
             beforeEach {
-                whenever(storage.getNewTransactions()).thenReturn(listOf(transaction))
+                whenever(storage.getNewTransactions()).thenReturn(listOf(fullTransaction))
             }
 
             context("when it wasn't sent") {
@@ -156,7 +157,7 @@ class TransactionSyncerTest : Spek({
                     val transactions = syncer.getPendingTransactions()
 
                     assertEquals(1, transactions.size)
-                    assertEquals(transaction, transactions[0])
+                    assertEquals(transaction, transactions[0].header)
                 }
 
             }
@@ -179,7 +180,7 @@ class TransactionSyncerTest : Spek({
                         val transactions = syncer.getPendingTransactions()
 
                         assertEquals(1, transactions.size)
-                        assertEquals(transaction.hash, transactions[0].hash)
+                        assertEquals(transaction.hash, transactions[0].header.hash)
                     }
                 }
 

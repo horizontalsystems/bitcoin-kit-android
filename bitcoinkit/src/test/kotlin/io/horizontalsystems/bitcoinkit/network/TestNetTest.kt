@@ -1,13 +1,13 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.verify
-import helpers.Fixtures
 import io.horizontalsystems.bitcoinkit.blocks.validators.TestnetValidator
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.models.Block
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
@@ -17,7 +17,11 @@ import org.powermock.modules.junit4.PowerMockRunner
 
 class TestNetTest {
 
-    private val validator = Mockito.mock(TestnetValidator::class.java)
+    private var storage = mock(IStorage::class.java)
+    private var block1 = mock(Block::class.java)
+    private var block2 = mock(Block::class.java)
+
+    private val validator = mock(TestnetValidator::class.java)
     private lateinit var network: TestNet
 
     @Before
@@ -27,17 +31,14 @@ class TestNetTest {
                 .withAnyArguments()
                 .thenReturn(validator)
 
-        network = TestNet()
+        network = TestNet(storage)
     }
 
     @Test
     fun validate() {
-        val block1 = Fixtures.checkpointBlock2
-        val blockPrev = block1.previousBlock!!
+        network.validateBlock(block1, block2)
 
-        network.validateBlock(block1, blockPrev)
-
-        verify(validator).validate(any(), any())
+        verify(validator).validate(block1, block2)
     }
 
 }

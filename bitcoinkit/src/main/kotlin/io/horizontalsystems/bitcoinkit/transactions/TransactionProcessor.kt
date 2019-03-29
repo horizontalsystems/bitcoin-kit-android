@@ -1,62 +1,61 @@
 package io.horizontalsystems.bitcoinkit.transactions
 
 import io.horizontalsystems.bitcoinkit.blocks.IBlockchainDataListener
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.inTopologicalOrder
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.BloomFilterManager
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.realm.Realm
 import java.util.*
 
-class TransactionProcessor(private val extractor: TransactionExtractor, private val linker: TransactionLinker, private val addressManager: AddressManager,
-                           private val dataListener: IBlockchainDataListener) {
+class TransactionProcessor(
+        private val storage: IStorage,
+        private val extractor: TransactionExtractor,
+        private val linker: TransactionLinker,
+        private val addressManager: AddressManager,
+        private val dataListener: IBlockchainDataListener) {
 
-    fun processOutgoing(transaction: Transaction, realm: Realm) {
-        realm.executeTransaction {
-            process(transaction, realm)
-            val managedTransaction = realm.copyToRealm(transaction)
-
-            dataListener.onTransactionsUpdate(listOf(managedTransaction), listOf())
+    fun processOutgoing(transaction: FullTransaction) {
+        if (storage.getTransaction(transaction.header.hashHexReversed) != null) {
+            throw TransactionCreator.TransactionAlreadyExists("hashHexReversed = ${transaction.header.hashHexReversed}")
         }
-    }
 
-    private fun process(transaction: Transaction, realm: Realm) {
-        extractor.extractOutputs(transaction, realm)
-        linker.handle(transaction, realm)
+        process(transaction)
 
-        if (transaction.isMine) {
-            extractor.extractAddress(transaction)
-            extractor.extractInputs(transaction)
-        }
+        storage.addTransaction(transaction)
+        dataListener.onTransactionsUpdate(listOf(transaction.header), listOf())
     }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
-    fun process(transactions: List<Transaction>, block: Block?, skipCheckBloomFilter: Boolean, realm: Realm) {
+    fun processIncoming(transactions: List<FullTransaction>, block: Block?, skipCheckBloomFilter: Boolean) {
         var needToUpdateBloomFilter = false
 
         val inserted = mutableListOf<Transaction>()
         val updated = mutableListOf<Transaction>()
 
         for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
-            val transactionInDB = realm.where(Transaction::class.java).equalTo("hashHexReversed", transaction.hashHexReversed).findFirst()
-
+            val transactionInDB = storage.getTransaction(transaction.header.hashHexReversed)
             if (transactionInDB != null) {
                 relay(transactionInDB, index, block)
+                storage.updateTransaction(transactionInDB)
 
                 updated.add(transactionInDB)
                 continue
             }
 
-            process(transaction, realm)
+            process(transaction)
 
-            if (transaction.isMine) {
-                relay(transaction, index, block)
-                inserted.add(realm.copyToRealm(transaction))
+            if (transaction.header.isMine) {
+                relay(transaction.header, index, block)
+
+                storage.addTransaction(transaction)
+                inserted.add(transaction.header)
 
                 if (!skipCheckBloomFilter) {
-                    needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts(realm) || hasUnspentOutputs(transaction)
+                    needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts() || hasUnspentOutputs(transaction)
                 }
             }
         }
@@ -70,16 +69,26 @@ class TransactionProcessor(private val extractor: TransactionExtractor, private 
         }
     }
 
+    private fun process(transaction: FullTransaction) {
+        extractor.extractOutputs(transaction)
+        linker.handle(transaction)
+
+        if (transaction.header.isMine) {
+            extractor.extractAddress(transaction)
+            extractor.extractInputs(transaction)
+        }
+    }
+
     private fun relay(transaction: Transaction, order: Int, block: Block?) {
-        transaction.block = block
+        transaction.blockHashReversedHex = block?.headerHashReversedHex
         transaction.status = Transaction.Status.RELAYED
-        transaction.timestamp = block?.header?.timestamp ?: (Date().time / 1000)
+        transaction.timestamp = block?.timestamp ?: (Date().time / 1000)
         transaction.order = order
     }
 
-    private fun hasUnspentOutputs(transaction: Transaction): Boolean {
+    private fun hasUnspentOutputs(transaction: FullTransaction): Boolean {
         return transaction.outputs.any { output ->
-            output.publicKey != null && (output.scriptType == ScriptType.P2PK || output.scriptType == ScriptType.P2WPKH)
+            (output.scriptType == ScriptType.P2PK || output.scriptType == ScriptType.P2WPKH) && output.publicKey(storage) != null
         }
     }
 

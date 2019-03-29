@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.models
 
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
-import io.realm.RealmObject
-import io.realm.RealmResults
-import io.realm.annotations.LinkingObjects
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.ForeignKey
+import android.arch.persistence.room.Index
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 
 /**
  * Transaction output
@@ -15,43 +15,58 @@ import io.realm.annotations.LinkingObjects
  *  VarInt      OutputScriptLength   Script length
  *  Variable    OutputScript         Script
  */
-open class TransactionOutput : RealmObject {
 
-    // Output value
+@Entity(indices = [Index("publicKeyPath", "transactionHashReversedHex")],
+        primaryKeys = ["transactionHashReversedHex", "index"],
+        foreignKeys = [
+            ForeignKey(
+                    entity = PublicKey::class,
+                    parentColumns = ["path"],
+                    childColumns = ["publicKeyPath"],
+                    onUpdate = ForeignKey.SET_NULL,
+                    onDelete = ForeignKey.SET_NULL),
+            ForeignKey(
+                    entity = Transaction::class,
+                    parentColumns = ["hashHexReversed"],
+                    childColumns = ["transactionHashReversedHex"],
+                    onDelete = ForeignKey.CASCADE,
+                    onUpdate = ForeignKey.CASCADE,
+                    deferred = true)
+        ])
+
+class TransactionOutput {
+
     var value: Long = 0
-
-    // Output script used for authenticating that the redeemer is allowed to spend this output.
     var lockingScript: ByteArray = byteArrayOf()
-
-    // Output transaction index
     var index: Int = 0
 
-    var publicKey: PublicKey? = null
-    var scriptType: Int = 0
+    var transactionHashReversedHex: String = ""
+    var publicKeyPath: String? = null
+    var scriptType: Int = ScriptType.UNKNOWN
     var keyHash: ByteArray? = null
     var address: String? = null
 
-    @LinkingObjects("previousOutput")
-    val inputs: RealmResults<TransactionInput>? = null
+    fun transaction(storage: IStorage): Transaction? {
+        return storage.getTransaction(hashHex = transactionHashReversedHex)
+    }
 
-    @LinkingObjects("outputs")
-    val transactions: RealmResults<Transaction>? = null
-    val transaction: Transaction?
-        get() = transactions?.first()
+    fun publicKey(storage: IStorage): PublicKey? {
+        publicKeyPath?.let { return storage.getPublicKey(byPath = it) } ?: return null
+    }
+
+    fun used(storage: IStorage): Boolean {
+        return storage.hasInputs(ofOutput = this)
+    }
 
     constructor()
-    constructor(input: BitcoinInput, vout: Long) {
-        value = input.readLong()
-        val scriptLength = input.readVarInt() // do not store
-        lockingScript = input.readBytes(scriptLength.toInt())
-        index = vout.toInt()
+    constructor(value: Long, index: Int, script: ByteArray, type: Int = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
+        this.value = value
+        this.lockingScript = script
+        this.index = index
+        this.scriptType = type
+        this.address = address
+        this.keyHash = keyHash
+        this.publicKeyPath = publicKey?.path
     }
 
-    fun toByteArray(): ByteArray {
-        return BitcoinOutput()
-                .writeLong(value)
-                .writeVarInt(lockingScript.size.toLong())
-                .write(lockingScript)
-                .toByteArray()
-    }
 }

@@ -2,6 +2,8 @@ package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.models.Header
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import java.io.ByteArrayInputStream
 
@@ -18,7 +20,7 @@ import java.io.ByteArrayInputStream
  */
 class MerkleBlockMessage() : Message("merkleblock") {
 
-    lateinit var header: Header
+    lateinit var header: BlockHeader
     var txCount: Int = 0
 
     var hashCount: Int = 0
@@ -28,12 +30,12 @@ class MerkleBlockMessage() : Message("merkleblock") {
     var flags: ByteArray = byteArrayOf()
 
     private val blockHash: String by lazy {
-        HashUtils.toHexStringAsLE(HashUtils.doubleSha256(header.toByteArray()))
+        HashUtils.toHexStringAsLE(HashUtils.doubleSha256(BlockHeaderSerializer.serialize(header)))
     }
 
     constructor(payload: ByteArray) : this() {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            header = Header(input)
+            header = BlockHeaderSerializer.deserialize(input)
             txCount = input.readInt()
 
             hashCount = input.readVarInt().toInt()

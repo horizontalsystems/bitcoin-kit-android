@@ -1,11 +1,12 @@
 package io.horizontalsystems.bitcoinkit.blocks.validators
 
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
 import java.math.BigInteger
 
-open class BlockValidator(private val network: Network) {
+open class BlockValidator(private val network: Network, private val storage: IStorage) {
 
     open fun validate(candidate: Block, previousBlock: Block) {
         validateHeader(candidate, previousBlock)
@@ -22,25 +23,16 @@ open class BlockValidator(private val network: Network) {
             BlockValidatorException.NoCheckpointBlock()
         }
 
-        val previousBlock = checkNotNull(block.previousBlock) {
-            throw BlockValidatorException.NoPreviousBlock()
-        }
+        val previousBlock = block.previousBlock(storage) ?: throw BlockValidatorException.NoPreviousBlock()
 
-        val blockHeader = previousBlock.header
-        val lastCheckPointBlockHeader = lastCheckPointBlock.header
-
-        if (blockHeader == null || lastCheckPointBlockHeader == null) {
-            throw BlockValidatorException.NoHeader()
-        }
-
-        // Limit the adjustment step
-        var timespan = blockHeader.timestamp - lastCheckPointBlockHeader.timestamp
+        //  Limit the adjustment step
+        var timespan = previousBlock.timestamp - lastCheckPointBlock.timestamp
         if (timespan < network.targetTimespan / 4)
             timespan = network.targetTimespan / 4
         if (timespan > network.targetTimespan * 4)
             timespan = network.targetTimespan * 4
 
-        var newTarget = CompactBits.decode(blockHeader.bits)
+        var newTarget = CompactBits.decode(previousBlock.bits)
         newTarget = newTarget.multiply(timespan.toBigInteger())
         newTarget = newTarget.divide(network.targetTimespan.toBigInteger())
 
@@ -50,33 +42,23 @@ open class BlockValidator(private val network: Network) {
         }
 
         val newTargetCompact = CompactBits.encode(newTarget)
-        if (newTargetCompact != block.header?.bits) {
+        if (newTargetCompact != block.bits) {
             throw BlockValidatorException.NotDifficultyTransitionEqualBits()
         }
     }
 
     fun validateHeader(block: Block, previousBlock: Block) {
-        val blockHeader = checkNotNull(block.header) {
-            throw BlockValidatorException.NoHeader()
-        }
-
-        check(BigInteger(block.reversedHeaderHashHex, 16) < CompactBits.decode(blockHeader.bits)) {
+        check(BigInteger(block.headerHashReversedHex, 16) < CompactBits.decode(block.bits)) {
             throw BlockValidatorException.InvalidProveOfWork()
         }
 
-        check(blockHeader.prevHash.contentEquals(previousBlock.headerHash)) {
+        check(block.previousBlockHash.contentEquals(previousBlock.headerHash)) {
             throw BlockValidatorException.WrongPreviousHeader()
         }
     }
 
     fun validateBits(block: Block, previousBlock: Block) {
-        val nextHeader = block.header
-        val prevHeader = previousBlock.header
-
-        if (prevHeader == null || nextHeader == null)
-            throw BlockValidatorException.NoHeader()
-
-        if (nextHeader.bits != prevHeader.bits)
+        if (block.bits != previousBlock.bits)
             throw BlockValidatorException.NotEqualBits()
     }
 
@@ -85,14 +67,14 @@ open class BlockValidator(private val network: Network) {
     }
 
     fun getPrevious(block: Block, stepBack: Int): Block? {
-        return getPreviousWindow(block, stepBack)?.first()
+        return getPreviousWindow(block, stepBack)?.firstOrNull()
     }
 
     fun getPreviousWindow(block: Block, size: Int): Array<Block>? {
         val blocks = mutableListOf<Block>()
         var prev = block
         for (i in 0 until size) {
-            prev = prev.previousBlock ?: return null
+            prev = prev.previousBlock(storage) ?: return null
             blocks.add(0, prev)
         }
 

@@ -1,67 +1,59 @@
 package io.horizontalsystems.bitcoinkit.managers
 
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.publicKey
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
-import io.realm.Realm
-import io.realm.Sort
 
-class AddressManager(private val realmFactory: RealmFactory, private val hdWallet: HDWallet, private val addressConverter: AddressConverter) {
+class AddressManager(private val storage: IStorage, private val hdWallet: HDWallet, private val addressConverter: AddressConverter) {
 
     @Throws
-    fun changePublicKey(realm: Realm): PublicKey {
-        return getPublicKey(HDWallet.Chain.INTERNAL, realm)
+    fun changePublicKey(): PublicKey {
+        return getPublicKey(external = false)
     }
 
     @Throws
     fun receiveAddress(): String {
-        realmFactory.realm.use { realm ->
-            val publicKey = getPublicKey(HDWallet.Chain.EXTERNAL, realm)
-            val address = addressConverter.convert(publicKey.publicKeyHash)
+        val publicKey = getPublicKey(external = true)
+        val address = addressConverter.convert(publicKey.publicKeyHash)
 
-            return address.string
-        }
+        return address.string
     }
 
     fun fillGap() {
-        realmFactory.realm.use { realm ->
-            val lastUsedAccount = realm.where(PublicKey::class.java)
-                    .sort("account", Sort.DESCENDING)
-                    .findAll()
-                    .find { (it.outputs?.size ?: 0) > 0 }
-                    ?.account
+        val lastUsedAccount = storage.getPublicKeys()
+                .sortedByDescending { it.account }
+                .lastOrNull { it.used(storage) }
+                ?.account
 
-            val requiredAccountsCount = lastUsedAccount?.let { it + 4 } ?: 1
+        val requiredAccountsCount = lastUsedAccount?.let { it + 4 } ?: 1
 
-            repeat(requiredAccountsCount) { account ->
-                fillGap(account, true, realm)
-                fillGap(account, false, realm)
-            }
+        repeat(requiredAccountsCount) { account ->
+            fillGap(account, true)
+            fillGap(account, false)
         }
     }
 
     fun addKeys(keys: List<PublicKey>) {
         if (keys.isEmpty()) return
 
-        realmFactory.realm.use { realm ->
-            realm.executeTransaction {
-                realm.insertOrUpdate(keys)
-            }
-        }
+        storage.savePublicKeys(keys)
     }
 
-    fun gapShifts(realm: Realm): Boolean {
-        val lastAccount = realm.where(PublicKey::class.java).sort("account", Sort.DESCENDING).findFirst()?.account
+    fun gapShifts(): Boolean {
+        val publicKeys = storage.getPublicKeys()
+        val lastAccount = publicKeys
+                .sortedByDescending { it.account }
+                .firstOrNull()?.account
                 ?: return false
 
         for (i in 0..lastAccount) {
-            if (gapKeysCount(i, true, realm) < hdWallet.gapLimit) {
+            if (gapKeysCount(publicKeys.filter { it.account == i && it.external }) < hdWallet.gapLimit) {
                 return true
             }
 
-            if (gapKeysCount(i, false, realm) < hdWallet.gapLimit) {
+            if (gapKeysCount(publicKeys.filter { it.account == i && !it.external }) < hdWallet.gapLimit) {
                 return true
             }
         }
@@ -69,17 +61,16 @@ class AddressManager(private val realmFactory: RealmFactory, private val hdWalle
         return false
     }
 
-    private fun fillGap(account: Int, external: Boolean, realm: Realm) {
-        val gapKeysCount = gapKeysCount(account, external, realm)
+    private fun fillGap(account: Int, external: Boolean) {
+        val publicKeys = storage.getPublicKeys().filter { it.account == account && it.external == external }
+        val keysCount = gapKeysCount(publicKeys)
         val keys = mutableListOf<PublicKey>()
-        if (gapKeysCount < hdWallet.gapLimit) {
-            val lastIndex = realm.where(PublicKey::class.java)
-                    .equalTo("account", account)
-                    .equalTo("external", external)
-                    .sort("index", Sort.DESCENDING)
-                    .findFirst()?.index ?: -1
 
-            for (i in 1..hdWallet.gapLimit - gapKeysCount) {
+        if (keysCount < hdWallet.gapLimit) {
+            val allKeys = publicKeys.sortedByDescending { it.index }
+            val lastIndex = allKeys.lastOrNull()?.index ?: -1
+
+            for (i in 1..hdWallet.gapLimit - keysCount) {
                 val publicKey = hdWallet.publicKey(account, lastIndex + i, external)
                 keys.add(publicKey)
             }
@@ -88,30 +79,27 @@ class AddressManager(private val realmFactory: RealmFactory, private val hdWalle
         addKeys(keys)
     }
 
-    private fun gapKeysCount(account: Int, external: Boolean, realm: Realm): Int {
-        val publicKeys = realm.where(PublicKey::class.java).equalTo("account", account).equalTo("external", external)
-        val lastUsedKey = publicKeys.sort("index").findAll().lastOrNull { it.outputs?.size ?: 0 > 0 }
+    private fun gapKeysCount(publicKeys: List<PublicKey>): Int {
+        val lastUsedKey = publicKeys.filter { it.used(storage) }.sortedByDescending { it.index }.lastOrNull()
 
         return when (lastUsedKey) {
-            null -> publicKeys.count().toInt()
-            else -> publicKeys.greaterThan("index", lastUsedKey.index).count().toInt()
+            null -> publicKeys.size
+            else -> publicKeys.filter { it.index > lastUsedKey.index }.size
         }
     }
 
     @Throws
-    private fun getPublicKey(chain: HDWallet.Chain, realm: Realm): PublicKey {
-        val existingKeys = realm.where(PublicKey::class.java)
-                .equalTo("account", 0L)
-                .equalTo("external", chain == HDWallet.Chain.EXTERNAL)
-                .sort("index")
-                .findAll()
-
-        return existingKeys.find { it.outputs?.size == 0 } ?: throw Error.NoUnusedPublicKey
+    private fun getPublicKey(external: Boolean): PublicKey {
+        return storage.getPublicKeys()
+                .filter { it.external == external && !it.used(storage) }
+                .sortedWith(compareByDescending { it.account })
+                .sortedWith(compareByDescending { it.index })
+                .firstOrNull() ?: throw Error.NoUnusedPublicKey
     }
 
     companion object {
-        fun create(realmFactory: RealmFactory, hdWallet: HDWallet, addressConverter: AddressConverter): AddressManager {
-            val addressManager = AddressManager(realmFactory, hdWallet, addressConverter)
+        fun create(storage: IStorage, hdWallet: HDWallet, addressConverter: AddressConverter): AddressManager {
+            val addressManager = AddressManager(storage, hdWallet, addressConverter)
             addressManager.fillGap()
             return addressManager
         }

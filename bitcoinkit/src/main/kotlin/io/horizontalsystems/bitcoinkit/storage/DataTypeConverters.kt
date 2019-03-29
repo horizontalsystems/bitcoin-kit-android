@@ -1,17 +1,22 @@
 package io.horizontalsystems.bitcoinkit.storage
 
 import android.arch.persistence.room.TypeConverter
-import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.extensions.hexToByteArray
 
-class DataTypeConverters {
+class WitnessConverter {
+
     @TypeConverter
-    fun byteArrayFromString(string: String): ByteArray {
-        return string.hexStringToByteArray()
+    fun fromWitness(list: List<ByteArray>): String {
+        return list.joinToString(", ") {
+            it.toHexString()
+        }
     }
 
     @TypeConverter
-    fun byteArrayToString(byteArray: ByteArray): String {
-        return byteArray.toHexString()
+    fun toWitness(data: String): List<ByteArray> {
+        return data.split(", ").map {
+            it.hexToByteArray()
+        }
     }
 }

@@ -78,7 +78,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
         val date = DateFormat.getInstance().format(Date(timeInMillis))
         val amount = NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)
 
-        summary.text = "#$index" +
+        val text = "#$index" +
                 "\nFrom: ${mapAddresses(transactionInfo.from)}" +
                 "\nTo: ${mapAddresses(transactionInfo.to)}" +
                 "\nAmount: $amount" +
@@ -86,10 +86,15 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                 "\nBlock: ${transactionInfo.blockHeight}" +
                 "\nTimestamp: ${transactionInfo.timestamp}" +
                 "\nDate: $date"
+        summary.text = text
+        summary.setOnClickListener {
+            println(transactionInfo)
+            println(text)
+        }
     }
 
     private fun mapAddresses(list: List<TransactionAddress>): String {
-        return list.joinToString("\n") {
+        return list.joinToString("\n ") {
             if (it.mine) {
                 "${it.address} (mine)"
             } else {

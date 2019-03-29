@@ -72,9 +72,9 @@ class BlockHashFetcherTest {
 
         Assert.assertEquals(lastUsedIndex, actualLastUsedIndex)
         Assert.assertEquals(2, blockHashes.size)
-        Assert.assertEquals("1234", blockHashes.first().reversedHeaderHashHex)
+        Assert.assertEquals("1234", blockHashes.first().headerHashReversedHex)
         Assert.assertEquals(1234, blockHashes.first().height)
-        Assert.assertEquals("5678", blockHashes.last().reversedHeaderHashHex)
+        Assert.assertEquals("5678", blockHashes.last().headerHashReversedHex)
         Assert.assertEquals(5678, blockHashes.last().height)
     }
 }

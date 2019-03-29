@@ -1,10 +1,13 @@
 package io.horizontalsystems.bitcoinkit.models
 
+import android.arch.persistence.room.ColumnInfo
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.PrimaryKey
+import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
-import io.realm.RealmObject
-import io.realm.RealmResults
-import io.realm.annotations.LinkingObjects
-import io.realm.annotations.PrimaryKey
 
 /**
  * Block
@@ -15,39 +18,49 @@ import io.realm.annotations.PrimaryKey
  *  VarInt      TxCount         Number of transactions in the block
  *  Variable    Transactions    The transactions in the block
  */
-open class Block() : RealmObject() {
+
+@Entity
+class Block() {
+
+    //  Header
+    @ColumnInfo(name = "block_version")
+    var version: Int = 0
+    var previousBlockHashReversedHex: String = ""
+    var previousBlockHash: ByteArray = byteArrayOf()
+    var merkleRoot: ByteArray = byteArrayOf()
+    @ColumnInfo(name = "block_timestamp")
+    var timestamp: Long = 0
+    var bits: Long = 0
+    var nonce: Long = 0
 
     @PrimaryKey
-    var reversedHeaderHashHex = ""
-
-    var height: Int = 0
-    var header: Header? = null
+    var headerHashReversedHex: String = ""
     var headerHash: ByteArray = byteArrayOf()
-    var previousBlock: Block? = null
+    var height: Int = 0
     var stale = false
 
-    @LinkingObjects("block")
-    val transactions: RealmResults<Transaction>? = null
-
-    constructor(header: Header, previousBlock: Block) : this() {
-        this.header = header
-        this.headerHash = header.hash
-        this.reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
-        this.previousBlock = previousBlock
-        this.height = previousBlock.height + 1
+    fun previousBlock(storage: IStorage): Block? {
+        return storage.getBlock(hashHex = previousBlockHashReversedHex)
     }
 
-    constructor(header: Header, height: Int) : this() {
-        this.header = header
-        this.headerHash = header.hash
-        this.reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
+    constructor(header: BlockHeader, previousBlock: Block) : this(header, height = previousBlock.height + 1)
+    constructor(header: BlockHeader, height: Int) : this() {
+        version = header.version
+        previousBlockHash = header.previousBlockHeaderHash
+        previousBlockHashReversedHex = header.previousBlockHeaderHash.toReversedHex()
+        merkleRoot = header.merkleRoot
+        timestamp = header.timestamp
+        bits = header.bits
+        nonce = header.nonce
+
+        headerHash = HashUtils.doubleSha256(BlockHeaderSerializer.serialize(header))
+        headerHashReversedHex = headerHash.toReversedHex()
         this.height = height
     }
 
-    constructor(headerHash: ByteArray, height: Int) : this() {
-        this.headerHash = headerHash
-        this.reversedHeaderHashHex = HashUtils.toHexString(this.headerHash.reversedArray())
-        this.height = height
-    }
-
+//    constructor(headerHash: ByteArray, height: Int) : this() {
+//        this.headerHash = headerHash
+//        this.headerHashReversedHex = HashUtils.toHexString(headerHash.reversedArray())
+//        this.height = height
+//    }
 }

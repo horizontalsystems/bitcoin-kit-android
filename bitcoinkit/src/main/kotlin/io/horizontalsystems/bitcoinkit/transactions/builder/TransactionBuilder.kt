@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.transactions.builder
 
-import io.horizontalsystems.bitcoinkit.core.RealmFactory
+import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
@@ -8,13 +8,16 @@ import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.serializers.TransactionSerializer
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
+import io.horizontalsystems.bitcoinkit.storage.InputToSign
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.horizontalsystems.hdwalletkit.HDWallet
-import io.realm.Realm
 
 class TransactionBuilder {
     private val addressConverter: AddressConverter
@@ -23,10 +26,8 @@ class TransactionBuilder {
     private val scriptBuilder: ScriptBuilder
     private val inputSigner: InputSigner
     private val addressManager: AddressManager
-    private val realmFactory: RealmFactory
 
-    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
-        this.realmFactory = realmFactory
+    constructor(addressConverter: AddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
         this.addressConverter = addressConverter
         this.addressManager = addressManager
         this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
@@ -35,8 +36,7 @@ class TransactionBuilder {
         this.inputSigner = InputSigner(wallet, network)
     }
 
-    constructor(realmFactory: RealmFactory, addressConverter: AddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager) {
-        this.realmFactory = realmFactory
+    constructor(addressConverter: AddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager) {
         this.addressManager = addressManager
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = unspentOutputsSelector
@@ -55,34 +55,31 @@ class TransactionBuilder {
             true
         }
 
-        realmFactory.realm.use { realm ->
-            if (estimatedFee) {
-                return unspentOutputsSelector.select(
-                        value = value,
-                        feeRate = feeRate,
-                        outputType = ScriptType.P2PKH,
-                        changeType = ScriptType.P2PKH,
-                        senderPay = senderPay,
-                        outputs = unspentOutputProvider.allUnspentOutputs(realm)
-                ).fee
-            }
-
-            val transaction = buildTransaction(
-                    realm = realm,
+        if (estimatedFee) {
+            return unspentOutputsSelector.select(
                     value = value,
                     feeRate = feeRate,
+                    outputType = ScriptType.P2PKH,
+                    changeType = ScriptType.P2PKH,
                     senderPay = senderPay,
-                    toAddress = address!!
-            )
-
-            return transaction.toByteArray(withWitness = false).size * feeRate.toLong()
+                    unspentOutputs = unspentOutputProvider.allUnspentOutputs()
+            ).fee
         }
+
+        val transaction = buildTransaction(
+                value = value,
+                feeRate = feeRate,
+                senderPay = senderPay,
+                toAddress = address!!
+        )
+
+        return TransactionSerializer.serialize(transaction, withWitness = false).size * feeRate.toLong()
     }
 
-    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean, realm: Realm): Transaction {
+    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean): FullTransaction {
 
         val address = addressConverter.convert(toAddress)
-        val changePubKey = addressManager.changePublicKey(realm)
+        val changePubKey = addressManager.changePublicKey()
         val changeScriptType = ScriptType.P2PKH
         val selectedOutputsInfo = unspentOutputsSelector.select(
                 value = value,
@@ -90,7 +87,7 @@ class TransactionBuilder {
                 outputType = address.scriptType,
                 changeType = changeScriptType,
                 senderPay = senderPay,
-                outputs = unspentOutputProvider.allUnspentOutputs(realm)
+                unspentOutputs = unspentOutputProvider.allUnspentOutputs()
         )
 
         if (!senderPay && selectedOutputsInfo.fee > value) {
@@ -98,81 +95,61 @@ class TransactionBuilder {
         }
 
         val transaction = Transaction(version = 1, lockTime = 0)
+        val inputsToSign = mutableListOf<InputToSign>()
+        val outputs = mutableListOf<TransactionOutput>()
 
-        // add inputs
-        for (output in selectedOutputsInfo.outputs) {
-            val previousTx = checkNotNull(output.transaction) {
-                throw BuilderException.NoPreviousTransaction()
-            }
-            val txInput = TransactionInput().apply {
-                previousOutputHash = previousTx.hash
-                previousOutputHexReversed = previousTx.hashHexReversed
-                previousOutputIndex = output.index.toLong()
-            }
-            txInput.previousOutput = output
-            transaction.inputs.add(txInput)
+        //  add inputs
+        for (unspentOutput in selectedOutputsInfo.outputs) {
+            val previousOutput = unspentOutput.output
+            val transactionInput = TransactionInput(previousOutput.transactionHashReversedHex, previousOutput.index.toLong())
+
+            inputsToSign.add(InputToSign(transactionInput, previousOutput, unspentOutput.publicKey))
         }
-
-        // add output
-        transaction.outputs.add(TransactionOutput().apply {
-            this.value = 0
-            this.index = 0
-            this.lockingScript = scriptBuilder.lockingScript(address)
-            this.scriptType = address.scriptType
-            this.address = address.string
-            this.keyHash = address.hash
-        })
 
         //  calculate fee and add change output if needed
         val receivedValue = if (senderPay) value else value - selectedOutputsInfo.fee
         val sentValue = if (senderPay) value + selectedOutputsInfo.fee else value
 
-        transaction.outputs[0]?.value = receivedValue.toLong()
+        //  add output
+        outputs.add(TransactionOutput(receivedValue, 0, scriptBuilder.lockingScript(address), address.scriptType, address.string, address.hash))
 
         if (selectedOutputsInfo.addChangeOutput) {
             val changeAddress = addressConverter.convert(changePubKey.publicKeyHash, changeScriptType)
-            transaction.outputs.add(TransactionOutput().apply {
-                this.value = selectedOutputsInfo.totalValue - sentValue
-                this.index = 1
-                this.lockingScript = scriptBuilder.lockingScript(changeAddress)
-                this.scriptType = changeScriptType
-                this.address = changeAddress.string
-                this.keyHash = changeAddress.hash
-                this.publicKey = changePubKey
-            })
+            outputs.add(TransactionOutput(selectedOutputsInfo.totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), changeScriptType, changeAddress.string, changeAddress.hash))
         }
 
         // sign inputs
-        transaction.inputs.forEachIndexed { index, input ->
-            val output = selectedOutputsInfo.outputs[index]
-            val sigScriptData = inputSigner.sigScriptData(transaction, index)
+        inputsToSign.forEachIndexed { index, inputToSign ->
+            val unspentOutput = selectedOutputsInfo.outputs[index]
+            val output = unspentOutput.output
+            val sigScriptData = inputSigner.sigScriptData(transaction, inputsToSign, outputs, index)
 
             when (output.scriptType) {
                 ScriptType.P2WPKH -> {
                     transaction.segwit = true
-                    input.witness.addAll(sigScriptData)
+                    inputToSign.input.witness = sigScriptData
                 }
 
                 ScriptType.P2WPKHSH -> {
-                    val pubKey = checkNotNull(output.publicKey)
-
                     transaction.segwit = true
-                    val witnessProgram = OpCodes.push(0) + OpCodes.push(pubKey.publicKeyHash)
+                    val witnessProgram = OpCodes.push(0) + OpCodes.push(unspentOutput.publicKey.publicKeyHash)
 
-                    input.sigScript = scriptBuilder.unlockingScript(listOf(witnessProgram))
-                    input.witness.addAll(sigScriptData)
+                    inputToSign.input.sigScript = scriptBuilder.unlockingScript(listOf(witnessProgram))
+                    inputToSign.input.witness = sigScriptData
                 }
 
-                else -> input.sigScript = scriptBuilder.unlockingScript(sigScriptData)
+                else -> inputToSign.input.sigScript = scriptBuilder.unlockingScript(sigScriptData)
             }
         }
 
         transaction.status = Transaction.Status.NEW
         transaction.isMine = true
         transaction.isOutgoing = true
-        transaction.setHashes()
 
-        return transaction
+        return FullTransaction(transaction, inputsToSign.map { it.input }, outputs).apply {
+            header.hash = HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = true))
+            header.hashHexReversed = transaction.hash.toReversedHex()
+        }
     }
 
     open class BuilderException : Exception() {

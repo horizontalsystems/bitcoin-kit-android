@@ -2,6 +2,8 @@ package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.serializers.TransactionSerializer
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.io.ByteArrayInputStream
 
 /**
@@ -11,24 +13,24 @@ import java.io.ByteArrayInputStream
  */
 class TransactionMessage() : Message("tx") {
 
-    lateinit var transaction: Transaction
+    lateinit var transaction: FullTransaction
 
-    constructor(transaction: Transaction) : this() {
+    constructor(transaction: FullTransaction) : this() {
         this.transaction = transaction
     }
 
     constructor(payload: ByteArray) : this() {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            transaction = Transaction(input)
+            transaction = TransactionSerializer.deserialize(input)
         }
     }
 
     override fun getPayload(): ByteArray {
-        return transaction.toByteArray()
+        return TransactionSerializer.serialize(transaction)
     }
 
     override fun toString(): String {
-        return "TransactionMessage(${transaction.hashHexReversed})"
+        return "TransactionMessage(${transaction.header.hashHexReversed})"
     }
 
 }

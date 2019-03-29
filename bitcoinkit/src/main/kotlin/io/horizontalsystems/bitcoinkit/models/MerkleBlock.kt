@@ -1,5 +1,8 @@
 package io.horizontalsystems.bitcoinkit.models
 
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.storage.BlockHeader
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
 /**
@@ -15,14 +18,14 @@ import io.horizontalsystems.bitcoinkit.utils.HashUtils
  */
 class MerkleBlock() {
 
-    lateinit var header: Header
+    lateinit var header: BlockHeader
     var hashes: List<ByteArray> = listOf()
 
     var height: Int? = null
     var associatedTransactionHexes = listOf<String>()
-    var associatedTransactions = mutableListOf<Transaction>()
+    var associatedTransactions = mutableListOf<FullTransaction>()
     val blockHash: ByteArray by lazy {
-        HashUtils.doubleSha256(header.toByteArray())
+        HashUtils.doubleSha256(BlockHeaderSerializer.serialize(header))
     }
 
     val reversedHeaderHashHex: String by lazy {
@@ -32,7 +35,7 @@ class MerkleBlock() {
     val complete: Boolean
         get() = associatedTransactionHexes.size == associatedTransactions.size
 
-    constructor(header: Header, transactionHashes: List<ByteArray>, transactions: List<Transaction>) : this() {
+    constructor(header: BlockHeader, transactionHashes: List<ByteArray>, transactions: List<FullTransaction>) : this() {
         this.header = header
         this.hashes = transactionHashes
         this.associatedTransactions = transactions.toMutableList()

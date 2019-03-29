@@ -3,8 +3,6 @@ package io.horizontalsystems.bitcoinkit.models
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
-import io.realm.RealmObject
-import io.realm.annotations.Ignore
 import java.io.IOException
 
 /**
@@ -19,7 +17,7 @@ import java.io.IOException
  *   4 bytes    Bits            The target difficulty
  *   4 bytes    Nonce           The nonce used to generate the required hash
  */
-open class Header : RealmObject {
+open class Header {
 
     // Int32, block version information (note, this is signed)
     var version: Int = 0
@@ -39,7 +37,6 @@ open class Header : RealmObject {
     // Uint32, The nonce used to generate this block to allow variations of the header and compute different hashes
     var nonce: Long = 0
 
-    @delegate:Ignore
     val hash: ByteArray by lazy {
         HashUtils.doubleSha256(toByteArray())
     }

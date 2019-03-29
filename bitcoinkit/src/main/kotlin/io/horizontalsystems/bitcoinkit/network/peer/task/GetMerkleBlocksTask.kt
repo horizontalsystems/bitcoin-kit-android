@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.network.peer.task
 
-import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.extensions.toHexString
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
-import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.util.concurrent.TimeUnit
 
 class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
@@ -41,8 +41,8 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
         return true
     }
 
-    override fun handleTransaction(transaction: Transaction): Boolean {
-        val block = pendingMerkleBlocks.find { it.associatedTransactionHexes.contains(transaction.hash.toHexString()) }
+    override fun handleTransaction(transaction: FullTransaction): Boolean {
+        val block = pendingMerkleBlocks.find { it.associatedTransactionHexes.contains(transaction.header.hash.toHexString()) }
                 ?: return false
 
         resetTimer()

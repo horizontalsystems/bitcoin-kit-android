@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.network
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.argumentCaptor
 import com.nhaarman.mockito_kotlin.verify
+import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.network.messages.AddrMessage
@@ -24,9 +25,10 @@ import org.powermock.modules.junit4.PowerMockRunner
 
 class PeerTest {
 
+    private val storage = mock(IStorage::class.java)
     private val listener = mock(Peer.Listener::class.java)
     private val peerConnection = mock(PeerConnection::class.java)
-    private val network = MainNet()
+    private val network = MainNet(storage)
 
     private lateinit var peer: Peer
 
