@@ -160,7 +160,15 @@ class BitcoinKitBuilder {
             }
         }
 
-        val feeRateSyncer = FeeRateSyncer(storage, ApiFeeRate(networkType))
+        val apiFeeRateResource = when (networkType) {
+            BitcoinKit.NetworkType.MainNet -> "BTC"
+            BitcoinKit.NetworkType.TestNet -> "BTC/testnet"
+            BitcoinKit.NetworkType.RegTest -> "BTC/regtest"
+            BitcoinKit.NetworkType.MainNetBitCash -> "BCH"
+            BitcoinKit.NetworkType.TestNetBitCash -> "BCH/testnet"
+        }
+
+        val feeRateSyncer = FeeRateSyncer(storage, ApiFeeRate(apiFeeRateResource))
         val blockHashFetcher = BlockHashFetcher(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
         val stateManager = StateManager(storage, network, newWallet)
