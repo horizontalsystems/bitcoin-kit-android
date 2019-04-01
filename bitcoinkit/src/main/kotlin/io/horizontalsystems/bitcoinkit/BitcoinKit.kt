@@ -11,6 +11,9 @@ import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
+import io.horizontalsystems.bitcoinkit.network.messages.BitcoinMessageParser
+import io.horizontalsystems.bitcoinkit.network.messages.Message
+import io.horizontalsystems.bitcoinkit.network.messages.MessageParserChain
 import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
@@ -113,6 +116,11 @@ class BitcoinKitBuilder {
         val connectionManager = ConnectionManager(context)
 
         val hdWallet = HDWallet(seed, network.coinType)
+
+        val messageParserChain = MessageParserChain()
+        messageParserChain.addParser(BitcoinMessageParser())
+
+        Message.Builder.messageParser = messageParserChain
 
         val addressConverter = AddressConverterChain()
         addressConverter.prependConverter(Base58AddressConverter(network.addressVersion, network.addressScriptVersion))

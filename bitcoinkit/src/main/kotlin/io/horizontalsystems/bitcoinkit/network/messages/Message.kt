@@ -31,33 +31,13 @@ abstract class Message(cmd: String) {
     }
 
     object Builder {
-
-        private val msgMap = initMessages()
-
-        private fun initMessages(): Map<String, Class<*>> {
-            val map = HashMap<String, Class<*>>()
-            map["addr"] = AddrMessage::class.java
-            map["getaddr"] = GetAddrMessage::class.java
-            map["getblocks"] = GetBlocksMessage::class.java
-            map["getdata"] = GetDataMessage::class.java
-            map["getheaders"] = GetHeadersMessage::class.java
-            map["inv"] = InvMessage::class.java
-            map["ping"] = PingMessage::class.java
-            map["pong"] = PongMessage::class.java
-            map["verack"] = VerAckMessage::class.java
-            map["version"] = VersionMessage::class.java
-            map["merkleblock"] = MerkleBlockMessage::class.java
-            map["tx"] = TransactionMessage::class.java
-            map["filterload"] = FilterLoadMessage::class.java
-
-            return map
-        }
+        var messageParser: IMessageParser? = null
 
         /**
          * Parse stream as message.
          */
         @Throws(IOException::class)
-        fun <T : Message> parseMessage(input: BitcoinInput, network: Network): T {
+        fun parseMessage(input: BitcoinInput, network: Network): Message {
             val magic = input.readUnsignedInt()
             if (magic != network.magic) {
                 throw BitcoinException("Bad magic. (local) ${network.magic}!=$magic")
@@ -76,11 +56,8 @@ abstract class Message(cmd: String) {
                 throw BitcoinException("Checksum failed.")
             }
 
-            // build msg:
-            val msgClass = msgMap[command] ?: return UnknownMessage(command, payload) as T
             try {
-                val constructor = msgClass.getConstructor(ByteArray::class.java)
-                return constructor.newInstance(payload) as T
+                return messageParser?.parseMessage(command, payload, network) ?: UnknownMessage(command, payload)
             } catch (e: Exception) {
                 throw RuntimeException(e)
             }
