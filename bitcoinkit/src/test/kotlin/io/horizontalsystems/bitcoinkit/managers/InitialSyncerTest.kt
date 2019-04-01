@@ -4,7 +4,7 @@ import com.nhaarman.mockito_kotlin.never
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
 import com.nhaarman.mockito_kotlin.whenever
-import helpers.RxTestRule
+import io.horizontalsystems.bitcoinkit.RxTestRule
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.ISyncStateListener
 import io.horizontalsystems.bitcoinkit.models.BlockHash

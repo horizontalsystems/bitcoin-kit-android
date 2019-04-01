@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.validators
 
 import com.nhaarman.mockito_kotlin.whenever
-import helpers.Fixtures
+import io.horizontalsystems.bitcoinkit.Fixtures
 import io.horizontalsystems.bitcoinkit.blocks.validators.BitcoinCashValidator
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
