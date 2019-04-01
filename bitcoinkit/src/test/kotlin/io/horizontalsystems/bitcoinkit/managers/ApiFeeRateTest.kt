@@ -29,9 +29,9 @@ class ApiFeeRateTest {
     }
 
     private val coinJsonObject = JsonObject().apply {
-        this.add("low_priority", feeRate.lowPriority.toString())
-        this.add("medium_priority", feeRate.mediumPriority.toString())
-        this.add("high_priority", feeRate.highPriority.toString())
+        this.add("low_priority", feeRate.lowPriority.toInt())
+        this.add("medium_priority", feeRate.mediumPriority.toInt())
+        this.add("high_priority", feeRate.highPriority.toInt())
     }
 
     private val btcJsonObject = JsonObject().add("BTC", coinJsonObject)
