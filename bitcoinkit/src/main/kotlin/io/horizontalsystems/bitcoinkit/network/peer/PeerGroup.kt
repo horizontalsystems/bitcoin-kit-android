@@ -105,7 +105,7 @@ class PeerGroup(
 
     override fun onReady(peer: Peer) {
         peersQueue.execute {
-            downloadBlockchain()
+            downloadBlockchain(peer)
         }
     }
 
@@ -236,36 +236,38 @@ class PeerGroup(
 
                     logger.info("Start syncing peer ${nonSyncedPeer.host}")
 
-                    downloadBlockchain()
+                    downloadBlockchain(nonSyncedPeer)
                 }
             }
         }
     }
 
-    private fun downloadBlockchain() {
-        peerManager.syncPeer?.let { syncPeer ->
-            blockSyncer?.let { blockSyncer ->
+    private fun downloadBlockchain(syncPeer: Peer) {
+        if (syncPeer != peerManager.syncPeer || !syncPeer.ready) {
+            return
+        }
 
-                val blockHashes = blockSyncer.getBlockHashes()
-                if (blockHashes.isEmpty()) {
-                    syncPeer.synced = syncPeer.blockHashesSynced
-                } else {
-                    syncPeer.addTask(GetMerkleBlocksTask(blockHashes))
-                }
+        blockSyncer?.let { blockSyncer ->
 
-                if (!syncPeer.blockHashesSynced) {
-                    val expectedHashesMinCount = Math.max(syncPeer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
-                    syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight), expectedHashesMinCount))
-                }
+            val blockHashes = blockSyncer.getBlockHashes()
+            if (blockHashes.isEmpty()) {
+                syncPeer.synced = syncPeer.blockHashesSynced
+            } else {
+                syncPeer.addTask(GetMerkleBlocksTask(blockHashes))
+            }
 
-                if (syncPeer.synced) {
-                    blockSyncer.downloadCompleted()
-                    syncStateListener.onSyncFinish()
-                    syncPeer.sendMempoolMessage()
-                    logger.info("Peer synced ${syncPeer.host}")
-                    peerManager.syncPeer = null
-                    assignNextSyncPeer()
-                }
+            if (!syncPeer.blockHashesSynced) {
+                val expectedHashesMinCount = Math.max(syncPeer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
+                syncPeer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(syncPeer.announcedLastBlockHeight), expectedHashesMinCount))
+            }
+
+            if (syncPeer.synced) {
+                blockSyncer.downloadCompleted()
+                syncStateListener.onSyncFinish()
+                syncPeer.sendMempoolMessage()
+                logger.info("Peer synced ${syncPeer.host}")
+                peerManager.syncPeer = null
+                assignNextSyncPeer()
             }
         }
     }
