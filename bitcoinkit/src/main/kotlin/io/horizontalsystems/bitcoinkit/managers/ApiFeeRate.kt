@@ -19,10 +19,11 @@ class ApiFeeRate(networkType: BitcoinKit.NetworkType) {
 
                 val btcRates = json.get("rates").asObject().get(coinCode).asObject()
                 val rate = FeeRate().apply {
-                    lowPriority = btcRates["low_priority"].asDouble()
-                    mediumPriority = btcRates["medium_priority"].asDouble()
-                    highPriority = btcRates["high_priority"].asDouble()
+                    lowPriority = btcRates["low_priority"].asString().toDouble()
+                    mediumPriority = btcRates["medium_priority"].asString().toDouble()
+                    highPriority = btcRates["high_priority"].asString().toDouble()
                     date = json["time"].asLong()
+                    dateStr = json["time_str"].asString()
                 }
 
                 subscriber.onSuccess(rate)
