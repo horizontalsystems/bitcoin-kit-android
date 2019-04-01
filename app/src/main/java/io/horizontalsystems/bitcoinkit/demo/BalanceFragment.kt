@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import io.horizontalsystems.bitcoinkit.BitcoinKit
+import io.horizontalsystems.bitcoinkit.BitcoinCore
 
 class BalanceFragment : Fragment() {
 
@@ -41,13 +41,13 @@ class BalanceFragment : Fragment() {
 
             viewModel.state.observe(this, Observer { state ->
                 when (state) {
-                    is BitcoinKit.KitState.Synced -> {
+                    is BitcoinCore.KitState.Synced -> {
                         stateValue.text = "synced"
                     }
-                    is BitcoinKit.KitState.Syncing -> {
-                        stateValue.text = "syncing ${"%.3f".format(state.progress).toDouble()}"
+                    is BitcoinCore.KitState.Syncing -> {
+                        stateValue.text = "syncing ${"%.3f".format(state.progress)}"
                     }
-                    is BitcoinKit.KitState.NotSynced -> {
+                    is BitcoinCore.KitState.NotSynced -> {
                         stateValue.text = "not synced"
                     }
                 }

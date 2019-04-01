@@ -4,9 +4,7 @@ import io.horizontalsystems.bitcoinkit.blocks.InvalidMerkleBlockException
 import io.horizontalsystems.bitcoinkit.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
-import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
@@ -20,11 +18,11 @@ class Peer(val host: String, private val network: Network, private val listener:
         fun onReady(peer: Peer)
         fun onDisconnect(peer: Peer, e: Exception?)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
-        fun onReceiveMerkleBlock(peer: Peer, merkleBlock: MerkleBlock)
         fun onReceiveAddress(addrs: Array<NetworkAddress>)
         fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
+    // TODO seems like property connected is not needed. It is always true in PeerManager. Need to check it and remove
     var connected = false
     var synced = false
     var blockHashesSynced = false
@@ -62,10 +60,6 @@ class Peer(val host: String, private val network: Network, private val listener:
 
     fun sendMempoolMessage() {
         peerConnection.sendMessage(MempoolMessage())
-    }
-
-    fun isRequestingInventory(hash: ByteArray): Boolean {
-        return tasks.any { it.isRequestingInventory(hash) }
     }
 
     //
@@ -112,6 +106,7 @@ class Peer(val host: String, private val network: Network, private val listener:
                     }
                 }
             }
+            else -> tasks.any { it.handleMessage(message) }
         }
     }
 
@@ -174,10 +169,6 @@ class Peer(val host: String, private val network: Network, private val listener:
         peerConnection.close(e)
     }
 
-    override fun handleMerkleBlock(merkleBlock: MerkleBlock) {
-        listener.onReceiveMerkleBlock(this, merkleBlock)
-    }
-
     //
     // PeerTask Requester implementations
     //
@@ -199,6 +190,10 @@ class Peer(val host: String, private val network: Network, private val listener:
 
     override fun send(transaction: FullTransaction) {
         peerConnection.sendMessage(TransactionMessage(transaction))
+    }
+
+    override fun sendMessage(message: Message) {
+        peerConnection.sendMessage(message)
     }
 
     //

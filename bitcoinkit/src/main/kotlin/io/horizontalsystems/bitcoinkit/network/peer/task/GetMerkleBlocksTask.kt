@@ -1,13 +1,18 @@
 package io.horizontalsystems.bitcoinkit.network.peer.task
 
-import io.horizontalsystems.bitcoinkit.extensions.toHexString
+import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.util.concurrent.TimeUnit
 
-class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
+class GetMerkleBlocksTask(hashes: List<BlockHash>, private val merkleBlockHandler: MerkleBlockHandler) : PeerTask() {
+
+    interface MerkleBlockHandler {
+        fun handleMerkleBlock(merkleBlock: MerkleBlock)
+    }
+
     private var blockHashes = hashes.toMutableList()
     private var pendingMerkleBlocks = mutableListOf<MerkleBlock>()
 
@@ -70,7 +75,11 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>) : PeerTask() {
             blockHashes.remove(it)
         }
 
-        listener?.handleMerkleBlock(merkleBlock)
+        try {
+            merkleBlockHandler.handleMerkleBlock(merkleBlock)
+        } catch (e: Exception) {
+            listener?.onTaskFailed(this, e)
+        }
 
         if (blockHashes.isEmpty()) {
             listener?.onTaskCompleted(this)

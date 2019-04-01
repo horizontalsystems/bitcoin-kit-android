@@ -2,9 +2,8 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import io.horizontalsystems.bitcoinkit.BitcoinCore.KitState
 import io.horizontalsystems.bitcoinkit.BitcoinKit
-import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
-import io.horizontalsystems.bitcoinkit.BitcoinKitBuilder
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.reactivex.disposables.CompositeDisposable
@@ -34,16 +33,11 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
 
-        bitcoinKit = BitcoinKitBuilder()
-                .setContext(App.instance)
-                .setWords(words)
-                .setNetworkType(BitcoinKit.NetworkType.TestNet)
-                .setWalletId("wallet-id")
-                .build()
+        bitcoinKit = BitcoinKit(App.instance, words, "wallet-id", true)
 
         bitcoinKit.listener = this
 
-        networkName = BitcoinKit.NetworkType.TestNet.name
+        networkName = bitcoinKit.networkName
         balance.value = bitcoinKit.balance
 
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
@@ -88,7 +82,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     // BitcoinKit Listener implementations
     //
-    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
             transactions.postValue(txList.sortedByDescending { it.blockHeight })
         }.let {
@@ -99,15 +93,15 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     override fun onTransactionsDelete(hashes: List<String>) {
     }
 
-    override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {
+    override fun onBalanceUpdate(balance: Long) {
         this.balance.postValue(balance)
     }
 
-    override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
+    override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
         this.lastBlockHeight.postValue(blockInfo.height)
     }
 
-    override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
+    override fun onKitStateUpdate(state: KitState) {
         this.state.postValue(state)
     }
 }
