@@ -20,8 +20,7 @@ import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.utils.AddressConverter
-import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
+import io.horizontalsystems.bitcoinkit.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
@@ -115,7 +114,18 @@ class BitcoinKitBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType)
 
-        val addressConverter = AddressConverter(network)
+        val addressConverter = AddressConverterChain()
+        addressConverter.prependConverter(Base58AddressConverter(network.addressVersion, network.addressScriptVersion))
+
+        when (networkType) {
+            BitcoinKit.NetworkType.MainNet,
+            BitcoinKit.NetworkType.TestNet -> SegwitAddressConverter(network.addressSegwitHrp)
+            BitcoinKit.NetworkType.MainNetBitCash,
+            BitcoinKit.NetworkType.TestNetBitCash -> CashAddressConverter(network.addressSegwitHrp)
+            else -> null
+        }?.let { bech32 ->
+            addressConverter.prependConverter(bech32)
+        }
 
         val addressManager = AddressManager.create(storage, hdWallet, addressConverter)
 
@@ -152,11 +162,11 @@ class BitcoinKitBuilder {
             BitcoinKit.NetworkType.MainNet,
             BitcoinKit.NetworkType.TestNet,
             BitcoinKit.NetworkType.RegTest -> {
-                BitcoinAddressSelector(addressConverter)
+                BitcoinAddressSelector()
             }
             BitcoinKit.NetworkType.MainNetBitCash,
             BitcoinKit.NetworkType.TestNetBitCash -> {
-                BitcoinCashAddressSelector(addressConverter)
+                BitcoinCashAddressSelector()
             }
         }
 
@@ -169,7 +179,7 @@ class BitcoinKitBuilder {
         }
 
         val feeRateSyncer = FeeRateSyncer(storage, ApiFeeRate(apiFeeRateResource))
-        val blockHashFetcher = BlockHashFetcher(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
+        val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
         val stateManager = StateManager(storage, network, newWallet)
         val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)
@@ -196,7 +206,7 @@ class BitcoinKitBuilder {
 
 }
 
-class BitcoinKit(private val storage: Storage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverter, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager)
+class BitcoinKit(private val storage: Storage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: IAddressConverter, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {

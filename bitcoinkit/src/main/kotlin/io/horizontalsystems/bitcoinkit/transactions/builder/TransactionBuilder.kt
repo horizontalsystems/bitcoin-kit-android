@@ -15,19 +15,19 @@ import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.IAddressConverter
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 class TransactionBuilder {
-    private val addressConverter: AddressConverter
+    private val addressConverter: IAddressConverter
     private val unspentOutputsSelector: UnspentOutputSelector
     private val unspentOutputProvider: UnspentOutputProvider
     private val scriptBuilder: ScriptBuilder
     private val inputSigner: InputSigner
     private val addressManager: AddressManager
 
-    constructor(addressConverter: AddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
+    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
         this.addressConverter = addressConverter
         this.addressManager = addressManager
         this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
@@ -36,7 +36,7 @@ class TransactionBuilder {
         this.inputSigner = InputSigner(wallet, network)
     }
 
-    constructor(addressConverter: AddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager) {
+    constructor(addressConverter: IAddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager) {
         this.addressManager = addressManager
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = unspentOutputsSelector
