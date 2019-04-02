@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.utils
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoinkit.models.Address
 import io.horizontalsystems.bitcoinkit.models.AddressType
 import io.horizontalsystems.bitcoinkit.network.MainNet
@@ -13,6 +14,7 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.mock
 
 class AddressConverterTest {
@@ -43,6 +45,14 @@ class AddressConverterTest {
 
         assertEquals(addressString, address.string)
         assertEquals(AddressType.P2PKH, address.type)
+
+        // Wrong prefix
+        assertThrows<AddressFormatException> {
+            val testnetAddress = addressString
+
+            converter = AddressConverter(MainNet(storage))
+            address = converter.convert(testnetAddress)
+        }
     }
 
     @Test

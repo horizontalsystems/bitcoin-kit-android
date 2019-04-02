@@ -30,12 +30,19 @@ class AddressConverter(private val network: Network) {
             }
 
             val bytes = Arrays.copyOfRange(data, 1, data.size)
-            var type = AddressType.P2PKH
-            if (data[0].toInt() == network.addressScriptVersion) {
-                type = AddressType.P2SH
+            val addressType = when (data[0].toInt()) {
+                network.addressScriptVersion -> {
+                    AddressType.P2SH
+                }
+                network.addressVersion -> {
+                    AddressType.P2PKH
+                }
+                else -> {
+                    throw AddressFormatException("Wrong address prefix")
+                }
             }
 
-            LegacyAddress(addressString, bytes, type)
+            LegacyAddress(addressString, bytes, addressType)
         }
     }
 
