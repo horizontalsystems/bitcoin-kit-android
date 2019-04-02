@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import com.nhaarman.mockito_kotlin.whenever
-import helpers.RxTestRule
+import io.horizontalsystems.bitcoinkit.RxTestRule
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.reactivex.Observable
 import org.junit.Before

@@ -1,4 +1,4 @@
-package helpers
+package io.horizontalsystems.bitcoinkit
 
 import io.reactivex.plugins.RxJavaPlugins
 import io.reactivex.schedulers.Schedulers

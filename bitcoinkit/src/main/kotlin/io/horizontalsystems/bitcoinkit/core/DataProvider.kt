@@ -78,7 +78,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
 
                 fromHash?.let { fromHash ->
                     storage.getTransaction(fromHash)?.let { fromTransaction ->
-                        results.filter {
+                        results = results.filter {
                             it.timestamp < fromTransaction.timestamp || (it.timestamp == fromTransaction.timestamp && it.order < fromTransaction.order)
                         }
                     }

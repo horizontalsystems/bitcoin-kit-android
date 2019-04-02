@@ -12,7 +12,6 @@ import io.horizontalsystems.bitcoinkit.models.BlockHash
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
-import io.realm.Realm
 import org.junit.Assert.assertEquals
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
@@ -32,7 +31,6 @@ class BlockSyncerTest : Spek({
     val listener = mock(KitStateProvider::class.java)
     val network = mock(Network::class.java)
 
-    val realm = mock(Realm::class.java)
     val state = mock(BlockSyncer.State::class.java)
     val checkpointBlock = mock(Block::class.java)
 
@@ -54,7 +52,6 @@ class BlockSyncerTest : Spek({
 
     afterEachTest {
         reset(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network, state)
-        reset(realm)
     }
 
     describe("#init") {
@@ -171,9 +168,11 @@ class BlockSyncerTest : Spek({
 
     describe("#prepareForDownload") {
         val emptyBlocks = mock<List<Block>>()
+        val blocksHashes = listOf("str")
 
         beforeEach {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
+            whenever(storage.getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)).thenReturn(blocksHashes)
 
             blockSyncer.prepareForDownload()
         }
@@ -186,7 +185,7 @@ class BlockSyncerTest : Spek({
 
         it("clears partial blocks") {
             verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)
-            verify(storage).getBlocks(listOf())
+            verify(storage).getBlocks(blocksHashes)
             verify(blockchain).deleteBlocks(any())
         }
 
@@ -238,9 +237,11 @@ class BlockSyncerTest : Spek({
 
     describe("#downloadFailed") {
         val emptyBlocks = mock<List<Block>>()
+        val blocksHashes = listOf("str")
 
         beforeEach {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
+            whenever(storage.getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)).thenReturn(blocksHashes)
 
             blockSyncer.downloadFailed()
         }
@@ -253,7 +254,7 @@ class BlockSyncerTest : Spek({
 
         it("clears partial blocks") {
             verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)
-            verify(storage).getBlocks(listOf())
+            verify(storage).getBlocks(blocksHashes)
             verify(blockchain).deleteBlocks(any())
         }
 
