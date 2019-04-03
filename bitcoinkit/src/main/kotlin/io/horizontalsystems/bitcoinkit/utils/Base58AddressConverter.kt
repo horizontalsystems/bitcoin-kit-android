@@ -17,12 +17,13 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
         }
 
         val bytes = Arrays.copyOfRange(data, 1, data.size)
-        var type = AddressType.P2PKH
-        if (data[0].toInt() == addressScriptVersion) {
-            type = AddressType.P2SH
+        val addressType = when (data[0].toInt()) {
+            addressScriptVersion -> AddressType.P2SH
+            addressVersion -> AddressType.P2PKH
+            else -> throw AddressFormatException("Wrong address prefix")
         }
 
-        return LegacyAddress(addressString, bytes, type)
+        return LegacyAddress(addressString, bytes, addressType)
 
     }
 
