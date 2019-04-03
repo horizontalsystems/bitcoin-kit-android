@@ -34,7 +34,8 @@ class TestNetBitcoinCash(storage: IStorage) : Network() {
             merkleRoot = HashUtils.toBytesAsLE("dfa42c8fc3d8bac6d6fb51007128092f41d590ace1b3522af7062b8a848ebde7"),
             timestamp = 1551085591,
             bits = 486604799,
-            nonce = 1684221831
+            nonce = 1684221831,
+            hash = HashUtils.toBytesAsLE("000000002d867bde415b82a4a276e802d1536c632d9138d599dba930cf45e2c3")
     ), 1287761)
 
     override val blockValidator = TestnetBitcoinCashValidator(this, storage)

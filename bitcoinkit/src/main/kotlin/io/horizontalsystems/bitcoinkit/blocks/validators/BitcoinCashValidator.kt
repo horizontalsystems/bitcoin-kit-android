@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.network.Network
 
 open class BitcoinCashValidator(private val network: Network, private val storage: IStorage) : BlockValidator(network, storage) {

@@ -55,6 +55,7 @@ dependencies {
 
     // HDWallet Kit
     implementation 'com.github.horizontalsystems:hd-wallet-kit-android:a3666d8'
+    implementation 'de.sfuhrm:saphir-hash-jca:3.0.5'
 
     // Test helpers
     testImplementation 'junit:junit:4.12'

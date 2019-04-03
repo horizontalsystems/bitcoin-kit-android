@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoinkit.utils
 import io.horizontalsystems.bitcoinkit.crypto.Bech32Cash
 import io.horizontalsystems.bitcoinkit.crypto.Bech32Segwit
 import io.horizontalsystems.bitcoinkit.exceptions.AddressFormatException
-import io.horizontalsystems.bitcoinkit.models.Address
 import io.horizontalsystems.bitcoinkit.models.AddressType
 import io.horizontalsystems.bitcoinkit.models.CashAddress
 import io.horizontalsystems.bitcoinkit.models.SegWitAddress
@@ -11,13 +10,10 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.Script
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import java.util.*
 
-abstract class Bech32AddressConverter {
-    abstract fun convert(hrp: String, addressString: String): Address
-    abstract fun convert(hrp: String, bytes: ByteArray, scriptType: Int): Address
-}
+abstract class Bech32AddressConverter(var hrp: String) : IAddressConverter
 
-class SegwitAddressConverter : Bech32AddressConverter() {
-    override fun convert(hrp: String, addressString: String): SegWitAddress {
+class SegwitAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(addressSegwitHrp) {
+    override fun convert(addressString: String): SegWitAddress {
         val decoded = Bech32Segwit.decode(addressString)
         if (decoded.hrp != hrp) {
             throw AddressFormatException("Address HRP ${decoded.hrp} is not correct")
@@ -30,7 +26,7 @@ class SegwitAddressConverter : Bech32AddressConverter() {
         return SegWitAddress(string, program, AddressType.WITNESS, 0)
     }
 
-    override fun convert(hrp: String, bytes: ByteArray, scriptType: Int): SegWitAddress {
+    override fun convert(bytes: ByteArray, scriptType: Int): SegWitAddress {
         val addressType = when (scriptType) {
             ScriptType.P2WPKH -> AddressType.WITNESS
             ScriptType.P2WSH -> AddressType.WITNESS
@@ -66,8 +62,8 @@ class SegwitAddressConverter : Bech32AddressConverter() {
     }
 }
 
-class CashAddressConverter : Bech32AddressConverter() {
-    override fun convert(hrp: String, addressString: String): CashAddress {
+class CashAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(addressSegwitHrp) {
+    override fun convert(addressString: String): CashAddress {
         var correctedAddress = addressString
         if (addressString.indexOf(":") < 0) {
             correctedAddress = "$hrp:$addressString"
@@ -117,7 +113,7 @@ class CashAddressConverter : Bech32AddressConverter() {
         return CashAddress(correctedAddress, Arrays.copyOfRange(data, 1, data.size), addressType)
     }
 
-    override fun convert(hrp: String, bytes: ByteArray, scriptType: Int): CashAddress {
+    override fun convert(bytes: ByteArray, scriptType: Int): CashAddress {
         val addressType = when (scriptType) {
             ScriptType.P2PKH,
             ScriptType.P2PK -> AddressType.P2PKH

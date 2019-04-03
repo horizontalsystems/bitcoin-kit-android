@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoinkit.utils.HashUtils
 /** Network-specific parameters */
 abstract class Network {
 
-    val protocolVersion = 70014
+    open val protocolVersion = 70014
     val bloomFilter = 70000
     val networkServices = 0L
     val serviceFullNode = 1L
@@ -36,4 +36,7 @@ abstract class Network {
     abstract val blockValidator: BlockValidator
     abstract fun validateBlock(block: Block, previousBlock: Block)
 
+    open fun generateBlockHeaderHash(data: ByteArray): ByteArray {
+        return HashUtils.doubleSha256(data)
+    }
 }

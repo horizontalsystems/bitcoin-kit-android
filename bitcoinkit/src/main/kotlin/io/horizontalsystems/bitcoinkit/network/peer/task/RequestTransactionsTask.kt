@@ -26,8 +26,4 @@ class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
         return true
     }
 
-    override fun isRequestingInventory(hash: ByteArray): Boolean {
-        return hashes.any { it.contentEquals(hash) }
-    }
-
 }

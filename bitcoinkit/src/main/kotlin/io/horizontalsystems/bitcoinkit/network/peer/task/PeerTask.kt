@@ -1,9 +1,8 @@
 package io.horizontalsystems.bitcoinkit.network.peer.task
 
-import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
-import io.horizontalsystems.bitcoinkit.models.Transaction
+import io.horizontalsystems.bitcoinkit.network.messages.Message
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.util.*
 
@@ -12,7 +11,6 @@ open class PeerTask {
     interface Listener {
         fun onTaskCompleted(task: PeerTask)
         fun onTaskFailed(task: PeerTask, e: Exception)
-        fun handleMerkleBlock(merkleBlock: MerkleBlock)
     }
 
     interface Requester {
@@ -21,6 +19,7 @@ open class PeerTask {
         fun getData(items: List<InventoryItem>)
         fun sendTransactionInventory(hash: ByteArray)
         fun send(transaction: FullTransaction)
+        fun sendMessage(message: Message)
     }
 
     var requester: Requester? = null
@@ -29,10 +28,6 @@ open class PeerTask {
     protected var allowedIdleTime: Long? = null
 
     open fun start() = Unit
-
-    open fun handleBlockHeaders(blockHeaders: List<Header>): Boolean {
-        return false
-    }
 
     open fun handleMerkleBlock(merkleBlock: MerkleBlock): Boolean {
         return false
@@ -50,10 +45,6 @@ open class PeerTask {
         return false
     }
 
-    open fun isRequestingInventory(hash: ByteArray): Boolean {
-        return false
-    }
-
     open fun handleTimeout() = Unit
 
     fun checkTimeout() {
@@ -68,6 +59,10 @@ open class PeerTask {
 
     fun resetTimer() {
         lastActiveTime = Date().time
+    }
+
+    open fun handleMessage(message: Message): Boolean {
+        return false
     }
 
 }

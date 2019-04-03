@@ -5,11 +5,11 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.bitcoinkit.transactions.scripts.*
-import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.IAddressConverter
 import io.horizontalsystems.bitcoinkit.utils.Utils
 import java.util.*
 
-class TransactionExtractor(private val addressConverter: AddressConverter, private val storage: IStorage) {
+class TransactionExtractor(private val addressConverter: IAddressConverter, private val storage: IStorage) {
 
     fun extractOutputs(transaction: FullTransaction) {
         for (output in transaction.outputs) {

@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.storage
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.*
 
-class Storage(private val store: KitDatabase) : IStorage {
+open class Storage(protected open val store: KitDatabase) : IStorage {
 
     override fun inTransaction(callback: () -> Unit) {
         store.runInTransaction(callback)

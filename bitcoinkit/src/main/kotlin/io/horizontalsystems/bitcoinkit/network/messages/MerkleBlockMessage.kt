@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.models.Header
 import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
@@ -30,7 +29,7 @@ class MerkleBlockMessage() : Message("merkleblock") {
     var flags: ByteArray = byteArrayOf()
 
     private val blockHash: String by lazy {
-        HashUtils.toHexStringAsLE(HashUtils.doubleSha256(BlockHeaderSerializer.serialize(header)))
+        HashUtils.toHexStringAsLE(header.hash)
     }
 
     constructor(payload: ByteArray) : this() {

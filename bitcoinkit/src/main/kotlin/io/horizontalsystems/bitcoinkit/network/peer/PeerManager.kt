@@ -4,9 +4,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 class PeerManager {
 
-    @Volatile
-    var syncPeer: Peer? = null
-
     private var peers = ConcurrentHashMap<String, Peer>()
 
     fun add(peer: Peer) {
@@ -47,7 +44,4 @@ class PeerManager {
         return peers.values.find { it.connected && !it.synced }
     }
 
-    fun isSyncPeer(peer: Peer): Boolean {
-        return peer == syncPeer
-    }
 }
