@@ -46,15 +46,13 @@ class BitcoinKit : AbstractKit {
 
         val addressSelector = BitcoinAddressSelector()
 
-        val apiFeeRateResource = if (testMode) "BTC/testnet" else "BTC"
-
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
-                .setApiFeeRateResource(apiFeeRateResource)
+                .setApiFeeRateCoinCode("BTC")
                 .setPeerSize(peerSize)
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)

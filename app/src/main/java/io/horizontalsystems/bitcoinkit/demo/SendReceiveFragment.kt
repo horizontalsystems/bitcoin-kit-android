@@ -8,11 +8,9 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoinkit.models.FeePriority
 
 class SendReceiveFragment : Fragment() {
 
@@ -61,6 +59,34 @@ class SendReceiveFragment : Fragment() {
         }
 
         sendAmount.addTextChangedListener(textChangeListener)
+
+        val customFeePriority = view.findViewById<EditText>(R.id.customFeePriority)
+        customFeePriority.addTextChangedListener(object: TextWatcher {
+            override fun afterTextChanged(s: Editable) {
+                val feePriority = s.toString().toIntOrNull()
+                feePriority?.let {
+                    viewModel.feePriority = FeePriority.Custom(it)
+                    updateFee()
+                }
+            }
+
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+        })
+
+        val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroup)
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val feePriority = when (checkedId) {
+                R.id.radioLowest ->  FeePriority.Lowest
+                R.id.radioLow ->  FeePriority.Low
+                R.id.radioMedium ->  FeePriority.Medium
+                R.id.radioHigh ->  FeePriority.High
+                else ->  FeePriority.Highest
+            }
+            customFeePriority.setText("")
+            viewModel.feePriority = feePriority
+            updateFee()
+        }
     }
 
     private fun send() {
@@ -84,21 +110,24 @@ class SendReceiveFragment : Fragment() {
 
     private val textChangeListener = object : TextWatcher {
         override fun afterTextChanged(s: Editable?) {
-            if (sendAddress.text.isEmpty() || sendAmount.text.isEmpty()) {
-                return
-            }
-
-            try {
-                txFeeValue.text = viewModel.fee(
-                        value = sendAmount.text.toString().toLong(),
-                        address = sendAddress.text.toString()
-                ).toString()
-            } catch (e: Exception) {
-                Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
-            }
+            updateFee()
         }
 
         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+    }
+
+    private fun updateFee() {
+        if (sendAddress.text.isEmpty() || sendAmount.text.isEmpty()) {
+            return
+        }
+        try {
+            txFeeValue.text = viewModel.fee(
+                    value = sendAmount.text.toString().toLong(),
+                    address = sendAddress.text.toString()
+            ).toString()
+        } catch (e: Exception) {
+            Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
+        }
     }
 }

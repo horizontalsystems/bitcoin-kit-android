@@ -52,7 +52,7 @@ class PeerGroup(
             throw Error("No peers connected")
         }
 
-        if (peerManager.nonSyncedPeer() != null) {
+        if (!peerManager.isHalfSynced()) {
             throw Error("Peers not synced yet")
         }
     }

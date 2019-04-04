@@ -29,7 +29,7 @@ class ApiManager(private val host: String) {
                 .openConnection()
                 .apply {
                     connectTimeout = 5000
-                    readTimeout = 10000
+                    readTimeout = 60000
                     setRequestProperty("Accept", "application/json")
                 }.getInputStream()
                 .use {

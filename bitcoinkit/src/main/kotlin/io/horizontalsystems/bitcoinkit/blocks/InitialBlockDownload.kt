@@ -105,6 +105,8 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
     }
 
     private fun downloadBlockchain() {
+        if (syncPeer?.ready != true) return
+
         syncPeer?.let { peer ->
             blockSyncer?.let { blockSyncer ->
 

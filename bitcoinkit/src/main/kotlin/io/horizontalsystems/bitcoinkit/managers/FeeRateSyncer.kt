@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.reactivex.Observable
+import io.reactivex.Maybe
 import io.reactivex.disposables.Disposable
 
 class FeeRateSyncer(private val storage: IStorage, private val apiFeeRate: ApiFeeRate) {
@@ -10,7 +10,7 @@ class FeeRateSyncer(private val storage: IStorage, private val apiFeeRate: ApiFe
 
     fun sync() {
         disposable = apiFeeRate.getFeeRate()
-                .onErrorResumeNext(Observable.empty())
+                .onErrorResumeNext(Maybe.empty())
                 .subscribe {
                     storage.setFeeRate(it)
                 }
