@@ -80,6 +80,9 @@ class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
         for (txItem in response) {
             val tx = txItem.asObject()
 
+            val blockHashJson = tx["block"] ?: continue
+            val blockHash = if (blockHashJson.isString) blockHashJson.asString() else continue
+
             val outputs = mutableListOf<TransactionOutputItem>()
             for (outputItem in tx["outputs"].asArray()) {
                 val outputJson = outputItem.asObject()
@@ -92,7 +95,7 @@ class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
                 }
             }
 
-            transactions.add(TransactionItem(tx["block"].asString(), tx["height"].asInt(), outputs))
+            transactions.add(TransactionItem(blockHash, tx["height"].asInt(), outputs))
         }
 
         return transactions
