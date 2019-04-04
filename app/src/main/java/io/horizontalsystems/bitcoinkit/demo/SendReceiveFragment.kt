@@ -63,7 +63,7 @@ class SendReceiveFragment : Fragment() {
         val customFeePriority = view.findViewById<EditText>(R.id.customFeePriority)
         customFeePriority.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable) {
-                val feePriority = s.toString().toDoubleOrNull()
+                val feePriority = s.toString().toIntOrNull()
                 feePriority?.let {
                     viewModel.feePriority = FeePriority.Custom(it)
                     updateFee()
