@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.network
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
 import io.horizontalsystems.bitcoinkit.network.peer.PeerManager
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -92,10 +92,34 @@ class PeerManagerTest {
     }
 
     @Test
-    fun isSyncPeer() {
-        assertFalse(peerManager.isSyncPeer(peer1))
+    fun isHalfSynced_moreThanHalf() {
+        addPeer(host = "0.0.0.1", connected = true, synced = true)
+        addPeer(host = "0.0.0.2", connected = true, synced = true)
+        addPeer(host = "0.0.0.3", connected = false, synced = false)
+        addPeer(host = "0.0.0.4", connected = false, synced = false)
 
-        peerManager.syncPeer = peer1
-        assertTrue(peerManager.isSyncPeer(peer1))
+        assertEquals(true, peerManager.isHalfSynced())
+    }
+
+    @Test
+    fun isHalfSynced_lessThanHalf() {
+        addPeer(host = "0.0.0.1", connected = true, synced = true)
+        addPeer(host = "0.0.0.2", connected = true, synced = false)
+        addPeer(host = "0.0.0.3", connected = false, synced = false)
+        addPeer(host = "0.0.0.4", connected = false, synced = true)
+
+        assertEquals(false, peerManager.isHalfSynced())
+    }
+
+    private fun addPeer(connected: Boolean, synced: Boolean, host: String = "0.0.0.0"): Peer {
+        val peer = mock(Peer::class.java)
+
+        whenever(peer.connected).thenReturn(connected)
+        whenever(peer.synced).thenReturn(synced)
+        whenever(peer.host).thenReturn(host)
+
+        peerManager.add(peer)
+
+        return peer
     }
 }
