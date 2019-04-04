@@ -1,23 +1,19 @@
 package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.models.FeeRate
-import io.reactivex.Observable
+import io.reactivex.Maybe
 
-class ApiFeeRate(private val resource: String) {
+class ApiFeeRate(private val coinCode: String) {
     private val apiManager = ApiManager("https://ipfs.horizontalsystems.xyz")
 
-    fun getFeeRate(): Observable<FeeRate> {
-        return Observable.create { subscriber ->
+    fun getFeeRate(): Maybe<FeeRate> {
+        return Maybe.create { subscriber ->
             try {
-                val json = apiManager.getJson("ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain/$resource/estimatefee/index.json")
-                val rate = FeeRate(
-                        json["low_priority"].asString(),
-                        json["medium_priority"].asString(),
-                        json["high_priority"].asString(),
-                        json["date"].asLong()
-                )
+                val json = apiManager.getJson("ipns/QmXTJZBMMRmBbPun6HFt3tmb3tfYF2usLPxFoacL7G5uMX/blockchain/estimatefee/index.json")
 
-                subscriber.onNext(rate)
+                val btcRates = json.get("rates").asObject().get(coinCode).asObject()
+                val rate = FeeRate(btcRates["low_priority"].asInt(), btcRates["medium_priority"].asInt(), btcRates["high_priority"].asInt(), json["time"].asLong())
+                subscriber.onSuccess(rate)
                 subscriber.onComplete()
             } catch (e: Exception) {
                 subscriber.onError(e)

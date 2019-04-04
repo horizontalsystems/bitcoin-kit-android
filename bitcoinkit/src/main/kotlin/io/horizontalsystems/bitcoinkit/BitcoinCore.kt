@@ -12,6 +12,7 @@ import io.horizontalsystems.bitcoinkit.core.Wallet
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
+import io.horizontalsystems.bitcoinkit.models.FeePriority
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.messages.BitcoinMessageParser
@@ -42,7 +43,7 @@ class BitcoinCoreBuilder {
     private var network: Network? = null
     private var paymentAddressParser: PaymentAddressParser? = null
     private var addressSelector: IAddressSelector? = null
-    private var apiFeeRateResource: String? = null
+    private var apiFeeRateCoinCode: String? = null
     private var storage: IStorage? = null
 
     // parameters with default values
@@ -80,8 +81,8 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setApiFeeRateResource(apiFeeRateResource: String): BitcoinCoreBuilder {
-        this.apiFeeRateResource = apiFeeRateResource
+    fun setApiFeeRateCoinCode(apiFeeRateCoinCode: String): BitcoinCoreBuilder {
+        this.apiFeeRateCoinCode = apiFeeRateCoinCode
         return this
     }
 
@@ -111,12 +112,12 @@ class BitcoinCoreBuilder {
         val network = checkNotNull(this.network)
         val paymentAddressParser = checkNotNull(this.paymentAddressParser)
         val addressSelector = checkNotNull(this.addressSelector)
-        val apiFeeRateResource = checkNotNull(this.apiFeeRateResource)
+        val apiFeeRateCoinCode = checkNotNull(this.apiFeeRateCoinCode)
         val storage = checkNotNull(this.storage)
 
         BlockHeaderSerializer.network = network
 
-        val apiFeeRate = ApiFeeRate(apiFeeRateResource)
+        val apiFeeRate = ApiFeeRate(apiFeeRateCoinCode)
 
         val addressConverter = AddressConverterChain()
 
@@ -288,12 +289,12 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         return dataProvider.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true): Long {
-        return transactionBuilder.fee(value, dataProvider.feeRate.medium, senderPay, address)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium): Long {
+        return transactionBuilder.fee(value, getFeeRate(feePriority), senderPay, address)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true) {
-        transactionCreator.create(address, value, dataProvider.feeRate.medium, senderPay)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium) {
+        transactionCreator.create(address, value, getFeeRate(feePriority), senderPay)
     }
 
     fun receiveAddress(): String {
@@ -375,6 +376,15 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
                 it.onKitStateUpdate(state)
             }
         }
+    }
+
+    private fun getFeeRate(feePriority: FeePriority) = when(feePriority) {
+        FeePriority.Lowest -> dataProvider.feeRate.lowPriority
+        FeePriority.Low -> (dataProvider.feeRate.lowPriority + dataProvider.feeRate.mediumPriority) / 2
+        FeePriority.Medium -> dataProvider.feeRate.mediumPriority
+        FeePriority.High -> (dataProvider.feeRate.mediumPriority + dataProvider.feeRate.highPriority) / 2
+        FeePriority.Highest -> dataProvider.feeRate.highPriority
+        is FeePriority.Custom -> feePriority.feeRate
     }
 
     sealed class KitState {

@@ -63,15 +63,13 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
 
         val addressSelector = BitcoinAddressSelector()
 
-        val apiFeeRateResource = if (testMode) "DASH/testnet" else "DASH"
-
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
-                .setApiFeeRateResource(apiFeeRateResource)
+                .setApiFeeRateCoinCode("DASH")
                 .setPeerSize(peerSize)
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)

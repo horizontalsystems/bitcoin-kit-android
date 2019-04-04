@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit
 
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
+import io.horizontalsystems.bitcoinkit.models.FeePriority
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.reactivex.Single
@@ -39,12 +40,12 @@ abstract class AbstractKit {
         return bitcoinCore.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true): Long {
-        return bitcoinCore.fee(value, address, senderPay)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium): Long {
+        return bitcoinCore.fee(value, address, senderPay, feePriority)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true) {
-        bitcoinCore.send(address, value, senderPay)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium) {
+        bitcoinCore.send(address, value, senderPay, feePriority)
     }
 
     fun receiveAddress(): String {
