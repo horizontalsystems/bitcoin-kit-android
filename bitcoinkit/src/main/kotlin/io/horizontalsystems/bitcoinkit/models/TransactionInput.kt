@@ -24,7 +24,11 @@ import io.horizontalsystems.bitcoinkit.storage.WitnessConverter
         foreignKeys = [ForeignKey(
                 entity = Transaction::class,
                 parentColumns = ["hashHexReversed"],
-                childColumns = ["transactionHashReversedHex"])])
+                childColumns = ["transactionHashReversedHex"],
+                onUpdate = ForeignKey.CASCADE,
+                onDelete = ForeignKey.CASCADE,
+                deferred = true)
+        ])
 
 class TransactionInput(
         val previousOutputTxReversedHex: String,

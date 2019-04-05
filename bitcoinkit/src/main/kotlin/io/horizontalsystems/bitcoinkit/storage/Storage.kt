@@ -10,6 +10,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     // FeeRate
+
     override val feeRate: FeeRate?
         get() = store.feeRate.getRate()
 
@@ -18,6 +19,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     // RestoreState
+
     override val initialRestored: Boolean?
         get() = store.blockchainState.getState()?.initialRestored
 
@@ -26,6 +28,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     // PeerAddress
+
     override fun getLeastScorePeerAddressExcludingIps(ips: List<String>): PeerAddress? {
         return store.peerAddress.getLeastScore(ips)
     }
@@ -207,7 +210,8 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.transaction.getByHash(hash) != null
     }
 
-    //  TransactionOutput
+    // TransactionOutput
+
     override fun getUnspentOutputs(): List<UnspentOutput> {
         return store.output.getUnspents()
     }
@@ -261,7 +265,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     override fun savePublicKeys(keys: List<PublicKey>) {
-        store.publicKey.insertAll(keys)
+        store.publicKey.insertOrIgnore(keys)
     }
 
     // SentTransaction
@@ -283,6 +287,5 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     override fun clear() {
         store.clearAllTables()
     }
-
 
 }

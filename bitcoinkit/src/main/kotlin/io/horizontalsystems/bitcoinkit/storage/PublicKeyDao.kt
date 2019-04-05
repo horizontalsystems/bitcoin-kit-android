@@ -5,11 +5,9 @@ import io.horizontalsystems.bitcoinkit.models.PublicKey
 
 @Dao
 interface PublicKeyDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(publicKey: PublicKey)
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(keys: List<PublicKey>)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertOrIgnore(keys: List<PublicKey>)
 
     @Delete
     fun delete(publicKey: PublicKey)

@@ -19,12 +19,16 @@ import java.util.*
  *  Variable    Outputs         Outputs
  *  4 bytes     LockTime        Transaction lock time
  */
+
 @Entity(indices = [Index("blockHashReversedHex")],
         primaryKeys = ["hashHexReversed"],
         foreignKeys = [ForeignKey(
                 entity = Block::class,
                 parentColumns = ["headerHashReversedHex"],
-                childColumns = ["blockHashReversedHex"])
+                childColumns = ["blockHashReversedHex"],
+                onUpdate = ForeignKey.CASCADE,
+                onDelete = ForeignKey.CASCADE,
+                deferred = true)
         ])
 
 class Transaction {

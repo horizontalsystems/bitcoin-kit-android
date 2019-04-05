@@ -24,7 +24,8 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
                     parentColumns = ["path"],
                     childColumns = ["publicKeyPath"],
                     onUpdate = ForeignKey.SET_NULL,
-                    onDelete = ForeignKey.SET_NULL),
+                    onDelete = ForeignKey.SET_NULL,
+                    deferred = true),
             ForeignKey(
                     entity = Transaction::class,
                     parentColumns = ["hashHexReversed"],
