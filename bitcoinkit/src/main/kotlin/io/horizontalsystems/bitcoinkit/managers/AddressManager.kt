@@ -23,11 +23,15 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
 
     fun fillGap() {
         val lastUsedAccount = storage.getPublicKeys()
-                .sortedByDescending { it.account }
+                .sortedBy { it.account }
                 .lastOrNull { it.used(storage) }
                 ?.account
 
-        val requiredAccountsCount = lastUsedAccount?.let { it + 4 } ?: 1
+        val requiredAccountsCount = if (lastUsedAccount != null) {
+            lastUsedAccount + 1 + 1 //  One because account starts from 0, One because we must have n+1 accounts
+        } else {
+            1
+        }
 
         repeat(requiredAccountsCount) { account ->
             fillGap(account, true)
@@ -44,7 +48,7 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     fun gapShifts(): Boolean {
         val publicKeys = storage.getPublicKeys()
         val lastAccount = publicKeys
-                .sortedByDescending { it.account }
+                .sortedBy { it.account }
                 .firstOrNull()?.account
                 ?: return false
 
@@ -67,7 +71,7 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
         val keys = mutableListOf<PublicKey>()
 
         if (keysCount < hdWallet.gapLimit) {
-            val allKeys = publicKeys.sortedByDescending { it.index }
+            val allKeys = publicKeys.sortedBy { it.index }
             val lastIndex = allKeys.lastOrNull()?.index ?: -1
 
             for (i in 1..hdWallet.gapLimit - keysCount) {
@@ -80,7 +84,7 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     }
 
     private fun gapKeysCount(publicKeys: List<PublicKey>): Int {
-        val lastUsedKey = publicKeys.filter { it.used(storage) }.sortedByDescending { it.index }.lastOrNull()
+        val lastUsedKey = publicKeys.filter { it.used(storage) }.sortedBy { it.index }.lastOrNull()
 
         return when (lastUsedKey) {
             null -> publicKeys.size
@@ -92,8 +96,8 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     private fun getPublicKey(external: Boolean): PublicKey {
         return storage.getPublicKeys()
                 .filter { it.external == external && !it.used(storage) }
-                .sortedWith(compareByDescending { it.account })
-                .sortedWith(compareByDescending { it.index })
+                .sortedWith(compareBy { it.account })
+                .sortedWith(compareBy { it.index })
                 .firstOrNull() ?: throw Error.NoUnusedPublicKey
     }
 
