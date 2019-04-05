@@ -27,6 +27,10 @@ import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.Mnemonic
 
 class DashKit : AbstractKit, BitcoinCore.Listener {
+    enum class NetworkType {
+        MainNet,
+        TestNet
+    }
 
     interface Listener : BitcoinCore.Listener
 
@@ -42,12 +46,11 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
     private val storage: DashStorage
     private var masterNodeSyncer: MasternodeListSyncer? = null
 
-    constructor(context: Context, words: List<String>, walletId: String, testMode: Boolean = false, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
-            this(context, Mnemonic().toSeed(words), walletId, testMode, peerSize, newWallet, confirmationsThreshold)
+    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
+            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
-    constructor(context: Context, seed: ByteArray, walletId: String, testMode: Boolean = false, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val networkId = if (testMode) "TestNet" else "MainNet"
-        val databaseName = "bitcoinkit-$networkId-$walletId"
+    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
+        val databaseName = "${this.javaClass.simpleName}-${networkType.name}-$walletId"
 
         val database = Room.databaseBuilder(context, DashKitDatabase::class.java, databaseName)
                 .fallbackToDestructiveMigration()
@@ -57,7 +60,10 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
 
         storage = DashStorage(database)
 
-        network = if (testMode) TestNetDash(storage) else MainNetDash(storage)
+        network = when (networkType) {
+            NetworkType.MainNet -> MainNetDash()
+            NetworkType.TestNet -> TestNetDash()
+        }
 
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
 
@@ -76,10 +82,8 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
                 .setStorage(storage)
                 .build()
 
-        extendBitcoin(bitcoinCore)
-    }
+        // extending bitcoinCore
 
-    private fun extendBitcoin(bitcoinCore: BitcoinCore) {
         bitcoinCore.addListener(this)
 
         bitcoinCore.addMessageParser(DashMessageParser())

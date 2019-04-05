@@ -5,21 +5,19 @@ import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
 
-open class BitcoinCashValidator(private val network: Network, private val storage: IStorage) : BlockValidator(network, storage) {
+open class BitcoinCashValidator(private val network: Network, private val storage: IStorage) : BitcoinBlockValidator(network, storage) {
     private val largestHash = 1.toBigInteger() shl 256
     private val diffDate = 1510600000
 
-    override fun validate(candidate: Block, previousBlock: Block) {
-        validateHeader(candidate, previousBlock)
-
-        if (medianTimePast(candidate) >= diffDate) {
+    override fun validate(block: Block, previousBlock: Block) {
+        if (medianTimePast(block) >= diffDate) {
             getPrevious(previousBlock, 147) ?: return
 
-            validateDAA(candidate, previousBlock)
-        } else if (isDifficultyTransitionEdge(candidate.height)) {
-            checkDifficultyTransitions(candidate)
+            validateDAA(block, previousBlock)
+        } else if (isDifficultyTransitionEdge(block.height)) {
+            checkDifficultyTransitions(block)
         } else {
-            validateEDA(candidate, previousBlock)
+            validateEDA(block, previousBlock)
         }
     }
 

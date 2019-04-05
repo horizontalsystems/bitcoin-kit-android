@@ -4,18 +4,16 @@ import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
 
-class TestnetValidator(private val network: Network, private val storage: IStorage) : BlockValidator(network, storage) {
+class BitcoinTestnetValidator(private val network: Network, private val storage: IStorage) : BitcoinBlockValidator(network, storage) {
     private val diffDate = 1329264000L // February 16th 2012
 
-    override fun validate(candidate: Block, previousBlock: Block) {
-        validateHeader(candidate, previousBlock)
-
-        if (isDifficultyTransitionEdge(candidate.height)) {
-            checkDifficultyTransitions(candidate)
+    override fun validate(block: Block, previousBlock: Block) {
+        if (isDifficultyTransitionEdge(block.height)) {
+            checkDifficultyTransitions(block)
         } else if (previousBlock.timestamp > diffDate) {
-            validateDifficulty(candidate, previousBlock)
+            validateDifficulty(block, previousBlock)
         } else {
-            validateBits(candidate, previousBlock)
+            validateBits(block, previousBlock)
         }
     }
 

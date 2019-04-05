@@ -1,13 +1,11 @@
 package io.horizontalsystems.bitcoinkit.dash
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidator
-import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
-class TestNetDash(storage: IStorage) : Network() {
+class TestNetDash : Network() {
 
     override val protocolVersion = 70213
 
@@ -37,13 +35,6 @@ class TestNetDash(storage: IStorage) : Network() {
             4281733120,
             HashUtils.toBytesAsLE("0000000f10a125d1d97784028be7c3b737e21a3ab76d59a60f8d244ab548de14")
     ), 55032)
-
-    override val blockValidator = BlockValidator(this, storage)
-
-    override fun validateBlock(block: Block, previousBlock: Block) {
-//        TODO: validator
-//        blockValidator.validate(block, previousBlock)
-    }
 
     override fun generateBlockHeaderHash(data: ByteArray): ByteArray {
         return X11Hash.x11(data)

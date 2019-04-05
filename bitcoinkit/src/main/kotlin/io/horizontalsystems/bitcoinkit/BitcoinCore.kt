@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit
 
 import android.content.Context
-import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
-import io.horizontalsystems.bitcoinkit.blocks.Blockchain
-import io.horizontalsystems.bitcoinkit.blocks.BloomFilterLoader
-import io.horizontalsystems.bitcoinkit.blocks.InitialBlockDownload
+import io.horizontalsystems.bitcoinkit.blocks.*
+import io.horizontalsystems.bitcoinkit.blocks.validators.BlockHeaderValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorChain
+import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
@@ -194,7 +194,8 @@ class BitcoinCoreBuilder {
         bloomFilterManager.listener = bloomFilterLoader
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 
-        val initialBlockDownload = InitialBlockDownload(BlockSyncer(storage, Blockchain(storage, network, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network), peerManager, kitStateProvider)
+        val initialBlockDownload = InitialBlockDownload(BlockSyncer(storage, Blockchain(storage, bitcoinCore.blockValidatorChain, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network), peerManager, kitStateProvider)
+        bitcoinCore.addBlockValidator(BlockHeaderValidator())
         bitcoinCore.addPeerTaskHandler(initialBlockDownload)
         bitcoinCore.addInventoryItemsHandler(initialBlockDownload)
         bitcoinCore.addPeerGroupListener(initialBlockDownload)
@@ -228,6 +229,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
     val messageParserChain = MessageParserChain()
+    val blockValidatorChain = BlockValidatorChain()
 
     fun addMessageParser(messageParser: IMessageParser) {
         messageParserChain.addParser(messageParser)
@@ -247,6 +249,10 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     fun prependAddressConverter(converter: IAddressConverter) {
         addressConverter.prependConverter(converter)
+    }
+
+    fun addBlockValidator(validator: IBlockValidator) {
+        blockValidatorChain.addValidator(validator)
     }
 
     // END: Extending

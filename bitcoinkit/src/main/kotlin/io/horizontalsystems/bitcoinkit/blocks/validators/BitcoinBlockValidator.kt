@@ -4,21 +4,17 @@ import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
-import java.math.BigInteger
 
-open class BlockValidator(private val network: Network, private val storage: IStorage) {
-
-    open fun validate(candidate: Block, previousBlock: Block) {
-        validateHeader(candidate, previousBlock)
-
-        if (isDifficultyTransitionEdge(candidate.height)) {
-            checkDifficultyTransitions(candidate)
+open class BitcoinBlockValidator(private val network: Network, private val storage: IStorage) : IBlockValidator {
+    override fun validate(block: Block, previousBlock: Block) {
+        if (isDifficultyTransitionEdge(block.height)) {
+            checkDifficultyTransitions(block)
         } else {
-            validateBits(candidate, previousBlock)
+            validateBits(block, previousBlock)
         }
     }
 
-    open fun checkDifficultyTransitions(block: Block) {
+    fun checkDifficultyTransitions(block: Block) {
         val lastCheckPointBlock = checkNotNull(getPrevious(block, 2016)) {
             BlockValidatorException.NoCheckpointBlock()
         }
@@ -44,16 +40,6 @@ open class BlockValidator(private val network: Network, private val storage: ISt
         val newTargetCompact = CompactBits.encode(newTarget)
         if (newTargetCompact != block.bits) {
             throw BlockValidatorException.NotDifficultyTransitionEqualBits()
-        }
-    }
-
-    fun validateHeader(block: Block, previousBlock: Block) {
-        check(BigInteger(block.headerHashReversedHex, 16) < CompactBits.decode(block.bits)) {
-            throw BlockValidatorException.InvalidProveOfWork()
-        }
-
-        check(block.previousBlockHash.contentEquals(previousBlock.headerHash)) {
-            throw BlockValidatorException.WrongPreviousHeader()
         }
     }
 
