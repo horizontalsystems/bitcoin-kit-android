@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.managers
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.RxTestRule
 import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.reactivex.Maybe
 import io.reactivex.Observable
 import org.junit.Before
 import org.junit.Test
@@ -22,7 +23,7 @@ class FeeRateSyncerTest {
 
     @Test
     fun sync() {
-        whenever(apiFeeRate.getFeeRate()).thenReturn(Observable.empty())
+        whenever(apiFeeRate.getFeeRate()).thenReturn(Maybe.empty())
 
         feeRateSyncer = FeeRateSyncer(storage, apiFeeRate)
         feeRateSyncer.sync()

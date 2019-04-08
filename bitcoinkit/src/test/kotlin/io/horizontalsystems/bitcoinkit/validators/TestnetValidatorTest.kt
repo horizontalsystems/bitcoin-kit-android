@@ -28,7 +28,8 @@ class TestnetValidatorTest {
                         merkleRoot = HashUtils.toBytesAsLE("167bf70981d49388d07881b1a448ff9b79cf2a32716e45c535345823d8cdd541"),
                         timestamp = 1533980459,
                         bits = 388763047,
-                        nonce = 1545867530
+                        nonce = 1545867530,
+                        hash = byteArrayOf(1)
                 )
         )
 
@@ -39,7 +40,8 @@ class TestnetValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("7904930640df999005df3b57f9c6f542088af33c3d773dcec2939f55ced359b8"),
                 timestamp = 1535129301,
                 bits = 388763047,
-                nonce = 59591417
+                nonce = 59591417,
+                hash = byteArrayOf(1)
         )
 
         for (i in 1 until 2016) {
@@ -52,7 +54,8 @@ class TestnetValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("3ad0fa0e8c100db5831ebea7cabf6addae2c372e6e1d84f6243555df5bbfa351"),
                 timestamp = 1535129431,
                 bits = 388618029,
-                nonce = 2367954839
+                nonce = 2367954839,
+                hash = byteArrayOf(1)
         )
 
         val check2 = Block(check2Head, prevBlock)
@@ -77,7 +80,8 @@ class TestnetValidatorTest {
                         merkleRoot = HashUtils.toBytesAsLE("dff076f1f3468f86785b42c10e6f23c849ccbc1d40a0fa8909b20b20fb204de2"),
                         timestamp = 1535560970,
                         bits = 424329477,
-                        nonce = 2681700833
+                        nonce = 2681700833,
+                        hash = byteArrayOf(1)
                 )
         )
 
@@ -88,7 +92,8 @@ class TestnetValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("6a05a10911d844e86e7758bf27ce183b2eaa5768108d992efdb6487c8f3f6dae"),
                 timestamp = 1536796796,
                 bits = 424329477,
-                nonce = 915088888
+                nonce = 915088888,
+                hash = byteArrayOf(1)
         )
 
         for (i in 1 until 2016) {
@@ -101,7 +106,8 @@ class TestnetValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("827bc2d47a164b9144a507eebc40b32f8f3e7e8c784b17e0a1fa245bfe9c100c"),
                 timestamp = 1536797113,
                 nonce = 1267362056,
-                bits = 424435696
+                bits = 424435696,
+                hash = byteArrayOf(1)
         )
 
         val check2 = Block(check2Head, prevBlock)

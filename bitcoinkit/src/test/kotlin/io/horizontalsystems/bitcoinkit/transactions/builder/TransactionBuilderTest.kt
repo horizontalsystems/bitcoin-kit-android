@@ -12,13 +12,14 @@ import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoinkit.models.PublicKey
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.bitcoinkit.storage.UnspentOutput
 import io.horizontalsystems.bitcoinkit.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.AddressConverterChain
+import io.horizontalsystems.bitcoinkit.utils.Base58AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.SegwitAddressConverter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -29,7 +30,6 @@ class TransactionBuilderTest {
 
     private val publicKey = Mockito.mock(PublicKey::class.java)
     private val unspentOutput = Mockito.mock(UnspentOutput::class.java)
-    private val network = Mockito.mock(Network::class.java)
     private val unspentOutputSelector = Mockito.mock(UnspentOutputSelector::class.java)
     private val unspentOutputProvider = Mockito.mock(UnspentOutputProvider::class.java)
     private val scriptBuilder = Mockito.mock(ScriptBuilder::class.java)
@@ -39,9 +39,8 @@ class TransactionBuilderTest {
 
     private lateinit var previousTransaction: FullTransaction
     private lateinit var unspentOutputs: SelectedUnspentOutputInfo
-
-    private val addressConverter = AddressConverter(network)
-    private val transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, addressManager)
+    private lateinit var transactionBuilder: TransactionBuilder
+    private lateinit var addressConverter: AddressConverterChain
 
     private val toAddressP2PKH = "mmLB5DvGbsb4krT9PJ7WrKmv8DkyvNx1ne"
     private val toAddressP2SH = "2MyQWMrsLsqAMSUeusduAzN6pWuH2V27ykE"
@@ -53,11 +52,12 @@ class TransactionBuilderTest {
 
     @Before
     fun setUp() {
-        previousTransaction = Fixtures.transactionP2PKH
+        addressConverter = AddressConverterChain()
+        addressConverter.prependConverter(Base58AddressConverter(111, 196))
 
-        whenever(network.addressSegwitHrp).thenReturn("bc")
-        whenever(network.addressVersion).thenReturn(111)
-        whenever(network.addressScriptVersion).thenReturn(196)
+        transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, addressManager)
+
+        previousTransaction = Fixtures.transactionP2PKH
 
         whenever(unspentOutput.output).thenReturn(previousTransaction.outputs[0])
         whenever(unspentOutput.publicKey).thenReturn(publicKey)

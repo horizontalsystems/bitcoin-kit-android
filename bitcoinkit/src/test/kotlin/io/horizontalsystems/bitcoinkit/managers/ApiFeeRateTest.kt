@@ -4,7 +4,6 @@ import com.eclipsesource.json.JsonObject
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.RxTestRule
-import io.horizontalsystems.bitcoinkit.BitcoinKit.NetworkType
 import io.horizontalsystems.bitcoinkit.models.FeeRate
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -21,12 +20,12 @@ import org.powermock.modules.junit4.PowerMockRunner
 
 class ApiFeeRateTest {
     private val apiManager = mock(ApiManager::class.java)
-    private val resource = "ipns/Qmd4Gv2YVPqs6dmSy1XEq7pQRSgLihqYKL2JjK7DMUFPVz/io-hs/data/blockchain"
+    private val resource = "ipns/QmXTJZBMMRmBbPun6HFt3tmb3tfYF2usLPxFoacL7G5uMX/blockchain/estimatefee/index.json"
 
     private val feeRate = FeeRate(
-            lowPriority = "0.00001023",
-            mediumPriority = "0.00001023",
-            highPriority = "0.00001023",
+            lowPriority = 10,
+            mediumPriority = 20,
+            highPriority = 30,
             date = 1543211299660
     )
 
@@ -34,7 +33,6 @@ class ApiFeeRateTest {
         this.add("low_priority", feeRate.lowPriority)
         this.add("medium_priority", feeRate.mediumPriority)
         this.add("high_priority", feeRate.highPriority)
-        this.add("date", feeRate.date)
     }
 
     private lateinit var apiFeeRate: ApiFeeRate
@@ -48,12 +46,19 @@ class ApiFeeRateTest {
                 .withAnyArguments()
                 .thenReturn(apiManager)
 
-        whenever(apiManager.getJson(any())).thenReturn(jsonObject)
+        whenever(apiManager.getJson(any())).thenReturn(JsonObject().apply {
+            add("time", feeRate.date)
+            add("rates", JsonObject().apply {
+                add("BTC", jsonObject)
+                add("BCH", jsonObject)
+                add("ETH", jsonObject)
+            })
+        })
     }
 
     @Test
     fun getFeeRate() {
-        apiFeeRate = ApiFeeRate(NetworkType.MainNet)
+        apiFeeRate = ApiFeeRate("BTC")
         apiFeeRate.getFeeRate().test().assertValue {
             feeRate.lowPriority == it.lowPriority &&
                     feeRate.mediumPriority == it.mediumPriority &&
@@ -66,22 +71,9 @@ class ApiFeeRateTest {
     fun getFeeRate_BTC() {
         assertEquals(1, 1)
 
-        // MainNet
-        apiFeeRate = ApiFeeRate(NetworkType.MainNet)
+        apiFeeRate = ApiFeeRate("BTC")
         apiFeeRate.getFeeRate().test().assertOf {
-            verify(apiManager).getJson("$resource/BTC/estimatefee/index.json")
-        }
-
-        // TestNet
-        apiFeeRate = ApiFeeRate(NetworkType.TestNet)
-        apiFeeRate.getFeeRate().test().assertOf {
-            verify(apiManager).getJson("$resource/BTC/testnet/estimatefee/index.json")
-        }
-
-        // RegNet
-        apiFeeRate = ApiFeeRate(NetworkType.RegTest)
-        apiFeeRate.getFeeRate().test().assertOf {
-            verify(apiManager).getJson("$resource/BTC/regtest/estimatefee/index.json")
+            verify(apiManager).getJson(resource)
         }
     }
 
@@ -89,17 +81,11 @@ class ApiFeeRateTest {
     fun getFeeRate_BCH() {
         assertEquals(1, 1)
 
-        // MainNet
-        apiFeeRate = ApiFeeRate(NetworkType.MainNetBitCash)
+        apiFeeRate = ApiFeeRate("BCH")
         apiFeeRate.getFeeRate().test().assertOf {
-            verify(apiManager).getJson("$resource/BCH/estimatefee/index.json")
+            verify(apiManager).getJson(resource)
         }
 
-        // TestNet
-        apiFeeRate = ApiFeeRate(NetworkType.TestNetBitCash)
-        apiFeeRate.getFeeRate().test().assertOf {
-            verify(apiManager).getJson("$resource/BCH/estimatefee/index.json")
-        }
     }
 
 }

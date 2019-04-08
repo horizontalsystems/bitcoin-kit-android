@@ -1,24 +1,19 @@
 package io.horizontalsystems.bitcoinkit.transactions.scripts
 
-import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.AddressType
 import io.horizontalsystems.bitcoinkit.models.SegWitAddress
-import io.horizontalsystems.bitcoinkit.network.MainNet
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2PKH
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType.P2SH
-import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.Base58AddressConverter
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.mockito.Mockito.mock
 
 class ScriptBuilderTest {
 
-    private val storage = mock(IStorage::class.java)
-    private val network = MainNet(storage)
     private val scriptBuilder = ScriptBuilder()
-    private val addressConverter = AddressConverter(network)
+    private val addressConverter = Base58AddressConverter(0, 5)
 
     @Test
     fun testP2PKH() {

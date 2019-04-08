@@ -3,8 +3,11 @@ package io.horizontalsystems.bitcoinkit.message
 import io.horizontalsystems.bitcoinkit.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoinkit.network.MainNet
+import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoinkit.network.TestNet
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.Mockito.mock
@@ -28,6 +31,8 @@ class MerkleBlockExtractorTest {
         )
 
         val expectedBlockHash = "490e924edc714fe5014d6b7f01a86aced7c37b2117a229000000000000000000"
+
+        BlockHeaderSerializer.network = MainNet(storage)
 
         val message = MerkleBlockMessage(data)
         val merkleBlock = merkleBlockExtractor.extract(message)

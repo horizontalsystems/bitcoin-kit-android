@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit
 
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.extensions.hexToByteArray
+import io.horizontalsystems.bitcoinkit.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
@@ -19,7 +20,8 @@ object Fixtures {
                         merkleRoot = HashUtils.toBytesAsLE("167bf70981d49388d07881b1a448ff9b79cf2a32716e45c535345823d8cdd541"),
                         timestamp = 1533980459,
                         bits = 388763047,
-                        nonce = 1545867530
+                        nonce = 1545867530,
+                        hash = "000000000000000000262e508512ce2e6a018e181fb2e5efe048a4e01d21fa7a".toReversedByteArray()
                 ))
 
     val block1
@@ -31,7 +33,8 @@ object Fixtures {
                         merkleRoot = HashUtils.toBytesAsLE("5510c0c3d1fd9d2b56a34aab98c29860015caf248fa62a1907b197ddec17c788"),
                         timestamp = 1535128609,
                         bits = 388763047,
-                        nonce = 2295801359
+                        nonce = 2295801359,
+                        hash = "0000000000000000000a876dbca5804f792afa90b6dc7946dedb5866245d0c55".toReversedByteArray()
                 )
         ).apply {
             headerHashReversedHex = HashUtils.toHexString(this.headerHash.reversedArray())
@@ -46,7 +49,8 @@ object Fixtures {
                         merkleRoot = HashUtils.toBytesAsLE("ccf2737e44e435e2e11481755b00d161815a24e605d605a17bf20da49320ad7d"),
                         timestamp = 1535128839,
                         bits = 388763047,
-                        nonce = 3401296263
+                        nonce = 3401296263,
+                        hash = "000000000000000000124a73e879fd66a1b29d1b4b3f1a81de3cbcbe579e21a8".toReversedByteArray()
                 )
         )
 
@@ -59,7 +63,8 @@ object Fixtures {
                         merkleRoot = HashUtils.toBytesAsLE("7904930640df999005df3b57f9c6f542088af33c3d773dcec2939f55ced359b8"),
                         timestamp = 1535129301,
                         bits = 388763047,
-                        nonce = 59591417
+                        nonce = 59591417,
+                        hash = "0000000000000000001d9d48d93793aaa85b5f6d17c176d4ef905c7e7112b1cf".toReversedByteArray()
                 )
         )
 
@@ -72,7 +77,8 @@ object Fixtures {
                         merkleRoot = HashUtils.toBytesAsLE("3ad0fa0e8c100db5831ebea7cabf6addae2c372e6e1d84f6243555df5bbfa351"),
                         timestamp = 1535129431,
                         bits = 388618029,
-                        nonce = 2367954839
+                        nonce = 2367954839,
+                        hash = "00000000000000000004f11858464cc6113248537a01e628324968b499848a60".toReversedByteArray()
                 )
         )
 

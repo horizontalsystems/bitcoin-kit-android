@@ -11,31 +11,31 @@ import org.junit.Test
 class CashAddressConverterTest {
     private lateinit var converter: CashAddressConverter
     private lateinit var address: Address
+    private val hrp: String = "bitcoincash"
 
     @Test
     fun convert_strings() {
-        converter = CashAddressConverter()
+        converter = CashAddressConverter(hrp)
 
         // empty string
-        stringToAddress("bitcoincash", "")
-        // stringToAddress("bitcoincash", " ")
+        stringToAddress("")
         // invalid upper and lower case at the same time "Q" "zdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8"
-        stringToAddress("bitcoincash", "bitcoincash:Qzdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8")
+        stringToAddress("bitcoincash:Qzdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8")
         // no prefix
-        // stringToAddress("bitcoincash", "qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2")
+        // stringToAddress("qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2")
         // invalid prefix "bitcoincash012345"
-        stringToAddress("bitcoincash", "bitcoincash012345:qzdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8")
+        stringToAddress("bitcoincash012345:qzdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8")
         // invalid character "1"
-        stringToAddress("bitcoincash", "bitcoincash:111112hn0xrz99fcp6hkjxzk848rjvvhgytv411111")
+        stringToAddress("bitcoincash:111112hn0xrz99fcp6hkjxzk848rjvvhgytv411111")
         // unexpected character "💦😆"
-        stringToAddress("bitcoincash", "bitcoincash:qzdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8💦😆")
+        stringToAddress("bitcoincash:qzdvr2hn0xrz99fcp6hkjxzk848rjvvhgytv4fket8💦😆")
         // invalid checksum
-        stringToAddress("bitcoincash", "bitcoincash:zzzzz2hn0xrz99fcp6hkjxzk848rjvvhgytv4zzzzz")
+        stringToAddress("bitcoincash:zzzzz2hn0xrz99fcp6hkjxzk848rjvvhgytv4zzzzz")
     }
 
-    private fun stringToAddress(hrp: String, addressString: String) {
+    private fun stringToAddress(addressString: String) {
         try {
-            converter.convert(hrp, addressString)
+            converter.convert(addressString)
             fail("Expected an Exception to be thrown")
         } catch (e: AddressFormatException) {
 
@@ -46,7 +46,6 @@ class CashAddressConverterTest {
 
     @Test
     fun convert_bytes() {
-        converter = CashAddressConverter()
 
         // The following test cases are from the spec about cashaddr
         // https://github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/cashaddr.md
@@ -87,7 +86,8 @@ class CashAddressConverterTest {
     }
 
     private fun hashToAddress(hash: String, hrp: String, string: String, type: Int) {
-        address = converter.convert(hrp, hash.hexStringToByteArray(), type)
+        converter = CashAddressConverter(hrp)
+        address = converter.convert(hash.hexStringToByteArray(), type)
 
         assertEquals(string, address.string)
     }

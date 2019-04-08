@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
-import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
+import io.horizontalsystems.bitcoinkit.BitcoinCore.KitState
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
 import org.junit.Before
 import org.junit.Test

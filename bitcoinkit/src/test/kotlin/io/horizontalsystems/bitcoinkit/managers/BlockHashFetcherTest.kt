@@ -3,16 +3,18 @@ package io.horizontalsystems.bitcoinkit.managers
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.models.PublicKey
+import io.horizontalsystems.bitcoinkit.utils.IAddressConverter
 import org.junit.Assert
 import org.junit.Test
 import org.mockito.Mockito
 
 class BlockHashFetcherTest {
-    private val apiManager = Mockito.mock(BCoinApi::class.java)
     private val addressSelector = Mockito.mock(IAddressSelector::class.java)
-    private val yyy = Mockito.mock(BlockHashFetcherHelper::class.java)
-    private val blockHashFetcher = BlockHashFetcher(addressSelector, apiManager, yyy)
+    private val addressConverter = Mockito.mock(IAddressConverter::class.java)
+    private val apiManager = Mockito.mock(BCoinApi::class.java)
+    private val helper = Mockito.mock(BlockHashFetcherHelper::class.java)
 
+    private val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, apiManager, helper)
 
     @Test
     fun getEmptyBlockHashes() {
@@ -26,9 +28,9 @@ class BlockHashFetcherTest {
 
         val addresses = addresses0 + addresses1 + addresses2
 
-        whenever(addressSelector.getAddressVariants(publicKey0)).thenReturn(addresses0)
-        whenever(addressSelector.getAddressVariants(publicKey1)).thenReturn(addresses1)
-        whenever(addressSelector.getAddressVariants(publicKey2)).thenReturn(addresses2)
+        whenever(addressSelector.getAddressVariants(addressConverter, publicKey0)).thenReturn(addresses0)
+        whenever(addressSelector.getAddressVariants(addressConverter, publicKey1)).thenReturn(addresses1)
+        whenever(addressSelector.getAddressVariants(addressConverter, publicKey2)).thenReturn(addresses2)
 
         whenever(apiManager.getTransactions(addresses)).thenReturn(listOf())
 
@@ -50,9 +52,9 @@ class BlockHashFetcherTest {
 
         val addresses = addresses0 + addresses1 + addresses2
 
-        whenever(addressSelector.getAddressVariants(publicKey0)).thenReturn(addresses0)
-        whenever(addressSelector.getAddressVariants(publicKey1)).thenReturn(addresses1)
-        whenever(addressSelector.getAddressVariants(publicKey2)).thenReturn(addresses2)
+        whenever(addressSelector.getAddressVariants(addressConverter, publicKey0)).thenReturn(addresses0)
+        whenever(addressSelector.getAddressVariants(addressConverter, publicKey1)).thenReturn(addresses1)
+        whenever(addressSelector.getAddressVariants(addressConverter, publicKey2)).thenReturn(addresses2)
 
         val transactionResponse0 = mock<BCoinApi.TransactionItem>()
         whenever(transactionResponse0.blockHeight).thenReturn(1234)
@@ -66,7 +68,7 @@ class BlockHashFetcherTest {
 
         whenever(apiManager.getTransactions(addresses)).thenReturn(listOf(transactionResponse0, transactionResponse1))
         val lastUsedIndex = 1
-        whenever(yyy.lastUsedIndex(listOf(addresses0, addresses1, addresses2), listOf())).thenReturn(lastUsedIndex)
+        whenever(helper.lastUsedIndex(listOf(addresses0, addresses1, addresses2), listOf())).thenReturn(lastUsedIndex)
 
         val (blockHashes, actualLastUsedIndex) = blockHashFetcher.getBlockHashes(listOf(publicKey0, publicKey1, publicKey2))
 

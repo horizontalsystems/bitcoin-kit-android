@@ -37,6 +37,7 @@ class BlockchainTestSpec : Spek({
         whenever(storage.inTransaction(any())).then(callbackInvoke)
         whenever(blockHeader.previousBlockHeaderHash).thenReturn(prevHash)
         whenever(blockHeader.merkleRoot).thenReturn(byteArrayOf())
+        whenever(blockHeader.hash).thenReturn(byteArrayOf(1))
         whenever(merkleBlock.header).thenReturn(blockHeader)
 
         blockchain = Blockchain(storage, network, dataListener)

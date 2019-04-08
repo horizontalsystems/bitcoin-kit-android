@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.*
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.utils.AddressConverter
+import io.horizontalsystems.bitcoinkit.utils.IAddressConverter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -18,7 +18,7 @@ import org.mockito.Mockito
 
 class TransactionExtractorTest {
     private val storage = Mockito.mock(IStorage::class.java)
-    private val addressConverter = Mockito.mock(AddressConverter::class.java)
+    private val addressConverter = Mockito.mock(IAddressConverter::class.java)
 
     private lateinit var transactionOutput: TransactionOutput
     private lateinit var transactionInput: TransactionInput

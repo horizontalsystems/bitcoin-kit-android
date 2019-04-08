@@ -3,12 +3,12 @@ package io.horizontalsystems.bitcoinkit.network
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.argumentCaptor
 import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.network.messages.AddrMessage
 import io.horizontalsystems.bitcoinkit.network.messages.Message
 import io.horizontalsystems.bitcoinkit.network.messages.VerAckMessage
+import io.horizontalsystems.bitcoinkit.network.messages.VersionMessage
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
 import io.horizontalsystems.bitcoinkit.network.peer.PeerConnection
 import org.junit.Assert
@@ -29,6 +29,8 @@ class PeerTest {
     private val listener = mock(Peer.Listener::class.java)
     private val peerConnection = mock(PeerConnection::class.java)
     private val network = MainNet(storage)
+    private val versionMessage = mock(VersionMessage::class.java)
+    private val addressMessage = mock(AddrMessage::class.java)
 
     private lateinit var peer: Peer
 
@@ -44,10 +46,11 @@ class PeerTest {
 
     @Test
     fun onMessage_versionMessage_success() {
-        val raw = "F9BEB4D976657273696F6E000000000066000000600C82817F1101000D04000000000000D1DC845B00000000000000000000000000000000000000000000FFFFD4707C069ACD0D040000000000000000000000000000000000000000000000002A13586EB0756F44102F5361746F7368693A302E31362E322FE838080001"
-        val msg = getMessageFromHex(raw)
+        whenever(versionMessage.lastBlock).thenReturn(99)
+        whenever(versionMessage.hasBlockChain(network)).thenReturn(true)
+        whenever(versionMessage.supportsBloomFilter(network)).thenReturn(true)
 
-        peer.onMessage(msg)
+        peer.onMessage(versionMessage)
 
         argumentCaptor<Message>().apply {
             verify(peerConnection).sendMessage(capture())
@@ -58,10 +61,9 @@ class PeerTest {
 
     @Test
     fun onMessage_versionMessage_error_lastBlockIs0() {
-        val raw = "F9BEB4D976657273696F6E000000000066000000BE39611E7F1101000D04000000000000D7E5845B00000000000000000000000000000000000000000000FFFFD4707C069DBE0D04000000000000000000000000000000000000000000000000E6030F56C7080373102F5361746F7368693A302E31362E322F0000000001"
-        val msg = getMessageFromHex(raw)
+        whenever(versionMessage.lastBlock).thenReturn(0)
 
-        peer.onMessage(msg)
+        peer.onMessage(versionMessage)
 
         verify(peerConnection).close(argThat {
             this is Peer.Error.UnsuitablePeerVersion
@@ -70,10 +72,10 @@ class PeerTest {
 
     @Test
     fun onMessage_versionMessage_error_notFullNode() {
-        val raw = "F9BEB4D976657273696F6E00000000006600000041E561B07F110100000000000000000092E4845B00000000000000000000000000000000000000000000FFFFD4707C06B4670D04000000000000000000000000000000000000000000000000E343866042AF517C102F5361746F7368693A302E31362E322FE838080001"
-        val msg = getMessageFromHex(raw)
+        whenever(versionMessage.lastBlock).thenReturn(99)
+        whenever(versionMessage.hasBlockChain(network)).thenReturn(false)
 
-        peer.onMessage(msg)
+        peer.onMessage(versionMessage)
 
         verify(peerConnection).close(argThat {
             this is Peer.Error.UnsuitablePeerVersion
@@ -82,10 +84,10 @@ class PeerTest {
 
     @Test
     fun onMessage_versionMessage_error_notSupportingBloomFilter() {
-        val raw = "F9BEB4D976657273696F6E0000000000660000008C490408880D01000D0400000000000061E5845B00000000000000000000000000000000000000000000FFFFD4707C06B26B0D04000000000000000000000000000000000000000000000000D8E6F92E8EC8F039112F5361746F7368693A302E31362E39392FE9380800"
-        val msg = getMessageFromHex(raw)
+        whenever(versionMessage.lastBlock).thenReturn(99)
+        whenever(versionMessage.supportsBloomFilter(network)).thenReturn(false)
 
-        peer.onMessage(msg)
+        peer.onMessage(versionMessage)
 
         verify(peerConnection).close(argThat {
             this is Peer.Error.UnsuitablePeerVersion
@@ -94,18 +96,8 @@ class PeerTest {
 
     @Test
     fun onReceiveAddresses() {
-        val raw = "f9beb4d961646472000000000000000023000000dff105f601250be45b250be45b000000000000000000000000000000000000ffff591ba82e208d"
-        val msg = getMessageFromHex(raw) as AddrMessage
-
         peer.connected = true
-        peer.onMessage(msg)
-        verify(listener).onReceiveAddress(msg.addresses)
-    }
-
-    private fun getMessageFromHex(hex: String): Message {
-        val bytes = hex.hexStringToByteArray()
-        val input = BitcoinInput(bytes)
-
-        return Message.Builder.parseMessage(input, network)
+        peer.onMessage(addressMessage)
+        verify(listener).onReceiveAddress(addressMessage.addresses)
     }
 }
