@@ -29,7 +29,8 @@ class UnspentOutputProviderTest : Spek({
             merkleRoot = "70d6379650ac87eaa4ac1de27c21217b81a034a53abf156c422a538150bd80f4".toReversedByteArray(),
             timestamp = 1337966314,
             bits = 486604799,
-            nonce = 2391008772
+            nonce = 2391008772,
+            hash = byteArrayOf(1)
     )
 
     val lastBlock = Block(header = blockHeader, height = lastBlockHeight)

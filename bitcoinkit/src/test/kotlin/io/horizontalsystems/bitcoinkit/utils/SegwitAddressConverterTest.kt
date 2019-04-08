@@ -21,8 +21,8 @@ class SegwitAddressConverterTest {
         program = "751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
         bytes = "0014".hexStringToByteArray() + program
 
-        converter = SegwitAddressConverter()
-        address = converter.convert("bc", bytes, ScriptType.P2WPKH)
+        converter = SegwitAddressConverter("bc")
+        address = converter.convert(bytes, ScriptType.P2WPKH)
 
         assertEquals(AddressType.WITNESS, address.type)
         assertEquals(addressString, address.string)
@@ -35,8 +35,8 @@ class SegwitAddressConverterTest {
         program = "1863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262".hexStringToByteArray()
         bytes = "00201863143c14c5166804bd19203356da136c985678cd4d27a1b8c6329604903262".hexStringToByteArray()
 
-        converter = SegwitAddressConverter()
-        address = converter.convert("tb", bytes, ScriptType.P2WSH)
+        converter = SegwitAddressConverter("tb")
+        address = converter.convert(bytes, ScriptType.P2WSH)
 
         assertEquals(AddressType.WITNESS, address.type)
         assertEquals(addressString, address.string)
@@ -49,8 +49,8 @@ class SegwitAddressConverterTest {
         program = "751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
         bytes = "5128751e76e8199196d454941c45d1b3a323f1433bd6751e76e8199196d454941c45d1b3a323f1433bd6".hexStringToByteArray()
 
-        converter = SegwitAddressConverter()
-        address = converter.convert("bc", bytes, ScriptType.P2WPKH)
+        converter = SegwitAddressConverter("bc")
+        address = converter.convert(bytes, ScriptType.P2WPKH)
 
         assertEquals(AddressType.WITNESS, address.type)
         assertEquals(addressString, address.string)

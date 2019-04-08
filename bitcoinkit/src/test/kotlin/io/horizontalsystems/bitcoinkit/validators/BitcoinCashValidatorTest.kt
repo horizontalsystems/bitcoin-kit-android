@@ -32,7 +32,8 @@ class BitcoinCashValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("1530edf433fdfd7252bda07bf38629e2c31f31560dbd30dd7f496c4b6fe7e27d"),
                 timestamp = 1534820198,
                 bits = 402796414,
-                nonce = 1748283264
+                nonce = 1748283264,
+                hash = byteArrayOf(1)
         )
 
         val candidate = Block(candidateHeader, 544320)
@@ -51,7 +52,8 @@ class BitcoinCashValidatorTest {
                             merkleRoot = byteArrayOf(),
                             timestamp = timestampArray[timestampArray.size - i - 1].toLong(),
                             bits = bitsArray[bitsArray.size - i - 1].toLong(),
-                            nonce = 0
+                            nonce = 0,
+                            hash = byteArrayOf(1)
                     ))
 
             whenever(storage.getBlock(hashHex = lastBlock.previousBlockHashReversedHex)).thenReturn(block)
@@ -107,7 +109,9 @@ class BitcoinCashValidatorTest {
                 previousBlockHeaderHash = hash,
                 merkleRoot = byteArrayOf(),
                 bits = 0,
-                nonce = 0)
+                nonce = 0,
+                hash = byteArrayOf(1)
+        )
     }
 
     private fun chain(block: Block, size: Int, timeInterval: Int = 100): Block {
@@ -125,7 +129,9 @@ class BitcoinCashValidatorTest {
                     previousBlockHeaderHash = hash,
                     merkleRoot = byteArrayOf(),
                     bits = 0,
-                    nonce = 0)
+                    nonce = 0,
+                    hash = byteArrayOf()
+            )
 
 
             nextBlock = Block(header, currentBlock)

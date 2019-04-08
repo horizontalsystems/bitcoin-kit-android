@@ -94,7 +94,8 @@ class BlockValidatorTest {
                         merkleRoot = HashUtils.toBytesAsLE("167bf70981d49388d07881b1a448ff9b79cf2a32716e45c535345823d8cdd541"),
                         timestamp = 1533980459,
                         bits = 388763047,
-                        nonce = 1545867530
+                        nonce = 1545867530,
+                        hash = byteArrayOf(1)
                 )
         )
 
@@ -105,7 +106,8 @@ class BlockValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("7904930640df999005df3b57f9c6f542088af33c3d773dcec2939f55ced359b8"),
                 timestamp = 1535129301,
                 bits = 388763047,
-                nonce = 59591417
+                nonce = 59591417,
+                hash = byteArrayOf(1)
         )
 
         for (i in 1 until 2016) {
@@ -118,7 +120,8 @@ class BlockValidatorTest {
                 merkleRoot = HashUtils.toBytesAsLE("3ad0fa0e8c100db5831ebea7cabf6addae2c372e6e1d84f6243555df5bbfa351"),
                 timestamp = 1535129431,
                 bits = 388618029,
-                nonce = 2367954839
+                nonce = 2367954839,
+                hash = byteArrayOf(1)
         )
 
         val check2 = Block(check2Head, prevBlock)

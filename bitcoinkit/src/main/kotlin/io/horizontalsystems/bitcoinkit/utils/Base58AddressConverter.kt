@@ -17,7 +17,7 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
         }
 
         val bytes = Arrays.copyOfRange(data, 1, data.size)
-        val addressType = when (data[0].toInt()) {
+        val addressType = when (data[0].toInt() and 0xFF) {
             addressScriptVersion -> AddressType.P2SH
             addressVersion -> AddressType.P2PKH
             else -> throw AddressFormatException("Wrong address prefix")
