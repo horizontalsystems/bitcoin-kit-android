@@ -82,7 +82,7 @@ class BitcoinCashKit : AbstractKit {
             val blockHelper = BlockHelper(storage)
 
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
-            bitcoinCore.addBlockValidator(DAAValidator(network, storage, blockHelper))
+            bitcoinCore.addBlockValidator(DAAValidator(network.targetSpacing, storage, blockHelper))
             bitcoinCore.addBlockValidator(EDAValidator(network, blockHelper))
         }
 

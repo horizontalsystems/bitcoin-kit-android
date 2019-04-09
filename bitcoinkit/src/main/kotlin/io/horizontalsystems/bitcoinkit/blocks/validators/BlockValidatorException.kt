@@ -7,5 +7,5 @@ open class BlockValidatorException(msg: String) : RuntimeException(msg) {
     class WrongPreviousHeader : BlockValidatorException("Wrong Previous Header Hash")
     class NotEqualBits : BlockValidatorException("Not Equal Bits")
     class NotDifficultyTransitionEqualBits : BlockValidatorException("Not Difficulty Transition Equal Bits")
-    class InvalidProveOfWork : BlockValidatorException("Invalid Prove of Work")
+    class InvalidProofOfWork : BlockValidatorException("Invalid Prove of Work")
 }

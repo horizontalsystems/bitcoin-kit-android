@@ -5,9 +5,9 @@ import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.blocks.BloomFilterLoader
 import io.horizontalsystems.bitcoinkit.blocks.InitialBlockDownload
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockHeaderValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoinkit.core.DataProvider
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.KitStateProvider
@@ -231,7 +231,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
     val messageParserChain = MessageParserChain()
-    val blockValidatorChain = BlockValidatorChain(BlockHeaderValidator())
+    val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
 
     fun addMessageParser(messageParser: IMessageParser) {
         messageParserChain.addParser(messageParser)

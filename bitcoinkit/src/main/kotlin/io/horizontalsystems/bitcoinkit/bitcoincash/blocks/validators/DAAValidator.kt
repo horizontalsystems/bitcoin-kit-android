@@ -6,9 +6,8 @@ import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.managers.BlockHelper
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.Network
 
-class DAAValidator(private val network: Network, private val storage: IStorage, private val blockHelper: BlockHelper) : IBlockValidator {
+class DAAValidator(private val targetSpacing: Int, private val storage: IStorage, private val blockHelper: BlockHelper) : IBlockValidator {
     private val largestHash = 1.toBigInteger() shl 256
     private val diffDate = 1510600000 // 2017 November 3, 14:06 GMT
 
@@ -23,17 +22,16 @@ class DAAValidator(private val network: Network, private val storage: IStorage, 
     }
 
     private fun validateDAA(candidate: Block, previousBlock: Block) {
-
         val lstBlock = getSuitableBlock(previousBlock)
         val previous = checkNotNull(blockHelper.getPrevious(previousBlock, 144)) { throw BlockValidatorException.NoPreviousBlock() }
         val fstBLock = getSuitableBlock(previous)
         val heightInterval = lstBlock.height - fstBLock.height
 
         var actualTimespan = lstBlock.timestamp - fstBLock.timestamp
-        if (actualTimespan > 288 * network.targetSpacing)
-            actualTimespan = 288 * network.targetSpacing.toLong()
-        if (actualTimespan < 72 * network.targetSpacing)
-            actualTimespan = 72 * network.targetSpacing.toLong()
+        if (actualTimespan > 288 * targetSpacing)
+            actualTimespan = 288 * targetSpacing.toLong()
+        if (actualTimespan < 72 * targetSpacing)
+            actualTimespan = 72 * targetSpacing.toLong()
 
         var blocks = checkNotNull(blockHelper.getPreviousWindow(lstBlock, heightInterval - 1)) {
             throw BlockValidatorException.NoPreviousBlock()
@@ -46,7 +44,7 @@ class DAAValidator(private val network: Network, private val storage: IStorage, 
             chainWork += largestHash / (target + 1.toBigInteger())
         }
 
-        chainWork = chainWork * network.targetSpacing.toBigInteger() / actualTimespan.toBigInteger()
+        chainWork = chainWork * targetSpacing.toBigInteger() / actualTimespan.toBigInteger()
 
         val target = largestHash / chainWork - 1.toBigInteger()
         val bits = CompactBits.encode(target)

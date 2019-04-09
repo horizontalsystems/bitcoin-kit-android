@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 
 import io.horizontalsystems.bitcoinkit.models.Block
 
-class BlockValidatorChain(private val proofOfWorkValidator: BlockHeaderValidator) : IBlockValidator {
+class BlockValidatorChain(private val proofOfWorkValidator: ProofOfWorkValidator) : IBlockValidator {
 
     private val concreteValidators = mutableListOf<IBlockValidator>()
 

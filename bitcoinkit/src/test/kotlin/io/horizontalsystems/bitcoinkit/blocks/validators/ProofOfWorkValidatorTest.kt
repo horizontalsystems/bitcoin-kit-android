@@ -8,11 +8,11 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.math.BigInteger
 
-object BlockHeaderValidatorTest : Spek({
-    lateinit var validator: BlockHeaderValidator
+object ProofOfWorkValidatorTest : Spek({
+    lateinit var validator: ProofOfWorkValidator
 
     beforeEachTest {
-        validator = BlockHeaderValidator()
+        validator = ProofOfWorkValidator()
     }
 
     describe("#validate") {
@@ -29,7 +29,7 @@ object BlockHeaderValidatorTest : Spek({
             val previousBlock = Fixtures.block1
             block.bits = CompactBits.encode(BigInteger(block.headerHashReversedHex, 16).minus(BigInteger.valueOf(1L)))
 
-            assertThrows<BlockValidatorException.InvalidProveOfWork> {
+            assertThrows<BlockValidatorException.InvalidProofOfWork> {
                 validator.validate(block, previousBlock)
             }
         }
