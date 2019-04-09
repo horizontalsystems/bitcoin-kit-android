@@ -36,7 +36,7 @@ class PeerGroupTest {
 
     private val peerIp = "8.8.8.8"
     private val peerIp2 = "5.5.5.5"
-    private val network = MainNet(storage)
+    private val network = MainNet()
 
     private lateinit var peerGroup: PeerGroup
 

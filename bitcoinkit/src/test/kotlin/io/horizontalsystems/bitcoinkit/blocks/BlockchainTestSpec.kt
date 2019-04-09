@@ -2,12 +2,12 @@ package io.horizontalsystems.bitcoinkit.blocks
 
 import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
 import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
@@ -21,7 +21,7 @@ class BlockchainTestSpec : Spek({
     lateinit var mockedBlocks: MockedBlocks
 
     val storage = mock(IStorage::class.java)
-    val network = mock(Network::class.java)
+    val blockValidator = mock(IBlockValidator::class.java)
     val dataListener = mock(IBlockchainDataListener::class.java)
 
     val prevHash = byteArrayOf(1)
@@ -40,11 +40,11 @@ class BlockchainTestSpec : Spek({
         whenever(blockHeader.hash).thenReturn(byteArrayOf(1))
         whenever(merkleBlock.header).thenReturn(blockHeader)
 
-        blockchain = Blockchain(storage, network, dataListener)
+        blockchain = Blockchain(storage, blockValidator, dataListener)
     }
 
     afterEachTest {
-        reset(storage, network, dataListener)
+        reset(storage, blockValidator, dataListener)
         reset(merkleBlock, blockHeader, block)
     }
 
@@ -99,7 +99,7 @@ class BlockchainTestSpec : Spek({
 
                 context("when block is invalid") {
                     it("doesn't add a block to storage") {
-                        whenever(network.validateBlock(any(), any())).thenThrow(BlockValidatorException.WrongPreviousHeader())
+                        whenever(blockValidator.validate(any(), any())).thenThrow(BlockValidatorException.WrongPreviousHeader())
 
                         try {
                             blockchain.connect(merkleBlock)
@@ -120,7 +120,7 @@ class BlockchainTestSpec : Spek({
                         }
 
                         verify(storage).addBlock(any())
-                        verify(network).validateBlock(any(), any())
+                        verify(blockValidator).validate(any(), any())
                         verify(dataListener).onBlockInsert(any())
                     }
                 }
@@ -141,7 +141,7 @@ class BlockchainTestSpec : Spek({
         }
 
         it("doesn't validate block") {
-            verify(network, never()).validateBlock(any(), any())
+            verify(blockValidator, never()).validate(any(), any())
         }
 
         it("adds block to database") {

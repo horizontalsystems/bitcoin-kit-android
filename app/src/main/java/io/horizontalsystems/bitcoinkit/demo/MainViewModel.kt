@@ -35,7 +35,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     init {
         val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
 
-        bitcoinKit = BitcoinKit(App.instance, words, "MyWallet", BitcoinKit.NetworkType.TestNet)
+        bitcoinKit = BitcoinKit(App.instance, words, "MyWallet", BitcoinKit.NetworkType.TestNet, newWallet = true)
 
         bitcoinKit.listener = this
 

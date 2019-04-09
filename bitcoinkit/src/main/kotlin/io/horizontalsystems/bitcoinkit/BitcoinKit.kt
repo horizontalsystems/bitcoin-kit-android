@@ -2,9 +2,11 @@ package io.horizontalsystems.bitcoinkit
 
 import android.arch.persistence.room.Room
 import android.content.Context
-import io.horizontalsystems.bitcoinkit.blocks.validators.BitcoinBlockValidator
-import io.horizontalsystems.bitcoinkit.blocks.validators.BitcoinTestnetValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.BitsValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyDifficultyAdjustmentValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
+import io.horizontalsystems.bitcoinkit.managers.BlockHelper
 import io.horizontalsystems.bitcoinkit.network.MainNet
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.RegTest
@@ -76,12 +78,16 @@ class BitcoinKit : AbstractKit {
         val bech32 = SegwitAddressConverter(network.addressSegwitHrp)
         bitcoinCore.prependAddressConverter(bech32)
 
-        when (networkType) {
-            NetworkType.MainNet -> BitcoinBlockValidator(network, storage)
-            NetworkType.TestNet -> BitcoinTestnetValidator(network, storage)
-            NetworkType.RegTest -> null
-        }?.let {
-            bitcoinCore.addBlockValidator(it)
+        val blockHelper = BlockHelper(storage)
+
+        if (networkType == NetworkType.MainNet) {
+            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
+            bitcoinCore.addBlockValidator(BitsValidator())
+        }
+        else if (networkType == NetworkType.TestNet) {
+            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
+            bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(network, storage))
+            bitcoinCore.addBlockValidator(BitsValidator())
         }
     }
 }

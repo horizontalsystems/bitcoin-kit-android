@@ -17,25 +17,25 @@ class StateManagerTest {
 
     @Test
     fun apiSynced() {
-        stateManager = StateManager(storage, MainNet(storage), newWallet = false)
+        stateManager = StateManager(storage, MainNet(), newWallet = false)
         assertFalse(stateManager.restored)
     }
 
     @Test
     fun apiSynced_RegTest() {
-        stateManager = StateManager(storage, RegTest(storage), newWallet = false)
+        stateManager = StateManager(storage, RegTest(), newWallet = false)
         assertTrue(stateManager.restored)
     }
 
     @Test
     fun apiSynced_newWallet() {
-        stateManager = StateManager(storage, MainNet(storage), newWallet = true)
+        stateManager = StateManager(storage, MainNet(), newWallet = true)
         assertTrue(stateManager.restored)
     }
 
     @Test
     fun apiSynced_SetTrue() {
-        stateManager = StateManager(storage, MainNet(storage), newWallet = false)
+        stateManager = StateManager(storage, MainNet(), newWallet = false)
         stateManager.restored = true
 
         verify(storage).setInitialRestored(true)
@@ -43,7 +43,7 @@ class StateManagerTest {
 
     @Test
     fun apiSynced_SetFalse() {
-        stateManager = StateManager(storage, MainNet(storage), newWallet = false)
+        stateManager = StateManager(storage, MainNet(), newWallet = false)
         stateManager.restored = false
 
         verify(storage).setInitialRestored(false)

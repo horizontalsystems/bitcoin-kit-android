@@ -5,9 +5,11 @@ import android.content.Context
 import io.horizontalsystems.bitcoinkit.AbstractKit
 import io.horizontalsystems.bitcoinkit.BitcoinCore
 import io.horizontalsystems.bitcoinkit.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoinkit.blocks.validators.BitcoinCashValidator
-import io.horizontalsystems.bitcoinkit.blocks.validators.TestnetBitcoinCashValidator
+import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators.DAAValidator
+import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators.EDAValidator
+import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoinkit.managers.BitcoinCashAddressSelector
+import io.horizontalsystems.bitcoinkit.managers.BlockHelper
 import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
@@ -23,8 +25,16 @@ class BitcoinCashKit : AbstractKit {
         TestNet
     }
 
+    interface Listener : BitcoinCore.Listener
+
     override var bitcoinCore: BitcoinCore
     override var network: Network
+
+    var listener: Listener? = null
+        set(value) {
+            field = value
+            value?.let { bitcoinCore.addListener(it) }
+        }
 
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
@@ -68,11 +78,14 @@ class BitcoinCashKit : AbstractKit {
         val bech32 = CashAddressConverter(network.addressSegwitHrp)
         bitcoinCore.prependAddressConverter(bech32)
 
-        val blockValidator = when (networkType) {
-            NetworkType.MainNet -> BitcoinCashValidator(network, storage)
-            NetworkType.TestNet -> TestnetBitcoinCashValidator(network, storage)
+        if (networkType == NetworkType.MainNet) {
+            val blockHelper = BlockHelper(storage)
+
+            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
+            bitcoinCore.addBlockValidator(DAAValidator(network, storage, blockHelper))
+            bitcoinCore.addBlockValidator(EDAValidator(network, blockHelper))
         }
-        bitcoinCore.addBlockValidator(blockValidator)
+
     }
 
 }
