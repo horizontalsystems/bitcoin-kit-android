@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoinkit.blocks.validators.BitsValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
-import io.horizontalsystems.bitcoinkit.managers.BlockHelper
+import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoinkit.network.MainNet
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.RegTest
@@ -78,7 +78,7 @@ class BitcoinKit : AbstractKit {
         val bech32 = SegwitAddressConverter(network.addressSegwitHrp)
         bitcoinCore.prependAddressConverter(bech32)
 
-        val blockHelper = BlockHelper(storage)
+        val blockHelper = BlockValidatorHelper(storage)
 
         if (networkType == NetworkType.MainNet) {
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))

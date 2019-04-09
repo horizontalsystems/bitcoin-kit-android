@@ -5,11 +5,11 @@ import android.content.Context
 import io.horizontalsystems.bitcoinkit.AbstractKit
 import io.horizontalsystems.bitcoinkit.BitcoinCore
 import io.horizontalsystems.bitcoinkit.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators.DAAValidator
 import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators.EDAValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoinkit.managers.BitcoinCashAddressSelector
-import io.horizontalsystems.bitcoinkit.managers.BlockHelper
 import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
@@ -79,11 +79,11 @@ class BitcoinCashKit : AbstractKit {
         bitcoinCore.prependAddressConverter(bech32)
 
         if (networkType == NetworkType.MainNet) {
-            val blockHelper = BlockHelper(storage)
+            val blockHelper = BitcoinCashBlockValidatorHelper(storage)
 
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
-            bitcoinCore.addBlockValidator(DAAValidator(network.targetSpacing, storage, blockHelper))
-            bitcoinCore.addBlockValidator(EDAValidator(network, blockHelper))
+            bitcoinCore.addBlockValidator(DAAValidator(network.targetSpacing, blockHelper))
+            bitcoinCore.addBlockValidator(EDAValidator(network.maxTargetBits, blockHelper))
         }
 
     }

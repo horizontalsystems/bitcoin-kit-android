@@ -4,7 +4,7 @@ import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.managers.BlockHelper
+import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.TestNet
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
@@ -17,7 +17,7 @@ object LegacyDifficultyAdjustmentValidatorTest : Spek({
     lateinit var validator: LegacyDifficultyAdjustmentValidator
     val storage = mock<IStorage>()
     val network = TestNet()
-    val blockHelper = BlockHelper(storage)
+    val blockHelper = BlockValidatorHelper(storage)
 
     beforeEachTest {
         validator = LegacyDifficultyAdjustmentValidator(network, blockHelper)
