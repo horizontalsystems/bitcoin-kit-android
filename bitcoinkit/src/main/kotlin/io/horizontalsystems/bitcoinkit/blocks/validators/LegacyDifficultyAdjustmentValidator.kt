@@ -5,10 +5,13 @@ import io.horizontalsystems.bitcoinkit.managers.BlockHelper
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
 
-class LegacyDifficultyAdjustmentValidator(private val network: Network, private val blockHelper: BlockHelper) : IBlockValidator {
+class LegacyDifficultyAdjustmentValidator(network: Network, private val blockHelper: BlockHelper) : IBlockValidator {
+    private val heightInterval = network.heightInterval
+    private val targetTimespan = network.targetTimespan
+    private val maxTargetBits = network.maxTargetBits
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
-        return block.height % network.heightInterval == 0L
+        return block.height % heightInterval == 0L
     }
 
     override fun validate(block: Block, previousBlock: Block) {
@@ -18,18 +21,18 @@ class LegacyDifficultyAdjustmentValidator(private val network: Network, private 
 
         //  Limit the adjustment step
         var timespan = previousBlock.timestamp - lastCheckPointBlock.timestamp
-        if (timespan < network.targetTimespan / 4)
-            timespan = network.targetTimespan / 4
-        if (timespan > network.targetTimespan * 4)
-            timespan = network.targetTimespan * 4
+        if (timespan < targetTimespan / 4)
+            timespan = targetTimespan / 4
+        if (timespan > targetTimespan * 4)
+            timespan = targetTimespan * 4
 
         var newTarget = CompactBits.decode(previousBlock.bits)
         newTarget = newTarget.multiply(timespan.toBigInteger())
-        newTarget = newTarget.divide(network.targetTimespan.toBigInteger())
+        newTarget = newTarget.divide(targetTimespan.toBigInteger())
 
         // Difficulty hit proof of work limit: newTarget.toString(16)
-        if (newTarget > network.maxTargetBits) {
-            newTarget = network.maxTargetBits
+        if (newTarget > maxTargetBits) {
+            newTarget = maxTargetBits
         }
 
         val newTargetCompact = CompactBits.encode(newTarget)
