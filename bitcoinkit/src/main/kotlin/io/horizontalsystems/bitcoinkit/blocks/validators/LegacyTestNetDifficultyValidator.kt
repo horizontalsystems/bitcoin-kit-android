@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.network.Network
 
 class LegacyTestNetDifficultyValidator(private val network: Network, private val storage: IStorage) : IBlockValidator {
-    private val diffDate = 1329264000L // February 16th 2012
+    private val diffDate = 1329264000 // February 16th 2012
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return previousBlock.timestamp > diffDate
