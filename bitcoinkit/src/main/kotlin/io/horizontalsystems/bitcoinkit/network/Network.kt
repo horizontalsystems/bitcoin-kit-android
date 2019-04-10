@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidator
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
@@ -33,8 +32,6 @@ abstract class Network {
     abstract var addressScriptVersion: Int
 
     abstract val checkpointBlock: Block
-    abstract val blockValidator: BlockValidator
-    abstract fun validateBlock(block: Block, previousBlock: Block)
 
     open fun generateBlockHeaderHash(data: ByteArray): ByteArray {
         return HashUtils.doubleSha256(data)

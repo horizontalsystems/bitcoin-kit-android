@@ -1,13 +1,13 @@
 package io.horizontalsystems.bitcoinkit.blocks
 
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.MerkleBlock
-import io.horizontalsystems.bitcoinkit.network.Network
 
-class Blockchain(private val storage: IStorage, private val network: Network, private val dataListener: IBlockchainDataListener) {
+class Blockchain(private val storage: IStorage, private val blockValidator: IBlockValidator, private val dataListener: IBlockchainDataListener) {
 
     fun connect(merkleBlock: MerkleBlock): Block {
         val blockInDB = storage.getBlock(merkleBlock.reversedHeaderHashHex)
@@ -19,7 +19,7 @@ class Blockchain(private val storage: IStorage, private val network: Network, pr
                 ?: throw BlockValidatorException.NoPreviousBlock()
 
         val block = Block(merkleBlock.header, parentBlock)
-        network.validateBlock(block, parentBlock)
+        blockValidator.validate(block, parentBlock)
 
         block.stale = true
 

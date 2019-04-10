@@ -1,27 +1,28 @@
-package io.horizontalsystems.bitcoinkit
+package io.horizontalsystems.bitcoinkit.bitcoincash
 
 import android.arch.persistence.room.Room
 import android.content.Context
-import io.horizontalsystems.bitcoinkit.blocks.validators.BitsValidator
+import io.horizontalsystems.bitcoinkit.AbstractKit
+import io.horizontalsystems.bitcoinkit.BitcoinCore
+import io.horizontalsystems.bitcoinkit.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
+import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators.DAAValidator
+import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators.EDAValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyDifficultyAdjustmentValidator
-import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyTestNetDifficultyValidator
-import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
-import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
-import io.horizontalsystems.bitcoinkit.network.MainNet
+import io.horizontalsystems.bitcoinkit.managers.BitcoinCashAddressSelector
+import io.horizontalsystems.bitcoinkit.network.MainNetBitcoinCash
 import io.horizontalsystems.bitcoinkit.network.Network
-import io.horizontalsystems.bitcoinkit.network.RegTest
-import io.horizontalsystems.bitcoinkit.network.TestNet
+import io.horizontalsystems.bitcoinkit.network.TestNetBitcoinCash
 import io.horizontalsystems.bitcoinkit.storage.KitDatabase
 import io.horizontalsystems.bitcoinkit.storage.Storage
+import io.horizontalsystems.bitcoinkit.utils.CashAddressConverter
 import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
-import io.horizontalsystems.bitcoinkit.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
 
-class BitcoinKit : AbstractKit {
+class BitcoinCashKit : AbstractKit {
     enum class NetworkType {
         MainNet,
-        TestNet,
-        RegTest
+        TestNet
     }
 
     interface Listener : BitcoinCore.Listener
@@ -50,14 +51,13 @@ class BitcoinKit : AbstractKit {
         val storage = Storage(database)
 
         network = when (networkType) {
-            NetworkType.MainNet -> MainNet()
-            NetworkType.TestNet -> TestNet()
-            NetworkType.RegTest -> RegTest()
+            NetworkType.MainNet -> MainNetBitcoinCash()
+            NetworkType.TestNet -> TestNetBitcoinCash()
         }
 
-        val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
+        val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
 
-        val addressSelector = BitcoinAddressSelector()
+        val addressSelector = BitcoinCashAddressSelector()
 
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
@@ -65,7 +65,7 @@ class BitcoinKit : AbstractKit {
                 .setNetwork(network)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
-                .setApiFeeRateCoinCode("BTC")
+                .setApiFeeRateCoinCode("BCH")
                 .setPeerSize(peerSize)
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
@@ -75,19 +75,17 @@ class BitcoinKit : AbstractKit {
 
         // extending bitcoinCore
 
-        val bech32 = SegwitAddressConverter(network.addressSegwitHrp)
+        val bech32 = CashAddressConverter(network.addressSegwitHrp)
         bitcoinCore.prependAddressConverter(bech32)
 
-        val blockHelper = BlockValidatorHelper(storage)
-
         if (networkType == NetworkType.MainNet) {
+            val blockHelper = BitcoinCashBlockValidatorHelper(storage)
+
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
-            bitcoinCore.addBlockValidator(BitsValidator())
+            bitcoinCore.addBlockValidator(DAAValidator(network.targetSpacing, blockHelper))
+            bitcoinCore.addBlockValidator(EDAValidator(network.maxTargetBits, blockHelper))
         }
-        else if (networkType == NetworkType.TestNet) {
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
-            bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(network, storage))
-            bitcoinCore.addBlockValidator(BitsValidator())
-        }
+
     }
+
 }

@@ -1,12 +1,10 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.TestnetValidator
-import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
-class RegTest(storage: IStorage) : Network() {
+class RegTest : Network() {
     override var port: Int = 18444
 
     override var magic: Long = 0xdab5bffa
@@ -26,8 +24,6 @@ class RegTest(storage: IStorage) : Network() {
             "btc03-regtest.horizontalsystems.xyz"
     )
 
-    override val blockValidator = TestnetValidator(this, storage)
-
     private val blockHeader = BlockHeader(
             version = 1,
             previousBlockHeaderHash = zeroHashBytes,
@@ -40,7 +36,4 @@ class RegTest(storage: IStorage) : Network() {
 
     override val checkpointBlock = Block(blockHeader, 0)
 
-    override fun validateBlock(block: Block, previousBlock: Block) {
-        blockValidator.validateHeader(block, previousBlock)
-    }
 }

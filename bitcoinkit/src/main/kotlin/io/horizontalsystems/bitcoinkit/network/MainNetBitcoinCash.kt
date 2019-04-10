@@ -1,12 +1,10 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.BitcoinCashValidator
-import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
-class MainNetBitcoinCash(storage: IStorage) : Network() {
+class MainNetBitcoinCash : Network() {
 
     override var port: Int = 8333
 
@@ -40,9 +38,4 @@ class MainNetBitcoinCash(storage: IStorage) : Network() {
     )
 
     override val checkpointBlock = Block(blockHeader, 571268)
-    override val blockValidator = BitcoinCashValidator(this, storage)
-
-    override fun validateBlock(block: Block, previousBlock: Block) {
-        blockValidator.validate(block, previousBlock)
-    }
 }
