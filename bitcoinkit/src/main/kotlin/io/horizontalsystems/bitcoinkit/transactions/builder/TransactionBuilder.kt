@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.transactions.builder
 
-import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
@@ -16,7 +15,6 @@ import io.horizontalsystems.bitcoinkit.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoinkit.utils.IAddressConverter
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 class TransactionBuilder {
@@ -146,10 +144,7 @@ class TransactionBuilder {
         transaction.isMine = true
         transaction.isOutgoing = true
 
-        return FullTransaction(transaction, inputsToSign.map { it.input }, outputs).apply {
-            header.hash = HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = true))
-            header.hashHexReversed = transaction.hash.toReversedHex()
-        }
+        return FullTransaction(transaction, inputsToSign.map { it.input }, outputs)
     }
 
     open class BuilderException : Exception() {
