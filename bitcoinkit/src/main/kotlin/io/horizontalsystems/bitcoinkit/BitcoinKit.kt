@@ -5,7 +5,10 @@ import io.horizontalsystems.bitcoinkit.blocks.BlockSyncer
 import io.horizontalsystems.bitcoinkit.blocks.Blockchain
 import io.horizontalsystems.bitcoinkit.core.*
 import io.horizontalsystems.bitcoinkit.managers.*
-import io.horizontalsystems.bitcoinkit.models.*
+import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
+import io.horizontalsystems.bitcoinkit.models.BlockInfo
+import io.horizontalsystems.bitcoinkit.models.PublicKey
+import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.*
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
 import io.horizontalsystems.bitcoinkit.network.peer.PeerHostManager
@@ -46,7 +49,6 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
 
     private val peerGroup: PeerGroup
     private val initialSyncer: InitialSyncer
-    private val feeRateSyncer: FeeRateSyncer
     private val addressManager: AddressManager
     private val addressConverter: AddressConverter
     private val paymentAddressParser: PaymentAddressParser
@@ -108,7 +110,6 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         val blockHashFetcher = BlockHashFetcherBCoin(addressSelector, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
 
-        feeRateSyncer = FeeRateSyncer(realmFactory, ApiFeeRate(networkType), connectionManager)
         initialSyncer = InitialSyncer(realmFactory, blockDiscovery, stateManager, addressManager, peerGroup, kitStateProvider)
         transactionBuilder = TransactionBuilder(realmFactory, addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
         transactionCreator = TransactionCreator(realmFactory, transactionBuilder, transactionProcessor, peerGroup)
@@ -119,12 +120,10 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
     //
     fun start() {
         initialSyncer.sync()
-        feeRateSyncer.start()
     }
 
     fun stop() {
         initialSyncer.stop()
-        feeRateSyncer.stop()
         dataProvider.clear()
     }
 
@@ -143,12 +142,12 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         return dataProvider.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium): Long {
-        return transactionBuilder.fee(value, getFeeRate(feePriority), senderPay, address)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
+        return transactionBuilder.fee(value, feeRate, senderPay, address)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium) {
-        transactionCreator.create(address, value, getFeeRate(feePriority), senderPay)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int) {
+        transactionCreator.create(address, value, feeRate, senderPay)
     }
 
     fun receiveAddress(): String {
@@ -222,22 +221,6 @@ class BitcoinKit(seed: ByteArray, networkType: NetworkType, walletId: String? = 
         listenerExecutor.execute {
             listener?.onKitStateUpdate(this, state)
         }
-    }
-
-    private fun getFeeRate(feePriority: FeePriority): Int {
-        val feeRate: Double = when(feePriority) {
-            FeePriority.Lowest -> dataProvider.feeRate.lowPriority
-            FeePriority.Low -> {
-                (dataProvider.feeRate.lowPriority + dataProvider.feeRate.mediumPriority) / 2
-            }
-            FeePriority.Medium -> dataProvider.feeRate.mediumPriority
-            FeePriority.High -> {
-                (dataProvider.feeRate.mediumPriority + dataProvider.feeRate.highPriority) / 2
-            }
-            FeePriority.Highest -> dataProvider.feeRate.highPriority
-            is FeePriority.Custom -> feePriority.feeRate
-        }
-        return feeRate.toInt()
     }
 
     enum class NetworkType {

@@ -33,12 +33,6 @@ class DataProvider(private val realmFactory: RealmFactory, private val listener:
     var lastBlockInfo: BlockInfo?
         private set
 
-    val feeRate: FeeRate
-        get() = realmFactory.realm.use { realm ->
-            realm.where(FeeRate::class.java).findAll().firstOrNull()?.let { realm.copyFromRealm(it) }
-                    ?: FeeRate.defaultFeeRate
-        }
-
     init {
         lastBlockInfo = realmFactory.realm.use { realm ->
             realm.where(Block::class.java)
