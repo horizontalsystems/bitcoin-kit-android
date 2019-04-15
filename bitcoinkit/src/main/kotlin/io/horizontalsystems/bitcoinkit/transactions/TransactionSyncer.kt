@@ -19,19 +19,17 @@ class TransactionSyncer(
     fun handleTransactions(transactions: List<FullTransaction>) {
         if (transactions.isEmpty()) return
 
-        storage.inTransaction {
-            var needToUpdateBloomFilter = false
+        var needToUpdateBloomFilter = false
 
-            try {
-                transactionProcessor.processIncoming(transactions, null, true)
-            } catch (e: BloomFilterManager.BloomFilterExpired) {
-                needToUpdateBloomFilter = true
-            }
+        try {
+            transactionProcessor.processIncoming(transactions, null, true)
+        } catch (e: BloomFilterManager.BloomFilterExpired) {
+            needToUpdateBloomFilter = true
+        }
 
-            if (needToUpdateBloomFilter) {
-                addressManager.fillGap()
-                bloomFilterManager.regenerateBloomFilter()
-            }
+        if (needToUpdateBloomFilter) {
+            addressManager.fillGap()
+            bloomFilterManager.regenerateBloomFilter()
         }
     }
 

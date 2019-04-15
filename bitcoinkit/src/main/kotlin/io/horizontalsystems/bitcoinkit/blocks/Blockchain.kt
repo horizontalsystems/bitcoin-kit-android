@@ -37,21 +37,19 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
         val lastNotStaleHeight = storage.getBlock(stale = false, sortedHeight = "DESC")
                 ?.height ?: 0
 
-        storage.inTransaction {
-            if (firstStaleHeight <= lastNotStaleHeight) {
-                val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height ?: firstStaleHeight
+        if (firstStaleHeight <= lastNotStaleHeight) {
+            val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height ?: firstStaleHeight
 
-                if (lastStaleHeight > lastNotStaleHeight) {
-                    val notStaleBlocks = storage.getBlocks(heightGreaterOrEqualTo = firstStaleHeight, stale = false)
-                    deleteBlocks(notStaleBlocks)
-                    unstaleAllBlocks()
-                } else {
-                    val staleBlocks = storage.getBlocks(stale = true)
-                    deleteBlocks(staleBlocks)
-                }
-            } else {
+            if (lastStaleHeight > lastNotStaleHeight) {
+                val notStaleBlocks = storage.getBlocks(heightGreaterOrEqualTo = firstStaleHeight, stale = false)
+                deleteBlocks(notStaleBlocks)
                 unstaleAllBlocks()
+            } else {
+                val staleBlocks = storage.getBlocks(stale = true)
+                deleteBlocks(staleBlocks)
             }
+        } else {
+            unstaleAllBlocks()
         }
     }
 

@@ -109,27 +109,24 @@ class BlockSyncer(
     }
 
     fun handleMerkleBlock(merkleBlock: MerkleBlock, maxBlockHeight: Int) {
-        storage.inTransaction {
-            val height = merkleBlock.height
+        val height = merkleBlock.height
 
-            val block = when (height) {
-                null -> blockchain.connect(merkleBlock)
-                else -> blockchain.forceAdd(merkleBlock, height)
-            }
-
-            try {
-                transactionProcessor.processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
-            } catch (e: BloomFilterManager.BloomFilterExpired) {
-                state.iterationHasPartialBlocks = true
-            }
-
-            if (!state.iterationHasPartialBlocks) {
-                storage.deleteBlockHash(block.headerHashReversedHex)
-            }
-
-            listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
+        val block = when (height) {
+            null -> blockchain.connect(merkleBlock)
+            else -> blockchain.forceAdd(merkleBlock, height)
         }
 
+        try {
+            transactionProcessor.processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
+        } catch (e: BloomFilterManager.BloomFilterExpired) {
+            state.iterationHasPartialBlocks = true
+        }
+
+        if (!state.iterationHasPartialBlocks) {
+            storage.deleteBlockHash(block.headerHashReversedHex)
+        }
+
+        listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
     }
 
     fun shouldRequest(blockHash: ByteArray): Boolean {
@@ -141,11 +138,9 @@ class BlockSyncer(
     private fun clearPartialBlocks() {
         val toDelete = storage.getBlockHashHeaderHashHexes(except = network.checkpointBlock.headerHashReversedHex)
 
-        storage.inTransaction {
-            toDelete.chunked(sqliteMaxVariableNumber).forEach {
-                val blocksToDelete = storage.getBlocks(hashHexes = it)
-                blockchain.deleteBlocks(blocksToDelete)
-            }
+        toDelete.chunked(sqliteMaxVariableNumber).forEach {
+            val blocksToDelete = storage.getBlocks(hashHexes = it)
+            blockchain.deleteBlocks(blocksToDelete)
         }
     }
 

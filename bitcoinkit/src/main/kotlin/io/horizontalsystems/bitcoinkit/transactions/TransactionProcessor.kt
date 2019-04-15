@@ -36,26 +36,29 @@ class TransactionProcessor(
         val inserted = mutableListOf<Transaction>()
         val updated = mutableListOf<Transaction>()
 
-        for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
-            val transactionInDB = storage.getTransaction(transaction.header.hashHexReversed)
-            if (transactionInDB != null) {
-                relay(transactionInDB, index, block)
-                storage.updateTransaction(transactionInDB)
+        // when the same transaction came in merkle block and from another peer's mempool we need to process it serial
+        synchronized(this) {
+            for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
+                val transactionInDB = storage.getTransaction(transaction.header.hashHexReversed)
+                if (transactionInDB != null) {
+                    relay(transactionInDB, index, block)
+                    storage.updateTransaction(transactionInDB)
 
-                updated.add(transactionInDB)
-                continue
-            }
+                    updated.add(transactionInDB)
+                    continue
+                }
 
-            process(transaction)
+                process(transaction)
 
-            if (transaction.header.isMine) {
-                relay(transaction.header, index, block)
+                if (transaction.header.isMine) {
+                    relay(transaction.header, index, block)
 
-                storage.addTransaction(transaction)
-                inserted.add(transaction.header)
+                    storage.addTransaction(transaction)
+                    inserted.add(transaction.header)
 
-                if (!skipCheckBloomFilter) {
-                    needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts() || hasUnspentOutputs(transaction)
+                    if (!skipCheckBloomFilter) {
+                        needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts() || hasUnspentOutputs(transaction)
+                    }
                 }
             }
         }
