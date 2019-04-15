@@ -95,8 +95,7 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     @Throws
     private fun getPublicKey(external: Boolean): PublicKey {
         return storage.getPublicKeys()
-                .filter { it.external == external && !it.used(storage) }
-                .sortedWith(compareBy { it.account })
+                .filter { it.account == 0 && it.external == external && !it.used(storage) }
                 .sortedWith(compareBy { it.index })
                 .firstOrNull() ?: throw Error.NoUnusedPublicKey
     }
