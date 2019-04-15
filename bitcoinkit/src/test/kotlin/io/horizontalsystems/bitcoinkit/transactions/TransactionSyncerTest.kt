@@ -10,7 +10,6 @@ import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import org.junit.Assert.assertEquals
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
-import org.mockito.invocation.InvocationOnMock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -24,16 +23,12 @@ class TransactionSyncerTest : Spek({
 
     val fullTransaction = mock(FullTransaction::class.java)
     val transaction = mock(Transaction::class.java)
-    val callbackInvoke: (InvocationOnMock) -> Unit = {
-        (it.arguments[0] as () -> Unit).invoke()
-    }
 
     val maxRetriesCount = 3
     val retriesPeriod: Long = 60 * 1000
     val totalRetriesPeriod: Long = 60 * 60 * 24 * 1000
 
     beforeEachTest {
-        whenever(storage.inTransaction(any())).then(callbackInvoke)
         whenever(transaction.hashHexReversed).thenReturn("abc")
         whenever(fullTransaction.header).thenReturn(transaction)
 

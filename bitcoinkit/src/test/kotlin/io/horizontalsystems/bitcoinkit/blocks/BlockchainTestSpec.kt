@@ -29,12 +29,7 @@ class BlockchainTestSpec : Spek({
     val blockHeader = mock(BlockHeader::class.java)
     val block = mock(Block::class.java)
 
-    val callbackInvoke: (InvocationOnMock) -> Unit = {
-        (it.arguments[0] as () -> Unit).invoke()
-    }
-
     beforeEachTest {
-        whenever(storage.inTransaction(any())).then(callbackInvoke)
         whenever(blockHeader.previousBlockHeaderHash).thenReturn(prevHash)
         whenever(blockHeader.merkleRoot).thenReturn(byteArrayOf())
         whenever(blockHeader.hash).thenReturn(byteArrayOf(1))

@@ -15,7 +15,6 @@ import io.horizontalsystems.bitcoinkit.transactions.TransactionProcessor
 import org.junit.Assert.assertEquals
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
-import org.mockito.invocation.InvocationOnMock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
@@ -34,13 +33,7 @@ class BlockSyncerTest : Spek({
     val state = mock(BlockSyncer.State::class.java)
     val checkpointBlock = mock(Block::class.java)
 
-    val callbackInvoke: (InvocationOnMock) -> Unit = {
-        (it.arguments[0] as () -> Unit).invoke()
-    }
-
     beforeEachTest {
-        whenever(storage.inTransaction(any())).then(callbackInvoke)
-
         whenever(checkpointBlock.height).thenReturn(1)
         whenever(network.checkpointBlock).thenReturn(checkpointBlock)
 
@@ -415,7 +408,6 @@ class BlockSyncerTest : Spek({
         it("handles merkle block") {
             blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
-            verify(storage).inTransaction(any())
             verify(blockchain).connect(merkleBlock)
             verify(transactionProcessor).processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
             verify(listener).onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
@@ -430,7 +422,6 @@ class BlockSyncerTest : Spek({
             it("force adds merkle block") {
                 blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
-                verify(storage).inTransaction(any())
                 verify(blockchain).forceAdd(merkleBlock, merkleHeight)
             }
         }

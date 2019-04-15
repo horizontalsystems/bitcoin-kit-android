@@ -5,10 +5,6 @@ import io.horizontalsystems.bitcoinkit.models.*
 
 open class Storage(protected open val store: KitDatabase) : IStorage {
 
-    override fun inTransaction(callback: () -> Unit) {
-        store.runInTransaction(callback)
-    }
-
     // FeeRate
 
     override val feeRate: FeeRate?
@@ -175,7 +171,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     override fun addTransaction(transaction: FullTransaction) {
-        inTransaction {
+        store.runInTransaction {
             store.transaction.insert(transaction.header)
 
             transaction.inputs.forEach {

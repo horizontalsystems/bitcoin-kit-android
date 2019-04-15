@@ -7,9 +7,6 @@ import io.horizontalsystems.bitcoinkit.storage.OutputWithPublicKey
 import io.horizontalsystems.bitcoinkit.storage.UnspentOutput
 
 interface IStorage {
-    //  Database transaction
-
-    fun inTransaction(callback: () -> Unit)
 
     //  FeeRate
 
