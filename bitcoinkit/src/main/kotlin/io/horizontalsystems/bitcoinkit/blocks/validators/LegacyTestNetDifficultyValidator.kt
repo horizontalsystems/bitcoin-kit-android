@@ -16,7 +16,7 @@ class LegacyTestNetDifficultyValidator(private val network: Network, private val
         if (timeDelta >= 0 && timeDelta <= network.targetSpacing * 2) {
             var cursor = block
 
-            while (cursor.height % network.heightInterval != 0L && cursor.bits == network.maxTargetBits.toLong()) {
+            while (cursor.height % network.heightInterval != 0L && cursor.bits == network.maxTargetBits) {
                 val prevBlock = checkNotNull(cursor.previousBlock(storage)) {
                     throw BlockValidatorException.NoPreviousBlock()
                 }

@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.network
 
-import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
@@ -13,10 +12,11 @@ abstract class Network {
     val serviceFullNode = 1L
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
-    val maxTargetBits = CompactBits.decode(0x1d00ffffL) // Maximum difficulty
-    val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
-    val targetSpacing = 10 * 60                         // 10 minutes per block.
-    var heightInterval = targetTimespan / targetSpacing // 2016 blocks
+    val maxTargetBits: Long = 0x1d00ffff                        // Maximum difficulty
+
+    val targetSpacing = 10 * 60                                 // 10 minutes per block.
+    val targetTimespan: Long = 14 * 24 * 60 * 60                // 2 weeks per difficulty cycle, on average.
+    var heightInterval: Long = targetTimespan / targetSpacing   // 2016 blocks
 
     abstract val maxBlockSize: Int
 
