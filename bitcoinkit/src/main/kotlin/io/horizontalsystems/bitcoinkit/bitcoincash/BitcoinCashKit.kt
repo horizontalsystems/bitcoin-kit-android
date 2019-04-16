@@ -81,11 +81,18 @@ class BitcoinCashKit : AbstractKit {
         if (networkType == NetworkType.MainNet) {
             val blockHelper = BitcoinCashBlockValidatorHelper(storage)
 
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
-            bitcoinCore.addBlockValidator(DAAValidator(network.targetSpacing, blockHelper))
-            bitcoinCore.addBlockValidator(EDAValidator(network.maxTargetBits, blockHelper))
+            bitcoinCore.addBlockValidator(DAAValidator(targetSpacing, blockHelper))
+            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
+            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper))
         }
+    }
 
+    companion object {
+        val maxTargetBits: Long = 0x1d00ffff                // Maximum difficulty
+
+        val targetSpacing = 10 * 60                         // 10 minutes per block.
+        val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
+        var heightInterval = targetTimespan / targetSpacing // 2016 blocks
     }
 
 }

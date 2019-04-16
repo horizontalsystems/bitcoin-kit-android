@@ -3,21 +3,22 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.Network
 import java.math.BigInteger
 import kotlin.math.min
 
-class LegacyDifficultyAdjustmentValidator(network: Network, private val blockValidatorHelper: BlockValidatorHelper) : IBlockValidator {
-    private val heightInterval = network.heightInterval
-    private val targetTimespan = network.targetTimespan
-    private val maxTargetBits = network.maxTargetBits
+class LegacyDifficultyAdjustmentValidator(
+        private val validatorHelper: BlockValidatorHelper,
+        private val heightInterval: Long,
+        private val targetTimespan: Long,
+        private val maxTargetBits: Long)
+    : IBlockValidator {
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return block.height % heightInterval == 0L
     }
 
     override fun validate(block: Block, previousBlock: Block) {
-        val lastCheckPointBlock = checkNotNull(blockValidatorHelper.getPrevious(block, 2016)) {
+        val lastCheckPointBlock = checkNotNull(validatorHelper.getPrevious(block, 2016)) {
             BlockValidatorException.NoCheckpointBlock()
         }
 

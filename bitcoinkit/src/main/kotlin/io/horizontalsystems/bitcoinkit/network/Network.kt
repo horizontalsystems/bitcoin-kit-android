@@ -12,16 +12,9 @@ abstract class Network {
     val serviceFullNode = 1L
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
-    val maxTargetBits: Long = 0x1d00ffff                        // Maximum difficulty
-
-    val targetSpacing = 10 * 60                                 // 10 minutes per block.
-    val targetTimespan: Long = 14 * 24 * 60 * 60                // 2 weeks per difficulty cycle, on average.
-    var heightInterval: Long = targetTimespan / targetSpacing   // 2016 blocks
-
     abstract val maxBlockSize: Int
 
     abstract var port: Int
-
     abstract var magic: Long
     abstract var bip32HeaderPub: Int
     abstract var bip32HeaderPriv: Int

@@ -81,12 +81,11 @@ class BitcoinKit : AbstractKit {
         val blockHelper = BlockValidatorHelper(storage)
 
         if (networkType == NetworkType.MainNet) {
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
+            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
             bitcoinCore.addBlockValidator(BitsValidator())
-        }
-        else if (networkType == NetworkType.TestNet) {
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(network, blockHelper))
-            bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(network, storage))
+        } else if (networkType == NetworkType.TestNet) {
+            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
+            bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
             bitcoinCore.addBlockValidator(BitsValidator())
         }
     }

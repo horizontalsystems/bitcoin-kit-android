@@ -3,24 +3,24 @@ package io.horizontalsystems.bitcoinkit.blocks.validators
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoinkit.BitcoinCore
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.TestNet
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import org.junit.Assert
+import org.junit.jupiter.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object LegacyDifficultyAdjustmentValidatorTest : Spek({
-    lateinit var validator: LegacyDifficultyAdjustmentValidator
+
     val storage = mock<IStorage>()
-    val network = TestNet()
     val blockHelper = BlockValidatorHelper(storage)
 
-    beforeEachTest {
-        validator = LegacyDifficultyAdjustmentValidator(network, blockHelper)
+    val validator by memoized {
+        LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits)
     }
 
     describe("#isBlockValidatable") {
@@ -83,12 +83,9 @@ object LegacyDifficultyAdjustmentValidatorTest : Spek({
             whenever(storage.getBlock(hashHex = any())).thenReturn(check1)
             whenever(storage.getBlock(hashHex = check2.previousBlockHashReversedHex)).thenReturn(prevBlock)
 
-            try {
+            Assertions.assertDoesNotThrow {
                 validator.validate(check2, prevBlock)
-            } catch (e: Exception) {
-                Assert.fail(e.message)
             }
-
         }
     }
 })
