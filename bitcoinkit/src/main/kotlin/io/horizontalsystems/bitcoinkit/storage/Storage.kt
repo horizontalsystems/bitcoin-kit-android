@@ -117,6 +117,10 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.block.getBlocks(hashHexes)
     }
 
+    override fun getBlocksChunk(fromHeight: Int, toHeight: Int): List<Block> {
+        return store.block.getBlocksChunk(fromHeight, toHeight)
+    }
+
     override fun blocksCount(headerHexes: List<String>?): Int {
         return if (headerHexes == null) {
             store.block.count()

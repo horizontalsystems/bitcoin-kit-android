@@ -19,7 +19,7 @@ object BitcoinCashBlockValidatorHelperTest : Spek({
     }
 
     describe("#medianTimePast") {
-        it ("") {
+        it("passes") {
             val block3 = Fixtures.block3
             block3.timestamp = 1000
 
@@ -40,7 +40,7 @@ object BitcoinCashBlockValidatorHelperTest : Spek({
             whenever(storage.getBlock(hashHex = block2.previousBlockHashReversedHex)).thenReturn(block1)
             whenever(storage.getBlock(hashHex = block3.previousBlockHashReversedHex)).thenReturn(block2)
 
-            Assert.assertEquals(block2, helper.getSuitableBlock(block3))
+            Assert.assertEquals(block2, helper.getSuitableBlock(mutableListOf(block1, block2, block3)))
         }
 
         it("getSuitableBlock_sameTime") {
@@ -51,7 +51,7 @@ object BitcoinCashBlockValidatorHelperTest : Spek({
             whenever(storage.getBlock(hashHex = block2.previousBlockHashReversedHex)).thenReturn(block1)
             whenever(storage.getBlock(hashHex = block3.previousBlockHashReversedHex)).thenReturn(block2)
 
-            Assert.assertEquals(block2, helper.getSuitableBlock(block3))
+            Assert.assertEquals(block2, helper.getSuitableBlock(mutableListOf(block1, block2, block3)))
         }
     }
 

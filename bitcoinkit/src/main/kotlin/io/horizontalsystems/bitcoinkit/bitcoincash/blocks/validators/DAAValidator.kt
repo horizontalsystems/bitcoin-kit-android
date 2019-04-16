@@ -15,29 +15,31 @@ class DAAValidator(private val targetSpacing: Int, private val blockValidatorHel
     }
 
     override fun validate(block: Block, previousBlock: Block) {
-        blockValidatorHelper.getPrevious(previousBlock, 147) ?: return
+        val chunk = blockValidatorHelper.getPreviousChunk(previousBlock.height, 147)
+        if (chunk.size < 147) {
+            return
+        }
 
-        validateDAA(block, previousBlock)
+        validateDAA(block, chunk)
     }
 
-    private fun validateDAA(candidate: Block, previousBlock: Block) {
-        val lstBlock = blockValidatorHelper.getSuitableBlock(previousBlock)
-        val previous = checkNotNull(blockValidatorHelper.getPrevious(previousBlock, 144)) { throw BlockValidatorException.NoPreviousBlock() }
-        val fstBLock = blockValidatorHelper.getSuitableBlock(previous)
-        val heightInterval = lstBlock.height - fstBLock.height
+    private fun validateDAA(candidate: Block, chunk: List<Block>) {
+        val firstSuitable = blockValidatorHelper.getSuitableBlock(mutableListOf(chunk[0], chunk[1], chunk[2]))
+        val lastSuitable = blockValidatorHelper.getSuitableBlock(mutableListOf(chunk[chunk.size - 3], chunk[chunk.size - 2], chunk[chunk.size - 1]))
 
-        var actualTimespan = lstBlock.timestamp - fstBLock.timestamp
+        val heightInterval = lastSuitable.height - firstSuitable.height
+
+        var actualTimespan = lastSuitable.timestamp - firstSuitable.timestamp
         if (actualTimespan > 288 * targetSpacing)
             actualTimespan = 288 * targetSpacing.toLong()
         if (actualTimespan < 72 * targetSpacing)
             actualTimespan = 72 * targetSpacing.toLong()
 
-        var blocks = checkNotNull(blockValidatorHelper.getPreviousWindow(lstBlock, heightInterval - 1)) {
-            throw BlockValidatorException.NoPreviousBlock()
-        }
+        val lastSuitableIndex = chunk.indexOf(lastSuitable)
+        val blocks = chunk.slice((lastSuitableIndex - heightInterval + 1) until lastSuitableIndex).toMutableList()
 
         var chainWork = 0.toBigInteger()
-        blocks += lstBlock
+        blocks += lastSuitable
         blocks.forEach {
             val target = CompactBits.decode(it.bits)
             chainWork += largestHash / (target + 1.toBigInteger())

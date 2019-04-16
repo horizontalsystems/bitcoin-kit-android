@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoinkit.AbstractKit
 import io.horizontalsystems.bitcoinkit.BitcoinCore
 import io.horizontalsystems.bitcoinkit.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
+import io.horizontalsystems.bitcoinkit.crypto.CompactBits
 import io.horizontalsystems.bitcoinkit.dash.managers.MasternodeListManager
 import io.horizontalsystems.bitcoinkit.dash.managers.MasternodeListSyncer
 import io.horizontalsystems.bitcoinkit.dash.managers.MasternodeSortedList
@@ -19,6 +20,7 @@ import io.horizontalsystems.bitcoinkit.dash.models.MasternodeSerializer
 import io.horizontalsystems.bitcoinkit.dash.storage.DashKitDatabase
 import io.horizontalsystems.bitcoinkit.dash.storage.DashStorage
 import io.horizontalsystems.bitcoinkit.dash.tasks.PeerTaskFactory
+import io.horizontalsystems.bitcoinkit.dash.validators.DarkGravityWaveValidator
 import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.network.Network
@@ -85,6 +87,7 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
         // extending bitcoinCore
 
         bitcoinCore.addListener(this)
+        bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits))
 
         bitcoinCore.addMessageParser(DashMessageParser())
 
@@ -116,5 +119,12 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
                 masterNodeSyncer?.sync(it.headerHash.hexStringToByteArray().reversedArray())
             }
         }
+    }
+
+    companion object {
+        val maxTargetBits = CompactBits.decode(0x1e0fffff)
+        val targetTimespan = 3600L     // 1 hour for 24 blocks
+        val targetSpacing = 150        // 2.5 min. for mining 1 Block
+        val heightInterval = targetTimespan / targetSpacing
     }
 }

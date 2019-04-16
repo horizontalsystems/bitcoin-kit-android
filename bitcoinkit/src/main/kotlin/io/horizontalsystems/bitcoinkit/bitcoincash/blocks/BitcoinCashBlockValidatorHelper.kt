@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit.bitcoincash.blocks
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoinkit.models.Block
@@ -24,20 +23,8 @@ class BitcoinCashBlockValidatorHelper(storage: IStorage) : BlockValidatorHelper(
         return median[median.size / 2]
     }
 
-    private fun MutableList<Block>.swap(index1: Int, index2: Int) {
-        val tmp = this[index1]
-        this[index1] = this[index2]
-        this[index2] = tmp
-    }
-
     //  Get median of last 3 blocks based on timestamp
-    fun getSuitableBlock(block: Block): Block {
-        val blocks: MutableList<Block> = mutableListOf()
-        blocks.add(block)
-        blocks.add(blocks[0].previousBlock(storage) ?: throw BlockValidatorException.NoPreviousBlock())
-        blocks.add(blocks[1].previousBlock(storage) ?: throw BlockValidatorException.NoPreviousBlock())
-
-        blocks.reverse()
+    fun getSuitableBlock(blocks: MutableList<Block>): Block {
 
         if (blocks[0].timestamp > blocks[2].timestamp) {
             blocks.swap(0, 2)
@@ -52,5 +39,11 @@ class BitcoinCashBlockValidatorHelper(storage: IStorage) : BlockValidatorHelper(
         }
 
         return blocks[1]
+    }
+
+    private fun MutableList<Block>.swap(index1: Int, index2: Int) {
+        val tmp = this[index1]
+        this[index1] = this[index2]
+        this[index2] = tmp
     }
 }
