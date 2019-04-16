@@ -27,15 +27,11 @@ import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.utils.AddressConverterChain
-import io.horizontalsystems.bitcoinkit.utils.Base58AddressConverter
-import io.horizontalsystems.bitcoinkit.utils.IAddressConverter
-import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
+import io.horizontalsystems.bitcoinkit.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 import java.util.concurrent.Executor
-import java.util.concurrent.Executors
 
 class BitcoinCoreBuilder {
 
@@ -259,7 +255,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     // END: Extending
 
-    var listenerExecutor: Executor = Executors.newSingleThreadExecutor()
+    var listenerExecutor: Executor = DirectExecutor()
 
     //  DataProvider getters
     val balance get() = dataProvider.balance
