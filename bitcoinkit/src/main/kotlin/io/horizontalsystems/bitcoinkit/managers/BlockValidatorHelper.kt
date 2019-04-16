@@ -4,6 +4,9 @@ import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.Block
 
 open class BlockValidatorHelper(protected val storage: IStorage) {
+    fun getPreviousChunk(blockHeight: Int, size: Int): List<Block> {
+        return storage.getBlocksChunk(fromHeight = blockHeight - size, toHeight = blockHeight)
+    }
 
     fun getPrevious(block: Block, stepBack: Int): Block? {
         return getPreviousWindow(block, stepBack)?.firstOrNull()

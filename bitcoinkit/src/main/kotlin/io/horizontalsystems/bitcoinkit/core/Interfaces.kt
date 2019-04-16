@@ -49,6 +49,7 @@ interface IStorage {
     fun getBlocks(heightGreaterThan: Int, sortedBy: String, limit: Int): List<Block>
     fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean): List<Block>
     fun getBlocks(hashHexes: List<String>): List<Block>
+    fun getBlocksChunk(fromHeight: Int, toHeight: Int): List<Block>
 
     fun addBlock(block: Block)
     fun saveBlock(block: Block)
