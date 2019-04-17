@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
-class UnknownMessage(command: String, private val payload: ByteArray) : Message(command) {
-    override fun getPayload(): ByteArray {
-        return payload
+class UnknownMessage(override val command: String, private val payload: ByteArray) : IMessage {
+    override fun toString(): String {
+        return "UnknownMessage(command=$command)"
     }
 }

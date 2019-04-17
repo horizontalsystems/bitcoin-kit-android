@@ -1,36 +1,35 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.io.ByteArrayInputStream
 
-/**
- * The 'tx' message contains a transaction which is not yet in a block. The transaction
- * will be held in the memory pool for a period of time to allow other peers to request
- * the transaction
- */
-class TransactionMessage() : Message("tx") {
-
-    lateinit var transaction: FullTransaction
-
-    constructor(transaction: FullTransaction) : this() {
-        this.transaction = transaction
-    }
-
-    constructor(payload: ByteArray) : this() {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            transaction = TransactionSerializer.deserialize(input)
-        }
-    }
-
-    override fun getPayload(): ByteArray {
-        return TransactionSerializer.serialize(transaction)
-    }
+class TransactionMessage(var transaction: FullTransaction) : IMessage {
+    override val command: String = "tx"
 
     override fun toString(): String {
         return "TransactionMessage(${transaction.header.hashHexReversed})"
     }
+}
 
+class TransactionMessageParser : IMessageParser {
+    override val command: String = "tx"
+
+    override fun parseMessage(payload: ByteArray): IMessage {
+        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
+            val transaction = TransactionSerializer.deserialize(input)
+            return TransactionMessage(transaction)
+        }
+    }
+}
+
+class TransactionMessageSerializer : IMessageSerializer {
+    override val command: String = "tx"
+
+    override fun serialize(message: IMessage): ByteArray {
+        if (message !is TransactionMessage) throw WrongSerializer()
+
+        return TransactionSerializer.serialize(message.transaction)
+    }
 }

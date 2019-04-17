@@ -1,57 +1,58 @@
 package io.horizontalsystems.bitcoinkit.dash.messages
 
-import io.horizontalsystems.bitcoinkit.core.toHexString
 import io.horizontalsystems.bitcoinkit.dash.models.CoinbaseTransaction
 import io.horizontalsystems.bitcoinkit.dash.models.Masternode
+import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.network.messages.Message
+import io.horizontalsystems.bitcoinkit.network.messages.IMessageParser
+import io.horizontalsystems.bitcoinkit.network.messages.IMessage
 import java.io.ByteArrayInputStream
 
-class MasternodeListDiffMessage(payload: ByteArray) : Message("mnlistdiff") {
-
-    var baseBlockHash = byteArrayOf()
-    var blockHash = byteArrayOf()
-    var totalTransactions = 0L
-    var merkleHashesCount = 0L
-    var merkleHashes = mutableListOf<ByteArray>()
-    var merkleFlagsCount = 0L
-    var merkleFlags = byteArrayOf()
-    val cbTx: CoinbaseTransaction
-    var deletedMNsCount = 0L
-    var deletedMNs = mutableListOf<ByteArray>()
-    var mnListCount = 0L
-    var mnList = mutableListOf<Masternode>()
-
-    init {
-        val input = BitcoinInput(ByteArrayInputStream(payload))
-
-        baseBlockHash = input.readBytes(32)
-        blockHash = input.readBytes(32)
-        totalTransactions = input.readUnsignedInt()
-        merkleHashesCount = input.readVarInt()
-        repeat(merkleHashesCount.toInt()) {
-            merkleHashes.add(input.readBytes(32))
-        }
-        merkleFlagsCount = input.readVarInt()
-        merkleFlags = input.readBytes(merkleFlagsCount.toInt())
-        cbTx = CoinbaseTransaction(input)
-        deletedMNsCount = input.readVarInt()
-        repeat(deletedMNsCount.toInt()) {
-            deletedMNs.add(input.readBytes(32))
-        }
-        mnListCount = input.readVarInt()
-        repeat(mnListCount.toInt()) {
-            mnList.add(Masternode(input))
-        }
-
-        input.close()
-    }
-
-    override fun getPayload(): ByteArray {
-        TODO("not implemented")
-    }
+class MasternodeListDiffMessage(
+        val baseBlockHash: ByteArray,
+        val blockHash: ByteArray,
+        val totalTransactions: Long,
+        val merkleHashes: List<ByteArray>,
+        val merkleFlags: ByteArray,
+        val cbTx: CoinbaseTransaction,
+        val deletedMNs: List<ByteArray>,
+        val mnList: List<Masternode>
+) : IMessage {
+    override val command: String = "mnlistdiff"
 
     override fun toString(): String {
-        return "MnListDiffMessage(baseBlockHash=${baseBlockHash.toHexString()}, blockHash=${blockHash.toHexString()})"
+        return "MnListDiffMessage(baseBlockHash=${baseBlockHash.toReversedHex()}, blockHash=${blockHash.toReversedHex()})"
+    }
+}
+
+class MasternodeListDiffMessageParser : IMessageParser {
+    override val command: String = "mnlistdiff"
+
+    override fun parseMessage(payload: ByteArray): IMessage {
+        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
+            val baseBlockHash = input.readBytes(32)
+            val blockHash = input.readBytes(32)
+            val totalTransactions = input.readUnsignedInt()
+            val merkleHashesCount = input.readVarInt()
+            val merkleHashes = mutableListOf<ByteArray>()
+            repeat(merkleHashesCount.toInt()) {
+                merkleHashes.add(input.readBytes(32))
+            }
+            val merkleFlagsCount = input.readVarInt()
+            val merkleFlags = input.readBytes(merkleFlagsCount.toInt())
+            val cbTx = CoinbaseTransaction(input)
+            val deletedMNsCount = input.readVarInt()
+            val deletedMNs = mutableListOf<ByteArray>()
+            repeat(deletedMNsCount.toInt()) {
+                deletedMNs.add(input.readBytes(32))
+            }
+            val mnListCount = input.readVarInt()
+            val mnList = mutableListOf<Masternode>()
+            repeat(mnListCount.toInt()) {
+                mnList.add(Masternode(input))
+            }
+
+            return MasternodeListDiffMessage(baseBlockHash, blockHash, totalTransactions, merkleHashes, merkleFlags, cbTx, deletedMNs, mnList)
+        }
     }
 }

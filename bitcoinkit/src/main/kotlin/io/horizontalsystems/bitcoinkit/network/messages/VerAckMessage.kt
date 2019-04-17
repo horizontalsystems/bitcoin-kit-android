@@ -1,18 +1,25 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
-/**
- * The 'verack' message is sent in response to the 'version' message.
- * It consists of just the message header.
- */
-class VerAckMessage() : Message("verack") {
-
-    constructor(payload: ByteArray) : this()
-
-    override fun getPayload(): ByteArray {
-        return ByteArray(0)
-    }
+class VerAckMessage : IMessage {
+    override val command: String = "verack"
 
     override fun toString(): String {
         return "VerAckMessage()"
+    }
+}
+
+class VerAckMessageParser : IMessageParser {
+    override val command: String = "verack"
+
+    override fun parseMessage(payload: ByteArray): IMessage {
+        return VerAckMessage()
+    }
+}
+
+class VerAckMessageSerializer : IMessageSerializer {
+    override val command: String = "verack"
+
+    override fun serialize(message: IMessage): ByteArray {
+        return ByteArray(0)
     }
 }

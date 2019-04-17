@@ -5,7 +5,7 @@ import com.nhaarman.mockito_kotlin.argumentCaptor
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoinkit.network.messages.AddrMessage
-import io.horizontalsystems.bitcoinkit.network.messages.Message
+import io.horizontalsystems.bitcoinkit.network.messages.IMessage
 import io.horizontalsystems.bitcoinkit.network.messages.VerAckMessage
 import io.horizontalsystems.bitcoinkit.network.messages.VersionMessage
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
@@ -50,7 +50,7 @@ class PeerTest {
 
         peer.onMessage(versionMessage)
 
-        argumentCaptor<Message>().apply {
+        argumentCaptor<IMessage>().apply {
             verify(peerConnection).sendMessage(capture())
 
             Assert.assertTrue(firstValue is VerAckMessage)

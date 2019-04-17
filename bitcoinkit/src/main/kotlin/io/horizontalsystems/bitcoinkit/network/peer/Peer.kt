@@ -11,14 +11,20 @@ import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import java.net.InetAddress
 
-class Peer(val host: String, private val network: Network, private val listener: Listener) : PeerConnection.Listener, PeerTask.Listener, PeerTask.Requester {
+class Peer(
+        val host: String,
+        private val network: Network,
+        private val listener: Listener,
+        networkMessageParser: NetworkMessageParser,
+        networkMessageSerializer: NetworkMessageSerializer
+) : PeerConnection.Listener, PeerTask.Listener, PeerTask.Requester {
 
     interface Listener {
         fun onConnect(peer: Peer)
         fun onReady(peer: Peer)
         fun onDisconnect(peer: Peer, e: Exception?)
         fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
-        fun onReceiveAddress(addrs: Array<NetworkAddress>)
+        fun onReceiveAddress(addrs: List<NetworkAddress>)
         fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
@@ -30,7 +36,7 @@ class Peer(val host: String, private val network: Network, private val listener:
     var localBestBlockHeight: Int = 0
 
     private val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
-    private val peerConnection = PeerConnection(host, network, this)
+    private val peerConnection = PeerConnection(host, network, this, networkMessageParser, networkMessageSerializer)
     private var tasks = mutableListOf<PeerTask>()
     private val timer = PeerTimer()
 
@@ -78,7 +84,7 @@ class Peer(val host: String, private val network: Network, private val listener:
         }
     }
 
-    override fun onMessage(message: Message) {
+    override fun onMessage(message: IMessage) {
         timer.restart()
 
         if (message is VersionMessage)
@@ -173,7 +179,7 @@ class Peer(val host: String, private val network: Network, private val listener:
     // PeerTask Requester implementations
     //
     override fun getBlocks(hashes: List<ByteArray>) {
-        peerConnection.sendMessage(GetBlocksMessage(hashes, network))
+        peerConnection.sendMessage(GetBlocksMessage(hashes, network.protocolVersion, network.zeroHashBytes))
     }
 
     override fun getData(items: List<InventoryItem>) {
@@ -192,7 +198,7 @@ class Peer(val host: String, private val network: Network, private val listener:
         peerConnection.sendMessage(TransactionMessage(transaction))
     }
 
-    override fun sendMessage(message: Message) {
+    override fun sendMessage(message: IMessage) {
         peerConnection.sendMessage(message)
     }
 

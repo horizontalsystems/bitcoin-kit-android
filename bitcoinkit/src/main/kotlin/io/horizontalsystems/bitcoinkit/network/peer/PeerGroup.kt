@@ -4,6 +4,8 @@ import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.network.Network
+import io.horizontalsystems.bitcoinkit.network.messages.NetworkMessageParser
+import io.horizontalsystems.bitcoinkit.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
 import java.net.InetAddress
 import java.util.concurrent.ArrayBlockingQueue
@@ -15,7 +17,10 @@ class PeerGroup(
         private val hostManager: PeerAddressManager,
         private val network: Network,
         private val peerManager: PeerManager,
-        private val peerSize: Int) : Thread(), Peer.Listener {
+        private val peerSize: Int,
+        private val networkMessageParser: NetworkMessageParser,
+        private val networkMessageSerializer: NetworkMessageSerializer
+) : Thread(), Peer.Listener {
 
     interface IPeerGroupListener {
         fun onStart() = Unit
@@ -132,7 +137,7 @@ class PeerGroup(
         inventoryItemsHandler?.handleInventoryItems(peer, inventoryItems)
     }
 
-    override fun onReceiveAddress(addrs: Array<NetworkAddress>) {
+    override fun onReceiveAddress(addrs: List<NetworkAddress>) {
         val peerIps = mutableListOf<String>()
         for (address in addrs) {
             val addr = InetAddress.getByAddress(address.address)
@@ -154,7 +159,7 @@ class PeerGroup(
         val ip = hostManager.getIp()
         if (ip != null) {
             logger.info("Try open new peer connection to $ip...")
-            val peer = Peer(ip, network, this)
+            val peer = Peer(ip, network, this, networkMessageParser, networkMessageSerializer)
             peerGroupListeners.forEach { it.onPeerCreate(peer) }
             peer.start()
         } else {
