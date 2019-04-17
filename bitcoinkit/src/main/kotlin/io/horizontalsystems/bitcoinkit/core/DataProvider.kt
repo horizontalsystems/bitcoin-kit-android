@@ -3,6 +3,8 @@ package io.horizontalsystems.bitcoinkit.core
 import io.horizontalsystems.bitcoinkit.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoinkit.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoinkit.models.*
+import io.horizontalsystems.bitcoinkit.storage.FullTransactionInfo
+import io.horizontalsystems.bitcoinkit.storage.TransactionWithBlock
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
@@ -58,8 +60,12 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         }
     }
 
-    override fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>) {
-        listener?.onTransactionsUpdate(inserted.mapNotNull { transactionInfo(it) }, updated.mapNotNull { transactionInfo(it) })
+    override fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>, block: Block?) {
+        listener?.onTransactionsUpdate(
+                storage.getFullTransactionInfo(inserted.map { TransactionWithBlock(it, block) }).mapNotNull { transactionInfo(it) },
+                storage.getFullTransactionInfo(updated.map { TransactionWithBlock(it, block) }).mapNotNull { transactionInfo(it) }
+        )
+
         balanceUpdateSubject.onNext(true)
     }
 
@@ -74,18 +80,15 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
 
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
             Single.create { emitter ->
-                var results = storage.getTransactionsSortedTimestampAndOrdered()
-
-                fromHash?.let { fromHash ->
-                    storage.getTransaction(fromHash)?.let { fromTransaction ->
-                        results = results.filter {
-                            it.timestamp < fromTransaction.timestamp || (it.timestamp == fromTransaction.timestamp && it.order < fromTransaction.order)
-                        }
+                var results = listOf<FullTransactionInfo>()
+                if (fromHash != null) {
+                    storage.getTransaction(fromHash)?.let {
+                        results = storage.getFullTransactionInfo(it, limit)
                     }
                 }
 
-                limit?.let {
-                    results = results.take(limit)
+                if (results.isEmpty()) {
+                    results = storage.getFullTransactionInfo(null, limit)
                 }
 
                 emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
@@ -96,30 +99,29 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
             block.height,
             block.timestamp)
 
-    private fun transactionInfo(transaction: Transaction?): TransactionInfo? {
-        if (transaction == null) return null
+    private fun transactionInfo(fullTransaction: FullTransactionInfo): TransactionInfo? {
+        val transaction = fullTransaction.header
 
         var totalMineInput = 0L
         var totalMineOutput = 0L
         val fromAddresses = mutableListOf<TransactionAddress>()
         val toAddresses = mutableListOf<TransactionAddress>()
 
-        storage.getTransactionInputs(transaction).forEach { input ->
+        fullTransaction.inputs.forEach { input ->
             var mine = false
 
-            val previousOutput = storage.getPreviousOutput(input)
-            if (previousOutput?.publicKeyPath != null) {
-                totalMineInput += previousOutput.value
+            if (input.previousOutput?.publicKeyPath != null) {
+                totalMineInput += input.previousOutput.value
                 mine = true
 
             }
 
-            input.address?.let { address ->
+            input.input.address?.let { address ->
                 fromAddresses.add(TransactionAddress(address, mine = mine))
             }
         }
 
-        storage.getTransactionOutputs(transaction).forEach { output ->
+        fullTransaction.outputs.forEach { output ->
             var mine = false
 
             if (output.publicKeyPath != null) {
@@ -137,7 +139,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
                 from = fromAddresses,
                 to = toAddresses,
                 amount = totalMineOutput - totalMineInput,
-                blockHeight = transaction.block(storage)?.height,
+                blockHeight = fullTransaction.block?.height,
                 timestamp = transaction.timestamp
         )
     }

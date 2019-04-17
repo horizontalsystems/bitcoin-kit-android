@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.storage
 
+import android.arch.persistence.db.SupportSQLiteQuery
 import android.arch.persistence.room.*
 import io.horizontalsystems.bitcoinkit.models.Transaction
 
@@ -28,6 +29,9 @@ interface TransactionDao {
 
     @Query("select * from `transaction` order by timestamp DESC, `order` DESC")
     fun getSortedTimestampAndOrdered(): List<Transaction>
+
+    @RawQuery
+    fun getTransactionWithBlockBySql(query: SupportSQLiteQuery): List<TransactionWithBlock>
 
     @Delete
     fun delete(transaction: Transaction)

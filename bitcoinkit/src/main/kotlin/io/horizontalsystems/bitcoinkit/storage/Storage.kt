@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.storage
 
+import android.arch.persistence.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.*
 
@@ -164,6 +165,39 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     override fun getTransactionsSortedTimestampAndOrdered(): List<Transaction> {
         return store.transaction.getSortedTimestampAndOrdered()
+    }
+
+    override fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo> {
+        val txHashes = transactions.map { it.transaction.hashHexReversed }
+        val inputs = store.input.getInputsWithPrevouts(txHashes)
+        val outputs = store.output.getTransactionsOutputs(txHashes)
+
+        return transactions.map { tx ->
+            FullTransactionInfo(
+                    tx.block,
+                    tx.transaction,
+                    inputs.filter { it.input.transactionHashReversedHex == tx.transaction.hashHexReversed },
+                    outputs.filter { it.transactionHashReversedHex == tx.transaction.hashHexReversed }
+            )
+        }
+    }
+
+    override fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo> {
+        var query = "SELECT transactions.*, Block.*" +
+                " FROM `Transaction` as transactions" +
+                " LEFT JOIN Block ON transactions.blockHashReversedHex = Block.headerHashReversedHex"
+
+        if (fromTransaction != null) {
+            query = " WHERE transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order})"
+        }
+
+        query += " ORDER BY timestamp DESC, `order` DESC"
+
+        if (limit != null) {
+            query += ", LIMIT $limit"
+        }
+
+        return getFullTransactionInfo(store.transaction.getTransactionWithBlockBySql(SimpleSQLiteQuery(query)))
     }
 
     override fun getTransaction(hashHex: String): Transaction? {

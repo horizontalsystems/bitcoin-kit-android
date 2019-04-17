@@ -14,6 +14,9 @@ interface TransactionOutputDao {
     @Query("SELECT output.*, publicKey.* FROM TransactionOutput as output INNER JOIN PublicKey as publicKey ON output.publicKeyPath = publicKey.path")
     fun getOutputsWithPublicKeys(): List<OutputWithPublicKey>
 
+    @Query("select * from transactionOutput where transactionHashReversedHex in (:txHashes)")
+    fun getTransactionsOutputs(txHashes: List<String>): List<TransactionOutput>
+
     @Delete
     fun delete(output: TransactionOutput)
 

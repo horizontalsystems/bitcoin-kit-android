@@ -42,6 +42,16 @@ class InputWithBlock(
         @Embedded val input: TransactionInput,
         @Embedded val block: Block?)
 
+class TransactionWithBlock(
+        @Embedded val transaction: Transaction,
+        @Embedded val block: Block?)
+
+class PreviousOutput(val publicKeyPath: String?, val value: Long)
+
+class InputWithPreviousOutput(
+        @Embedded val input: TransactionInput,
+        @Embedded val previousOutput: PreviousOutput?)
+
 class UnspentOutput(
         @Embedded val output: TransactionOutput,
         @Embedded val publicKey: PublicKey,
@@ -51,3 +61,9 @@ class UnspentOutput(
 class OutputWithPublicKey(
         @Embedded val output: TransactionOutput,
         @Embedded val publicKey: PublicKey)
+
+class FullTransactionInfo(
+        val block: Block?,
+        val header: Transaction,
+        val inputs: List<InputWithPreviousOutput>,
+        val outputs: List<TransactionOutput>)
