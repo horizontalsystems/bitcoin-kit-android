@@ -85,6 +85,7 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
+                .setBlockHeaderHasher(X11Hasher())
                 .build()
 
         // extending bitcoinCore

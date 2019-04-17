@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import java.io.ByteArrayInputStream
@@ -36,12 +36,12 @@ class MerkleBlockMessage(
     }
 }
 
-class MerkleBlockMessageParser : IMessageParser {
+class MerkleBlockMessageParser(private val blockHeaderParser: BlockHeaderParser) : IMessageParser {
     override val command = "merkleblock"
 
     override fun parseMessage(payload: ByteArray): IMessage {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val header = BlockHeaderSerializer.deserialize(input)
+            val header = blockHeaderParser.parse(input)
             val txCount = input.readInt()
 
             val hashCount = input.readVarInt().toInt()

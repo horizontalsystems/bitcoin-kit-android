@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.dash.masternodelist
 
-import io.horizontalsystems.bitcoinkit.dash.IHasher
+import io.horizontalsystems.bitcoinkit.core.IHasher
 import io.horizontalsystems.bitcoinkit.dash.IMerkleHasher
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 

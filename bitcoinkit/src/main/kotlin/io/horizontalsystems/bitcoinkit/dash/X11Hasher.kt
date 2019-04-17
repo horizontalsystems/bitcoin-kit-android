@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.dash
 
 import fr.cryptohash.*
+import io.horizontalsystems.bitcoinkit.core.IHasher
 import java.util.*
 
-object X11Hash {
-
+class X11Hasher : IHasher {
     private val algorithms = listOf(
             BLAKE512(),
             BMW512(),
@@ -19,8 +19,8 @@ object X11Hash {
             ECHO512()
     )
 
-    fun x11(input: ByteArray): ByteArray {
-        var hash = input
+    override fun hash(data: ByteArray): ByteArray {
+        var hash = data
 
         algorithms.forEach {
             hash = it.digest(hash)

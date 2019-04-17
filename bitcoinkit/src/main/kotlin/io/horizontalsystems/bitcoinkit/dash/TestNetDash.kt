@@ -36,7 +36,4 @@ class TestNetDash : Network() {
             HashUtils.toBytesAsLE("0000000f10a125d1d97784028be7c3b737e21a3ab76d59a60f8d244ab548de14")
     ), 55032)
 
-    override fun generateBlockHeaderHash(data: ByteArray): ByteArray {
-        return X11Hash.x11(data)
-    }
 }

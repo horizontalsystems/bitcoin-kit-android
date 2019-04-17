@@ -8,10 +8,7 @@ import io.horizontalsystems.bitcoinkit.blocks.InitialBlockDownload
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.ProofOfWorkValidator
-import io.horizontalsystems.bitcoinkit.core.DataProvider
-import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.core.KitStateProvider
-import io.horizontalsystems.bitcoinkit.core.Wallet
+import io.horizontalsystems.bitcoinkit.core.*
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
@@ -20,7 +17,7 @@ import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.network.peer.*
-import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
@@ -46,6 +43,7 @@ class BitcoinCoreBuilder {
     private var confirmationsThreshold = 6
     private var newWallet = false
     private var peerSize = 10
+    private var blockHeaderHasher: IHasher? = null
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -102,6 +100,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setBlockHeaderHasher(blockHeaderHasher: IHasher): BitcoinCoreBuilder {
+        this.blockHeaderHasher = blockHeaderHasher
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -110,8 +113,7 @@ class BitcoinCoreBuilder {
         val addressSelector = checkNotNull(this.addressSelector)
         val apiFeeRateCoinCode = checkNotNull(this.apiFeeRateCoinCode)
         val storage = checkNotNull(this.storage)
-
-        BlockHeaderSerializer.network = network
+        val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
 
         val apiFeeRate = ApiFeeRate(apiFeeRateCoinCode)
 
@@ -189,7 +191,7 @@ class BitcoinCoreBuilder {
         // this part can be moved to another place
 
         bitcoinCore.addMessageParser(AddrMessageParser())
-        bitcoinCore.addMessageParser(MerkleBlockMessageParser())
+        bitcoinCore.addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
         bitcoinCore.addMessageParser(InvMessageParser())
         bitcoinCore.addMessageParser(GetDataMessageParser())
         bitcoinCore.addMessageParser(PingMessageParser())
