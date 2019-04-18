@@ -38,9 +38,15 @@ class InputToSign(
         val previousOutput: TransactionOutput,
         val previousOutputPublicKey: PublicKey)
 
-class InputWithBlock(
-        @Embedded val input: TransactionInput,
+class TransactionWithBlock(
+        @Embedded val transaction: Transaction,
         @Embedded val block: Block?)
+
+class PreviousOutput(val publicKeyPath: String?, val value: Long)
+
+class InputWithPreviousOutput(
+        @Embedded val input: TransactionInput,
+        @Embedded val previousOutput: PreviousOutput?)
 
 class UnspentOutput(
         @Embedded val output: TransactionOutput,
@@ -48,6 +54,14 @@ class UnspentOutput(
         @Embedded val transaction: Transaction,
         @Embedded val block: Block?)
 
-class OutputWithPublicKey(
+class InputBlock(@Embedded val block: Block?)
+
+class FullOutputInfo(
         @Embedded val output: TransactionOutput,
-        @Embedded val publicKey: PublicKey)
+        @Embedded val input: InputBlock?)
+
+class FullTransactionInfo(
+        val block: Block?,
+        val header: Transaction,
+        val inputs: List<InputWithPreviousOutput>,
+        val outputs: List<TransactionOutput>)

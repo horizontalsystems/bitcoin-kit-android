@@ -26,7 +26,7 @@ class TransactionProcessor(
         process(transaction)
 
         storage.addTransaction(transaction)
-        dataListener.onTransactionsUpdate(listOf(transaction.header), listOf())
+        dataListener.onTransactionsUpdate(listOf(transaction.header), listOf(), null)
     }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
@@ -64,7 +64,7 @@ class TransactionProcessor(
         }
 
         if (inserted.isNotEmpty() || updated.isNotEmpty()) {
-            dataListener.onTransactionsUpdate(inserted, updated)
+            dataListener.onTransactionsUpdate(inserted, updated, block)
         }
 
         if (needToUpdateBloomFilter) {

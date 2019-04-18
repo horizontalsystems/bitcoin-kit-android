@@ -5,6 +5,6 @@ import io.horizontalsystems.bitcoinkit.models.Transaction
 
 interface IBlockchainDataListener {
     fun onBlockInsert(block: Block)
-    fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>)
+    fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>, block: Block?)
     fun onTransactionsDelete(ids: List<String>)
 }

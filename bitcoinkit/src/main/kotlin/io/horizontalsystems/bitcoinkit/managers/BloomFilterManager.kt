@@ -2,8 +2,8 @@ package io.horizontalsystems.bitcoinkit.managers
 
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
-import io.horizontalsystems.bitcoinkit.storage.OutputWithPublicKey
-import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoinkit.extensions.toReversedByteArray
+import io.horizontalsystems.bitcoinkit.storage.FullOutputInfo
 import io.horizontalsystems.bitcoinkit.utils.Utils
 
 class BloomFilterManager(private val storage: IStorage) {
@@ -30,19 +30,15 @@ class BloomFilterManager(private val storage: IStorage) {
             elements.add(publicKey.scriptHashP2WPKH)
         }
 
-        var transactionOutputs = storage.getOutputsWithPublicKeys().filter {
-            it.output.scriptType == ScriptType.P2WPKH || it.output.scriptType == ScriptType.P2PK
-        }
+        var transactionOutputs = storage.getMyOutputs()
 
         storage.lastBlock()?.height?.let { bestBlockHeight ->
             transactionOutputs = transactionOutputs.filter { needToSetToBloomFilter(it, bestBlockHeight) }
         }
 
-        for (output in transactionOutputs) {
-            output.output.transaction(storage)?.let { transaction ->
-                val outpoint = transaction.hash + Utils.intToByteArray(output.output.index).reversedArray()
-                elements.add(outpoint)
-            }
+        for (out in transactionOutputs) {
+            val outpoint = out.output.transactionHashReversedHex.toReversedByteArray() + Utils.intToByteArray(out.output.index).reversedArray()
+            elements.add(outpoint)
         }
 
         if (elements.isNotEmpty()) {
@@ -58,13 +54,12 @@ class BloomFilterManager(private val storage: IStorage) {
     /**
      * @return false if transaction output is spent more then 100 blocks before, otherwise true
      */
-    private fun needToSetToBloomFilter(output: OutputWithPublicKey, bestBlockHeight: Int): Boolean {
-        val inputs = storage.getInputsWithBlock(output.output)
-        if (inputs.isEmpty()) {
+    private fun needToSetToBloomFilter(output: FullOutputInfo, bestBlockHeight: Int): Boolean {
+        if (output.input == null) {
             return true
         }
 
-        val outputSpentBlockHeight = inputs.firstOrNull()?.block?.height
+        val outputSpentBlockHeight = output.input.block?.height
         if (outputSpentBlockHeight != null) {
             return bestBlockHeight - outputSpentBlockHeight < 100
         }

@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoinkit.storage
 
+import android.arch.persistence.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.models.*
 
@@ -166,6 +167,39 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.transaction.getSortedTimestampAndOrdered()
     }
 
+    override fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo> {
+        val txHashes = transactions.map { it.transaction.hashHexReversed }
+        val inputs = store.input.getInputsWithPrevouts(txHashes)
+        val outputs = store.output.getTransactionsOutputs(txHashes)
+
+        return transactions.map { tx ->
+            FullTransactionInfo(
+                    tx.block,
+                    tx.transaction,
+                    inputs.filter { it.input.transactionHashReversedHex == tx.transaction.hashHexReversed },
+                    outputs.filter { it.transactionHashReversedHex == tx.transaction.hashHexReversed }
+            )
+        }
+    }
+
+    override fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo> {
+        var query = "SELECT transactions.*, Block.*" +
+                " FROM `Transaction` as transactions" +
+                " LEFT JOIN Block ON transactions.blockHashReversedHex = Block.headerHashReversedHex"
+
+        if (fromTransaction != null) {
+            query = " WHERE transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order})"
+        }
+
+        query += " ORDER BY timestamp DESC, `order` DESC"
+
+        if (limit != null) {
+            query += ", LIMIT $limit"
+        }
+
+        return getFullTransactionInfo(store.transaction.getTransactionWithBlockBySql(SimpleSQLiteQuery(query)))
+    }
+
     override fun getTransaction(hashHex: String): Transaction? {
         return store.transaction.getByHashHex(hashHex)
     }
@@ -224,19 +258,15 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.output.getByHashHex(transaction.hashHexReversed)
     }
 
-    override fun getOutputsWithPublicKeys(): List<OutputWithPublicKey> {
-        return store.output.getOutputsWithPublicKeys()
-    }
-
     override fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput> {
         return store.output.getListByPath(publicKey.path)
     }
 
-    // TransactionInput
-
-    override fun getInputsWithBlock(output: TransactionOutput): List<InputWithBlock> {
-        return store.input.getInputsWithBlock(output.transactionHashReversedHex, output.index)
+    override fun getMyOutputs(): List<FullOutputInfo> {
+        return store.output.getMyOutputs()
     }
+
+    // TransactionInput
 
     override fun getTransactionInputs(transaction: Transaction): List<TransactionInput> {
         return store.input.getTransactionInputs(transaction.hashHexReversed)

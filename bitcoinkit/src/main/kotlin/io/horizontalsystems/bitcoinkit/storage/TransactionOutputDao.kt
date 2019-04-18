@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.storage
 
 import android.arch.persistence.room.*
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
+import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
 
 @Dao
 interface TransactionOutputDao {
@@ -11,8 +12,8 @@ interface TransactionOutputDao {
     @Query("SELECT * FROM TransactionOutput WHERE transactionHashReversedHex = :hashHex")
     fun getListByTransactionHash(hashHex: String): List<TransactionOutput>
 
-    @Query("SELECT output.*, publicKey.* FROM TransactionOutput as output INNER JOIN PublicKey as publicKey ON output.publicKeyPath = publicKey.path")
-    fun getOutputsWithPublicKeys(): List<OutputWithPublicKey>
+    @Query("select * from transactionOutput where transactionHashReversedHex in (:txHashes)")
+    fun getTransactionsOutputs(txHashes: List<String>): List<TransactionOutput>
 
     @Delete
     fun delete(output: TransactionOutput)
@@ -39,6 +40,25 @@ interface TransactionOutputDao {
 
     @Query("select * from TransactionOutput where publicKeyPath = :path")
     fun getListByPath(path: String): List<TransactionOutput>
+
+    @Query("""
+        SELECT outputs.*
+        FROM TransactionOutput AS outputs
+        INNER JOIN PublicKey as publicKey ON outputs.publicKeyPath = publicKey.path
+        LEFT JOIN (
+          SELECT
+            inputs.previousOutputIndex,
+            inputs.previousOutputTxReversedHex,
+            inputs.transactionHashReversedHex AS txReversedHex,
+            Block.*
+          FROM TransactionInput AS inputs
+          INNER JOIN `Transaction` AS transactions ON inputs.transactionHashReversedHex = transactions.hashHexReversed
+          LEFT JOIN Block ON transactions.blockHashReversedHex = Block.headerHashReversedHex
+        )
+        AS input ON input.txReversedHex = outputs.transactionHashReversedHex AND input.previousOutputIndex = outputs.`index`
+        WHERE outputs.scriptType = ${ScriptType.P2WPKH} OR outputs.scriptType = ${ScriptType.P2PK}
+    """)
+    fun getMyOutputs(): List<FullOutputInfo>
 
 }
 

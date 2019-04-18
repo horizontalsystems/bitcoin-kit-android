@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoinkit.core
 
 import io.horizontalsystems.bitcoinkit.models.*
-import io.horizontalsystems.bitcoinkit.storage.FullTransaction
-import io.horizontalsystems.bitcoinkit.storage.InputWithBlock
-import io.horizontalsystems.bitcoinkit.storage.OutputWithPublicKey
-import io.horizontalsystems.bitcoinkit.storage.UnspentOutput
+import io.horizontalsystems.bitcoinkit.storage.*
 
 interface IStorage {
 
@@ -62,6 +59,8 @@ interface IStorage {
     //  Transaction
 
     fun getTransactionsSortedTimestampAndOrdered(): List<Transaction>
+    fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo>
+    fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo>
 
     fun getTransaction(hashHex: String): Transaction?
     fun getTransactionOfOutput(output: TransactionOutput): Transaction?
@@ -77,12 +76,11 @@ interface IStorage {
     fun getUnspentOutputs(): List<UnspentOutput>
     fun getPreviousOutput(input: TransactionInput): TransactionOutput?
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
-    fun getOutputsWithPublicKeys(): List<OutputWithPublicKey>
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
+    fun getMyOutputs(): List<FullOutputInfo>
 
     // Transaction Input
 
-    fun getInputsWithBlock(output: TransactionOutput): List<InputWithBlock>
     fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
 
     // PublicKey
