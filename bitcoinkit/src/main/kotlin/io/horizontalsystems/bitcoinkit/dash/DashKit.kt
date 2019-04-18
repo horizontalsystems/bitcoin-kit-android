@@ -2,11 +2,16 @@ package io.horizontalsystems.bitcoinkit.dash
 
 import android.arch.persistence.room.Room
 import android.content.Context
-import io.horizontalsystems.bitcoinkit.AbstractKit
-import io.horizontalsystems.bitcoinkit.BitcoinCore
-import io.horizontalsystems.bitcoinkit.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
-import io.horizontalsystems.bitcoinkit.crypto.CompactBits
+import io.horizontalsystems.bitcoincore.AbstractKit
+import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
+import io.horizontalsystems.bitcoincore.crypto.CompactBits
+import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
+import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.utils.MerkleBranch
+import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoinkit.dash.managers.MasternodeListManager
 import io.horizontalsystems.bitcoinkit.dash.managers.MasternodeListSyncer
 import io.horizontalsystems.bitcoinkit.dash.managers.MasternodeSortedList
@@ -24,11 +29,6 @@ import io.horizontalsystems.bitcoinkit.dash.storage.DashKitDatabase
 import io.horizontalsystems.bitcoinkit.dash.storage.DashStorage
 import io.horizontalsystems.bitcoinkit.dash.tasks.PeerTaskFactory
 import io.horizontalsystems.bitcoinkit.dash.validators.DarkGravityWaveValidator
-import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
-import io.horizontalsystems.bitcoinkit.models.BlockInfo
-import io.horizontalsystems.bitcoinkit.network.Network
-import io.horizontalsystems.bitcoinkit.utils.MerkleBranch
-import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.Mnemonic
 
 class DashKit : AbstractKit, BitcoinCore.Listener {

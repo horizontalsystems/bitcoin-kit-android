@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators
 
 import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
-import io.horizontalsystems.bitcoinkit.crypto.CompactBits
-import io.horizontalsystems.bitcoinkit.models.Block
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoincore.crypto.CompactBits
+import io.horizontalsystems.bitcoincore.models.Block
 
 // Emergency Difficulty Adjustment
 class EDAValidator(private val maxTargetBits: Long, private val blockValidatorHelper: BitcoinCashBlockValidatorHelper) : IBlockValidator {

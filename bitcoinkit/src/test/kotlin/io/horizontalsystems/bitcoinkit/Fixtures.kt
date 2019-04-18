@@ -1,13 +1,13 @@
 package io.horizontalsystems.bitcoinkit
 
-import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
-import io.horizontalsystems.bitcoinkit.extensions.hexToByteArray
-import io.horizontalsystems.bitcoinkit.extensions.toReversedByteArray
-import io.horizontalsystems.bitcoinkit.models.*
-import io.horizontalsystems.bitcoinkit.storage.BlockHeader
-import io.horizontalsystems.bitcoinkit.storage.FullTransaction
-import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
+import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
+import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
+import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 object Fixtures {
 

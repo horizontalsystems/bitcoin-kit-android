@@ -2,9 +2,9 @@ package io.horizontalsystems.bitcoinkit.dash.tasks
 
 import io.horizontalsystems.bitcoinkit.dash.InventoryType
 import io.horizontalsystems.bitcoinkit.dash.messages.TransactionLockVoteMessage
-import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
-import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
+import io.horizontalsystems.bitcoincore.models.InventoryItem
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 
 class RequestTransactionLockVotesTask(hashes: List<ByteArray>) : PeerTask() {
 

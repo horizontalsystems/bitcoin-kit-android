@@ -9,7 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import io.horizontalsystems.bitcoinkit.BitcoinCore
+import io.horizontalsystems.bitcoincore.BitcoinCore
 
 class BalanceFragment : Fragment() {
 

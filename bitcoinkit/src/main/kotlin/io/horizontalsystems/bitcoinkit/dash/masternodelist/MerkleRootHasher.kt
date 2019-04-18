@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoinkit.dash.masternodelist
 
-import io.horizontalsystems.bitcoinkit.core.IHasher
+import io.horizontalsystems.bitcoincore.core.IHasher
+import io.horizontalsystems.bitcoincore.utils.HashUtils
 import io.horizontalsystems.bitcoinkit.dash.IMerkleHasher
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
 
 class MerkleRootHasher: IHasher, IMerkleHasher {
 

@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.dash.models
 
-import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
+import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 
 class MasternodeSerializer {
 

@@ -53,7 +53,7 @@ dependencies {
     // JSON
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
-    implementation project(':bitcoincore')
+    api project(':bitcoincore')
 
     // HDWallet Kit
     implementation 'com.github.horizontalsystems:hd-wallet-kit-android:a3666d8'

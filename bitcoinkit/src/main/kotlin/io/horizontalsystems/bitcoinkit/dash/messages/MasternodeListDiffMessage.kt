@@ -2,10 +2,10 @@ package io.horizontalsystems.bitcoinkit.dash.messages
 
 import io.horizontalsystems.bitcoinkit.dash.models.CoinbaseTransaction
 import io.horizontalsystems.bitcoinkit.dash.models.Masternode
-import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.network.messages.IMessageParser
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import java.io.ByteArrayInputStream
 
 class MasternodeListDiffMessage(

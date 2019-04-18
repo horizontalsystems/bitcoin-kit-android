@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoinkit.dash.storage
 
+import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoinkit.dash.IDashStorage
 import io.horizontalsystems.bitcoinkit.dash.models.Masternode
 import io.horizontalsystems.bitcoinkit.dash.models.MasternodeListState
-import io.horizontalsystems.bitcoinkit.storage.Storage
 
 class DashStorage(override val store: DashKitDatabase) : Storage(store), IDashStorage {
 

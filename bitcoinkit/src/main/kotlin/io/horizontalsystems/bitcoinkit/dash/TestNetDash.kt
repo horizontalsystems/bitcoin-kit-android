@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoinkit.dash
 
-import io.horizontalsystems.bitcoinkit.models.Block
-import io.horizontalsystems.bitcoinkit.network.Network
-import io.horizontalsystems.bitcoinkit.storage.BlockHeader
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
+import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
+import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 class TestNetDash : Network() {
 

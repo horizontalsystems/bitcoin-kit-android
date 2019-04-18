@@ -9,8 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
-import io.horizontalsystems.bitcoinkit.models.FeePriority
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoincore.models.FeePriority
 
 class SendReceiveFragment : Fragment() {
 

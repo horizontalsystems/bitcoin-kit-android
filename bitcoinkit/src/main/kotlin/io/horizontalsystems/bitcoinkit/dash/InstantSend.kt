@@ -1,15 +1,15 @@
 package io.horizontalsystems.bitcoinkit.dash
 
 import android.util.Log
-import io.horizontalsystems.bitcoinkit.core.toHexString
+import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoinkit.dash.tasks.RequestTransactionLockRequestsTask
 import io.horizontalsystems.bitcoinkit.dash.tasks.RequestTransactionLockVotesTask
-import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import io.horizontalsystems.bitcoinkit.network.peer.IInventoryItemsHandler
-import io.horizontalsystems.bitcoinkit.network.peer.IPeerTaskHandler
-import io.horizontalsystems.bitcoinkit.network.peer.Peer
-import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
-import io.horizontalsystems.bitcoinkit.transactions.TransactionSyncer
+import io.horizontalsystems.bitcoincore.models.InventoryItem
+import io.horizontalsystems.bitcoincore.network.peer.IInventoryItemsHandler
+import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
+import io.horizontalsystems.bitcoincore.network.peer.Peer
+import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
+import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
 
 class InstantSend(private val transactionSyncer: TransactionSyncer?) : IInventoryItemsHandler, IPeerTaskHandler {
 

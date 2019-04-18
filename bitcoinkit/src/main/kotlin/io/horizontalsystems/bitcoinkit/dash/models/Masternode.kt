@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoinkit.dash.models
 
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
 
 @Entity
 class Masternode() : Comparable<Masternode> {

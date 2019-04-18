@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.dash.messages
 
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.network.messages.IMessageParser
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
-import io.horizontalsystems.bitcoinkit.serializers.TransactionSerializer
-import io.horizontalsystems.bitcoinkit.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
+import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import java.io.ByteArrayInputStream
 
 class TransactionLockMessage(var transaction: FullTransaction) : IMessage {

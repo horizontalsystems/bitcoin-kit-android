@@ -2,11 +2,11 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
-import io.horizontalsystems.bitcoinkit.BitcoinCore.KitState
+import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoinkit.BitcoinKit
-import io.horizontalsystems.bitcoinkit.models.BlockInfo
-import io.horizontalsystems.bitcoinkit.models.FeePriority
-import io.horizontalsystems.bitcoinkit.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.FeePriority
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.reactivex.disposables.CompositeDisposable
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {

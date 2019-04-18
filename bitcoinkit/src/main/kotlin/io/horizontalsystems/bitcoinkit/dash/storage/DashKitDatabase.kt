@@ -1,11 +1,11 @@
 package io.horizontalsystems.bitcoinkit.dash.storage
 
 import android.arch.persistence.room.*
+import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.storage.KitDatabase
 import io.horizontalsystems.bitcoinkit.dash.models.Masternode
 import io.horizontalsystems.bitcoinkit.dash.models.MasternodeListState
-import io.horizontalsystems.bitcoinkit.models.*
-import io.horizontalsystems.bitcoinkit.models.Transaction
-import io.horizontalsystems.bitcoinkit.storage.KitDatabase
 
 @Database(entities = [
     FeeRate::class,
