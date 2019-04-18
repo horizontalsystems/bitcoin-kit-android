@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoinkit.Fixtures
 import io.horizontalsystems.bitcoinkit.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.managers.AddressManager
+import io.horizontalsystems.bitcoinkit.models.Block
 import io.horizontalsystems.bitcoinkit.models.Transaction
 import io.horizontalsystems.bitcoinkit.models.TransactionInput
 import io.horizontalsystems.bitcoinkit.models.TransactionOutput
@@ -14,7 +15,9 @@ import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
+import org.mockito.Mockito.anyObject
 import org.mockito.Mockito.mock
 
 class TransactionProcessorTest {
@@ -43,7 +46,7 @@ class TransactionProcessorTest {
         Mockito.verify(linker).handle(fullTransaction)
         Mockito.verify(blockchainDataListener).onTransactionsUpdate(com.nhaarman.mockito_kotlin.check {
             Assert.assertEquals(transaction.hashHexReversed, it.firstOrNull()?.hashHexReversed)
-        }, eq(listOf()))
+        }, eq(listOf()), anyObject())
     }
 
     @Test

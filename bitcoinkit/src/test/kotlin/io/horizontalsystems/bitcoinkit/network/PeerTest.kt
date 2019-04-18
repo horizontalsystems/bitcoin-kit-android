@@ -4,10 +4,7 @@ import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.argumentCaptor
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
-import io.horizontalsystems.bitcoinkit.network.messages.AddrMessage
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
-import io.horizontalsystems.bitcoinkit.network.messages.VerAckMessage
-import io.horizontalsystems.bitcoinkit.network.messages.VersionMessage
+import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
 import io.horizontalsystems.bitcoinkit.network.peer.PeerConnection
 import org.junit.Assert
@@ -29,6 +26,8 @@ class PeerTest {
     private val network = MainNet()
     private val versionMessage = mock(VersionMessage::class.java)
     private val addressMessage = mock(AddrMessage::class.java)
+    private val networkMessageParser = mock(NetworkMessageParser::class.java)
+    private val networkMessageSerializer = mock(NetworkMessageSerializer::class.java)
 
     private lateinit var peer: Peer
 
@@ -39,7 +38,7 @@ class PeerTest {
                 .withAnyArguments()
                 .thenReturn(peerConnection)
 
-        peer = Peer("host", network, listener)
+        peer = Peer("host", network, listener, networkMessageParser, networkMessageSerializer)
     }
 
     @Test

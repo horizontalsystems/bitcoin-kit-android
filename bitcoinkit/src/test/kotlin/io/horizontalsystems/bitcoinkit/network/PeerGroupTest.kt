@@ -1,11 +1,12 @@
 package io.horizontalsystems.bitcoinkit.network
 
 import com.nhaarman.mockito_kotlin.whenever
-import io.horizontalsystems.bitcoinkit.core.IStorage
 import io.horizontalsystems.bitcoinkit.core.hexStringToByteArray
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.managers.ConnectionManager
 import io.horizontalsystems.bitcoinkit.models.NetworkAddress
+import io.horizontalsystems.bitcoinkit.network.messages.NetworkMessageParser
+import io.horizontalsystems.bitcoinkit.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoinkit.network.peer.Peer
 import io.horizontalsystems.bitcoinkit.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoinkit.network.peer.PeerGroup
@@ -28,11 +29,12 @@ class PeerGroupTest {
 
     private var peer1 = mock(Peer::class.java)
     private var peer2 = mock(Peer::class.java)
-    private var storage = mock(IStorage::class.java)
     private var hostManager = mock(PeerAddressManager::class.java)
     private var peerManager = mock(PeerManager::class.java)
     private var connectionManager = mock(ConnectionManager::class.java)
     private var relayTransactionTask = mock(SendTransactionTask::class.java)
+    private val networkMessageParser = mock(NetworkMessageParser::class.java)
+    private val networkMessageSerializer = mock(NetworkMessageSerializer::class.java)
 
     private val peerIp = "8.8.8.8"
     private val peerIp2 = "5.5.5.5"
@@ -57,7 +59,7 @@ class PeerGroupTest {
                 .withAnyArguments()
                 .thenReturn(relayTransactionTask)
 
-        peerGroup = PeerGroup(hostManager, network, peerManager, 2)
+        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer)
         peerGroup.connectionManager = connectionManager
     }
 
@@ -89,7 +91,7 @@ class PeerGroupTest {
 
         val netAddress = NetworkAddress(input, false)
 
-        peerGroup.onReceiveAddress(arrayOf(netAddress))
+        peerGroup.onReceiveAddress(listOf(netAddress))
 
         verify(hostManager).addIps(arrayOf("10.0.0.1"))
     }

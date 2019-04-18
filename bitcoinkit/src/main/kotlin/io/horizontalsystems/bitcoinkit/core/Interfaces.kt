@@ -58,7 +58,6 @@ interface IStorage {
 
     //  Transaction
 
-    fun getTransactionsSortedTimestampAndOrdered(): List<Transaction>
     fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo>
     fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo>
 

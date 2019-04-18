@@ -27,9 +27,6 @@ interface TransactionDao {
     @Query("select * from `Transaction` where status = 1")
     fun getNewTransactions(): List<Transaction>
 
-    @Query("select * from `transaction` order by timestamp DESC, `order` DESC")
-    fun getSortedTimestampAndOrdered(): List<Transaction>
-
     @RawQuery
     fun getTransactionWithBlockBySql(query: SupportSQLiteQuery): List<TransactionWithBlock>
 
@@ -38,6 +35,5 @@ interface TransactionDao {
 
     @Delete
     fun deleteAll(transactions: List<Transaction>)
-
 
 }

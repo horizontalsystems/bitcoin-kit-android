@@ -163,10 +163,6 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     // Transaction
 
-    override fun getTransactionsSortedTimestampAndOrdered(): List<Transaction> {
-        return store.transaction.getSortedTimestampAndOrdered()
-    }
-
     override fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo> {
         val txHashes = transactions.map { it.transaction.hashHexReversed }
         val inputs = store.input.getInputsWithPrevouts(txHashes)
