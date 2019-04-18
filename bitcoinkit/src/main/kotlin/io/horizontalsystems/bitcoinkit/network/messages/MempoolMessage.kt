@@ -1,14 +1,17 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
-class MempoolMessage() : Message("mempool") {
-
-    constructor(payload: ByteArray) : this()
-
-    override fun getPayload(): ByteArray {
-        return ByteArray(0)
-    }
+class MempoolMessage : IMessage {
+    override val command: String = "mempool"
 
     override fun toString(): String {
         return "MempoolMessage()"
+    }
+}
+
+class MempoolMessageSerializer : IMessageSerializer {
+    override val command: String = "mempool"
+
+    override fun serialize(message: IMessage): ByteArray {
+        return ByteArray(0)
     }
 }

@@ -2,7 +2,9 @@ package io.horizontalsystems.bitcoinkit.network.peer
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
 import io.horizontalsystems.bitcoinkit.network.Network
-import io.horizontalsystems.bitcoinkit.network.messages.Message
+import io.horizontalsystems.bitcoinkit.network.messages.IMessage
+import io.horizontalsystems.bitcoinkit.network.messages.NetworkMessageParser
+import io.horizontalsystems.bitcoinkit.network.messages.NetworkMessageSerializer
 import java.io.IOException
 import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
@@ -11,17 +13,23 @@ import java.util.concurrent.TimeUnit
 import java.util.logging.Level
 import java.util.logging.Logger
 
-class PeerConnection(private val host: String, private val network: Network, private val listener: Listener) : Thread() {
+class PeerConnection(
+        private val host: String,
+        private val network: Network,
+        private val listener: Listener,
+        private val networkMessageParser: NetworkMessageParser,
+        private val networkMessageSerializer: NetworkMessageSerializer
+) : Thread() {
 
     interface Listener {
         fun socketConnected(address: InetAddress)
         fun disconnected(e: Exception? = null)
         fun onTimePeriodPassed() // didn't find better name
-        fun onMessage(message: Message)
+        fun onMessage(message: IMessage)
     }
 
     private val logger = Logger.getLogger("Peer[$host]")
-    private val sendingQueue: BlockingQueue<Message> = ArrayBlockingQueue(100)
+    private val sendingQueue: BlockingQueue<IMessage> = ArrayBlockingQueue(100)
     private val socket = Socket()
     private var disconnectError: Exception? = null
 
@@ -55,13 +63,13 @@ class PeerConnection(private val host: String, private val network: Network, pri
                 if (isRunning && msg != null) {
                     // send message:
                     logger.info("=> " + msg.toString())
-                    output.write(msg.toByteArray(network))
+                    output.write(networkMessageSerializer.serialize(msg))
                 }
 
                 // try receive message:
                 while (isRunning && input.available() > 0) {
                     val inputStream = BitcoinInput(input)
-                    val parsedMsg = Message.Builder.parseMessage(inputStream, network)
+                    val parsedMsg = networkMessageParser.parseMessage(inputStream)
                     logger.info("<= $parsedMsg")
                     listener.onMessage(parsedMsg)
                 }
@@ -99,7 +107,7 @@ class PeerConnection(private val host: String, private val network: Network, pri
         }
     }
 
-    fun sendMessage(message: Message) {
+    fun sendMessage(message: IMessage) {
         sendingQueue.add(message)
     }
 

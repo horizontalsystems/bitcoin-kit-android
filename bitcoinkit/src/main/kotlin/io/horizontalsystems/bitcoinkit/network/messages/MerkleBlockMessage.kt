@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoinkit.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.utils.HashUtils
 import java.io.ByteArrayInputStream
@@ -17,41 +17,43 @@ import java.io.ByteArrayInputStream
  *  VarInt      flagsCount      Number of bytes of flag bits
  *  Variable    flagsBits       Flag bits packed 8 per byte, least significant bit first
  */
-class MerkleBlockMessage() : Message("merkleblock") {
-
-    lateinit var header: BlockHeader
-    var txCount: Int = 0
-
-    var hashCount: Int = 0
-    var hashes: MutableList<ByteArray> = mutableListOf()
-
-    var flagsCount: Int = 0
-    var flags: ByteArray = byteArrayOf()
+class MerkleBlockMessage(
+        var header: BlockHeader,
+        var txCount: Int,
+        var hashCount: Int,
+        var hashes: List<ByteArray>,
+        var flagsCount: Int,
+        var flags: ByteArray
+) : IMessage {
+    override val command: String = "merkleblock"
 
     private val blockHash: String by lazy {
         HashUtils.toHexStringAsLE(header.hash)
     }
 
-    constructor(payload: ByteArray) : this() {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            header = BlockHeaderSerializer.deserialize(input)
-            txCount = input.readInt()
+    override fun toString(): String {
+        return "MerkleBlockMessage(blockHash=$blockHash, hashesSize=${hashes.size})"
+    }
+}
 
-            hashCount = input.readVarInt().toInt()
+class MerkleBlockMessageParser(private val blockHeaderParser: BlockHeaderParser) : IMessageParser {
+    override val command = "merkleblock"
+
+    override fun parseMessage(payload: ByteArray): IMessage {
+        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
+            val header = blockHeaderParser.parse(input)
+            val txCount = input.readInt()
+
+            val hashCount = input.readVarInt().toInt()
+            val hashes: MutableList<ByteArray> = mutableListOf()
             repeat(hashCount) {
                 hashes.add(input.readBytes(32))
             }
 
-            flagsCount = input.readVarInt().toInt()
-            flags = input.readBytes(flagsCount)
+            val flagsCount = input.readVarInt().toInt()
+            val flags = input.readBytes(flagsCount)
+
+            return MerkleBlockMessage(header, txCount, hashCount, hashes, flagsCount, flags)
         }
-    }
-
-    override fun getPayload(): ByteArray {
-        return byteArrayOf()
-    }
-
-    override fun toString(): String {
-        return "MerkleBlockMessage(blockHash=$blockHash, hashesSize=${hashes.size})"
     }
 }

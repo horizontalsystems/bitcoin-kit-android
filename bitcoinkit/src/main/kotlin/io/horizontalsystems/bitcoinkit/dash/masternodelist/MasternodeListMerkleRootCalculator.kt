@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.dash.masternodelist
 
-import io.horizontalsystems.bitcoinkit.dash.IHasher
+import io.horizontalsystems.bitcoinkit.core.IHasher
 import io.horizontalsystems.bitcoinkit.dash.models.Masternode
 import io.horizontalsystems.bitcoinkit.dash.models.MasternodeSerializer
 

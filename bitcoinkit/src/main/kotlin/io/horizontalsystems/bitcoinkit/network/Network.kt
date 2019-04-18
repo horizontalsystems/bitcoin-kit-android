@@ -25,8 +25,4 @@ abstract class Network {
     abstract var addressScriptVersion: Int
 
     abstract val checkpointBlock: Block
-
-    open fun generateBlockHeaderHash(data: ByteArray): ByteArray {
-        return HashUtils.doubleSha256(data)
-    }
 }

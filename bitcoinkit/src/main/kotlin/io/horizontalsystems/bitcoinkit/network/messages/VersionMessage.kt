@@ -6,98 +6,30 @@ import io.horizontalsystems.bitcoinkit.models.NetworkAddress
 import io.horizontalsystems.bitcoinkit.network.Network
 import io.horizontalsystems.bitcoinkit.utils.NetworkUtils
 import java.io.ByteArrayInputStream
-import java.io.IOException
 import java.net.InetAddress
 
-/**
- * Version Message
- *
- *   Size       Field           Description
- *   ====       =====           ===========
- *   4 bytes    Version         Protocol version
- *   8 bytes    Services        Supported services (bit field)
- *   8 bytes    Timestamp       Time in seconds since the epoch
- *  26 bytes    RemoteAddress   Remote node address
- *  26 bytes    LocalAddress    Local node address
- *   8 bytes    Nonce           Random value to identify sending node
- * VarString    UserAgent       Identification string
- *   4 bytes    BlockHeight     Last block received by sending node
- *   1 byte     TxRelay         TRUE if remote peer should relay transactions
- */
-class VersionMessage : Message {
+class VersionMessage(val protocolVersion: Int, val services: Long, val timestamp: Long, val recipientAddress: NetworkAddress) : IMessage {
+    override val command: String = "version"
 
-    // The version number of the protocol spoken
-    private var protocolVersion: Int = 0
-
-    // Flags defining what optional services are supported.
-    private var services: Long = 0L
-
-    // What the other side believes the current time to be, in seconds.
-    private var timestamp = System.currentTimeMillis() / 1000
-
-    // The network address of the node receiving this message.
-    private lateinit var recipientAddress: NetworkAddress
-
-    // The network address of the node emitting this message.
-    private lateinit var senderAddress: NetworkAddress
+    lateinit var senderAddress: NetworkAddress
 
     // Random value to identify sending node
-    private var nonce = 0L
+    var nonce = 0L
 
     // User-Agent as defined in <a href="https://github.com/bitcoin/bips/blob/master/bip-0014.mediawiki">BIP 14</a>.
-    private var subVersion = "/BitcoinKit:0.1.0/"
+    var subVersion = "/BitcoinKit:0.1.0/"
 
     // How many blocks are in the chain, according to the other side.
     var lastBlock: Int = 0
 
     // Whether or not to relay tx invs before a filter is received.
     // See <a href="https://github.com/bitcoin/bips/blob/master/bip-0037.mediawiki#extensions-to-existing-messages">BIP 37</a>.
-    private var relay = false
+    var relay = false
 
-    constructor(bestBlock: Int, recipientAddr: InetAddress, network: Network) : super("version") {
-        protocolVersion = network.protocolVersion
-        services = network.networkServices
+    constructor(bestBlock: Int, recipientAddr: InetAddress, network: Network) : this(network.protocolVersion, network.networkServices, System.currentTimeMillis() / 1000, NetworkAddress(recipientAddr, network)) {
         lastBlock = bestBlock
-        recipientAddress = NetworkAddress(recipientAddr, network)
         senderAddress = NetworkAddress(NetworkUtils.getLocalInetAddress(), network)
         nonce = (Math.random() * java.lang.Long.MAX_VALUE).toLong() //Random node id generated at startup.
-    }
-
-    @Throws(IOException::class)
-    constructor(payload: ByteArray) : super("version") {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            protocolVersion = input.readInt()
-            services = input.readLong()
-            timestamp = input.readLong()
-            recipientAddress = NetworkAddress.parse(input, true)
-            if (protocolVersion >= 106) {
-                senderAddress = NetworkAddress.parse(input, true)
-                nonce = input.readLong()
-                subVersion = input.readString()
-                lastBlock = input.readInt()
-                if (protocolVersion >= 70001) {
-                    relay = input.readByte().toInt() != 0
-                }
-            }
-        }
-    }
-
-    override fun getPayload(): ByteArray {
-        val output = BitcoinOutput()
-        output.writeInt(protocolVersion) // protocol
-                .writeLong(services) // services
-                .writeLong(timestamp) // timestamp
-                .write(recipientAddress.toByteArray(true)) // recipient-address
-        if (protocolVersion >= 106) {
-            output.write(senderAddress.toByteArray(true)) // sender-address
-                    .writeLong(nonce) // nodeId
-                    .writeString(subVersion) // sub-version-string
-                    .writeInt(lastBlock) // # of last block
-            if (protocolVersion >= 70001) {
-                output.writeByte(1)
-            }
-        }
-        return output.toByteArray()
     }
 
     fun hasBlockChain(network: Network): Boolean {
@@ -110,5 +42,58 @@ class VersionMessage : Message {
 
     override fun toString(): String {
         return ("VersionMessage(lastBlock=$lastBlock, protocol=$protocolVersion, services=$services, timestamp=$timestamp), userAgent=$subVersion")
+    }
+}
+
+class VersionMessageParser : IMessageParser {
+    override val command: String = "version"
+
+    override fun parseMessage(payload: ByteArray): IMessage {
+        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
+            val protocolVersion = input.readInt()
+            val services = input.readLong()
+            val timestamp = input.readLong()
+            val recipientAddress = NetworkAddress.parse(input, true)
+
+            val versionMessage = VersionMessage(protocolVersion, services, timestamp, recipientAddress)
+
+            if (protocolVersion >= 106) {
+                versionMessage.senderAddress = NetworkAddress.parse(input, true)
+                versionMessage.nonce = input.readLong()
+                versionMessage.subVersion = input.readString()
+                versionMessage.lastBlock = input.readInt()
+                if (protocolVersion >= 70001) {
+                    versionMessage.relay = input.readByte().toInt() != 0
+                }
+            }
+
+            return versionMessage
+        }
+
+    }
+}
+
+class VersionMessageSerializer : IMessageSerializer {
+    override val command: String = "version"
+
+    override fun serialize(message: IMessage): ByteArray {
+        if (message !is VersionMessage) throw WrongSerializer()
+
+        val output = BitcoinOutput()
+        output.writeInt(message.protocolVersion)
+                .writeLong(message.services)
+                .writeLong(message.timestamp)
+                .write(message.recipientAddress.toByteArray(true))
+        if (message.protocolVersion >= 106) {
+            output.write(message.senderAddress.toByteArray(true))
+                    .writeLong(message.nonce)
+                    .writeString(message.subVersion)
+                    .writeInt(message.lastBlock)
+            if (message.protocolVersion >= 70001) {
+                output.writeByte(1)
+            }
+        }
+
+        return output.toByteArray()
     }
 }

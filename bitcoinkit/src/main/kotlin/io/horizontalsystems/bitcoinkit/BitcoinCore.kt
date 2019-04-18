@@ -8,22 +8,16 @@ import io.horizontalsystems.bitcoinkit.blocks.InitialBlockDownload
 import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoinkit.blocks.validators.ProofOfWorkValidator
-import io.horizontalsystems.bitcoinkit.core.DataProvider
-import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.core.KitStateProvider
-import io.horizontalsystems.bitcoinkit.core.Wallet
+import io.horizontalsystems.bitcoinkit.core.*
 import io.horizontalsystems.bitcoinkit.managers.*
 import io.horizontalsystems.bitcoinkit.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoinkit.models.BlockInfo
 import io.horizontalsystems.bitcoinkit.models.FeePriority
 import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.network.Network
-import io.horizontalsystems.bitcoinkit.network.messages.BitcoinMessageParser
-import io.horizontalsystems.bitcoinkit.network.messages.IMessageParser
-import io.horizontalsystems.bitcoinkit.network.messages.Message
-import io.horizontalsystems.bitcoinkit.network.messages.MessageParserChain
+import io.horizontalsystems.bitcoinkit.network.messages.*
 import io.horizontalsystems.bitcoinkit.network.peer.*
-import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderSerializer
+import io.horizontalsystems.bitcoinkit.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoinkit.transactions.*
 import io.horizontalsystems.bitcoinkit.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoinkit.transactions.scripts.ScriptType
@@ -49,6 +43,7 @@ class BitcoinCoreBuilder {
     private var confirmationsThreshold = 6
     private var newWallet = false
     private var peerSize = 10
+    private var blockHeaderHasher: IHasher? = null
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -105,6 +100,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setBlockHeaderHasher(blockHeaderHasher: IHasher): BitcoinCoreBuilder {
+        this.blockHeaderHasher = blockHeaderHasher
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -113,8 +113,7 @@ class BitcoinCoreBuilder {
         val addressSelector = checkNotNull(this.addressSelector)
         val apiFeeRateCoinCode = checkNotNull(this.apiFeeRateCoinCode)
         val storage = checkNotNull(this.storage)
-
-        BlockHeaderSerializer.network = network
+        val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
 
         val apiFeeRate = ApiFeeRate(apiFeeRateCoinCode)
 
@@ -141,7 +140,10 @@ class BitcoinCoreBuilder {
 
         val peerManager = PeerManager()
 
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize)
+        val networkMessageParser = NetworkMessageParser(network.magic)
+        val networkMessageSerializer = NetworkMessageSerializer(network.magic)
+
+        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer)
         peerGroup.connectionManager = connectionManager
 
         val transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
@@ -178,16 +180,36 @@ class BitcoinCoreBuilder {
 
         bitcoinCore.peerGroup = peerGroup
         bitcoinCore.transactionSyncer = transactionSyncer
+        bitcoinCore.networkMessageParser = networkMessageParser
+        bitcoinCore.networkMessageSerializer = networkMessageSerializer
 
         peerGroup.peerTaskHandler = bitcoinCore.peerTaskHandlerChain
         peerGroup.inventoryItemsHandler = bitcoinCore.inventoryItemsHandlerChain
-        Message.Builder.messageParser = bitcoinCore.messageParserChain
 
         bitcoinCore.prependAddressConverter(Base58AddressConverter(network.addressVersion, network.addressScriptVersion))
 
         // this part can be moved to another place
 
-        bitcoinCore.addMessageParser(BitcoinMessageParser())
+        bitcoinCore.addMessageParser(AddrMessageParser())
+                .addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
+                .addMessageParser(InvMessageParser())
+                .addMessageParser(GetDataMessageParser())
+                .addMessageParser(PingMessageParser())
+                .addMessageParser(PongMessageParser())
+                .addMessageParser(TransactionMessageParser())
+                .addMessageParser(VerAckMessageParser())
+                .addMessageParser(VersionMessageParser())
+
+        bitcoinCore.addMessageSerializer(FilterLoadMessageSerializer())
+                .addMessageSerializer(GetBlocksMessageSerializer())
+                .addMessageSerializer(InvMessageSerializer())
+                .addMessageSerializer(GetDataMessageSerializer())
+                .addMessageSerializer(MempoolMessageSerializer())
+                .addMessageSerializer(PingMessageSerializer())
+                .addMessageSerializer(PongMessageSerializer())
+                .addMessageSerializer(TransactionMessageSerializer())
+                .addMessageSerializer(VerAckMessageSerializer())
+                .addMessageSerializer(VersionMessageSerializer())
 
         val bloomFilterLoader = BloomFilterLoader(bloomFilterManager)
         bloomFilterManager.listener = bloomFilterLoader
@@ -223,14 +245,21 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     // START: Extending
     lateinit var peerGroup: PeerGroup
     lateinit var transactionSyncer: TransactionSyncer
+    lateinit var networkMessageParser: NetworkMessageParser
+    lateinit var networkMessageSerializer: NetworkMessageSerializer
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
-    val messageParserChain = MessageParserChain()
     val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
 
-    fun addMessageParser(messageParser: IMessageParser) {
-        messageParserChain.addParser(messageParser)
+    fun addMessageParser(messageParser: IMessageParser): BitcoinCore {
+        networkMessageParser.add(messageParser)
+        return this
+    }
+
+    fun addMessageSerializer(messageSerializer: IMessageSerializer): BitcoinCore {
+        networkMessageSerializer.add(messageSerializer)
+        return this
     }
 
     fun addInventoryItemsHandler(handler: IInventoryItemsHandler) {
@@ -332,7 +361,8 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 //                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
             } catch (e: Exception) {
                 println(e.message)
-            }        }
+            }
+        }
     }
 
     //
@@ -382,7 +412,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         }
     }
 
-    private fun getFeeRate(feePriority: FeePriority) = when(feePriority) {
+    private fun getFeeRate(feePriority: FeePriority) = when (feePriority) {
         FeePriority.Lowest -> dataProvider.feeRate.lowPriority
         FeePriority.Low -> (dataProvider.feeRate.lowPriority + dataProvider.feeRate.mediumPriority) / 2
         FeePriority.Medium -> dataProvider.feeRate.mediumPriority

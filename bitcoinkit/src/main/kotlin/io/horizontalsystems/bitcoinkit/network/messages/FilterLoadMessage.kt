@@ -2,29 +2,22 @@ package io.horizontalsystems.bitcoinkit.network.messages
 
 import io.horizontalsystems.bitcoinkit.crypto.BloomFilter
 
-/**
- * FilterLoad Message
- *
- *   Size       Field           Description
- *   ====       =====           ===========
- *   VarInt     byteCount       Number of bytes in the filter (BloomFilter.MAX_FILTER_SIZE)
- *   Variable   filter          Bloom filter
- *   4 bytes    nHashFuncs      Number of hash functions (BloomFilter.MAX_HASH_FUNCS)
- *   4 bytes    nTweak          Random value to add to seed value
- *   1 byte     nFlags          Matching flags
- */
-class FilterLoadMessage() : Message("filterload") {
-    lateinit var filter: BloomFilter
+class FilterLoadMessage(bloomFilter: BloomFilter) : IMessage {
+    override val command: String = "filterload"
 
-    constructor(bloomFilter: BloomFilter) : this() {
-        filter = bloomFilter
-    }
-
-    override fun getPayload(): ByteArray {
-        return filter.toByteArray()
-    }
+    var filter: BloomFilter = bloomFilter
 
     override fun toString(): String {
         return "FilterLoadMessage($filter)"
+    }
+}
+
+class FilterLoadMessageSerializer : IMessageSerializer {
+    override val command: String = "filterload"
+
+    override fun serialize(message: IMessage): ByteArray {
+        if (message !is FilterLoadMessage) throw WrongSerializer()
+
+        return message.filter.toByteArray()
     }
 }

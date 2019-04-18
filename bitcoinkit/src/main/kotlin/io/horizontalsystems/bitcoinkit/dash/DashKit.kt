@@ -14,7 +14,10 @@ import io.horizontalsystems.bitcoinkit.dash.masternodelist.MasternodeCbTxHasher
 import io.horizontalsystems.bitcoinkit.dash.masternodelist.MasternodeListMerkleRootCalculator
 import io.horizontalsystems.bitcoinkit.dash.masternodelist.MerkleRootCreator
 import io.horizontalsystems.bitcoinkit.dash.masternodelist.MerkleRootHasher
-import io.horizontalsystems.bitcoinkit.dash.messages.DashMessageParser
+import io.horizontalsystems.bitcoinkit.dash.messages.GetMasternodeListDiffMessageSerializer
+import io.horizontalsystems.bitcoinkit.dash.messages.MasternodeListDiffMessageParser
+import io.horizontalsystems.bitcoinkit.dash.messages.TransactionLockMessageParser
+import io.horizontalsystems.bitcoinkit.dash.messages.TransactionLockVoteMessageParser
 import io.horizontalsystems.bitcoinkit.dash.models.CoinbaseTransactionSerializer
 import io.horizontalsystems.bitcoinkit.dash.models.MasternodeSerializer
 import io.horizontalsystems.bitcoinkit.dash.storage.DashKitDatabase
@@ -82,6 +85,7 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
+                .setBlockHeaderHasher(X11Hasher())
                 .build()
 
         // extending bitcoinCore
@@ -89,7 +93,11 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
         bitcoinCore.addListener(this)
         bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits))
 
-        bitcoinCore.addMessageParser(DashMessageParser())
+        bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
+                .addMessageParser(TransactionLockMessageParser())
+                .addMessageParser(TransactionLockVoteMessageParser())
+
+        bitcoinCore.addMessageSerializer(GetMasternodeListDiffMessageSerializer())
 
         val merkleRootHasher = MerkleRootHasher()
         val merkleRootCreator = MerkleRootCreator(merkleRootHasher)

@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.dash.tasks
 import io.horizontalsystems.bitcoinkit.dash.InventoryType
 import io.horizontalsystems.bitcoinkit.dash.messages.TransactionLockMessage
 import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import io.horizontalsystems.bitcoinkit.network.messages.Message
+import io.horizontalsystems.bitcoinkit.network.messages.IMessage
 import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoinkit.storage.FullTransaction
 
@@ -18,7 +18,7 @@ class RequestTransactionLockRequestsTask(hashes: List<ByteArray>) : PeerTask() {
         })
     }
 
-    override fun handleMessage(message: Message) = when (message) {
+    override fun handleMessage(message: IMessage) = when (message) {
         is TransactionLockMessage -> handleTransactionLockRequest(message.transaction)
         else -> false
     }
