@@ -191,25 +191,25 @@ class BitcoinCoreBuilder {
         // this part can be moved to another place
 
         bitcoinCore.addMessageParser(AddrMessageParser())
-        bitcoinCore.addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
-        bitcoinCore.addMessageParser(InvMessageParser())
-        bitcoinCore.addMessageParser(GetDataMessageParser())
-        bitcoinCore.addMessageParser(PingMessageParser())
-        bitcoinCore.addMessageParser(PongMessageParser())
-        bitcoinCore.addMessageParser(TransactionMessageParser())
-        bitcoinCore.addMessageParser(VerAckMessageParser())
-        bitcoinCore.addMessageParser(VersionMessageParser())
+                .addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
+                .addMessageParser(InvMessageParser())
+                .addMessageParser(GetDataMessageParser())
+                .addMessageParser(PingMessageParser())
+                .addMessageParser(PongMessageParser())
+                .addMessageParser(TransactionMessageParser())
+                .addMessageParser(VerAckMessageParser())
+                .addMessageParser(VersionMessageParser())
 
         bitcoinCore.addMessageSerializer(FilterLoadMessageSerializer())
-        bitcoinCore.addMessageSerializer(GetBlocksMessageSerializer())
-        bitcoinCore.addMessageSerializer(InvMessageSerializer())
-        bitcoinCore.addMessageSerializer(GetDataMessageSerializer())
-        bitcoinCore.addMessageSerializer(MempoolMessageSerializer())
-        bitcoinCore.addMessageSerializer(PingMessageSerializer())
-        bitcoinCore.addMessageSerializer(PongMessageSerializer())
-        bitcoinCore.addMessageSerializer(TransactionMessageSerializer())
-        bitcoinCore.addMessageSerializer(VerAckMessageSerializer())
-        bitcoinCore.addMessageSerializer(VersionMessageSerializer())
+                .addMessageSerializer(GetBlocksMessageSerializer())
+                .addMessageSerializer(InvMessageSerializer())
+                .addMessageSerializer(GetDataMessageSerializer())
+                .addMessageSerializer(MempoolMessageSerializer())
+                .addMessageSerializer(PingMessageSerializer())
+                .addMessageSerializer(PongMessageSerializer())
+                .addMessageSerializer(TransactionMessageSerializer())
+                .addMessageSerializer(VerAckMessageSerializer())
+                .addMessageSerializer(VersionMessageSerializer())
 
         val bloomFilterLoader = BloomFilterLoader(bloomFilterManager)
         bloomFilterManager.listener = bloomFilterLoader
@@ -252,12 +252,14 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     val peerTaskHandlerChain = PeerTaskHandlerChain()
     val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
 
-    fun addMessageParser(messageParser: IMessageParser) {
+    fun addMessageParser(messageParser: IMessageParser): BitcoinCore {
         networkMessageParser.add(messageParser)
+        return this
     }
 
-    fun addMessageSerializer(messageSerializer: IMessageSerializer) {
+    fun addMessageSerializer(messageSerializer: IMessageSerializer): BitcoinCore {
         networkMessageSerializer.add(messageSerializer)
+        return this
     }
 
     fun addInventoryItemsHandler(handler: IInventoryItemsHandler) {
@@ -359,7 +361,8 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 //                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
             } catch (e: Exception) {
                 println(e.message)
-            }        }
+            }
+        }
     }
 
     //
@@ -409,7 +412,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         }
     }
 
-    private fun getFeeRate(feePriority: FeePriority) = when(feePriority) {
+    private fun getFeeRate(feePriority: FeePriority) = when (feePriority) {
         FeePriority.Lowest -> dataProvider.feeRate.lowPriority
         FeePriority.Low -> (dataProvider.feeRate.lowPriority + dataProvider.feeRate.mediumPriority) / 2
         FeePriority.Medium -> dataProvider.feeRate.mediumPriority

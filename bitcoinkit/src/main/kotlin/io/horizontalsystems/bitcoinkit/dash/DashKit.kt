@@ -94,8 +94,8 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
         bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits))
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
-        bitcoinCore.addMessageParser(TransactionLockMessageParser())
-        bitcoinCore.addMessageParser(TransactionLockVoteMessageParser())
+                .addMessageParser(TransactionLockMessageParser())
+                .addMessageParser(TransactionLockVoteMessageParser())
 
         bitcoinCore.addMessageSerializer(GetMasternodeListDiffMessageSerializer())
 
