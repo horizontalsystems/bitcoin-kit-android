@@ -21,6 +21,11 @@ android {
         }
     }
 
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
+
     lintOptions { abortOnError false }
     kotlinOptions { jvmTarget = '1.8' }
     compileOptions {
