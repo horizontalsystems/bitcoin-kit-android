@@ -28,7 +28,4 @@ interface TransactionInputDao {
     """)
     fun getInputsWithPrevouts(txHashes: List<String>): List<InputWithPreviousOutput>
 
-    @Query("SELECT TransactionInput.*, Block.* FROM TransactionInput INNER JOIN `Transaction` as transactions ON TransactionInput.transactionHashReversedHex = transactions.hashHexReversed LEFT JOIN  Block ON transactions.blockHashReversedHex = Block.headerHashReversedHex WHERE TransactionInput.previousOutputTxReversedHex = :hashHex AND TransactionInput.previousOutputIndex = :index")
-    fun getInputsWithBlock(hashHex: String, index: Int): List<InputWithBlock>
-
 }

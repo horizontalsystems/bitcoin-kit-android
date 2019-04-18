@@ -258,19 +258,15 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.output.getByHashHex(transaction.hashHexReversed)
     }
 
-    override fun getOutputsWithPublicKeys(): List<OutputWithPublicKey> {
-        return store.output.getOutputsWithPublicKeys()
-    }
-
     override fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput> {
         return store.output.getListByPath(publicKey.path)
     }
 
-    // TransactionInput
-
-    override fun getInputsWithBlock(output: TransactionOutput): List<InputWithBlock> {
-        return store.input.getInputsWithBlock(output.transactionHashReversedHex, output.index)
+    override fun getMyOutputs(): List<FullOutputInfo> {
+        return store.output.getMyOutputs()
     }
+
+    // TransactionInput
 
     override fun getTransactionInputs(transaction: Transaction): List<TransactionInput> {
         return store.input.getTransactionInputs(transaction.hashHexReversed)

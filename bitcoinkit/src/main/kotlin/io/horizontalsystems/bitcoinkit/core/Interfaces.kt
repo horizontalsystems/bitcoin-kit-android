@@ -76,12 +76,11 @@ interface IStorage {
     fun getUnspentOutputs(): List<UnspentOutput>
     fun getPreviousOutput(input: TransactionInput): TransactionOutput?
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
-    fun getOutputsWithPublicKeys(): List<OutputWithPublicKey>
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
+    fun getMyOutputs(): List<FullOutputInfo>
 
     // Transaction Input
 
-    fun getInputsWithBlock(output: TransactionOutput): List<InputWithBlock>
     fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
 
     // PublicKey
