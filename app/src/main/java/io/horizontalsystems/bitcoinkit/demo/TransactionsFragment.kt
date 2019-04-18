@@ -12,8 +12,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import io.horizontalsystems.bitcoinkit.models.TransactionAddress
-import io.horizontalsystems.bitcoinkit.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.TransactionAddress
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import java.text.DateFormat
 import java.util.*
 

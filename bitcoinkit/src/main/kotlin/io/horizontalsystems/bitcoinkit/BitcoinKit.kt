@@ -2,19 +2,19 @@ package io.horizontalsystems.bitcoinkit
 
 import android.arch.persistence.room.Room
 import android.content.Context
-import io.horizontalsystems.bitcoinkit.blocks.validators.BitsValidator
-import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyDifficultyAdjustmentValidator
-import io.horizontalsystems.bitcoinkit.blocks.validators.LegacyTestNetDifficultyValidator
-import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
-import io.horizontalsystems.bitcoinkit.managers.BlockValidatorHelper
-import io.horizontalsystems.bitcoinkit.network.MainNet
-import io.horizontalsystems.bitcoinkit.network.Network
-import io.horizontalsystems.bitcoinkit.network.RegTest
-import io.horizontalsystems.bitcoinkit.network.TestNet
-import io.horizontalsystems.bitcoinkit.storage.KitDatabase
-import io.horizontalsystems.bitcoinkit.storage.Storage
-import io.horizontalsystems.bitcoinkit.utils.PaymentAddressParser
-import io.horizontalsystems.bitcoinkit.utils.SegwitAddressConverter
+import io.horizontalsystems.bitcoincore.AbstractKit
+import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
+import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.KitDatabase
+import io.horizontalsystems.bitcoincore.storage.Storage
+import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
+import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
 
 class BitcoinKit : AbstractKit {

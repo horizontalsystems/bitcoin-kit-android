@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit.dash
 
-import io.horizontalsystems.bitcoinkit.core.IStorage
+import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoinkit.dash.models.Masternode
 import io.horizontalsystems.bitcoinkit.dash.models.MasternodeListState
 

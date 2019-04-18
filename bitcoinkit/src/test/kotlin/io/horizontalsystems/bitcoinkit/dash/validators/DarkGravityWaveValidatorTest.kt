@@ -3,10 +3,10 @@ package io.horizontalsystems.bitcoinkit.dash.validators
 import com.nhaarman.mockito_kotlin.doReturn
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.crypto.CompactBits
-import io.horizontalsystems.bitcoinkit.models.Block
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.crypto.CompactBits
+import io.horizontalsystems.bitcoincore.models.Block
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.spekframework.spek2.Spek

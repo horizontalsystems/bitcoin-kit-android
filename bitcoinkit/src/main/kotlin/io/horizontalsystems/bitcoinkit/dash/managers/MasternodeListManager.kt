@@ -5,9 +5,9 @@ import io.horizontalsystems.bitcoinkit.dash.masternodelist.MasternodeCbTxHasher
 import io.horizontalsystems.bitcoinkit.dash.masternodelist.MasternodeListMerkleRootCalculator
 import io.horizontalsystems.bitcoinkit.dash.messages.MasternodeListDiffMessage
 import io.horizontalsystems.bitcoinkit.dash.models.MasternodeListState
-import io.horizontalsystems.bitcoinkit.extensions.toReversedHex
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
-import io.horizontalsystems.bitcoinkit.utils.MerkleBranch
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
+import io.horizontalsystems.bitcoincore.utils.HashUtils
+import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 
 class MasternodeListManager(
         private val storage: IDashStorage,

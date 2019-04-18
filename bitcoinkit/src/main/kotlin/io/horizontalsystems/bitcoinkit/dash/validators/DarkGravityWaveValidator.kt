@@ -1,10 +1,10 @@
 package io.horizontalsystems.bitcoinkit.dash.validators
 
-import io.horizontalsystems.bitcoinkit.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoinkit.blocks.validators.IBlockValidator
-import io.horizontalsystems.bitcoinkit.core.IStorage
-import io.horizontalsystems.bitcoinkit.crypto.CompactBits
-import io.horizontalsystems.bitcoinkit.models.Block
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.crypto.CompactBits
+import io.horizontalsystems.bitcoincore.models.Block
 import java.math.BigInteger
 
 class DarkGravityWaveValidator(

@@ -1,11 +1,11 @@
 package io.horizontalsystems.bitcoinkit.dash.messages
 
-import io.horizontalsystems.bitcoinkit.core.toHexString
-import io.horizontalsystems.bitcoinkit.io.BitcoinInput
-import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
-import io.horizontalsystems.bitcoinkit.network.messages.IMessageParser
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
-import io.horizontalsystems.bitcoinkit.utils.HashUtils
+import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinOutput
+import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.io.ByteArrayInputStream
 
 class TransactionLockVoteMessage(

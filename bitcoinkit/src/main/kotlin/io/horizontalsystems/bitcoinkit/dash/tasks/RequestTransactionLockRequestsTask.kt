@@ -2,10 +2,10 @@ package io.horizontalsystems.bitcoinkit.dash.tasks
 
 import io.horizontalsystems.bitcoinkit.dash.InventoryType
 import io.horizontalsystems.bitcoinkit.dash.messages.TransactionLockMessage
-import io.horizontalsystems.bitcoinkit.models.InventoryItem
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
-import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
-import io.horizontalsystems.bitcoinkit.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.models.InventoryItem
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
+import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class RequestTransactionLockRequestsTask(hashes: List<ByteArray>) : PeerTask() {
 

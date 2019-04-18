@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoinkit.dash.models
 
-import io.horizontalsystems.bitcoinkit.io.BitcoinOutput
-import io.horizontalsystems.bitcoinkit.serializers.TransactionSerializer
+import io.horizontalsystems.bitcoincore.io.BitcoinOutput
+import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 
 class CoinbaseTransactionSerializer {
 

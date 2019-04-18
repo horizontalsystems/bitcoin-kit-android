@@ -2,8 +2,8 @@ package io.horizontalsystems.bitcoinkit.dash.tasks
 
 import io.horizontalsystems.bitcoinkit.dash.messages.GetMasternodeListDiffMessage
 import io.horizontalsystems.bitcoinkit.dash.messages.MasternodeListDiffMessage
-import io.horizontalsystems.bitcoinkit.network.messages.IMessage
-import io.horizontalsystems.bitcoinkit.network.peer.task.PeerTask
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 
 class RequestMasternodeListDiffTask(private val baseBlockHash: ByteArray, private val blockHash: ByteArray) : PeerTask() {
 
