@@ -5,7 +5,6 @@ import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -26,14 +25,15 @@ class DarkGravityWaveValidatorTest : Spek({
             1408732229, 1408732257, 1408732489) // 123433 - 123456
 
     val storage = mock<IStorage>()
+    val candidateHeight = 25
+    val heightInterval = 24
 
     val validator by memoized {
-        DarkGravityWaveValidator(storage, 24, 3600, CompactBits.decode(0x1e0fffff))
+        DarkGravityWaveValidator(storage, 24, 3600, 0x1e0fffff, 0)
     }
 
     describe("#validate") {
         context("when candidate bits are valid") {
-            val candidateHeight = 123457
             val candidate = mock<Block> {
                 on { version } doReturn 1
                 on { timestamp } doReturn 1408732505
@@ -45,7 +45,7 @@ class DarkGravityWaveValidatorTest : Spek({
             beforeEach {
                 var lastBlock = candidate
 
-                repeat(24) { i ->
+                repeat(heightInterval) { i ->
                     val block = mock<Block> {
                         on { version } doReturn 1
                         on { timestamp } doReturn timestampArray[timestampArray.size - i - 1].toLong()
@@ -73,7 +73,11 @@ class DarkGravityWaveValidatorTest : Spek({
             }
 
             val previousBlock = mock<Block> {
-                on { height } doReturn 23
+                on { height } doReturn 25
+            }
+
+            beforeEach {
+                whenever(previousBlock.previousBlock(storage)).thenReturn(null)
             }
 
             it("throws an exception NoPreviousBlock") {

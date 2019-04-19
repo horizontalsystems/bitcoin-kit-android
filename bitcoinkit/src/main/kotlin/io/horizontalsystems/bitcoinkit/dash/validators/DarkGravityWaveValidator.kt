@@ -6,28 +6,37 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 import java.math.BigInteger
+import kotlin.math.min
 
 class DarkGravityWaveValidator(
         private val storage: IStorage,
         private val heightInterval: Long,
         private val targetTimespan: Long,
-        private val maxTargetBits: BigInteger) : IBlockValidator {
+        private val maxTargetBits: Long,
+        private val firstCheckpoint: Int) : IBlockValidator {
 
-    override fun validate(candidate: Block, block: Block) {
+    override fun validate(block: Block, previousBlock: Block) {
+        check(previousBlock.height >= firstCheckpoint + heightInterval) {
+            return
+        }
+
         var actualTimeSpan = 0L
-        var avgTargets = CompactBits.decode(block.bits)
-        var prevBlock = block.previousBlock(storage)
+        var avgTargets = CompactBits.decode(previousBlock.bits)
+        var prevBlock = previousBlock.previousBlock(storage)
 
         for (blockCount in 2..heightInterval) {
-            val currentBlock = checkNotNull(prevBlock) { throw BlockValidatorException.NoPreviousBlock() }
+            val currentBlock = checkNotNull(prevBlock) {
+                throw BlockValidatorException.NoPreviousBlock()
+            }
 
-            val currentTarget = CompactBits.decode(currentBlock.bits)
-            avgTargets = (avgTargets * BigInteger.valueOf(blockCount) + currentTarget) / BigInteger.valueOf(blockCount + 1)
+            avgTargets *= BigInteger.valueOf(blockCount)
+            avgTargets += CompactBits.decode(currentBlock.bits)
+            avgTargets /= BigInteger.valueOf(blockCount + 1)
 
             if (blockCount < heightInterval) {
                 prevBlock = currentBlock.previousBlock(storage)
             } else {
-                actualTimeSpan = block.timestamp - currentBlock.timestamp
+                actualTimeSpan = previousBlock.timestamp - currentBlock.timestamp
             }
         }
 
@@ -41,12 +50,8 @@ class DarkGravityWaveValidator(
         //  Retarget
         darkTarget = darkTarget * BigInteger.valueOf(actualTimeSpan) / BigInteger.valueOf(targetTimespan)
 
-        if (darkTarget > maxTargetBits) {
-            darkTarget = maxTargetBits
-        }
-
-        val compact = CompactBits.encode(darkTarget)
-        if (compact != candidate.bits) {
+        val compact = min(CompactBits.encode(darkTarget), maxTargetBits)
+        if (compact != block.bits) {
             throw BlockValidatorException.NotEqualBits()
         }
     }
