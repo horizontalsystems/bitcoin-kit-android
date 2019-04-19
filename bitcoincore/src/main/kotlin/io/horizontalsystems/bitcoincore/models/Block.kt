@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoincore.models
 
 import android.arch.persistence.room.ColumnInfo
 import android.arch.persistence.room.Entity
-import android.arch.persistence.room.PrimaryKey
+import android.arch.persistence.room.Index
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
@@ -17,7 +17,7 @@ import io.horizontalsystems.bitcoincore.storage.BlockHeader
  *  Variable    Transactions    The transactions in the block
  */
 
-@Entity
+@Entity(indices = [Index("height")], primaryKeys = ["headerHashReversedHex"])
 class Block() {
 
     //  Header
@@ -31,7 +31,6 @@ class Block() {
     var bits: Long = 0
     var nonce: Long = 0
 
-    @PrimaryKey
     var headerHashReversedHex: String = ""
     var headerHash: ByteArray = byteArrayOf()
     var height: Int = 0
@@ -56,9 +55,4 @@ class Block() {
         this.height = height
     }
 
-//    constructor(headerHash: ByteArray, height: Int) : this() {
-//        this.headerHash = headerHash
-//        this.headerHashReversedHex = HashUtils.toHexString(headerHash.reversedArray())
-//        this.height = height
-//    }
 }

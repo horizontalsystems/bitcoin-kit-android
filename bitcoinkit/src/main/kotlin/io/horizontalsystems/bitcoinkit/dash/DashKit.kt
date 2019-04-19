@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
-import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -28,6 +27,7 @@ import io.horizontalsystems.bitcoinkit.dash.models.MasternodeSerializer
 import io.horizontalsystems.bitcoinkit.dash.storage.DashKitDatabase
 import io.horizontalsystems.bitcoinkit.dash.storage.DashStorage
 import io.horizontalsystems.bitcoinkit.dash.tasks.PeerTaskFactory
+import io.horizontalsystems.bitcoinkit.dash.validators.DarkGravityWaveTestnetValidator
 import io.horizontalsystems.bitcoinkit.dash.validators.DarkGravityWaveValidator
 import io.horizontalsystems.hdwalletkit.Mnemonic
 
@@ -91,7 +91,13 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
         // extending bitcoinCore
 
         bitcoinCore.addListener(this)
-        bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits))
+
+        if (network is MainNetDash) {
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+        } else {
+            bitcoinCore.addBlockValidator(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+        }
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
                 .addMessageParser(TransactionLockMessageParser())
@@ -130,9 +136,10 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
     }
 
     companion object {
-        val maxTargetBits = CompactBits.decode(0x1e0fffff)
-        val targetTimespan = 3600L     // 1 hour for 24 blocks
-        val targetSpacing = 150        // 2.5 min. for mining 1 Block
-        val heightInterval = targetTimespan / targetSpacing
+        const val maxTargetBits: Long = 0x1e0fffff
+
+        const val targetSpacing = 150             // 2.5 min. for mining 1 Block
+        const val targetTimespan = 3600L          // 1 hour for 24 blocks
+        const val heightInterval = targetTimespan / targetSpacing
     }
 }
