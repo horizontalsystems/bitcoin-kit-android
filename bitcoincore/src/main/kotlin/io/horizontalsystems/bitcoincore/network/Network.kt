@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.network
 
 import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 /** Network-specific parameters */
@@ -26,4 +27,6 @@ abstract class Network {
     abstract var addressScriptVersion: Int
 
     abstract val checkpointBlock: Block
+    open val sigHashForked: Boolean = false
+    open val sigHashValue = Sighash.ALL
 }
