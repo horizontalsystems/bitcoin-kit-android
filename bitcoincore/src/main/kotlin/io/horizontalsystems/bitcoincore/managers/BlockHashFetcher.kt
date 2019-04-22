@@ -5,7 +5,6 @@ import com.eclipsesource.json.JsonObject
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import java.util.logging.Logger
 
@@ -52,17 +51,7 @@ class BlockHashFetcherHelper {
 
 }
 
-class BCoinApi(val network: Network, val httpRequester: HttpRequester) {
-
-    val host = when (network) {
-//        todo: fix it
-//        is MainNet -> "https://btc.horizontalsystems.xyz/apg"
-//        is TestNet -> "http://btc-testnet.horizontalsystems.xyz/apg"
-//        is MainNetBitcoinCash -> "https://bch.horizontalsystems.xyz/apg"
-//        is TestNetBitcoinCash -> "http://bch-testnet.horizontalsystems.xyz/apg"
-        else -> "http://btc-testnet.horizontalsystems.xyz/apg"
-    }
-
+class BCoinApi(private val host: String, val httpRequester: HttpRequester) {
     private val logger = Logger.getLogger("BCoinApi")
 
     fun getTransactions(addresses: List<String>): List<TransactionItem> {

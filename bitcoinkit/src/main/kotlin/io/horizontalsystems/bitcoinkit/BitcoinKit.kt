@@ -55,6 +55,12 @@ class BitcoinKit : AbstractKit {
             NetworkType.RegTest -> RegTest()
         }
 
+        val initialSyncApiUrl = when (networkType) {
+            NetworkType.MainNet -> "https://btc.horizontalsystems.xyz/apg"
+            NetworkType.TestNet -> "http://btc-testnet.horizontalsystems.xyz/apg"
+            NetworkType.RegTest -> null
+        }
+
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
 
         val addressSelector = BitcoinAddressSelector()
@@ -70,6 +76,7 @@ class BitcoinKit : AbstractKit {
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
+                .setInitialSyncApiUrl(initialSyncApiUrl)
                 .build()
 
 
