@@ -7,10 +7,9 @@ class StateManager(private val storage: IStorage, private val network: Network, 
 
     var restored: Boolean
         get() {
-//            todo: fix it
-//            if (network is RegTest) {
-//                return true
-//            }
+            if (!network.syncableFromApi) {
+                return true
+            }
 
             if (newWallet) {
                 return true

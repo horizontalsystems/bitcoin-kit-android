@@ -1,9 +1,11 @@
 package io.horizontalsystems.bitcoincash
 
 import io.horizontalsystems.bitcoincore.models.Block
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
+import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.bitcoincore.utils.HashUtils
+import kotlin.experimental.or
 
 class MainNetBitcoinCash : Network() {
 
@@ -18,6 +20,8 @@ class MainNetBitcoinCash : Network() {
     override var coinType: Int = 0
 
     override val maxBlockSize = 32 * 1024 * 1024
+    override val sigHashForked = true
+    override val sigHashValue = Sighash.FORKID or Sighash.ALL
 
     override var dnsSeeds: Array<String> = arrayOf(
             "seed.bitcoinabc.org",                  // Bitcoin ABC seeder

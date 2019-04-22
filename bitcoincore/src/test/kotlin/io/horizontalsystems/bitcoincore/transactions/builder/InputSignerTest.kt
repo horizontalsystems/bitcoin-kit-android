@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.builder.InputSigner
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.hdwalletkit.HDKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -41,6 +42,8 @@ object InputSignerTest : Spek({
         whenever(publicKey.publicKey).thenReturn(byteArrayOf(1, 2, 3))
         whenever(privateKey.createSignature(any())).thenReturn(derEncodedSignature)
         whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(privateKey)
+        whenever(network.sigHashForked).thenReturn(false)
+        whenever(network.sigHashValue).thenReturn(Sighash.ALL)
 
         inputSigner = InputSigner(hdWallet, network)
     }

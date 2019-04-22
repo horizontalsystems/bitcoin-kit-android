@@ -38,6 +38,7 @@ class BitcoinCoreBuilder {
     private var addressSelector: IAddressSelector? = null
     private var apiFeeRateCoinCode: String? = null
     private var storage: IStorage? = null
+    private var initialSyncApiUrl: String? = null
 
     // parameters with default values
     private var confirmationsThreshold = 6
@@ -105,6 +106,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setInitialSyncApiUrl(initialSyncApiUrl: String?): BitcoinCoreBuilder {
+        this.initialSyncApiUrl = initialSyncApiUrl
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -113,6 +119,7 @@ class BitcoinCoreBuilder {
         val addressSelector = checkNotNull(this.addressSelector)
         val apiFeeRateCoinCode = checkNotNull(this.apiFeeRateCoinCode)
         val storage = checkNotNull(this.storage)
+        val initialSyncApiUrl = this.initialSyncApiUrl ?: "http://btc-testnet.horizontalsystems.xyz/apg"
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
 
         val apiFeeRate = ApiFeeRate(apiFeeRateCoinCode)
@@ -156,7 +163,7 @@ class BitcoinCoreBuilder {
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
 
         val feeRateSyncer = FeeRateSyncer(storage, apiFeeRate)
-        val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, BCoinApi(network, HttpRequester()), BlockHashFetcherHelper())
+        val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, BCoinApi(initialSyncApiUrl, HttpRequester()), BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
         val stateManager = StateManager(storage, network, newWallet)
         val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)

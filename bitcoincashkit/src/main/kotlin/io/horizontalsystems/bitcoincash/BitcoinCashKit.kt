@@ -2,12 +2,12 @@ package io.horizontalsystems.bitcoincash
 
 import android.arch.persistence.room.Room
 import android.content.Context
-import io.horizontalsystems.bitcoincore.AbstractKit
-import io.horizontalsystems.bitcoincore.BitcoinCore
-import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincash.blocks.validators.DAAValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.EDAValidator
+import io.horizontalsystems.bitcoincore.AbstractKit
+import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
 import io.horizontalsystems.bitcoincore.network.Network
@@ -53,6 +53,11 @@ class BitcoinCashKit : AbstractKit {
             NetworkType.TestNet -> TestNetBitcoinCash()
         }
 
+        val initialSyncApiUrl = when (networkType) {
+            NetworkType.MainNet -> "https://bch.horizontalsystems.xyz/apg"
+            NetworkType.TestNet -> "http://bch-testnet.horizontalsystems.xyz/apg"
+        }
+
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
 
         val addressSelector = BitcoinCashAddressSelector()
@@ -68,6 +73,7 @@ class BitcoinCashKit : AbstractKit {
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
+                .setInitialSyncApiUrl(initialSyncApiUrl)
                 .build()
 
 
