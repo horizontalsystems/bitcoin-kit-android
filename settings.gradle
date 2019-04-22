@@ -1,1 +1,1 @@
-include ':app', ':bitcoinkit', ':bitcoincore', ':dashkit'
+include ':app', ':bitcoinkit', ':bitcoincore', ':dashkit', ':bitcoincashkit'

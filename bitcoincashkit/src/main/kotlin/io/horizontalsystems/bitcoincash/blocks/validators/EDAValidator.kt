@@ -1,6 +1,6 @@
-package io.horizontalsystems.bitcoinkit.bitcoincash.blocks.validators
+package io.horizontalsystems.bitcoincash.blocks.validators
 
-import io.horizontalsystems.bitcoinkit.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
+import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
