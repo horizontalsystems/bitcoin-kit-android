@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoinkit.bitcoincash
+package io.horizontalsystems.bitcoincash
 
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.storage.BlockHeader

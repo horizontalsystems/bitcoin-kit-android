@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoinkit.bitcoincash.blocks
+package io.horizontalsystems.bitcoincash.blocks
 
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper

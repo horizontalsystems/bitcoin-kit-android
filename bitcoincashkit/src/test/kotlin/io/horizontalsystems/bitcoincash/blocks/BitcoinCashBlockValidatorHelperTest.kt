@@ -1,11 +1,11 @@
-package io.horizontalsystems.bitcoinkit.bitcoincash.blocks
+package io.horizontalsystems.bitcoincash.blocks
 
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.Fixtures
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import io.horizontalsystems.bitcoinkit.Fixtures
 import org.junit.Assert
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
