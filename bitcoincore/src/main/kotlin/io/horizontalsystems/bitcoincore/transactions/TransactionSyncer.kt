@@ -34,9 +34,9 @@ class TransactionSyncer(
     }
 
     fun handleTransaction(sentTransaction: FullTransaction) {
-        val newTransaction = storage.getNewTransaction(sentTransaction.header.hashHexReversed) ?: return
-        val sntTransaction = storage.getSentTransaction(newTransaction.hashHexReversed) ?: run {
-            storage.addSentTransaction(SentTransaction(newTransaction.hashHexReversed))
+        val newTransaction = storage.getNewTransaction(sentTransaction.header.hash) ?: return
+        val sntTransaction = storage.getSentTransaction(newTransaction.hash) ?: run {
+            storage.addSentTransaction(SentTransaction(newTransaction.hash))
 
             return
         }
@@ -49,7 +49,7 @@ class TransactionSyncer(
 
     fun getPendingTransactions(): List<FullTransaction> {
         return storage.getNewTransactions().filter { transition ->
-            val sentTransaction = storage.getSentTransaction(transition.header.hashHexReversed)
+            val sentTransaction = storage.getSentTransaction(transition.header.hash)
             if (sentTransaction == null) {
                 true
             } else {

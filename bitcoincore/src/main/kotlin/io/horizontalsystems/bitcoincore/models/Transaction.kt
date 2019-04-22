@@ -20,12 +20,12 @@ import java.util.*
  *  4 bytes     LockTime        Transaction lock time
  */
 
-@Entity(indices = [Index("blockHashReversedHex")],
-        primaryKeys = ["hashHexReversed"],
+@Entity(indices = [Index("blockHash")],
+        primaryKeys = ["hash"],
         foreignKeys = [ForeignKey(
                 entity = Block::class,
-                parentColumns = ["headerHashReversedHex"],
-                childColumns = ["blockHashReversedHex"],
+                parentColumns = ["headerHash"],
+                childColumns = ["blockHash"],
                 onUpdate = ForeignKey.CASCADE,
                 onDelete = ForeignKey.CASCADE,
                 deferred = true)
@@ -33,9 +33,8 @@ import java.util.*
 
 class Transaction {
 
-    var hashHexReversed = ""
     var hash: ByteArray = byteArrayOf()
-    var blockHashReversedHex: String? = null
+    var blockHash: ByteArray? = null
 
     var version: Int = 0
     var lockTime: Long = 0
@@ -47,8 +46,8 @@ class Transaction {
     var status: Int = Status.RELAYED
 
     fun block(storage: IStorage): Block? {
-        blockHashReversedHex?.let {
-            return storage.getBlock(hashHex = it)
+        blockHash?.let {
+            return storage.getBlock(hashHash = it)
         }
 
         return null

@@ -68,7 +68,7 @@ object InputSignerTest : Spek({
             whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(privateKey)
 
             whenever(transactionOutput.lockingScript).thenReturn(lockingScript)
-            whenever(transactionOutput.transactionHashReversedHex).thenReturn("abc")
+            whenever(transactionOutput.transactionHash).thenReturn(byteArrayOf(1, 2, 3))
 
             whenever(inputToSign.previousOutput).thenReturn(transactionOutput)
             whenever(inputToSign.input).thenReturn(transactionInput)

@@ -28,7 +28,7 @@ class TransactionExtractorTest {
     @Before
     fun setup() {
         transactionOutput = TransactionOutput()
-        transactionInput = TransactionInput("", 0)
+        transactionInput = TransactionInput(byteArrayOf(), 0)
         fullTransaction = FullTransaction(Transaction(), listOf(transactionInput), listOf(transactionOutput))
 
         extractor = TransactionExtractor(addressConverter, storage)

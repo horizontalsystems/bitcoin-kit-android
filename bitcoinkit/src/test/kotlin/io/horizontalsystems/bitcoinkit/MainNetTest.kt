@@ -1,12 +1,10 @@
 package io.horizontalsystems.bitcoinkit
 
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
-import io.horizontalsystems.bitcoincore.models.Block
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.mock
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
 
@@ -14,9 +12,6 @@ import org.powermock.modules.junit4.PowerMockRunner
 @PrepareForTest(MainNet::class)
 
 class MainNetTest {
-
-    private val block1 = mock(Block::class.java)
-    private val block2 = mock(Block::class.java)
 
     private lateinit var network: MainNet
 

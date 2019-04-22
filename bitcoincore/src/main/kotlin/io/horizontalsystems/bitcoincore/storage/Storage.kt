@@ -56,7 +56,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.blockHash.allBlockHashes()
     }
 
-    override fun getBlockHashHeaderHashHexes(except: String): List<String> {
+    override fun getBlockHashHeaderHashes(except: ByteArray): List<ByteArray> {
         return store.blockHash.allBlockHashes(except)
     }
 
@@ -66,6 +66,10 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     override fun getBlockchainBlockHashes(): List<BlockHash> {
         return store.blockHash.getBlockchainBlockHashes()
+    }
+
+    override fun deleteBlockHash(hash: ByteArray) {
+        store.blockHash.delete(hash)
     }
 
     override fun addBlockHashes(hashes: List<BlockHash>) {
@@ -80,18 +84,14 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         store.blockHash.delete(height = 0)
     }
 
-    override fun deleteBlockHash(hashHex: String) {
-        store.blockHash.delete(hashHex)
-    }
-
     // Block
 
     override fun getBlock(height: Int): Block? {
         return store.block.getBlockByHeight(height)
     }
 
-    override fun getBlock(hashHex: String): Block? {
-        return store.block.getBlockByHex(hashHex)
+    override fun getBlock(hashHash: ByteArray): Block? {
+        return store.block.getBlockByHash(hashHash)
     }
 
     override fun getBlock(stale: Boolean, sortedHeight: String): Block? {
@@ -114,19 +114,19 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return store.block.getBlocks(heightGreaterOrEqualTo, stale)
     }
 
-    override fun getBlocks(hashHexes: List<String>): List<Block> {
-        return store.block.getBlocks(hashHexes)
+    override fun getBlocks(hashes: List<ByteArray>): List<Block> {
+        return store.block.getBlocks(hashes)
     }
 
     override fun getBlocksChunk(fromHeight: Int, toHeight: Int): List<Block> {
         return store.block.getBlocksChunk(fromHeight, toHeight)
     }
 
-    override fun blocksCount(headerHexes: List<String>?): Int {
-        return if (headerHexes == null) {
+    override fun blocksCount(headerHashes: List<ByteArray>?): Int {
+        return if (headerHashes == null) {
             store.block.count()
         } else {
-            store.block.getBlocksCount(headerHexes)
+            store.block.getBlocksCount(headerHashes)
         }
     }
 
@@ -148,7 +148,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     override fun deleteBlocks(blocks: List<Block>) {
         blocks.forEach { block ->
-            val transactions = store.transaction.getBlockTransactions(block.headerHashReversedHex)
+            val transactions = store.transaction.getBlockTransactions(block.headerHash)
 
             transactions.forEach {
                 store.input.deleteAll(getTransactionInputs(it))
@@ -164,7 +164,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     // Transaction
 
     override fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo> {
-        val txHashes = transactions.map { it.transaction.hashHexReversed }
+        val txHashes = transactions.map { it.transaction.hash }
         val inputs = store.input.getInputsWithPrevouts(txHashes)
         val outputs = store.output.getTransactionsOutputs(txHashes)
 
@@ -172,8 +172,8 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
             FullTransactionInfo(
                     tx.block,
                     tx.transaction,
-                    inputs.filter { it.input.transactionHashReversedHex == tx.transaction.hashHexReversed },
-                    outputs.filter { it.transactionHashReversedHex == tx.transaction.hashHexReversed }
+                    inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
+                    outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) }
             )
         }
     }
@@ -181,7 +181,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     override fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo> {
         var query = "SELECT transactions.*, Block.*" +
                 " FROM `Transaction` as transactions" +
-                " LEFT JOIN Block ON transactions.blockHashReversedHex = Block.headerHashReversedHex"
+                " LEFT JOIN Block ON transactions.blockHash = Block.headerHash"
 
         if (fromTransaction != null) {
             query = " WHERE transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order})"
@@ -196,12 +196,12 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         return getFullTransactionInfo(store.transaction.getTransactionWithBlockBySql(SimpleSQLiteQuery(query)))
     }
 
-    override fun getTransaction(hashHex: String): Transaction? {
-        return store.transaction.getByHashHex(hashHex)
+    override fun getTransaction(hash: ByteArray): Transaction? {
+        return store.transaction.getByHash(hash)
     }
 
     override fun getTransactionOfOutput(output: TransactionOutput): Transaction? {
-        return store.transaction.getByHashHex(output.transactionHashReversedHex)
+        return store.transaction.getByHash(output.transactionHash)
     }
 
     override fun addTransaction(transaction: FullTransaction) {
@@ -223,11 +223,11 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     override fun getBlockTransactions(block: Block): List<Transaction> {
-        return store.transaction.getBlockTransactions(block.headerHashReversedHex)
+        return store.transaction.getBlockTransactions(block.headerHash)
     }
 
-    override fun getNewTransaction(hashHex: String): Transaction? {
-        return store.transaction.getNewTransaction(hashHex)
+    override fun getNewTransaction(hash: ByteArray): Transaction? {
+        return store.transaction.getNewTransaction(hash)
     }
 
     override fun getNewTransactions(): List<FullTransaction> {
@@ -247,11 +247,11 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     override fun getPreviousOutput(input: TransactionInput): TransactionOutput? {
-        return store.output.getPreviousOutput(input.previousOutputTxReversedHex, input.previousOutputIndex.toInt())
+        return store.output.getPreviousOutput(input.previousOutputTxHash, input.previousOutputIndex.toInt())
     }
 
     override fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput> {
-        return store.output.getByHashHex(transaction.hashHexReversed)
+        return store.output.getByHash(transaction.hash)
     }
 
     override fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput> {
@@ -265,13 +265,13 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     // TransactionInput
 
     override fun getTransactionInputs(transaction: Transaction): List<TransactionInput> {
-        return store.input.getTransactionInputs(transaction.hashHexReversed)
+        return store.input.getTransactionInputs(transaction.hash)
     }
 
     // PublicKey
 
     override fun hasInputs(ofOutput: TransactionOutput): Boolean {
-        return store.input.getInputsOfOutput(ofOutput.transactionHashReversedHex, ofOutput.index).isNotEmpty()
+        return store.input.getInputsOfOutput(ofOutput.transactionHash, ofOutput.index).isNotEmpty()
     }
 
     override fun getPublicKey(byPath: String): PublicKey? {
@@ -296,8 +296,8 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     // SentTransaction
 
-    override fun getSentTransaction(hashHex: String): SentTransaction? {
-        return store.sentTransaction.getTransaction(hashHex)
+    override fun getSentTransaction(hash: ByteArray): SentTransaction? {
+        return store.sentTransaction.getTransaction(hash)
     }
 
     override fun addSentTransaction(transaction: SentTransaction) {

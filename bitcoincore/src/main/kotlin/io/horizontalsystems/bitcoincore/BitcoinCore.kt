@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.core.*
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BlockInfo
@@ -243,7 +244,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit
-        fun onTransactionsDelete(hashes: List<String>) = Unit
+        fun onTransactionsDelete(hashes: List<ByteArray>) = Unit
         fun onBalanceUpdate(balance: Long) = Unit
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo) = Unit
         fun onKitStateUpdate(state: KitState) = Unit
@@ -364,7 +365,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 //                    } catch (e: Exception) {
 //                        ""
 //                    }
-                println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHex} ---- legacy: $legacy")
+                println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHash.toHexString()} ---- legacy: $legacy")
 //                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
             } catch (e: Exception) {
                 println(e.message)
@@ -383,7 +384,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         }
     }
 
-    override fun onTransactionsDelete(hashes: List<String>) {
+    override fun onTransactionsDelete(hashes: List<ByteArray>) {
         listenerExecutor.execute {
             listeners.forEach {
                 it.onTransactionsDelete(hashes)

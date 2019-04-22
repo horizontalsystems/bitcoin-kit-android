@@ -16,8 +16,8 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
  *  Variable    OutputScript         Script
  */
 
-@Entity(indices = [Index("publicKeyPath", "transactionHashReversedHex")],
-        primaryKeys = ["transactionHashReversedHex", "index"],
+@Entity(indices = [Index("publicKeyPath", "transactionHash")],
+        primaryKeys = ["transactionHash", "index"],
         foreignKeys = [
             ForeignKey(
                     entity = PublicKey::class,
@@ -28,8 +28,8 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
                     deferred = true),
             ForeignKey(
                     entity = Transaction::class,
-                    parentColumns = ["hashHexReversed"],
-                    childColumns = ["transactionHashReversedHex"],
+                    parentColumns = ["hash"],
+                    childColumns = ["transactionHash"],
                     onDelete = ForeignKey.CASCADE,
                     onUpdate = ForeignKey.CASCADE,
                     deferred = true)
@@ -41,14 +41,14 @@ class TransactionOutput {
     var lockingScript: ByteArray = byteArrayOf()
     var index: Int = 0
 
-    var transactionHashReversedHex: String = ""
+    var transactionHash = byteArrayOf()
     var publicKeyPath: String? = null
     var scriptType: Int = ScriptType.UNKNOWN
     var keyHash: ByteArray? = null
     var address: String? = null
 
     fun transaction(storage: IStorage): Transaction? {
-        return storage.getTransaction(hashHex = transactionHashReversedHex)
+        return storage.getTransaction(hash = transactionHash)
     }
 
     fun publicKey(storage: IStorage): PublicKey? {

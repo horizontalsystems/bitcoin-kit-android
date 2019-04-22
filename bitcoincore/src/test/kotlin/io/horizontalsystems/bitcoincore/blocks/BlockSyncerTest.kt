@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoincore.blocks
 import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.KitStateProvider
-import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.AddressManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
@@ -133,7 +132,7 @@ class BlockSyncerTest : Spek({
         context("when there are some BlockHashes which haven't downloaded blocks") {
             beforeEach {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf(blockHash))
-                whenever(storage.blocksCount(listOf(blockHash.headerHashReversedHex))).thenReturn(0)
+                whenever(storage.blocksCount(listOf(blockHash.headerHash))).thenReturn(0)
             }
 
             it("returns lastBLock + BlockHashes count") {
@@ -147,7 +146,7 @@ class BlockSyncerTest : Spek({
         context("when there are some BlockHashes which have downloaded blocks") {
             beforeEach {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf(blockHash))
-                whenever(storage.blocksCount(listOf(blockHash.headerHashReversedHex))).thenReturn(1)
+                whenever(storage.blocksCount(listOf(blockHash.headerHash))).thenReturn(1)
             }
 
             it("returns lastBLock height") {
@@ -161,11 +160,11 @@ class BlockSyncerTest : Spek({
 
     describe("#prepareForDownload") {
         val emptyBlocks = mock<List<Block>>()
-        val blocksHashes = listOf("str")
+        val blocksHashes = listOf(byteArrayOf(1))
 
         beforeEach {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
-            whenever(storage.getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)).thenReturn(blocksHashes)
+            whenever(storage.getBlockHashHeaderHashes(checkpointBlock.headerHash)).thenReturn(blocksHashes)
 
             blockSyncer.prepareForDownload()
         }
@@ -177,7 +176,7 @@ class BlockSyncerTest : Spek({
         }
 
         it("clears partial blocks") {
-            verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)
+            verify(storage).getBlockHashHeaderHashes(checkpointBlock.headerHash)
             verify(storage).getBlocks(blocksHashes)
             verify(blockchain).deleteBlocks(any())
         }
@@ -230,11 +229,11 @@ class BlockSyncerTest : Spek({
 
     describe("#downloadFailed") {
         val emptyBlocks = mock<List<Block>>()
-        val blocksHashes = listOf("str")
+        val blocksHashes = listOf(byteArrayOf(1))
 
         beforeEach {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
-            whenever(storage.getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)).thenReturn(blocksHashes)
+            whenever(storage.getBlockHashHeaderHashes(checkpointBlock.headerHash)).thenReturn(blocksHashes)
 
             blockSyncer.downloadFailed()
         }
@@ -246,7 +245,7 @@ class BlockSyncerTest : Spek({
         }
 
         it("clears partial blocks") {
-            verify(storage).getBlockHashHeaderHashHexes(checkpointBlock.headerHashReversedHex)
+            verify(storage).getBlockHashHeaderHashes(checkpointBlock.headerHash)
             verify(storage).getBlocks(blocksHashes)
             verify(blockchain).deleteBlocks(any())
         }
@@ -394,7 +393,7 @@ class BlockSyncerTest : Spek({
             whenever(merkleBlock.height).thenReturn(null)
             whenever(merkleBlock.associatedTransactions).thenReturn(mutableListOf())
             whenever(block.height).thenReturn(merkleHeight)
-            whenever(block.headerHashReversedHex).thenReturn("abc")
+            whenever(block.headerHash).thenReturn(byteArrayOf(1, 2, 3))
             whenever(state.iterationHasPartialBlocks).thenReturn(true)
 
             whenever(blockchain.connect(merkleBlock)).thenReturn(block)
@@ -447,19 +446,19 @@ class BlockSyncerTest : Spek({
             it("delete block hash") {
                 blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
-                verify(storage).deleteBlockHash(block.headerHashReversedHex)
+                verify(storage).deleteBlockHash(block.headerHash)
             }
         }
     }
 
     describe("#shouldRequest") {
         val block = mock(Block::class.java)
-        val hashHex = byteArrayOf(1)
+        val hashHash = byteArrayOf(1)
 
         it("returns true if block exists") {
-            whenever(storage.getBlock(hashHex.reversedArray().toHexString())).thenReturn(block)
+            whenever(storage.getBlock(hashHash)).thenReturn(block)
 
-            assertEquals(false, blockSyncer.shouldRequest(hashHex))
+            assertEquals(false, blockSyncer.shouldRequest(hashHash))
         }
     }
 

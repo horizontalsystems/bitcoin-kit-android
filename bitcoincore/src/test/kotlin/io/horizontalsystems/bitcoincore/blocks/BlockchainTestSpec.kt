@@ -4,7 +4,6 @@ import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -31,8 +30,9 @@ class BlockchainTestSpec : Spek({
     beforeEachTest {
         whenever(blockHeader.previousBlockHeaderHash).thenReturn(prevHash)
         whenever(blockHeader.merkleRoot).thenReturn(byteArrayOf())
-        whenever(blockHeader.hash).thenReturn(byteArrayOf(1))
+        whenever(blockHeader.hash).thenReturn(byteArrayOf(1, 2))
         whenever(merkleBlock.header).thenReturn(blockHeader)
+        whenever(merkleBlock.blockHash).thenReturn(byteArrayOf(1, 3))
 
         blockchain = Blockchain(storage, blockValidator, dataListener)
     }
@@ -44,13 +44,13 @@ class BlockchainTestSpec : Spek({
 
     describe("#connect") {
         beforeEach {
-            whenever(merkleBlock.reversedHeaderHashHex).thenReturn("abc")
+            whenever(merkleBlock.blockHash).thenReturn(byteArrayOf(1,2,3))
             whenever(merkleBlock.header).thenReturn(blockHeader)
         }
 
         context("when block exists") {
             beforeEach {
-                whenever(storage.getBlock(merkleBlock.reversedHeaderHashHex)).thenReturn(block)
+                whenever(storage.getBlock(merkleBlock.blockHash)).thenReturn(block)
             }
 
             it("returns existing block") {
@@ -67,12 +67,12 @@ class BlockchainTestSpec : Spek({
 
         context("when block doesn't exist") {
             beforeEach {
-                whenever(storage.getBlock(merkleBlock.reversedHeaderHashHex)).thenReturn(null)
+                whenever(storage.getBlock(merkleBlock.blockHash)).thenReturn(null)
             }
 
             context("when block is not in chain") {
                 beforeEach {
-                    whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash.reversedArray().toHexString())).thenReturn(null)
+                    whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash)).thenReturn(null)
                 }
 
                 it("throws BlockValidatorError.noPreviousBlock error") {
@@ -88,7 +88,7 @@ class BlockchainTestSpec : Spek({
 
             context("when block is in chain") {
                 beforeEach {
-                    whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash.reversedArray().toHexString())).thenReturn(block)
+                    whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash)).thenReturn(block)
                 }
 
                 context("when block is invalid") {
@@ -128,9 +128,6 @@ class BlockchainTestSpec : Spek({
         val height = 1
 
         beforeEach {
-            // whenever(storage.getBlock(merkleBlock.reversedHeaderHashHex)).thenReturn(null)
-            // whenever(storage.addBlock(any()))
-
             connectedBlock = blockchain.forceAdd(merkleBlock, height)
         }
 
@@ -181,7 +178,7 @@ class BlockchainTestSpec : Spek({
 
                 verify(storage).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2))
                 verify(storage, never()).deleteBlocks(mockedBlocks.newBlocks)
-                verify(dataListener).onTransactionsDelete(mockedBlocks.blocksInChainTransactionHexes.takeLast(2))
+                verify(dataListener).onTransactionsDelete(mockedBlocks.blocksInChainTransactionHashes.takeLast(2))
             }
 
             it("makes new blocks not stale") {
@@ -211,7 +208,7 @@ class BlockchainTestSpec : Spek({
 
                 verify(storage).deleteBlocks(mockedBlocks.newBlocks)
                 verify(storage, never()).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2))
-                verify(dataListener).onTransactionsDelete(mockedBlocks.newBlocksTransactionHexes)
+                verify(dataListener).onTransactionsDelete(mockedBlocks.newBlocksTransactionHashes)
             }
         }
 
@@ -228,7 +225,7 @@ class BlockchainTestSpec : Spek({
 
                 verify(storage).deleteBlocks(mockedBlocks.newBlocks)
                 verify(storage, never()).deleteBlocks(mockedBlocks.blocksInChain.takeLast(2))
-                verify(dataListener).onTransactionsDelete(mockedBlocks.newBlocksTransactionHexes)
+                verify(dataListener).onTransactionsDelete(mockedBlocks.newBlocksTransactionHashes)
             }
         }
 
@@ -279,8 +276,8 @@ class BlockchainTestSpec : Spek({
 class MockedBlocks(private val storage: IStorage, private val blockHeader: BlockHeader) {
     var newBlocks = mutableListOf<Block>()
     var blocksInChain = mutableListOf<Block>()
-    var newBlocksTransactionHexes = mutableListOf<String>()
-    var blocksInChainTransactionHexes = mutableListOf<String>()
+    var newBlocksTransactionHashes = mutableListOf<ByteArray>()
+    var blocksInChainTransactionHashes = mutableListOf<ByteArray>()
 
     fun create(_blocksInChain: Map<Int, String>, _newBlocks: Map<Int, String>): MockedBlocks {
         _blocksInChain.forEach { height, id ->
@@ -291,7 +288,7 @@ class MockedBlocks(private val storage: IStorage, private val blockHeader: Block
             whenever(storage.getBlockTransactions(block)).thenReturn(listOf(transaction))
 
             blocksInChain.add(block)
-            blocksInChainTransactionHexes.add(transaction.hashHexReversed)
+            blocksInChainTransactionHashes.add(transaction.hash)
         }
 
         _newBlocks.forEach { height, id ->
@@ -302,7 +299,7 @@ class MockedBlocks(private val storage: IStorage, private val blockHeader: Block
             whenever(storage.getBlockTransactions(block)).thenReturn(listOf(transaction))
 
             newBlocks.add(block)
-            newBlocksTransactionHexes.add(transaction.hashHexReversed)
+            newBlocksTransactionHashes.add(transaction.hash)
         }
 
         whenever(storage.getBlocks(stale = true)).thenReturn(newBlocks)
@@ -331,9 +328,7 @@ class MockedBlocks(private val storage: IStorage, private val blockHeader: Block
     private fun mockTransaction(block: Block): Transaction {
         val transaction = mock(Transaction::class.java)
 
-        // whenever(transaction.block).thenReturn(block)
         whenever(transaction.hash).thenReturn(block.headerHash)
-        whenever(transaction.hashHexReversed).thenReturn(block.headerHashReversedHex)
 
         return transaction
     }

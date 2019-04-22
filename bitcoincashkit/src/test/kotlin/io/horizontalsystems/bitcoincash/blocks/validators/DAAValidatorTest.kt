@@ -77,7 +77,7 @@ object DAAValidatorTest : Spek({
                                 hash = byteArrayOf(1)
                         ))
 
-                whenever(storage.getBlock(hashHex = lastBlock.previousBlockHashReversedHex)).thenReturn(block)
+                whenever(storage.getBlock(hashHash = lastBlock.previousBlockHash)).thenReturn(block)
 
                 lastBlock = block
                 chunks.add(block)

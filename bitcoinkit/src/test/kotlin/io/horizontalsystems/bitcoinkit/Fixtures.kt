@@ -3,7 +3,10 @@ package io.horizontalsystems.bitcoinkit
 import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
-import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionInput
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
@@ -36,9 +39,7 @@ object Fixtures {
                         nonce = 2295801359,
                         hash = "0000000000000000000a876dbca5804f792afa90b6dc7946dedb5866245d0c55".toReversedByteArray()
                 )
-        ).apply {
-            headerHashReversedHex = HashUtils.toHexString(this.headerHash.reversedArray())
-        }
+        )
 
     val block2
         get () = Block(
@@ -87,7 +88,7 @@ object Fixtures {
         get() = FullTransaction(
                 header = Transaction(),
                 inputs = listOf(TransactionInput(
-                        previousOutputTxReversedHex = "093f5f5c5e57ae2ae9728147547e183e2ef5c9e6e879a78bee6ceb59db2b4797",
+                        previousOutputTxHash = "093f5f5c5e57ae2ae9728147547e183e2ef5c9e6e879a78bee6ceb59db2b4797".toReversedByteArray(),
                         previousOutputIndex = 1,
                         sigScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexStringToByteArray(),
                         sequence = 4294967295
@@ -113,7 +114,7 @@ object Fixtures {
                 header = Transaction(),
                 inputs = listOf(
                         TransactionInput(
-                                previousOutputTxReversedHex = "b6f0ede9cc38cdbceb91936619f89b648bb912f4c42773567037ea5de164873d",
+                                previousOutputTxHash = "b6f0ede9cc38cdbceb91936619f89b648bb912f4c42773567037ea5de164873d".toReversedByteArray(),
                                 previousOutputIndex = 0,
                                 sigScript = "004830450221008c203a0881f75c731d9a3a2e6d2ffa37da7095b7dde61a9e7a906659219cd0fa02202677097ca7f7e164f73924fe8f84e1e6fc6611450efcda360ce771e98af9f73d0147304402201cba9b641483476f67a4cef08d7280f51de8d7615fcce76642d944dc07132a990220323d13175477bbf67c8c36fb243bec0e4c410bc9173a186d9f8e98ce3445363601475221025b64f7c63e30f315259393f64dcca269d18386997b1cc93da1388c4021e3ea8e210386d42d5d7027ac08ddcbb066e2140575091fe7dc1d202a008eb5e036725e975652ae".hexToByteArray(),
                                 sequence = 4294967295
@@ -140,7 +141,7 @@ object Fixtures {
         get() = FullTransaction(
                 header = Transaction(),
                 inputs = listOf(TransactionInput(
-                        previousOutputTxReversedHex = "978530798f3979322351c190856d17b9e9e7e470c5be4ce87a60bd7a9f7756ac",
+                        previousOutputTxHash = "978530798f3979322351c190856d17b9e9e7e470c5be4ce87a60bd7a9f7756ac".toReversedByteArray(),
                         previousOutputIndex = 0,
                         sigScript = "473044022003f9d150b4e291de2825af19dbe1846cc80caf3535d7e9fa03743b2ad019cc47022073294e520c508f702e3ad7a085ecce4a4b311d43faa1e6eb685ec78c002e795d01".hexToByteArray(),
                         sequence = 4294967295
@@ -155,7 +156,7 @@ object Fixtures {
         get() = FullTransaction(
                 header = Transaction(version = 1),
                 inputs = listOf(TransactionInput(
-                        previousOutputTxReversedHex = "a6d1ce683f38a84cfd88a9d48b0ba2d7a8def00f8517e3da02c86fce6c7863d7",
+                        previousOutputTxHash = "a6d1ce683f38a84cfd88a9d48b0ba2d7a8def00f8517e3da02c86fce6c7863d7".toReversedByteArray(),
                         previousOutputIndex = 0,
                         sigScript = "4730440220302e597d74aebcb0bf7f372be156252017af190bd586466104b079fba4b7efa7022037ebbf84e096ef3d966123a93a83586012353c1d2c11c967d21acf1c94c45df001210347235e12207d21b6093d9fd93a0df4d589a0d44252b98b2e934a8da5ab1d1654".hexStringToByteArray(),
                         sequence = 4294967295
@@ -177,12 +178,4 @@ object Fixtures {
                         )
                 )
         )
-
-    //  test public key
-    val publicKey = PublicKey().apply {
-        this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
-        this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexStringToByteArray()
-        this.publicKeyHex = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06"
-    }
-
 }

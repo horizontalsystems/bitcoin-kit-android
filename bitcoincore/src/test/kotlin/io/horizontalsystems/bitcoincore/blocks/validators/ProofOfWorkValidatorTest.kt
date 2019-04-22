@@ -27,7 +27,7 @@ object ProofOfWorkValidatorTest : Spek({
         it("fails when proof of work is not valid") {
             val block = Fixtures.block2
             val previousBlock = Fixtures.block1
-            block.bits = CompactBits.encode(BigInteger(block.headerHashReversedHex, 16).minus(BigInteger.valueOf(1L)))
+            block.bits = CompactBits.encode(BigInteger(block.headerHash).minus(BigInteger.valueOf(1L)))
 
             assertThrows<BlockValidatorException.InvalidProofOfWork> {
                 validator.validate(block, previousBlock)

@@ -18,16 +18,15 @@ class BlockHeader(
 class FullTransaction(val header: Transaction, val inputs: List<TransactionInput>, val outputs: List<TransactionOutput>) {
 
     init {
-        if (header.hashHexReversed.isEmpty()) {
+        if (header.hash.isEmpty()) {
             header.hash = HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = true))
-            header.hashHexReversed = header.hash.toReversedHex()
         }
 
         inputs.forEach {
-            it.transactionHashReversedHex = header.hashHexReversed
+            it.transactionHash = header.hash
         }
         outputs.forEach {
-            it.transactionHashReversedHex = header.hashHexReversed
+            it.transactionHash = header.hash
         }
     }
 

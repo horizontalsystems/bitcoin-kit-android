@@ -28,8 +28,8 @@ class BlockSyncer(
     val localKnownBestBlockHeight: Int
         get() {
             val blockHashes = storage.getBlockchainBlockHashes()
-            val headerHexes = blockHashes.map { it.headerHashReversedHex }
-            val existingBlocksCount = headerHexes.chunked(sqliteMaxVariableNumber).map {
+            val headerHashes = blockHashes.map { it.headerHash }
+            val existingBlocksCount = headerHashes.chunked(sqliteMaxVariableNumber).map {
                 storage.blocksCount(it)
             }.sum()
 
@@ -123,23 +123,21 @@ class BlockSyncer(
         }
 
         if (!state.iterationHasPartialBlocks) {
-            storage.deleteBlockHash(block.headerHashReversedHex)
+            storage.deleteBlockHash(block.headerHash)
         }
 
         listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
     }
 
     fun shouldRequest(blockHash: ByteArray): Boolean {
-        val hashHex = blockHash.reversedArray().toHexString()
-
-        return storage.getBlock(hashHex) == null
+        return storage.getBlock(blockHash) == null
     }
 
     private fun clearPartialBlocks() {
-        val toDelete = storage.getBlockHashHeaderHashHexes(except = network.checkpointBlock.headerHashReversedHex)
+        val toDelete = storage.getBlockHashHeaderHashes(except = network.checkpointBlock.headerHash)
 
         toDelete.chunked(sqliteMaxVariableNumber).forEach {
-            val blocksToDelete = storage.getBlocks(hashHexes = it)
+            val blocksToDelete = storage.getBlocks(hashes = it)
             blockchain.deleteBlocks(blocksToDelete)
         }
     }

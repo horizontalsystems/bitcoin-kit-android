@@ -20,11 +20,11 @@ interface BlockDao {
     @Query("SELECT * FROM Block ORDER BY height DESC limit 1")
     fun getLastBlock(): Block?
 
-    @Query("SELECT * FROM Block WHERE headerHashReversedHex IN (:hashHex)")
-    fun getBlocks(hashHex: List<String>): List<Block>
+    @Query("SELECT * FROM Block WHERE headerHash IN (:hashes)")
+    fun getBlocks(hashes: List<ByteArray>): List<Block>
 
-    @Query("SELECT COUNT(headerHashReversedHex) FROM Block WHERE headerHashReversedHex IN (:hashHex)")
-    fun getBlocksCount(hashHex: List<String>): Int
+    @Query("SELECT COUNT(headerHash) FROM Block WHERE headerHash IN (:hashes)")
+    fun getBlocksCount(hashes: List<ByteArray>): Int
 
     @Query("SELECT * FROM Block WHERE height >= :heightGreaterOrEqualTo AND stale = :stale")
     fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean): List<Block>
@@ -38,13 +38,13 @@ interface BlockDao {
     @Query("SELECT * FROM Block WHERE height <= :fromHeight AND height > :toHeight ORDER BY height ASC")
     fun getBlocksChunk(fromHeight: Int, toHeight: Int): List<Block>
 
-    @Query("SELECT * FROM Block WHERE headerHashReversedHex = :hashHex limit 1")
-    fun getBlockByHex(hashHex: String): Block?
+    @Query("SELECT * FROM Block WHERE headerHash = :hash limit 1")
+    fun getBlockByHash(hash: ByteArray): Block?
 
     @Query("SELECT * FROM Block WHERE height = :height limit 1")
     fun getBlockByHeight(height: Int): Block?
 
-    @Query("SELECT COUNT(headerHashReversedHex) FROM Block")
+    @Query("SELECT COUNT(headerHash) FROM Block")
     fun count(): Int
 
     @Delete

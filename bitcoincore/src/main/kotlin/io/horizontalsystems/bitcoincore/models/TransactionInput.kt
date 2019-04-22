@@ -19,24 +19,24 @@ import io.horizontalsystems.bitcoincore.storage.WitnessConverter
  *  4 bytes     InputSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
  */
 
-@Entity(indices = [Index("transactionHashReversedHex")],
-        primaryKeys = ["previousOutputTxReversedHex", "previousOutputIndex"],
+@Entity(indices = [Index("transactionHash")],
+        primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
         foreignKeys = [ForeignKey(
                 entity = Transaction::class,
-                parentColumns = ["hashHexReversed"],
-                childColumns = ["transactionHashReversedHex"],
+                parentColumns = ["hash"],
+                childColumns = ["transactionHash"],
                 onUpdate = ForeignKey.CASCADE,
                 onDelete = ForeignKey.CASCADE,
                 deferred = true)
         ])
 
 class TransactionInput(
-        val previousOutputTxReversedHex: String,
+        val previousOutputTxHash: ByteArray,
         val previousOutputIndex: Long,
         var sigScript: ByteArray = byteArrayOf(),
         val sequence: Long = 0xffffffff) {
 
-    var transactionHashReversedHex: String = ""
+    var transactionHash = byteArrayOf()
     var keyHash: ByteArray? = null
     var address: String? = ""
 
@@ -44,7 +44,7 @@ class TransactionInput(
     var witness: List<ByteArray> = listOf()
 
     fun transaction(storage: IStorage): Transaction? {
-        return storage.getTransaction(transactionHashReversedHex)
+        return storage.getTransaction(transactionHash)
     }
 
 }

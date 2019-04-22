@@ -14,8 +14,8 @@ interface BlockHashDao {
     @Query("SELECT headerHash FROM BlockHash")
     fun allBlockHashes(): List<ByteArray>
 
-    @Query("SELECT headerHashReversedHex FROM BlockHash WHERE headerHashReversedHex != :excludedHex")
-    fun allBlockHashes(excludedHex: String): List<String>
+    @Query("SELECT headerHash FROM BlockHash WHERE headerHash != :excludedHash")
+    fun allBlockHashes(excludedHash: ByteArray): List<ByteArray>
 
     @Query("SELECT * FROM BlockHash ORDER BY sequence ASC, height ASC LIMIT :limit")
     fun getBlockHashesSortedSequenceHeight(limit: Int): List<BlockHash>
@@ -35,6 +35,6 @@ interface BlockHashDao {
     @Query("DELETE FROM BlockHash WHERE height = :height")
     fun delete(height: Int)
 
-    @Query("DELETE FROM BlockHash WHERE headerHashReversedHex = :hashHex")
-    fun delete(hashHex: String)
+    @Query("DELETE FROM BlockHash WHERE headerHash = :hash")
+    fun delete(hash: ByteArray)
 }

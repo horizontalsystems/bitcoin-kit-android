@@ -99,7 +99,7 @@ class TransactionBuilder {
         //  add inputs
         for (unspentOutput in selectedOutputsInfo.outputs) {
             val previousOutput = unspentOutput.output
-            val transactionInput = TransactionInput(previousOutput.transactionHashReversedHex, previousOutput.index.toLong())
+            val transactionInput = TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong())
 
             inputsToSign.add(InputToSign(transactionInput, previousOutput, unspentOutput.publicKey))
         }

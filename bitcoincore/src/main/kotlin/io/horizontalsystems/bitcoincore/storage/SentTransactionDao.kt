@@ -11,8 +11,8 @@ interface SentTransactionDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update(transaction: SentTransaction)
 
-    @Query("select * from SentTransaction where hashHexReversed = :hashHex limit 1")
-    fun getTransaction(hashHex: String): SentTransaction?
+    @Query("select * from SentTransaction where hash = :hash limit 1")
+    fun getTransaction(hash: ByteArray): SentTransaction?
 
     @Delete
     fun delete(transaction: SentTransaction)

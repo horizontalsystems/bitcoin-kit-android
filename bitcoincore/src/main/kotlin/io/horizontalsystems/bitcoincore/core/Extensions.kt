@@ -33,7 +33,7 @@ fun List<FullTransaction>.inTopologicalOrder(): List<FullTransaction> {
 
         for (i in 0 until this.size) {
             for (input in this[i].inputs) {
-                if (input.previousOutputTxReversedHex == currentTx.header.hashHexReversed && input.previousOutputIndex < currentTx.outputs.size) {
+                if (input.previousOutputTxHash.contentEquals(currentTx.header.hash) && input.previousOutputIndex < currentTx.outputs.size) {
                     visit(i, visited, stack)
                 }
             }

@@ -5,7 +5,6 @@ import android.arch.persistence.room.Entity
 import android.arch.persistence.room.Ignore
 import android.arch.persistence.room.PrimaryKey
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.utils.Utils
 
@@ -20,11 +19,9 @@ class PublicKey {
     var index = 0
     var external = true
 
-    var publicKeyHex = ""
-    var publicKeyHash: ByteArray = byteArrayOf()
-    var publicKey: ByteArray = byteArrayOf()
-    var scriptHashP2WPKH: ByteArray = byteArrayOf()
-    var scriptHashP2WPKHHex: String = ""
+    var publicKeyHash = byteArrayOf()
+    var publicKey = byteArrayOf()
+    var scriptHashP2WPKH = byteArrayOf()
 
     fun used(storage: IStorage): Boolean {
         return storage.getOutputsOfPublicKey(this).isNotEmpty()
@@ -40,12 +37,9 @@ class PublicKey {
         this.external = external
         this.publicKey = publicKey
         this.publicKeyHash = publicKeyHash
-        this.publicKeyHex = publicKeyHash.toHexString()
 
         val version = 0
         val redeemScript = OpCodes.push(version) + OpCodes.push(this.publicKeyHash)
         this.scriptHashP2WPKH = Utils.sha256Hash160(redeemScript)
-        this.scriptHashP2WPKHHex = scriptHashP2WPKH.toHexString()
     }
-
 }

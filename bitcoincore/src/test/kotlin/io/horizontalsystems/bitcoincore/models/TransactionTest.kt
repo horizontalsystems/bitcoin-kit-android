@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.models
 
 import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
 import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -26,11 +27,10 @@ class TransactionTest {
         assertEquals(fullTransaction.inputs.size, 1)
         assertEquals(fullTransaction.outputs.size, 2)
 
-        assertEquals(fullTransaction.outputs[0]?.index, 0)
-        assertEquals(fullTransaction.outputs[1]?.index, 1)
+        assertEquals(fullTransaction.outputs[0].index, 0)
+        assertEquals(fullTransaction.outputs[1].index, 1)
 
         assertEquals(transaction.hash.toHexString(), txHashLE)
-        assertEquals(transaction.hashHexReversed, txHashBE)
     }
 
     @Test
@@ -76,7 +76,7 @@ class TransactionTest {
         fullTransaction = TransactionSerializer.deserialize(BitcoinInput(txRaw.hexStringToByteArray()))
         transaction = fullTransaction.header
 
-        assertEquals(txHash, transaction.hashHexReversed)
+        assertEquals(txHash, transaction.hash.toReversedHex())
 
         val bytes = HashUtils.doubleSha256(TransactionSerializer.serialize(fullTransaction, withWitness = true))
 

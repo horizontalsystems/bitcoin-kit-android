@@ -37,7 +37,7 @@ class BloomFilterManager(private val storage: IStorage) {
         }
 
         for (out in transactionOutputs) {
-            val outpoint = out.output.transactionHashReversedHex.toReversedByteArray() + Utils.intToByteArray(out.output.index).reversedArray()
+            val outpoint = out.output.transactionHash + Utils.intToByteArray(out.output.index).reversedArray()
             elements.add(outpoint)
         }
 

@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore.serializers
 
-import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -51,14 +50,12 @@ object TransactionSerializer {
         val fullTransaction = FullTransaction(transaction, inputs, outputs)
 
         fullTransaction.header.hash = HashUtils.doubleSha256(serialize(fullTransaction, withWitness = false))
-        fullTransaction.header.hashHexReversed = transaction.hash.toReversedHex()
-
         fullTransaction.inputs.forEach {
-            it.transactionHashReversedHex = fullTransaction.header.hashHexReversed
+            it.transactionHash = fullTransaction.header.hash
         }
 
         fullTransaction.outputs.forEach {
-            it.transactionHashReversedHex = fullTransaction.header.hashHexReversed
+            it.transactionHash = fullTransaction.header.hash
         }
 
         return fullTransaction

@@ -1,7 +1,5 @@
 package io.horizontalsystems.bitcoincore.serializers
 
-import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
-import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.TransactionInput
@@ -11,7 +9,7 @@ object InputSerializer {
 
     fun serialize(input: TransactionInput): ByteArray {
         return BitcoinOutput()
-                .write(input.previousOutputTxReversedHex.toReversedByteArray())
+                .write(input.previousOutputTxHash)
                 .writeUnsignedInt(input.previousOutputIndex)
                 .writeVarInt(input.sigScript.size.toLong())
                 .write(input.sigScript)
@@ -21,18 +19,17 @@ object InputSerializer {
 
     fun deserialize(input: BitcoinInput): TransactionInput {
         val previousOutputHash = input.readBytes(32)
-        val previousOutputTxReversedHex = previousOutputHash.toReversedHex()
         val previousOutputIndex = input.readUnsignedInt()
         val sigScriptLength = input.readVarInt()
         val sigScript = input.readBytes(sigScriptLength.toInt())
         val sequence = input.readUnsignedInt()
 
-        return TransactionInput(previousOutputTxReversedHex, previousOutputIndex, sigScript, sequence)
+        return TransactionInput(previousOutputHash, previousOutputIndex, sigScript, sequence)
     }
 
     fun serializeOutpoint(input: InputToSign): ByteArray {
         return BitcoinOutput()
-                .write(input.previousOutput.transactionHashReversedHex.toReversedByteArray())
+                .write(input.previousOutput.transactionHash)
                 .writeInt(input.previousOutput.index)
                 .toByteArray()
     }
@@ -40,7 +37,7 @@ object InputSerializer {
     fun serializeForSignature(inputToSign: InputToSign, forCurrentInputSignature: Boolean): ByteArray {
         val previousOutput = inputToSign.previousOutput
         val output = BitcoinOutput()
-                .write(previousOutput.transactionHashReversedHex.toReversedByteArray())
+                .write(previousOutput.transactionHash)
                 .writeUnsignedInt(previousOutput.index.toLong())
 
         if (forCurrentInputSignature) {
