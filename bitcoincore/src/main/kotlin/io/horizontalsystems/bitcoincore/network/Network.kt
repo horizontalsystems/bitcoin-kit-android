@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoincore.utils.HashUtils
 abstract class Network {
 
     open val protocolVersion = 70014
+    open val syncableFromApi = true
     val bloomFilter = 70000
     val networkServices = 0L
     val serviceFullNode = 1L

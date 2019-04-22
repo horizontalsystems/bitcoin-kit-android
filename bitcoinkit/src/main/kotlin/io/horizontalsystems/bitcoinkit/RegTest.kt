@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoinkit
 
 import io.horizontalsystems.bitcoincore.models.Block
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 class RegTest : Network() {
@@ -17,6 +17,7 @@ class RegTest : Network() {
     override var coinType: Int = 1
 
     override val maxBlockSize = 1_000_000
+    override val syncableFromApi = false
 
     override var dnsSeeds: Array<String> = arrayOf(
             "btc-regtest.horizontalsystems.xyz",
