@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.io.ByteArrayInputStream
 
 /**
@@ -28,7 +28,7 @@ class MerkleBlockMessage(
     override val command: String = "merkleblock"
 
     private val blockHash: String by lazy {
-        HashUtils.toHexStringAsLE(header.hash)
+        header.hash.toReversedHex()
     }
 
     override fun toString(): String {

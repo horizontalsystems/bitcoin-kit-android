@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoincore.message
 
 import io.horizontalsystems.bitcoincore.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoincore.core.DoubleSha256Hasher
-import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoincore.network.messages.MerkleBlockMessageParser
 import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser

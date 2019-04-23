@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoincore.blocks
 
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
-import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoincore.managers.AddressManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.BlockHash

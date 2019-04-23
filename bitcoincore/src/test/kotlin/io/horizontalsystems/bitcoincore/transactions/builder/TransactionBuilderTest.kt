@@ -4,8 +4,8 @@ import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.argThat
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
-import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.AddressManager
 import io.horizontalsystems.bitcoincore.managers.SelectedUnspentOutputInfo
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider

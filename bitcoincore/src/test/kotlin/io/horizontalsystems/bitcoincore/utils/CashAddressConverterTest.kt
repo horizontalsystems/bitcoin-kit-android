@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.utils
 
-import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import org.junit.Assert.assertEquals
@@ -87,7 +87,7 @@ class CashAddressConverterTest {
 
     private fun hashToAddress(hash: String, hrp: String, string: String, type: Int) {
         converter = CashAddressConverter(hrp)
-        address = converter.convert(hash.hexStringToByteArray(), type)
+        address = converter.convert(hash.hexToByteArray(), type)
 
         assertEquals(string, address.string)
     }

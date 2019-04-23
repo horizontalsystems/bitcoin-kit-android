@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
-import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 class GetBlocksMessage(var hashes: List<ByteArray>, var version: Int, var hashStop: ByteArray) : IMessage {
     override val command: String = "getblocks"
@@ -9,10 +9,10 @@ class GetBlocksMessage(var hashes: List<ByteArray>, var version: Int, var hashSt
     override fun toString(): String {
         val list = hashes
                 .take(10)
-                .map { hash -> HashUtils.toHexStringAsLE(hash) }
+                .map { hash -> hash.toReversedHex() }
                 .joinToString()
 
-        return ("GetBlocksMessage(" + hashes.size + ": [" + list + "], hashStop=" + HashUtils.toHexStringAsLE(hashStop) + ")")
+        return ("GetBlocksMessage(" + hashes.size + ": [" + list + "], hashStop=" + hashStop.toReversedHex() + ")")
     }
 }
 

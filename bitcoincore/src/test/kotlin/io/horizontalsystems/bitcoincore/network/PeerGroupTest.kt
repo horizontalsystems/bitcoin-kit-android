@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.network
 
 import com.nhaarman.mockito_kotlin.whenever
-import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.models.NetworkAddress
@@ -87,7 +87,7 @@ class PeerGroupTest {
     fun onReceiveAddresses() {
         val ip4 = "0A000001"
         val raw = arrayOf("E215104D", "0100000000000000", "00000000000000000000FFFF$ip4", "208D").joinToString("")
-        val input = BitcoinInput(raw.hexStringToByteArray())
+        val input = BitcoinInput(raw.hexToByteArray())
 
         val netAddress = NetworkAddress(input, false)
 

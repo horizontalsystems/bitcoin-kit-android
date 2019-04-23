@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.blocks
 
-import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoincore.utils.MerkleBranch

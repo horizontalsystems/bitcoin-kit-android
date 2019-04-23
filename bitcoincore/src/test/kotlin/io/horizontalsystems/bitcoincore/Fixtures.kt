@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore
 
-import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.*
@@ -87,20 +86,20 @@ object Fixtures {
                 inputs = listOf(TransactionInput(
                         previousOutputTxHash = "093f5f5c5e57ae2ae9728147547e183e2ef5c9e6e879a78bee6ceb59db2b4797".toReversedByteArray(),
                         previousOutputIndex = 1,
-                        sigScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexStringToByteArray(),
+                        sigScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexToByteArray(),
                         sequence = 4294967295
                 )),
                 outputs = listOf(
                         TransactionOutput(
                                 value = 94734191,
                                 index = 0,
-                                script = "76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexStringToByteArray(),
+                                script = "76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexToByteArray(),
                                 type = ScriptType.UNKNOWN
                         ),
                         TransactionOutput(
                                 value = 100000,
                                 index = 1,
-                                script = "76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexStringToByteArray(),
+                                script = "76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexToByteArray(),
                                 type = ScriptType.UNKNOWN
                         ))
         )
@@ -127,7 +126,7 @@ object Fixtures {
                         TransactionOutput(
                                 value = 1407000,
                                 index = 1,
-                                script = "a914aed6f804c63da80800892f8fd4cdbad0d3ad6d1287".hexStringToByteArray(),
+                                script = "a914aed6f804c63da80800892f8fd4cdbad0d3ad6d1287".hexToByteArray(),
                                 type = ScriptType.UNKNOWN
                         )
                 )
@@ -155,21 +154,21 @@ object Fixtures {
                 inputs = listOf(TransactionInput(
                         previousOutputTxHash = "a6d1ce683f38a84cfd88a9d48b0ba2d7a8def00f8517e3da02c86fce6c7863d7".toReversedByteArray(),
                         previousOutputIndex = 0,
-                        sigScript = "4730440220302e597d74aebcb0bf7f372be156252017af190bd586466104b079fba4b7efa7022037ebbf84e096ef3d966123a93a83586012353c1d2c11c967d21acf1c94c45df001210347235e12207d21b6093d9fd93a0df4d589a0d44252b98b2e934a8da5ab1d1654".hexStringToByteArray(),
+                        sigScript = "4730440220302e597d74aebcb0bf7f372be156252017af190bd586466104b079fba4b7efa7022037ebbf84e096ef3d966123a93a83586012353c1d2c11c967d21acf1c94c45df001210347235e12207d21b6093d9fd93a0df4d589a0d44252b98b2e934a8da5ab1d1654".hexToByteArray(),
                         sequence = 4294967295
                 )),
                 outputs = listOf(
                         TransactionOutput(
                                 value = 10792000,
                                 index = 0,
-                                script = "00148749115073ad59a6f3587f1f9e468adedf01473f".hexStringToByteArray(),
+                                script = "00148749115073ad59a6f3587f1f9e468adedf01473f".hexToByteArray(),
                                 type = ScriptType.P2WPKH,
                                 keyHash = byteArrayOf()
                         ),
                         TransactionOutput(
                                 value = 0,
                                 index = 0,
-                                script = "6a4c500000b919000189658af37cd16dbd16e4186ea13c5d8e1f40c5b5a0958326067dd923b8fc8f0767f62eb9a7fd57df4f3e775a96ca5b5eabf5057dff98997a3bbd011366703f5e45075f397f7f3c8465da".hexStringToByteArray(),
+                                script = "6a4c500000b919000189658af37cd16dbd16e4186ea13c5d8e1f40c5b5a0958326067dd923b8fc8f0767f62eb9a7fd57df4f3e775a96ca5b5eabf5057dff98997a3bbd011366703f5e45075f397f7f3c8465da".hexToByteArray(),
                                 type = ScriptType.P2PK,
                                 keyHash = byteArrayOf()
                         )
@@ -178,8 +177,8 @@ object Fixtures {
 
     //  test public key
     val publicKey = PublicKey().apply {
-        this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexStringToByteArray()
-        this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexStringToByteArray()
+        this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexToByteArray()
+        this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexToByteArray()
     }
 
 }

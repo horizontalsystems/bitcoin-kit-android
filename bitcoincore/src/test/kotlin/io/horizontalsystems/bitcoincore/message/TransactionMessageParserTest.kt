@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.message
 
-import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.network.messages.TransactionMessage
 import io.horizontalsystems.bitcoincore.network.messages.TransactionMessageParser
 import org.junit.Assert.assertEquals

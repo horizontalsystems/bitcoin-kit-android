@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions.scripts
 
-import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.utils.Utils
 import java.io.ByteArrayInputStream
 
