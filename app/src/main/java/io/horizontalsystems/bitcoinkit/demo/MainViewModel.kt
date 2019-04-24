@@ -92,7 +92,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         }
     }
 
-    override fun onTransactionsDelete(hashes: List<ByteArray>) {
+    override fun onTransactionsDelete(hashes: List<String>) {
     }
 
     override fun onBalanceUpdate(balance: Long) {

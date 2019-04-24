@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.blocks
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 
@@ -61,10 +62,10 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
     }
 
     fun deleteBlocks(blocksToDelete: List<Block>) {
-        val deletedTransactionIds = mutableListOf<ByteArray>()
+        val deletedTransactionIds = mutableListOf<String>()
 
         blocksToDelete.forEach { block ->
-            deletedTransactionIds.addAll(storage.getBlockTransactions(block).map { it.hash })
+            deletedTransactionIds.addAll(storage.getBlockTransactions(block).map { it.hash.toReversedHex() })
         }
 
         storage.deleteBlocks(blocksToDelete)

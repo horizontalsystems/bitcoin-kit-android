@@ -244,7 +244,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit
-        fun onTransactionsDelete(hashes: List<ByteArray>) = Unit
+        fun onTransactionsDelete(hashes: List<String>) = Unit
         fun onBalanceUpdate(balance: Long) = Unit
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo) = Unit
         fun onKitStateUpdate(state: KitState) = Unit
@@ -384,7 +384,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         }
     }
 
-    override fun onTransactionsDelete(hashes: List<ByteArray>) {
+    override fun onTransactionsDelete(hashes: List<String>) {
         listenerExecutor.execute {
             listeners.forEach {
                 it.onTransactionsDelete(hashes)

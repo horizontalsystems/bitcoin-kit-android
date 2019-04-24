@@ -4,6 +4,7 @@ import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -276,8 +277,8 @@ class BlockchainTestSpec : Spek({
 class MockedBlocks(private val storage: IStorage, private val blockHeader: BlockHeader) {
     var newBlocks = mutableListOf<Block>()
     var blocksInChain = mutableListOf<Block>()
-    var newBlocksTransactionHashes = mutableListOf<ByteArray>()
-    var blocksInChainTransactionHashes = mutableListOf<ByteArray>()
+    var newBlocksTransactionHashes = mutableListOf<String>()
+    var blocksInChainTransactionHashes = mutableListOf<String>()
 
     fun create(_blocksInChain: Map<Int, String>, _newBlocks: Map<Int, String>): MockedBlocks {
         _blocksInChain.forEach { height, id ->
@@ -288,7 +289,7 @@ class MockedBlocks(private val storage: IStorage, private val blockHeader: Block
             whenever(storage.getBlockTransactions(block)).thenReturn(listOf(transaction))
 
             blocksInChain.add(block)
-            blocksInChainTransactionHashes.add(transaction.hash)
+            blocksInChainTransactionHashes.add(transaction.hash.toReversedHex())
         }
 
         _newBlocks.forEach { height, id ->
@@ -299,7 +300,7 @@ class MockedBlocks(private val storage: IStorage, private val blockHeader: Block
             whenever(storage.getBlockTransactions(block)).thenReturn(listOf(transaction))
 
             newBlocks.add(block)
-            newBlocksTransactionHashes.add(transaction.hash)
+            newBlocksTransactionHashes.add(transaction.hash.toReversedHex())
         }
 
         whenever(storage.getBlocks(stale = true)).thenReturn(newBlocks)

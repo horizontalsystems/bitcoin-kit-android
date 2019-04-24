@@ -18,7 +18,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
-        fun onTransactionsDelete(hashes: List<ByteArray>)
+        fun onTransactionsDelete(hashes: List<String>)
         fun onBalanceUpdate(balance: Long)
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
@@ -72,7 +72,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         balanceUpdateSubject.onNext(true)
     }
 
-    override fun onTransactionsDelete(hashes: List<ByteArray>) {
+    override fun onTransactionsDelete(hashes: List<String>) {
         listener?.onTransactionsDelete(hashes)
         balanceUpdateSubject.onNext(true)
     }
