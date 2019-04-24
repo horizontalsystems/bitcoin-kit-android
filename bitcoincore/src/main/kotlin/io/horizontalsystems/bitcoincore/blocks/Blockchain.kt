@@ -28,6 +28,11 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
     }
 
     fun forceAdd(merkleBlock: MerkleBlock, height: Int): Block {
+        val blockInDB = storage.getBlock(merkleBlock.blockHash)
+        if (blockInDB != null) {
+            return blockInDB
+        }
+
         return addBlockAndNotify(Block(merkleBlock.header, height))
     }
 

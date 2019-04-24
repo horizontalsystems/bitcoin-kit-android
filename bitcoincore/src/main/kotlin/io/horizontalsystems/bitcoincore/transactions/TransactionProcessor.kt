@@ -91,8 +91,8 @@ class TransactionProcessor(
     }
 
     private fun hasUnspentOutputs(transaction: FullTransaction): Boolean {
-        return transaction.outputs.any { output ->
-            (output.scriptType == ScriptType.P2PK || output.scriptType == ScriptType.P2WPKH) && output.publicKey(storage) != null
+        return transaction.outputs.any {
+            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH)
         }
     }
 

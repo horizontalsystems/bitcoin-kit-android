@@ -184,7 +184,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
                 " LEFT JOIN Block ON transactions.blockHash = Block.headerHash"
 
         if (fromTransaction != null) {
-            query = " WHERE transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order})"
+            query += " WHERE transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order})"
         }
 
         query += " ORDER BY timestamp DESC, `order` DESC"
