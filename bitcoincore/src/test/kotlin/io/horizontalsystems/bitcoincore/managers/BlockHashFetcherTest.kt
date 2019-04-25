@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.managers
 
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import org.junit.Assert
@@ -74,9 +75,9 @@ class BlockHashFetcherTest {
 
         Assert.assertEquals(lastUsedIndex, actualLastUsedIndex)
         Assert.assertEquals(2, blockHashes.size)
-        Assert.assertEquals("1234", blockHashes.first().headerHashReversedHex)
+        Assert.assertEquals("1234", blockHashes.first().headerHash.toReversedHex())
         Assert.assertEquals(1234, blockHashes.first().height)
-        Assert.assertEquals("5678", blockHashes.last().headerHashReversedHex)
+        Assert.assertEquals("5678", blockHashes.last().headerHash.toReversedHex())
         Assert.assertEquals(5678, blockHashes.last().height)
     }
 }

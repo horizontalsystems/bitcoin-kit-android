@@ -37,8 +37,8 @@ object BitcoinCashBlockValidatorHelperTest : Spek({
             val block2 = Block(height = 2, header = header(20))
             val block3 = Block(height = 3, header = header(30))
 
-            whenever(storage.getBlock(hashHex = block2.previousBlockHashReversedHex)).thenReturn(block1)
-            whenever(storage.getBlock(hashHex = block3.previousBlockHashReversedHex)).thenReturn(block2)
+            whenever(storage.getBlock(hashHash = block2.previousBlockHash)).thenReturn(block1)
+            whenever(storage.getBlock(hashHash = block3.previousBlockHash)).thenReturn(block2)
 
             Assert.assertEquals(block2, helper.getSuitableBlock(mutableListOf(block1, block2, block3)))
         }
@@ -48,8 +48,8 @@ object BitcoinCashBlockValidatorHelperTest : Spek({
             val block2 = Block(height = 2, header = header(1536780486))
             val block3 = Block(height = 3, header = header(1536780486))
 
-            whenever(storage.getBlock(hashHex = block2.previousBlockHashReversedHex)).thenReturn(block1)
-            whenever(storage.getBlock(hashHex = block3.previousBlockHashReversedHex)).thenReturn(block2)
+            whenever(storage.getBlock(hashHash = block2.previousBlockHash)).thenReturn(block1)
+            whenever(storage.getBlock(hashHash = block3.previousBlockHash)).thenReturn(block2)
 
             Assert.assertEquals(block2, helper.getSuitableBlock(mutableListOf(block1, block2, block3)))
         }
@@ -82,7 +82,7 @@ private fun chain(block: Block, size: Int, timeInterval: Int = 100): Block {
 
         nextBlock = Block(header, currentBlock)
 
-        whenever(storage.getBlock(hashHex = nextBlock.previousBlockHashReversedHex)).thenReturn(currentBlock)
+        whenever(storage.getBlock(hashHash = nextBlock.previousBlockHash)).thenReturn(currentBlock)
 
         currentBlock = nextBlock
     }

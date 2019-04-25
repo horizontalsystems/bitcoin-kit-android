@@ -1,7 +1,7 @@
 import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.whenever
-import io.horizontalsystems.bitcoincore.core.toHexString
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
@@ -68,7 +68,7 @@ object InputSignerTest : Spek({
             whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(privateKey)
 
             whenever(transactionOutput.lockingScript).thenReturn(lockingScript)
-            whenever(transactionOutput.transactionHashReversedHex).thenReturn("abc")
+            whenever(transactionOutput.transactionHash).thenReturn(byteArrayOf(1, 2, 3))
 
             whenever(inputToSign.previousOutput).thenReturn(transactionOutput)
             whenever(inputToSign.input).thenReturn(transactionInput)

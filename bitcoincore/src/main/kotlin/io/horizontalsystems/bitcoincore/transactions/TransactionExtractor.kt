@@ -5,7 +5,6 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.*
-import io.horizontalsystems.bitcoincore.transactions.scripts.*
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 import java.util.*
@@ -40,10 +39,6 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             getPublicKey(output)?.let {
                 transaction.header.isMine = true
                 output.publicKeyPath = it.path
-
-                if (scriptType == ScriptType.P2WPKH) {
-                    output.scriptType = ScriptType.P2WPKHSH
-                }
             }
         }
     }
@@ -118,12 +113,18 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
     private fun getPublicKey(output: TransactionOutput): PublicKey? {
         var keyHash = output.keyHash ?: return null
 
-        return if (output.scriptType == ScriptType.P2WPKH) {
+        if (output.scriptType == ScriptType.P2WPKH) {
             keyHash = keyHash.drop(2).toByteArray()
-            storage.getPublicKeyByHash(keyHash, isWPKH = true)
-        } else {
-            storage.getPublicKeyByHash(keyHash, isWPKH = false)
+            storage.getPublicKeyByHash(keyHash, isWPKH = true)?.let {
+                if (output.scriptType == ScriptType.P2WPKH) {
+                    output.scriptType = ScriptType.P2WPKHSH
+                }
+
+                return it
+            }
         }
+
+        return storage.getPublicKeyByHash(keyHash, isWPKH = false)
     }
 
     //

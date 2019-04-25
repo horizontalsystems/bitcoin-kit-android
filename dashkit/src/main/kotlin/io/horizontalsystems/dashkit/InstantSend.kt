@@ -1,15 +1,15 @@
 package io.horizontalsystems.dashkit
 
 import android.util.Log
-import io.horizontalsystems.bitcoincore.core.toHexString
-import io.horizontalsystems.dashkit.tasks.RequestTransactionLockRequestsTask
-import io.horizontalsystems.dashkit.tasks.RequestTransactionLockVotesTask
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.network.peer.IInventoryItemsHandler
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
 import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
+import io.horizontalsystems.dashkit.tasks.RequestTransactionLockRequestsTask
+import io.horizontalsystems.dashkit.tasks.RequestTransactionLockVotesTask
 
 class InstantSend(private val transactionSyncer: TransactionSyncer?) : IInventoryItemsHandler, IPeerTaskHandler {
 
@@ -46,7 +46,7 @@ class InstantSend(private val transactionSyncer: TransactionSyncer?) : IInventor
             }
             is RequestTransactionLockVotesTask -> {
                 task.transactionLockVotes.forEach {
-                    Log.e("AAA", "Received tx lock vote for tx: ${it.txHash.reversedArray().toHexString()}")
+                    Log.e("AAA", "Received tx lock vote for tx: ${it.txHash.toReversedHex()}")
                 }
                 true
             }

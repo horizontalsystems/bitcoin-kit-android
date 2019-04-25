@@ -9,11 +9,8 @@ interface TransactionOutputDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(output: TransactionOutput)
 
-    @Query("SELECT * FROM TransactionOutput WHERE transactionHashReversedHex = :hashHex")
-    fun getListByTransactionHash(hashHex: String): List<TransactionOutput>
-
-    @Query("select * from transactionOutput where transactionHashReversedHex in (:txHashes)")
-    fun getTransactionsOutputs(txHashes: List<String>): List<TransactionOutput>
+    @Query("select * from transactionOutput where transactionHash in (:txHashes)")
+    fun getTransactionsOutputs(txHashes: List<ByteArray>): List<TransactionOutput>
 
     @Delete
     fun delete(output: TransactionOutput)
@@ -25,18 +22,18 @@ interface TransactionOutputDao {
         SELECT TransactionOutput.*, PublicKey.*, `Transaction`.*, Block.*
         FROM TransactionOutput
           INNER JOIN PublicKey ON TransactionOutput.publicKeyPath = PublicKey.path
-          INNER JOIN `Transaction` ON TransactionOutput.transactionHashReversedHex = `Transaction`.hashHexReversed
-          LEFT JOIN Block ON `Transaction`.blockHashReversedHex = Block.headerHashReversedHex
+          INNER JOIN `Transaction` ON TransactionOutput.transactionHash = `Transaction`.hash
+          LEFT JOIN Block ON `Transaction`.blockHash = Block.headerHash
         WHERE TransactionOutput.scriptType != 0
-          AND NOT EXISTS (SELECT previousOutputIndex FROM TransactionInput where TransactionInput.previousOutputTxReversedHex = TransactionOutput.transactionHashReversedHex and TransactionInput.previousOutputIndex = TransactionOutput.`index`)
+          AND NOT EXISTS (SELECT previousOutputIndex FROM TransactionInput where TransactionInput.previousOutputTxHash = TransactionOutput.transactionHash and TransactionInput.previousOutputIndex = TransactionOutput.`index`)
     """)
     fun getUnspents(): List<UnspentOutput>
 
-    @Query("select * from TransactionOutput where transactionHashReversedHex = :previousOutputTxReversedHex and `index` = :previousOutputIndex limit 1")
-    fun getPreviousOutput(previousOutputTxReversedHex: String, previousOutputIndex: Int): TransactionOutput?
+    @Query("select * from TransactionOutput where transactionHash = :previousOutputTxHash and `index` = :previousOutputIndex limit 1")
+    fun getPreviousOutput(previousOutputTxHash: ByteArray, previousOutputIndex: Int): TransactionOutput?
 
-    @Query("select * from TransactionOutput where transactionHashReversedHex = :hashHex")
-    fun getByHashHex(hashHex: String): List<TransactionOutput>
+    @Query("select * from TransactionOutput where transactionHash = :hash")
+    fun getByHash(hash: ByteArray): List<TransactionOutput>
 
     @Query("select * from TransactionOutput where publicKeyPath = :path")
     fun getListByPath(path: String): List<TransactionOutput>
@@ -48,14 +45,14 @@ interface TransactionOutputDao {
         LEFT JOIN (
           SELECT
             inputs.previousOutputIndex,
-            inputs.previousOutputTxReversedHex,
-            inputs.transactionHashReversedHex AS txReversedHex,
+            inputs.previousOutputTxHash,
+            inputs.transactionHash AS txHash,
             Block.*
           FROM TransactionInput AS inputs
-          INNER JOIN `Transaction` AS transactions ON inputs.transactionHashReversedHex = transactions.hashHexReversed
-          LEFT JOIN Block ON transactions.blockHashReversedHex = Block.headerHashReversedHex
+          INNER JOIN `Transaction` AS transactions ON inputs.transactionHash = transactions.hash
+          LEFT JOIN Block ON transactions.blockHash = Block.headerHash
         )
-        AS input ON input.txReversedHex = outputs.transactionHashReversedHex AND input.previousOutputIndex = outputs.`index`
+        AS input ON input.txHash = outputs.transactionHash AND input.previousOutputIndex = outputs.`index`
         WHERE outputs.scriptType = ${ScriptType.P2WPKH} OR outputs.scriptType = ${ScriptType.P2PK}
     """)
     fun getMyOutputs(): List<FullOutputInfo>

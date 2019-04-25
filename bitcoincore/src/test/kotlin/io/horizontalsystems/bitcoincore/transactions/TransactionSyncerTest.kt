@@ -29,7 +29,7 @@ class TransactionSyncerTest : Spek({
     val totalRetriesPeriod: Long = 60 * 60 * 24 * 1000
 
     beforeEachTest {
-        whenever(transaction.hashHexReversed).thenReturn("abc")
+        whenever(transaction.hash).thenReturn(byteArrayOf(1, 2, 3))
         whenever(fullTransaction.header).thenReturn(transaction)
 
         syncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
@@ -84,8 +84,8 @@ class TransactionSyncerTest : Spek({
 
         context("when SentTransaction does not exist") {
             beforeEach {
-                whenever(storage.getNewTransaction(transaction.hashHexReversed)).thenReturn(transaction)
-                whenever(storage.getSentTransaction(transaction.hashHexReversed)).thenReturn(null)
+                whenever(storage.getNewTransaction(transaction.hash)).thenReturn(transaction)
+                whenever(storage.getSentTransaction(transaction.hash)).thenReturn(null)
             }
 
             it("adds new SentTransaction object") {
@@ -93,7 +93,7 @@ class TransactionSyncerTest : Spek({
                     syncer.handleTransaction(fullTransaction)
 
                     verify(storage).addSentTransaction(capture())
-                    firstValue.hashHexReversed = transaction.hashHexReversed
+                    firstValue.hash = transaction.hash
                 }
             }
         }
@@ -103,13 +103,13 @@ class TransactionSyncerTest : Spek({
 
             beforeEach {
                 sentTransaction.apply {
-                    hashHexReversed = transaction.hashHexReversed
+                    hash = transaction.hash
                     firstSendTime = sentTransaction.firstSendTime - 100
                     lastSendTime = sentTransaction.lastSendTime - 100
                 }
 
-                whenever(storage.getNewTransaction(transaction.hashHexReversed)).thenReturn(transaction)
-                whenever(storage.getSentTransaction(transaction.hashHexReversed)).thenReturn(sentTransaction)
+                whenever(storage.getNewTransaction(transaction.hash)).thenReturn(transaction)
+                whenever(storage.getSentTransaction(transaction.hash)).thenReturn(sentTransaction)
             }
 
             it("updates existing SentTransaction object") {
@@ -117,14 +117,14 @@ class TransactionSyncerTest : Spek({
                     syncer.handleTransaction(fullTransaction)
 
                     verify(storage).updateSentTransaction(capture())
-                    firstValue.hashHexReversed = transaction.hashHexReversed
+                    firstValue.hash = transaction.hash
                 }
             }
         }
 
         context("when Transaction doesn't exist") {
             beforeEach {
-                whenever(storage.getNewTransaction(transaction.hashHexReversed)).thenReturn(null)
+                whenever(storage.getNewTransaction(transaction.hash)).thenReturn(null)
             }
 
             it("neither adds new nor updates existing") {
@@ -145,7 +145,7 @@ class TransactionSyncerTest : Spek({
 
             context("when it wasn't sent") {
                 beforeEach {
-                    whenever(storage.getSentTransaction(transaction.hashHexReversed)).thenReturn(null)
+                    whenever(storage.getSentTransaction(transaction.hash)).thenReturn(null)
                 }
 
                 it("returns transaction") {
@@ -162,12 +162,12 @@ class TransactionSyncerTest : Spek({
 
                 beforeEach {
                     sentTransaction.apply {
-                        hashHexReversed = transaction.hashHexReversed
+                        hash = transaction.hash
                         lastSendTime = System.currentTimeMillis() - retriesPeriod - 1
                         retriesCount = 0
                     }
 
-                    whenever(storage.getSentTransaction(transaction.hashHexReversed)).thenReturn(sentTransaction)
+                    whenever(storage.getSentTransaction(transaction.hash)).thenReturn(sentTransaction)
                 }
 
                 context("when sent not too many times or too frequently") {

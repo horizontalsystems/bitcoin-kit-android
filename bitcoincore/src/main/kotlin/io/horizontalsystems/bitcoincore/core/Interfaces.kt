@@ -27,31 +27,31 @@ interface IStorage {
 
     fun getBlockHashesSortedBySequenceAndHeight(limit: Int): List<BlockHash>
     fun getBlockHashHeaderHashes(): List<ByteArray>
-    fun getBlockHashHeaderHashHexes(except: String): List<String>
+    fun getBlockHashHeaderHashes(except: ByteArray): List< ByteArray>
     fun getLastBlockHash(): BlockHash?
 
     fun getBlockchainBlockHashes(): List<BlockHash>
     fun getLastBlockchainBlockHash(): BlockHash?
     fun deleteBlockchainBlockHashes()
-    fun deleteBlockHash(hashHex: String)
+    fun deleteBlockHash(hash: ByteArray)
     fun addBlockHashes(hashes: List<BlockHash>)
 
     //  Block
 
     fun getBlock(height: Int): Block?
-    fun getBlock(hashHex: String): Block?
+    fun getBlock(hashHash: ByteArray): Block?
     fun getBlock(stale: Boolean, sortedHeight: String): Block?
 
     fun getBlocks(stale: Boolean): List<Block>
     fun getBlocks(heightGreaterThan: Int, sortedBy: String, limit: Int): List<Block>
     fun getBlocks(heightGreaterOrEqualTo: Int, stale: Boolean): List<Block>
-    fun getBlocks(hashHexes: List<String>): List<Block>
+    fun getBlocks(hashes: List<ByteArray>): List<Block>
     fun getBlocksChunk(fromHeight: Int, toHeight: Int): List<Block>
 
     fun addBlock(block: Block)
     fun saveBlock(block: Block)
 
-    fun blocksCount(headerHexes: List<String>? = null): Int
+    fun blocksCount(headerHashes: List<ByteArray>? = null): Int
     fun lastBlock(): Block?
     fun updateBlock(staleBlock: Block)
     fun deleteBlocks(blocks: List<Block>)
@@ -61,13 +61,13 @@ interface IStorage {
     fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo>
     fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo>
 
-    fun getTransaction(hashHex: String): Transaction?
+    fun getTransaction(hash: ByteArray): Transaction?
     fun getTransactionOfOutput(output: TransactionOutput): Transaction?
     fun addTransaction(transaction: FullTransaction)
     fun updateTransaction(transaction: Transaction)
     fun getBlockTransactions(block: Block): List<Transaction>
     fun getNewTransactions(): List<FullTransaction>
-    fun getNewTransaction(hashHex: String): Transaction?
+    fun getNewTransaction(hash: ByteArray): Transaction?
     fun isTransactionExists(hash: ByteArray): Boolean
 
     //  Transaction Output
@@ -92,7 +92,7 @@ interface IStorage {
 
     //  SentTransaction
 
-    fun getSentTransaction(hashHex: String): SentTransaction?
+    fun getSentTransaction(hash: ByteArray): SentTransaction?
     fun addSentTransaction(transaction: SentTransaction)
     fun updateSentTransaction(transaction: SentTransaction)
 

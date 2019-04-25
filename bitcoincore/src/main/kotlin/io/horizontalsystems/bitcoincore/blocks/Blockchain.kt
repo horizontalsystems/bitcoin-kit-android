@@ -10,13 +10,15 @@ import io.horizontalsystems.bitcoincore.models.MerkleBlock
 class Blockchain(private val storage: IStorage, private val blockValidator: IBlockValidator, private val dataListener: IBlockchainDataListener) {
 
     fun connect(merkleBlock: MerkleBlock): Block {
-        val blockInDB = storage.getBlock(merkleBlock.reversedHeaderHashHex)
+        val blockInDB = storage.getBlock(merkleBlock.blockHash)
         if (blockInDB != null) {
             return blockInDB
         }
 
-        val parentBlock = storage.getBlock(merkleBlock.header.previousBlockHeaderHash.toReversedHex())
-                ?: throw BlockValidatorException.NoPreviousBlock()
+        val parentBlock = storage.getBlock(merkleBlock.header.previousBlockHeaderHash)
+        if (parentBlock == null) {
+            throw BlockValidatorException.NoPreviousBlock()
+        }
 
         val block = Block(merkleBlock.header, parentBlock)
         blockValidator.validate(block, parentBlock)
@@ -27,6 +29,11 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
     }
 
     fun forceAdd(merkleBlock: MerkleBlock, height: Int): Block {
+        val blockInDB = storage.getBlock(merkleBlock.blockHash)
+        if (blockInDB != null) {
+            return blockInDB
+        }
+
         return addBlockAndNotify(Block(merkleBlock.header, height))
     }
 
@@ -38,7 +45,8 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
                 ?.height ?: 0
 
         if (firstStaleHeight <= lastNotStaleHeight) {
-            val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height ?: firstStaleHeight
+            val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height
+                    ?: firstStaleHeight
 
             if (lastStaleHeight > lastNotStaleHeight) {
                 val notStaleBlocks = storage.getBlocks(heightGreaterOrEqualTo = firstStaleHeight, stale = false)
@@ -57,7 +65,7 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
         val deletedTransactionIds = mutableListOf<String>()
 
         blocksToDelete.forEach { block ->
-            deletedTransactionIds.addAll(storage.getBlockTransactions(block).map { it.hashHexReversed })
+            deletedTransactionIds.addAll(storage.getBlockTransactions(block).map { it.hash.toReversedHex() })
         }
 
         storage.deleteBlocks(blocksToDelete)

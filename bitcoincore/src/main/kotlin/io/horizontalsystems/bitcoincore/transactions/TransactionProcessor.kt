@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.transactions
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.AddressManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.Block
@@ -19,8 +20,8 @@ class TransactionProcessor(
         private val dataListener: IBlockchainDataListener) {
 
     fun processOutgoing(transaction: FullTransaction) {
-        if (storage.getTransaction(transaction.header.hashHexReversed) != null) {
-            throw TransactionCreator.TransactionAlreadyExists("hashHexReversed = ${transaction.header.hashHexReversed}")
+        if (storage.getTransaction(transaction.header.hash) != null) {
+            throw TransactionCreator.TransactionAlreadyExists("hash = ${transaction.header.hash.toReversedHex()}")
         }
 
         process(transaction)
@@ -39,7 +40,7 @@ class TransactionProcessor(
         // when the same transaction came in merkle block and from another peer's mempool we need to process it serial
         synchronized(this) {
             for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
-                val transactionInDB = storage.getTransaction(transaction.header.hashHexReversed)
+                val transactionInDB = storage.getTransaction(transaction.header.hash)
                 if (transactionInDB != null) {
                     relay(transactionInDB, index, block)
                     storage.updateTransaction(transactionInDB)
@@ -83,15 +84,15 @@ class TransactionProcessor(
     }
 
     private fun relay(transaction: Transaction, order: Int, block: Block?) {
-        transaction.blockHashReversedHex = block?.headerHashReversedHex
+        transaction.blockHash = block?.headerHash
         transaction.status = Transaction.Status.RELAYED
         transaction.timestamp = block?.timestamp ?: (Date().time / 1000)
         transaction.order = order
     }
 
     private fun hasUnspentOutputs(transaction: FullTransaction): Boolean {
-        return transaction.outputs.any { output ->
-            (output.scriptType == ScriptType.P2PK || output.scriptType == ScriptType.P2WPKH) && output.publicKey(storage) != null
+        return transaction.outputs.any {
+            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH)
         }
     }
 

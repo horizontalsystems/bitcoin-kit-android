@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.InventoryItem
-import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.io.ByteArrayInputStream
 
 class InvMessage : IMessage {
@@ -24,7 +24,7 @@ class InvMessage : IMessage {
 
     override fun toString(): String {
         val invList = inventory.take(10)
-                .map { inv -> inv.type.toString() + ":" + HashUtils.toHexStringAsLE(inv.hash) }
+                .map { inv -> inv.type.toString() + ":" + inv.hash.toReversedHex() }
                 .toTypedArray()
                 .joinToString()
 

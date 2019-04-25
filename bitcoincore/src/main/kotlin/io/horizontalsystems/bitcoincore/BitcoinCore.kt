@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.core.*
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BlockInfo
@@ -364,7 +365,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 //                    } catch (e: Exception) {
 //                        ""
 //                    }
-                println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHex} ---- legacy: $legacy")
+                println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHash.toHexString()} ---- legacy: $legacy")
 //                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
             } catch (e: Exception) {
                 println(e.message)

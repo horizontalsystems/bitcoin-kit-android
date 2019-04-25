@@ -14,7 +14,6 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
-import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.Mockito.anyObject
 import org.mockito.Mockito.mock
@@ -44,7 +43,7 @@ class TransactionProcessorTest {
         Mockito.verify(extractor).extractOutputs(fullTransaction)
         Mockito.verify(linker).handle(fullTransaction)
         Mockito.verify(blockchainDataListener).onTransactionsUpdate(com.nhaarman.mockito_kotlin.check {
-            Assert.assertEquals(transaction.hashHexReversed, it.firstOrNull()?.hashHexReversed)
+            Assert.assertArrayEquals(transaction.hash, it.firstOrNull()?.hash)
         }, eq(listOf()), anyObject())
     }
 
@@ -130,7 +129,7 @@ class TransactionProcessorTest {
 
         processor.processIncoming(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), block, false)
 
-        transactions.forEachIndexed { index, transaction ->
+        transactions.forEachIndexed { index, _ ->
             Assert.assertEquals(transactions[index].header.status, Transaction.Status.RELAYED)
             Assert.assertEquals(transactions[index].header.timestamp, block.timestamp)
         }
@@ -141,7 +140,7 @@ class TransactionProcessorTest {
         val tx1 = FullTransaction(
                 header = Transaction(),
                 inputs = listOf(TransactionInput(
-                        previousOutputTxReversedHex = "1",
+                        previousOutputTxHash = byteArrayOf(),
                         previousOutputIndex = 1
                 )),
                 outputs = listOf(TransactionOutput())
@@ -149,7 +148,7 @@ class TransactionProcessorTest {
         val tx2 = FullTransaction(
                 header = Transaction(),
                 inputs = listOf(TransactionInput(
-                        previousOutputTxReversedHex = tx1.header.hashHexReversed,
+                        previousOutputTxHash = tx1.header.hash,
                         previousOutputIndex = 0
                 )),
                 outputs = listOf(
@@ -159,7 +158,7 @@ class TransactionProcessorTest {
         val tx3 = FullTransaction(
                 header = Transaction(),
                 inputs = listOf(TransactionInput(
-                        previousOutputTxReversedHex = tx2.header.hashHexReversed,
+                        previousOutputTxHash = tx2.header.hash,
                         previousOutputIndex = 0
                 )),
                 outputs = listOf(TransactionOutput().apply { index = 0 })
@@ -168,11 +167,11 @@ class TransactionProcessorTest {
                 header = Transaction(),
                 inputs = listOf(
                         TransactionInput(
-                                previousOutputTxReversedHex = tx2.header.hashHexReversed,
+                                previousOutputTxHash = tx2.header.hash,
                                 previousOutputIndex = 0
                         ),
                         TransactionInput(
-                                previousOutputTxReversedHex = tx3.header.hashHexReversed,
+                                previousOutputTxHash = tx3.header.hash,
                                 previousOutputIndex = 0
                         )),
                 outputs = listOf(TransactionOutput().apply { index = 0 })

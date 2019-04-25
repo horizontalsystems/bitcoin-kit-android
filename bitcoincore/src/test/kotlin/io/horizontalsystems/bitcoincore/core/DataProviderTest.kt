@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.core
 
 import com.nhaarman.mockito_kotlin.*
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.Transaction
 import org.spekframework.spek2.Spek
@@ -19,12 +20,12 @@ class DataProviderTest : Spek({
     }
 
     describe("with `fromHash`") {
-        val fromHash = "hash"
+        val fromHash = "1234"
         val limit = 1
 
         it("gets transaction with given hash") {
             dataProvider.transactions(fromHash).test().assertOf {
-                verify(storage).getTransaction(fromHash)
+                verify(storage).getTransaction(fromHash.toReversedByteArray())
             }
         }
 
@@ -32,12 +33,12 @@ class DataProviderTest : Spek({
             val fromTransaction = mock<Transaction>()
 
             beforeEach {
-                whenever(storage.getTransaction(fromHash)).thenReturn(fromTransaction)
+                whenever(storage.getTransaction(fromHash.toReversedByteArray())).thenReturn(fromTransaction)
             }
 
             it("starts loading transactions from that transaction") {
                 dataProvider.transactions(fromHash, limit).test().assertOf {
-                    verify(storage).getTransaction(fromHash)
+                    verify(storage).getTransaction(fromHash.toReversedByteArray())
 
                     verify(storage).getFullTransactionInfo(fromTransaction, limit)
                 }
@@ -46,12 +47,12 @@ class DataProviderTest : Spek({
 
         context("when transactions does not exist with given hash") {
             beforeEach {
-                whenever(storage.getTransaction(fromHash)).thenReturn(null)
+                whenever(storage.getTransaction(fromHash.toReversedByteArray())).thenReturn(null)
             }
 
             it("loads transactions without starting point") {
                 dataProvider.transactions(fromHash, limit).test().assertOf {
-                    verify(storage).getTransaction(fromHash)
+                    verify(storage).getTransaction(fromHash.toReversedByteArray())
 
                     verify(storage).getFullTransactionInfo(null, limit)
                 }

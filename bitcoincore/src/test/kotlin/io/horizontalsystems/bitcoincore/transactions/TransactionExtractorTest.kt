@@ -4,8 +4,8 @@ import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
-import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
@@ -28,7 +28,7 @@ class TransactionExtractorTest {
     @Before
     fun setup() {
         transactionOutput = TransactionOutput()
-        transactionInput = TransactionInput("", 0)
+        transactionInput = TransactionInput(byteArrayOf(), 0)
         fullTransaction = FullTransaction(Transaction(), listOf(transactionInput), listOf(transactionOutput))
 
         extractor = TransactionExtractor(addressConverter, storage)
@@ -45,7 +45,7 @@ class TransactionExtractorTest {
 
         whenever(addressConverter.convert(any(), any())).thenReturn(address)
 
-        transactionInput.sigScript = signScript.hexStringToByteArray()
+        transactionInput.sigScript = signScript.hexToByteArray()
         extractor.extractInputs(fullTransaction)
 
         assertEquals(address.hash, fullTransaction.inputs[0].keyHash)
@@ -59,7 +59,7 @@ class TransactionExtractorTest {
 
         whenever(addressConverter.convert(any(), any())).thenReturn(address)
 
-        transactionInput.sigScript = signScript.hexStringToByteArray()
+        transactionInput.sigScript = signScript.hexToByteArray()
         extractor.extractInputs(fullTransaction)
 
         assertEquals(address.hash, fullTransaction.inputs[0].keyHash)
@@ -73,7 +73,7 @@ class TransactionExtractorTest {
 
         whenever(addressConverter.convert(any(), any())).thenReturn(address)
 
-        transactionInput.sigScript = signScript.hexStringToByteArray()
+        transactionInput.sigScript = signScript.hexToByteArray()
         extractor.extractInputs(fullTransaction)
 
         assertEquals(address.hash, fullTransaction.inputs[0].keyHash)
@@ -89,7 +89,7 @@ class TransactionExtractorTest {
         assertNull(fullTransaction.outputs[0].keyHash)
 
         val keyHash = "1ec865abcb88cec71c484d4dadec3d7dc0271a7b"
-        transactionOutput.lockingScript = "76a914${keyHash}88AC".hexStringToByteArray()
+        transactionOutput.lockingScript = "76a914${keyHash}88AC".hexToByteArray()
         extractor.extractOutputs(fullTransaction)
 
         assertEquals(keyHash, fullTransaction.outputs[0].keyHash?.toHexString())
@@ -101,7 +101,7 @@ class TransactionExtractorTest {
         assertNull(fullTransaction.outputs[0].keyHash)
 
         val keyHash = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15"
-        transactionOutput.lockingScript = "21${keyHash}AC".hexStringToByteArray()
+        transactionOutput.lockingScript = "21${keyHash}AC".hexToByteArray()
         extractor.extractOutputs(fullTransaction)
 
         assertEquals(keyHash, fullTransaction.outputs[0].keyHash?.toHexString())
@@ -113,7 +113,7 @@ class TransactionExtractorTest {
         assertNull(fullTransaction.outputs[0].keyHash)
 
         val keyHash = "bd82ef4973ebfcbc8f7cb1d540ef0503a791970b"
-        transactionOutput.lockingScript = "A914${keyHash}87".hexStringToByteArray()
+        transactionOutput.lockingScript = "A914${keyHash}87".hexToByteArray()
         extractor.extractOutputs(fullTransaction)
 
         assertEquals(keyHash, fullTransaction.outputs[0].keyHash?.toHexString())
@@ -124,7 +124,7 @@ class TransactionExtractorTest {
     fun extractOutputs_P2WPKH() {
         assertNull(fullTransaction.outputs[0].keyHash)
 
-        val keyHash = "00148749115073ad59a6f3587f1f9e468adedf01473f".hexStringToByteArray()
+        val keyHash = "00148749115073ad59a6f3587f1f9e468adedf01473f".hexToByteArray()
         transactionOutput.lockingScript = keyHash
         extractor.extractOutputs(fullTransaction)
 

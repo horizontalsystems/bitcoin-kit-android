@@ -1,6 +1,9 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
@@ -69,8 +72,8 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         balanceUpdateSubject.onNext(true)
     }
 
-    override fun onTransactionsDelete(ids: List<String>) {
-        listener?.onTransactionsDelete(ids)
+    override fun onTransactionsDelete(hashes: List<String>) {
+        listener?.onTransactionsDelete(hashes)
         balanceUpdateSubject.onNext(true)
     }
 
@@ -82,7 +85,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
             Single.create { emitter ->
                 var results = listOf<FullTransactionInfo>()
                 if (fromHash != null) {
-                    storage.getTransaction(fromHash)?.let {
+                    storage.getTransaction(fromHash.toReversedByteArray())?.let {
                         results = storage.getFullTransactionInfo(it, limit)
                     }
                 }
@@ -95,7 +98,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
             }
 
     private fun blockInfo(block: Block) = BlockInfo(
-            block.headerHashReversedHex,
+            block.headerHash.toReversedHex(),
             block.height,
             block.timestamp)
 
@@ -135,7 +138,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         }
 
         return TransactionInfo(
-                transactionHash = transaction.hashHexReversed,
+                transactionHash = transaction.hash.toReversedHex(),
                 from = fromAddresses,
                 to = toAddresses,
                 amount = totalMineOutput - totalMineInput,

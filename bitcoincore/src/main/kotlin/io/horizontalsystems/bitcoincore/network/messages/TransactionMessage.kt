@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -9,7 +10,7 @@ class TransactionMessage(var transaction: FullTransaction) : IMessage {
     override val command: String = "tx"
 
     override fun toString(): String {
-        return "TransactionMessage(${transaction.header.hashHexReversed})"
+        return "TransactionMessage(${transaction.header.hash.toReversedHex()})"
     }
 }
 

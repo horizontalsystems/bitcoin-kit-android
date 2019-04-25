@@ -12,17 +12,14 @@ interface TransactionDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update(transaction: Transaction)
 
-    @Query("select * from `Transaction` where hashHexReversed = :hashHex")
-    fun getByHashHex(hashHex: String): Transaction?
-
     @Query("select * from `Transaction` where hash = :hash")
     fun getByHash(hash: ByteArray): Transaction?
 
-    @Query("select * from `Transaction` where blockHashReversedHex = :blockHashHex")
-    fun getBlockTransactions(blockHashHex: String): List<Transaction>
+    @Query("select * from `Transaction` where blockHash = :blockHash")
+    fun getBlockTransactions(blockHash: ByteArray): List<Transaction>
 
-    @Query("select * from `Transaction` where hashHexReversed = :hashHex and status = 1 limit 1")
-    fun getNewTransaction(hashHex: String): Transaction?
+    @Query("select * from `Transaction` where hash = :hash and status = 1 limit 1")
+    fun getNewTransaction(hash: ByteArray): Transaction?
 
     @Query("select * from `Transaction` where status = 1")
     fun getNewTransactions(): List<Transaction>

@@ -65,7 +65,7 @@ class MasternodeListManager(
             throw ValidationError.WrongCoinbaseHash
         }
 
-        val block = storage.getBlock(masternodeListDiffMessage.blockHash.toReversedHex())
+        val block = storage.getBlock(masternodeListDiffMessage.blockHash)
         val merkleRoot = block?.merkleRoot
 
         if (block == null || merkleRoot == null) {

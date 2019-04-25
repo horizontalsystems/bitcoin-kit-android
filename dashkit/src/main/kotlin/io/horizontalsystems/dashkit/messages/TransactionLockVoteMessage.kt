@@ -1,10 +1,10 @@
 package io.horizontalsystems.dashkit.messages
 
-import io.horizontalsystems.bitcoincore.core.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
-import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.io.ByteArrayInputStream
 
@@ -20,7 +20,7 @@ class TransactionLockVoteMessage(
     override val command: String = "txlvote"
 
     override fun toString(): String {
-        return "TransactionLockVoteMessage(hash=${hash.reversedArray().toHexString()}, txHash=${txHash.reversedArray().toHexString()})"
+        return "TransactionLockVoteMessage(hash=${hash.toReversedHex()}, txHash=${txHash.toReversedHex()})"
     }
 }
 

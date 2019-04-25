@@ -80,8 +80,8 @@ object LegacyDifficultyAdjustmentValidatorTest : Spek({
 
             val check2 = Block(check2Head, prevBlock)
 
-            whenever(storage.getBlock(hashHex = any())).thenReturn(check1)
-            whenever(storage.getBlock(hashHex = check2.previousBlockHashReversedHex)).thenReturn(prevBlock)
+            whenever(storage.getBlock(hashHash = any())).thenReturn(check1)
+            whenever(storage.getBlock(hashHash = check2.previousBlockHash)).thenReturn(prevBlock)
 
             Assertions.assertDoesNotThrow {
                 validator.validate(check2, prevBlock)

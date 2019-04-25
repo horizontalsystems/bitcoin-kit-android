@@ -5,7 +5,7 @@ import android.content.Context
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoincore.core.hexStringToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -123,14 +123,14 @@ class DashKit : AbstractKit, BitcoinCore.Listener {
 
     override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
         if (bitcoinCore.syncState == BitcoinCore.KitState.Synced) {
-            masterNodeSyncer?.sync(blockInfo.headerHash.hexStringToByteArray().reversedArray())
+            masterNodeSyncer?.sync(blockInfo.headerHash.toReversedByteArray())
         }
     }
 
     override fun onKitStateUpdate(state: BitcoinCore.KitState) {
         if (state == BitcoinCore.KitState.Synced) {
             bitcoinCore.lastBlockInfo?.let {
-                masterNodeSyncer?.sync(it.headerHash.hexStringToByteArray().reversedArray())
+                masterNodeSyncer?.sync(it.headerHash.toReversedByteArray())
             }
         }
     }
