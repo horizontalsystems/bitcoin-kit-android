@@ -22,7 +22,7 @@ class DarkGravityWaveValidator(
 
         var actualTimeSpan = 0L
         var avgTargets = CompactBits.decode(previousBlock.bits)
-        var prevBlock = previousBlock.previousBlock(storage)
+        var prevBlock = storage.getBlock(hashHash = previousBlock.previousBlockHash)
 
         for (blockCount in 2..heightInterval) {
             val currentBlock = checkNotNull(prevBlock) {
@@ -34,7 +34,7 @@ class DarkGravityWaveValidator(
             avgTargets /= BigInteger.valueOf(blockCount + 1)
 
             if (blockCount < heightInterval) {
-                prevBlock = currentBlock.previousBlock(storage)
+                prevBlock = storage.getBlock(hashHash = currentBlock.previousBlockHash)
             } else {
                 actualTimeSpan = previousBlock.timestamp - currentBlock.timestamp
             }

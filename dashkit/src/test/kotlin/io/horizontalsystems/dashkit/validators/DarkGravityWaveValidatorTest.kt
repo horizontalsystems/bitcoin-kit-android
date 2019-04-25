@@ -54,7 +54,7 @@ class DarkGravityWaveValidatorTest : Spek({
                         on { height } doReturn candidateHeight - i - 1
                     }
 
-                    whenever(lastBlock.previousBlock(storage)).thenReturn(block)
+                    whenever(storage.getBlock(lastBlock.previousBlockHash)).thenReturn(block)
 
                     lastBlock = block
                 }
@@ -62,7 +62,8 @@ class DarkGravityWaveValidatorTest : Spek({
 
             it("checks bits") {
                 assertDoesNotThrow {
-                    validator.validate(candidate, candidate.previousBlock(storage)!!)
+                    val prevBlock = storage.getBlock(candidate.previousBlockHash)!!
+                    validator.validate(candidate, prevBlock)
                 }
             }
         }
@@ -77,7 +78,7 @@ class DarkGravityWaveValidatorTest : Spek({
             }
 
             beforeEach {
-                whenever(previousBlock.previousBlock(storage)).thenReturn(null)
+                whenever(storage.getBlock(previousBlock.previousBlockHash)).thenReturn(null)
             }
 
             it("throws an exception NoPreviousBlock") {

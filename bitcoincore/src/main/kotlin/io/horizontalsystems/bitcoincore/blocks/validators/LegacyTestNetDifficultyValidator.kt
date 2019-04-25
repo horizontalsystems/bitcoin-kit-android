@@ -22,9 +22,8 @@ class LegacyTestNetDifficultyValidator(
             var cursor = block
 
             while (cursor.height % heightInterval != 0L && cursor.bits == maxTargetBits) {
-                val prevBlock = checkNotNull(cursor.previousBlock(storage)) {
-                    throw BlockValidatorException.NoPreviousBlock()
-                }
+                val prevBlock = storage.getBlock(hashHash = cursor.previousBlockHash)
+                        ?: throw BlockValidatorException.NoPreviousBlock()
 
                 cursor = prevBlock
             }

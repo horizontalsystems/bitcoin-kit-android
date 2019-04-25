@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore.blocks.validators
 
-import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.BitcoinCore
@@ -80,8 +79,7 @@ object LegacyDifficultyAdjustmentValidatorTest : Spek({
 
             val check2 = Block(check2Head, prevBlock)
 
-            whenever(storage.getBlock(hashHash = any())).thenReturn(check1)
-            whenever(storage.getBlock(hashHash = check2.previousBlockHash)).thenReturn(prevBlock)
+            whenever(storage.getBlock(check2.height - 2016)).thenReturn(check1)
 
             Assertions.assertDoesNotThrow {
                 validator.validate(check2, prevBlock)

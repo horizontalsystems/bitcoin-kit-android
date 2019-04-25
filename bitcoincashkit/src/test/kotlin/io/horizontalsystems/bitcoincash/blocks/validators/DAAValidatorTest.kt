@@ -83,7 +83,7 @@ object DAAValidatorTest : Spek({
                 chunks.add(block)
             }
 
-            val prevBlock = candidate.previousBlock(storage)!!
+            val prevBlock = storage.getBlock(candidate.previousBlockHash)!!
 
             whenever(storage.getBlocksChunk(any(), any())).thenReturn(chunks.sortedBy { it.height })
 
