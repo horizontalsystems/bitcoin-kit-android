@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoincore.models
 
 import android.arch.persistence.room.Entity
-import android.arch.persistence.room.Ignore
 import android.arch.persistence.room.PrimaryKey
 
 @Entity
@@ -13,7 +12,6 @@ class SentTransaction() {
     var lastSendTime: Long = System.currentTimeMillis()
     var retriesCount: Int = 0
 
-    @Ignore
     constructor(hash: ByteArray) : this() {
         this.hash = hash
     }

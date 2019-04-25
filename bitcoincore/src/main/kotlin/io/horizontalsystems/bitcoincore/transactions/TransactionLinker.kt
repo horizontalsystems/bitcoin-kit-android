@@ -8,7 +8,7 @@ class TransactionLinker(private val storage: IStorage) {
     fun handle(transaction: FullTransaction) {
         for (input in transaction.inputs) {
             val previousOutput = storage.getPreviousOutput(input = input) ?: continue
-            if (previousOutput.publicKey(storage) == null) {
+            if (previousOutput.publicKeyPath == null) {
                 continue
             }
 

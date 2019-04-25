@@ -270,14 +270,6 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     // PublicKey
 
-    override fun hasInputs(ofOutput: TransactionOutput): Boolean {
-        return store.input.getInputsOfOutput(ofOutput.transactionHash, ofOutput.index).isNotEmpty()
-    }
-
-    override fun getPublicKey(byPath: String): PublicKey? {
-        return store.publicKey.getByPath(path = byPath)
-    }
-
     override fun getPublicKeyByHash(keyHash: ByteArray, isWPKH: Boolean): PublicKey? {
         return if (isWPKH) {
             store.publicKey.getByScriptHashWPKH(keyHash)

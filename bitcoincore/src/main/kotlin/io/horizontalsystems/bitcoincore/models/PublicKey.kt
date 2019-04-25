@@ -1,14 +1,20 @@
 package io.horizontalsystems.bitcoincore.models
 
-import android.arch.persistence.room.*
+import android.arch.persistence.room.ColumnInfo
+import android.arch.persistence.room.Entity
+import android.arch.persistence.room.Index
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.utils.Utils
 
-@Entity(indices = [Index("publicKey", "publicKeyHash", "scriptHashP2WPKH")])
-class PublicKey {
+@Entity(primaryKeys = ["path"],
+        indices = [
+            Index("publicKey"),
+            Index("publicKeyHash"),
+            Index("scriptHashP2WPKH")
+        ])
 
-    @PrimaryKey
+class PublicKey {
     var path: String = ""
 
     var account = 0
@@ -25,10 +31,8 @@ class PublicKey {
     }
 
     constructor()
-
-    @Ignore
-    constructor(account: Int, index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) {
-        this.path = "$account/$index/${if (external) 1 else 0}"
+    constructor(account: Int, index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) : this() {
+        this.path = "$account/${if (external) 1 else 0}/$index"
         this.account = account
         this.index = index
         this.external = external

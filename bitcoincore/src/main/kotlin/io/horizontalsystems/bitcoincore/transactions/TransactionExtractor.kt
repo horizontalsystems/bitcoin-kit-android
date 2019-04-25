@@ -97,9 +97,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             val scriptType = output.scriptType
 
             val pubkeyHash = when (scriptType) {
-                ScriptType.P2PK -> {
-                    output.publicKey(storage)?.publicKeyHash ?: Utils.sha256Hash160(outKeyHash)
-                }
+                ScriptType.P2PK -> Utils.sha256Hash160(outKeyHash)
                 else -> outKeyHash
             }
 

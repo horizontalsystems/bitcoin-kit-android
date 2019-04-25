@@ -14,9 +14,6 @@ interface TransactionInputDao {
     @Delete
     fun deleteAll(inputs: List<TransactionInput>)
 
-    @Query("select * from TransactionInput where transactionHash = :hash and previousOutputIndex = :index")
-    fun getInputsOfOutput(hash: ByteArray, index: Int): List<TransactionInput>
-
     @Query("select * from TransactionInput where transactionHash = :hash")
     fun getTransactionInputs(hash: ByteArray): List<TransactionInput>
 

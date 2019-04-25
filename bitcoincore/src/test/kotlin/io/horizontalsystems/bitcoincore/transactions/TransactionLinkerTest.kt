@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoincore.transactions
 
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
@@ -17,7 +16,6 @@ class TransactionLinkerTest : Spek({
     val fullTransaction = mock(FullTransaction::class.java)
     val transactionOutput = mock(TransactionOutput::class.java)
     val transactionInput = mock(TransactionInput::class.java)
-    val publicKey = mock(PublicKey::class.java)
     val storage = mock(IStorage::class.java)
 
 
@@ -37,7 +35,7 @@ class TransactionLinkerTest : Spek({
 
         context("which is mine") {
             beforeEach {
-                whenever(transactionOutput.publicKey(storage)).thenReturn(publicKey)
+                whenever(transactionOutput.publicKeyPath).thenReturn("0/1/1")
             }
 
             it("marks transaction as mine") {
@@ -52,7 +50,7 @@ class TransactionLinkerTest : Spek({
 
         context("which is not mine") {
             beforeEach {
-                whenever(transactionOutput.publicKey(storage)).thenReturn(null)
+                whenever(transactionOutput.publicKeyPath).thenReturn(null)
             }
 
             it("do not marks transaction as mine") {

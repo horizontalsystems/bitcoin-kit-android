@@ -84,10 +84,8 @@ interface IStorage {
 
     // PublicKey
 
-    fun getPublicKey(byPath: String): PublicKey?
     fun getPublicKeyByHash(keyHash: ByteArray, isWPKH: Boolean = false): PublicKey?
     fun getPublicKeys(): List<PublicKey>
-    fun hasInputs(ofOutput: TransactionOutput): Boolean
     fun savePublicKeys(keys: List<PublicKey>)
 
     //  SentTransaction
