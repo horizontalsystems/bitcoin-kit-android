@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.network.peer.task
 
-import io.horizontalsystems.bitcoincore.extensions.toHexString
+import io.horizontalsystems.bitcoincore.core.HashBytes
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
@@ -47,7 +47,7 @@ class GetMerkleBlocksTask(hashes: List<BlockHash>, private val merkleBlockHandle
     }
 
     override fun handleTransaction(transaction: FullTransaction): Boolean {
-        val block = pendingMerkleBlocks.find { it.associatedTransactionHexes.contains(transaction.header.hash.toHexString()) }
+        val block = pendingMerkleBlocks.find { it.associatedTransactionHashes[HashBytes(transaction.header.hash)] == true }
                 ?: return false
 
         resetTimer()

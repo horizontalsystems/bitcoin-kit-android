@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.blocks
 
-import io.horizontalsystems.bitcoincore.extensions.toHexString
+import io.horizontalsystems.bitcoincore.core.HashBytes
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.messages.MerkleBlockMessage
 import io.horizontalsystems.bitcoincore.utils.MerkleBranch
@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 class MerkleBlockExtractor(private val maxBlockSize: Int) {
 
     fun extract(message: MerkleBlockMessage): MerkleBlock {
-        val matchedHashes = mutableListOf<ByteArray>()
+        val matchedHashes = mutableMapOf<HashBytes, Boolean>()
         val merkleRoot = MerkleBranch().calculateMerkleRoot(message.txCount, message.hashes, message.flags, matchedHashes)
 
         message.apply {
@@ -29,7 +29,7 @@ class MerkleBlockExtractor(private val maxBlockSize: Int) {
             }
         }
 
-        return MerkleBlock(message.header, matchedHashes.map { it.toHexString() })
+        return MerkleBlock(message.header, matchedHashes)
     }
 }
 
