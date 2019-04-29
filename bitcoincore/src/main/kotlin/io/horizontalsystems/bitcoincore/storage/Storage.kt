@@ -1,13 +1,10 @@
 package io.horizontalsystems.bitcoincore.storage
 
 import android.arch.persistence.db.SimpleSQLiteQuery
-import io.horizontalsystems.bitcoincore.core.HashBytes
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.*
 
 open class Storage(protected open val store: KitDatabase) : IStorage {
-
-    private val outputWithPubKeysCache = mutableMapOf<HashBytes, MutableList<Int>>()
 
     // FeeRate
 
@@ -217,15 +214,6 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
             transaction.outputs.forEach {
                 store.output.insert(it)
-
-                if (it.publicKeyPath != null) {
-                    val out = outputWithPubKeysCache[HashBytes(it.transactionHash)]
-                    if (out == null) {
-                        outputWithPubKeysCache[HashBytes(it.transactionHash)] = mutableListOf(it.index)
-                    } else {
-                        outputWithPubKeysCache[HashBytes(it.transactionHash)]?.add(it.index)
-                    }
-                }
             }
         }
     }
@@ -276,10 +264,6 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
 
     // TransactionInput
 
-    override fun previousOutputWithPubKeyExists(input: TransactionInput): Boolean {
-        return outputWithPubKeysCache[HashBytes(input.previousOutputTxHash)]?.contains(input.previousOutputIndex.toInt()) == true
-    }
-
     override fun getTransactionInputs(transaction: Transaction): List<TransactionInput> {
         return store.input.getTransactionInputs(transaction.hash)
     }
@@ -317,9 +301,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
     }
 
     // Rest
-
     override fun clear() {
         store.clearAllTables()
     }
-
 }

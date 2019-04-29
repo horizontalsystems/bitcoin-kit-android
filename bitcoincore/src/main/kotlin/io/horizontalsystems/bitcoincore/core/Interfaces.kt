@@ -80,7 +80,6 @@ interface IStorage {
 
     // Transaction Input
 
-    fun previousOutputWithPubKeyExists(input: TransactionInput): Boolean
     fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
 
     // PublicKey

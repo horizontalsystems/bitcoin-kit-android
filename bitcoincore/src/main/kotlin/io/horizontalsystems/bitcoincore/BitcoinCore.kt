@@ -137,9 +137,9 @@ class BitcoinCoreBuilder {
 
         val addressManager = AddressManager.create(storage, hdWallet, addressConverter)
 
-        val transactionLinker = TransactionLinker(storage)
+        val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage)
-        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionLinker, addressManager, dataProvider)
+        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, addressManager, dataProvider)
 
         val kitStateProvider = KitStateProvider()
 
@@ -394,7 +394,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     override fun onBalanceUpdate(balance: Long) {
         listenerExecutor.execute {
-            listeners.forEach { it ->
+            listeners.forEach {
                 it.onBalanceUpdate(balance)
             }
 
