@@ -7,13 +7,10 @@ class TransactionLinker(private val storage: IStorage) {
 
     fun handle(transaction: FullTransaction) {
         for (input in transaction.inputs) {
-            val previousOutput = storage.getPreviousOutput(input = input) ?: continue
-            if (previousOutput.publicKeyPath == null) {
-                continue
+            if (storage.previousOutputWithPubKeyExists(input)) {
+                transaction.header.isMine = true
+                transaction.header.isOutgoing = true
             }
-
-            transaction.header.isMine = true
-            transaction.header.isOutgoing = true
         }
     }
 }
