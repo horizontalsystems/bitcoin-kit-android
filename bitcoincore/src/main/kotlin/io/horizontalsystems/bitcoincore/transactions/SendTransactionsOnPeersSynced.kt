@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import io.horizontalsystems.bitcoincore.blocks.IAllPeersSyncedListener
+import io.horizontalsystems.bitcoincore.blocks.IPeerSyncListener
 
-class SendTransactionsOnPeersSynced(var transactionSender: TransactionSender) : IAllPeersSyncedListener {
+class SendTransactionsOnPeersSynced(var transactionSender: TransactionSender) : IPeerSyncListener {
 
     override fun onAllPeersSynced() {
         transactionSender.sendPendingTransactions()

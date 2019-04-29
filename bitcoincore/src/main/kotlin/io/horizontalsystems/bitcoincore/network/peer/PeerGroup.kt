@@ -8,9 +8,6 @@ import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import java.net.InetAddress
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.Executors
 import java.util.logging.Logger
 
 class PeerGroup(
@@ -39,8 +36,6 @@ class PeerGroup(
     @Volatile
     private var running = false
     private val logger = Logger.getLogger("PeerGroup")
-    private val peersQueue = Executors.newSingleThreadExecutor()
-    private val taskQueue: BlockingQueue<PeerTask> = ArrayBlockingQueue(10)
     private val peerGroupListeners = mutableListOf<IPeerGroupListener>()
 
     fun addPeerGroupListener(listener: IPeerGroupListener) {
@@ -108,14 +103,7 @@ class PeerGroup(
     }
 
     override fun onReady(peer: Peer) {
-        peersQueue.execute {
-            peerGroupListeners.forEach { it.onPeerReady(peer) }
-
-//            todo check if peer is not syncPeer
-            taskQueue.poll()?.let {
-                peer.addTask(it)
-            }
-        }
+        peerGroupListeners.forEach { it.onPeerReady(peer) }
     }
 
     override fun onDisconnect(peer: Peer, e: Exception?) {
@@ -125,7 +113,7 @@ class PeerGroup(
             logger.info("Peer ${peer.host} disconnected.")
             hostManager.markSuccess(peer.host)
         } else {
-            logger.warning("Peer ${peer.host} disconnected with error ${e.message}.")
+            logger.warning("Peer ${peer.host} disconnected with error ${e.javaClass.simpleName}, ${e.message}.")
             hostManager.markFailed(peer.host)
         }
 
@@ -165,18 +153,6 @@ class PeerGroup(
         } else {
             logger.info("No peers found yet.")
         }
-    }
-
-    fun addTask(peerTask: PeerTask) {
-        // todo find better solution
-        val peer = peerManager.someReadyPeers().firstOrNull()
-
-        if (peer == null) {
-            taskQueue.add(peerTask)
-        } else {
-            peer.addTask(peerTask)
-        }
-
     }
 
     //
