@@ -61,7 +61,7 @@ class MasternodeListManager(
 
         val calculatedMerkleRoot = merkleBranch.calculateMerkleRoot(masternodeListDiffMessage.totalTransactions.toInt(), masternodeListDiffMessage.merkleHashes, masternodeListDiffMessage.merkleFlags, matchedHashes)
 
-        if (matchedHashes[cbTxHash] == true) {
+        if (matchedHashes[cbTxHash] != true) {
             throw ValidationError.WrongCoinbaseHash
         }
 
