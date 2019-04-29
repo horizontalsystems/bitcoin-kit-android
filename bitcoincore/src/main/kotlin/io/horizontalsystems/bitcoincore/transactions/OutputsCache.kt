@@ -23,7 +23,7 @@ class OutputsCache {
 
     fun hasOutputs(inputs: List<TransactionInput>): Boolean {
         for (input in inputs) {
-            val outputIndices = outputsCache[HashBytes(input.previousOutputTxHash)] ?: return false
+            val outputIndices = outputsCache[HashBytes(input.previousOutputTxHash)] ?: continue
             if (outputIndices.contains(input.previousOutputIndex.toInt())) {
                 return true
             }
