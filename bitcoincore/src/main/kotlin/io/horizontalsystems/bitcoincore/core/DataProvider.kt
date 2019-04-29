@@ -139,6 +139,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
 
         return TransactionInfo(
                 transactionHash = transaction.hash.toReversedHex(),
+                transactionIndex = transaction.order,
                 from = fromAddresses,
                 to = toAddresses,
                 amount = totalMineOutput - totalMineInput,
