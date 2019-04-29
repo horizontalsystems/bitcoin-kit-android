@@ -1,13 +1,13 @@
 package io.horizontalsystems.dashkit.managers
 
+import io.horizontalsystems.bitcoincore.core.HashBytes
+import io.horizontalsystems.bitcoincore.utils.HashUtils
+import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 import io.horizontalsystems.dashkit.IDashStorage
 import io.horizontalsystems.dashkit.masternodelist.MasternodeCbTxHasher
 import io.horizontalsystems.dashkit.masternodelist.MasternodeListMerkleRootCalculator
 import io.horizontalsystems.dashkit.messages.MasternodeListDiffMessage
 import io.horizontalsystems.dashkit.models.MasternodeListState
-import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.utils.HashUtils
-import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 
 class MasternodeListManager(
         private val storage: IDashStorage,
@@ -57,11 +57,11 @@ class MasternodeListManager(
         //06.
         val cbTxHash = masternodeCbTxHasher.hash(masternodeListDiffMessage.cbTx)
 
-        val matchedHashes = mutableListOf<ByteArray>()
+        val matchedHashes = mutableMapOf<HashBytes, Boolean>()
 
         val calculatedMerkleRoot = merkleBranch.calculateMerkleRoot(masternodeListDiffMessage.totalTransactions.toInt(), masternodeListDiffMessage.merkleHashes, masternodeListDiffMessage.merkleFlags, matchedHashes)
 
-        if (matchedHashes.none { it.contentEquals(cbTxHash) }) {
+        if (matchedHashes[cbTxHash] == true) {
             throw ValidationError.WrongCoinbaseHash
         }
 

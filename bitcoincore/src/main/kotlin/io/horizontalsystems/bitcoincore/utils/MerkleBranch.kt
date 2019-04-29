@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.utils
 
 import io.horizontalsystems.bitcoincore.blocks.InvalidMerkleBlockException
+import io.horizontalsystems.bitcoincore.core.HashBytes
 
 class MerkleBranch {
     private var txCount = 0
@@ -14,7 +15,7 @@ class MerkleBranch {
     private var hashesUsed: Int = 0
 
     @Throws(InvalidMerkleBlockException::class)
-    fun calculateMerkleRoot(txCount: Int, hashes: List<ByteArray>, flags: ByteArray, matchedHashes: MutableList<ByteArray>): ByteArray {
+    fun calculateMerkleRoot(txCount: Int, hashes: List<ByteArray>, flags: ByteArray, matchedHashes: MutableMap<HashBytes, Boolean>): ByteArray {
         this.txCount = txCount
         this.hashes = hashes
         this.flags = flags
@@ -41,7 +42,7 @@ class MerkleBranch {
     }
 
     @Throws(InvalidMerkleBlockException::class)
-    private fun parseBranch(height: Int, pos: Int, matchedHashes: MutableList<ByteArray>): ByteArray {
+    private fun parseBranch(height: Int, pos: Int, matchedHashes: MutableMap<HashBytes, Boolean>): ByteArray {
         if (bitsUsed >= flags.size * 8)
             throw InvalidMerkleBlockException("Merkle branch overflowed the bits array")
         val parentOfMatch = Utils.checkBitLE(flags, bitsUsed++)
@@ -53,7 +54,7 @@ class MerkleBranch {
             if (hashesUsed >= hashes.size)
                 throw InvalidMerkleBlockException("Merkle branch overflowed the hash array")
             if (height == 0 && parentOfMatch)
-                matchedHashes.add(hashes[hashesUsed])
+                matchedHashes[HashBytes(hashes[hashesUsed])] = true
             return hashes[hashesUsed++]
         }
         //

@@ -40,7 +40,7 @@ class MerkleBlockExtractorTest : Spek({
             val merkleBlock = merkleBlockExtractor.extract(message as MerkleBlockMessage)
 
             Assert.assertEquals(expectedBlockHash, merkleBlock.blockHash.toHexString())
-            Assert.assertArrayEquals(expectedTransactionHashes, merkleBlock.associatedTransactionHexes.toTypedArray())
+            Assert.assertArrayEquals(expectedTransactionHashes, merkleBlock.associatedTransactionHashes.keys.map { it.bytes.toHexString() }.toTypedArray())
         }
     }
 })

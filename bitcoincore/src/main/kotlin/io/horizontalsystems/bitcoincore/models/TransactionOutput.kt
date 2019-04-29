@@ -2,8 +2,6 @@ package io.horizontalsystems.bitcoincore.models
 
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
-import android.arch.persistence.room.Index
-import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 /**
@@ -16,8 +14,7 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
  *  Variable    OutputScript         Script
  */
 
-@Entity(indices = [Index("publicKeyPath", "transactionHash")],
-        primaryKeys = ["transactionHash", "index"],
+@Entity(primaryKeys = ["transactionHash", "index"],
         foreignKeys = [
             ForeignKey(
                     entity = PublicKey::class,
@@ -47,18 +44,6 @@ class TransactionOutput {
     var keyHash: ByteArray? = null
     var address: String? = null
 
-    fun transaction(storage: IStorage): Transaction? {
-        return storage.getTransaction(hash = transactionHash)
-    }
-
-    fun publicKey(storage: IStorage): PublicKey? {
-        publicKeyPath?.let { return storage.getPublicKey(byPath = it) } ?: return null
-    }
-
-    fun used(storage: IStorage): Boolean {
-        return storage.hasInputs(ofOutput = this)
-    }
-
     constructor()
     constructor(value: Long, index: Int, script: ByteArray, type: Int = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
         this.value = value
@@ -69,5 +54,4 @@ class TransactionOutput {
         this.keyHash = keyHash
         this.publicKeyPath = publicKey?.path
     }
-
 }

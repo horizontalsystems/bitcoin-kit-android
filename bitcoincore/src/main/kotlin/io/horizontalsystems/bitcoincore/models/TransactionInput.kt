@@ -2,9 +2,7 @@ package io.horizontalsystems.bitcoincore.models
 
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
-import android.arch.persistence.room.Index
 import android.arch.persistence.room.TypeConverters
-import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.storage.WitnessConverter
 
 /**
@@ -19,8 +17,7 @@ import io.horizontalsystems.bitcoincore.storage.WitnessConverter
  *  4 bytes     InputSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
  */
 
-@Entity(indices = [Index("transactionHash")],
-        primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
+@Entity(primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
         foreignKeys = [ForeignKey(
                 entity = Transaction::class,
                 parentColumns = ["hash"],
@@ -42,9 +39,4 @@ class TransactionInput(
 
     @TypeConverters(WitnessConverter::class)
     var witness: List<ByteArray> = listOf()
-
-    fun transaction(storage: IStorage): Transaction? {
-        return storage.getTransaction(transactionHash)
-    }
-
 }

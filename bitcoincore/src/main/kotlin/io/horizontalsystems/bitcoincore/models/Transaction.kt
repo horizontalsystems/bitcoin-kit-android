@@ -2,9 +2,6 @@ package io.horizontalsystems.bitcoincore.models
 
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
-import android.arch.persistence.room.Ignore
-import android.arch.persistence.room.Index
-import io.horizontalsystems.bitcoincore.core.IStorage
 import java.util.*
 
 /**
@@ -20,8 +17,7 @@ import java.util.*
  *  4 bytes     LockTime        Transaction lock time
  */
 
-@Entity(indices = [Index("blockHash")],
-        primaryKeys = ["hash"],
+@Entity(primaryKeys = ["hash"],
         foreignKeys = [ForeignKey(
                 entity = Block::class,
                 parentColumns = ["headerHash"],
@@ -45,18 +41,8 @@ class Transaction {
     var segwit = false
     var status: Int = Status.RELAYED
 
-    fun block(storage: IStorage): Block? {
-        blockHash?.let {
-            return storage.getBlock(hashHash = it)
-        }
-
-        return null
-    }
-
     constructor()
-
-    @Ignore
-    constructor(version: Int = 0, lockTime: Long = 0) {
+    constructor(version: Int = 0, lockTime: Long = 0) : this() {
         this.version = version
         this.lockTime = lockTime
         this.timestamp = Date().time / 1000

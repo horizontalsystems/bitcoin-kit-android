@@ -21,7 +21,4 @@ interface PublicKeyDao {
     @Query("SELECT * from PublicKey where publicKey = :keyHash or publicKeyHash =:keyHash limit 1")
     fun getByKeyOrKeyHash(keyHash: ByteArray): PublicKey?
 
-    @Query("select * from PublicKey where path = :path limit 1")
-    fun getByPath(path: String): PublicKey?
-
 }

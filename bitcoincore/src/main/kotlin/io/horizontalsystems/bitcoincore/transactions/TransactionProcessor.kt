@@ -15,7 +15,7 @@ import java.util.*
 class TransactionProcessor(
         private val storage: IStorage,
         private val extractor: TransactionExtractor,
-        private val linker: TransactionLinker,
+        private val outputsCache: OutputsCache,
         private val addressManager: AddressManager,
         private val dataListener: IBlockchainDataListener) {
 
@@ -75,9 +75,14 @@ class TransactionProcessor(
 
     private fun process(transaction: FullTransaction) {
         extractor.extractOutputs(transaction)
-        linker.handle(transaction)
+
+        if (outputsCache.hasOutputs(transaction.inputs)) {
+            transaction.header.isMine = true
+            transaction.header.isOutgoing = true
+        }
 
         if (transaction.header.isMine) {
+            outputsCache.add(transaction.outputs)
             extractor.extractAddress(transaction)
             extractor.extractInputs(transaction)
         }

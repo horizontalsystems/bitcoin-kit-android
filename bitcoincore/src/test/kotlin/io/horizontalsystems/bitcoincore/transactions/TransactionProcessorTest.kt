@@ -21,7 +21,7 @@ import org.mockito.Mockito.mock
 class TransactionProcessorTest {
 
     private val storage = mock(IStorage::class.java)
-    private val linker = mock(TransactionLinker::class.java)
+    private val outputsCache = mock(OutputsCache::class.java)
     private val extractor = mock(TransactionExtractor::class.java)
     private val addressManager = mock(AddressManager::class.java)
     private val blockchainDataListener = mock(IBlockchainDataListener::class.java)
@@ -33,7 +33,7 @@ class TransactionProcessorTest {
 
     @Before
     fun setup() {
-        processor = TransactionProcessor(storage, extractor, linker, addressManager, blockchainDataListener)
+        processor = TransactionProcessor(storage, extractor, outputsCache, addressManager, blockchainDataListener)
     }
 
     @Test
@@ -41,7 +41,7 @@ class TransactionProcessorTest {
         processor.processOutgoing(fullTransaction)
 
         Mockito.verify(extractor).extractOutputs(fullTransaction)
-        Mockito.verify(linker).handle(fullTransaction)
+        Mockito.verify(outputsCache).hasOutputs(fullTransaction.inputs)
         Mockito.verify(blockchainDataListener).onTransactionsUpdate(com.nhaarman.mockito_kotlin.check {
             Assert.assertArrayEquals(transaction.hash, it.firstOrNull()?.hash)
         }, eq(listOf()), anyObject())
@@ -56,7 +56,7 @@ class TransactionProcessorTest {
         Mockito.verify(extractor).extractOutputs(fullTransaction)
         Mockito.verify(extractor).extractInputs(fullTransaction)
         Mockito.verify(extractor).extractAddress(fullTransaction)
-        Mockito.verify(linker).handle(fullTransaction)
+        Mockito.verify(outputsCache).add(fullTransaction.outputs)
     }
 
     @Test

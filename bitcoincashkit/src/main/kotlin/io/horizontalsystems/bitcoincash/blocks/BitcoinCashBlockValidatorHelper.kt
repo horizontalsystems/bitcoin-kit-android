@@ -4,7 +4,7 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
 
-class BitcoinCashBlockValidatorHelper(storage: IStorage) : BlockValidatorHelper(storage) {
+class BitcoinCashBlockValidatorHelper(private val store: IStorage) : BlockValidatorHelper(store) {
 
     fun medianTimePast(block: Block): Long {
         val median = mutableListOf<Long>()
@@ -12,7 +12,7 @@ class BitcoinCashBlockValidatorHelper(storage: IStorage) : BlockValidatorHelper(
 
         for (i in 0 until 11) {
             median.add(currentBlock.timestamp)
-            currentBlock = currentBlock.previousBlock(storage) ?: break
+            currentBlock = store.getBlock(currentBlock.previousBlockHash) ?: break
         }
 
         if (median.isEmpty()) {
