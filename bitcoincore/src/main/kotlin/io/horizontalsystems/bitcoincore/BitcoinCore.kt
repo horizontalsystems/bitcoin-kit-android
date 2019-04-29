@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoincore
 
 import android.content.Context
-import io.horizontalsystems.bitcoincore.blocks.BlockSyncer
-import io.horizontalsystems.bitcoincore.blocks.Blockchain
-import io.horizontalsystems.bitcoincore.blocks.BloomFilterLoader
-import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
+import io.horizontalsystems.bitcoincore.blocks.*
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
@@ -224,10 +221,13 @@ class BitcoinCoreBuilder {
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 
         val initialBlockDownload = InitialBlockDownload(BlockSyncer(storage, Blockchain(storage, bitcoinCore.blockValidatorChain, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network), peerManager, kitStateProvider)
+        // todo: now this part cannot be moved to another place since bitcoinCore requires initialBlockDownload to be set. find solution to do so
+        bitcoinCore.initialBlockDownload = initialBlockDownload
         bitcoinCore.addPeerTaskHandler(initialBlockDownload)
         bitcoinCore.addInventoryItemsHandler(initialBlockDownload)
         bitcoinCore.addPeerGroupListener(initialBlockDownload)
-        initialBlockDownload.peersSyncedListener = SendTransactionsOnPeersSynced(transactionSender)
+
+        bitcoinCore.addPeerSyncListener(SendTransactionsOnPeersSynced(transactionSender))
 
         val mempoolTransactions = MempoolTransactions(transactionSyncer)
         bitcoinCore.addPeerTaskHandler(mempoolTransactions)
@@ -255,10 +255,16 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     lateinit var transactionSyncer: TransactionSyncer
     lateinit var networkMessageParser: NetworkMessageParser
     lateinit var networkMessageSerializer: NetworkMessageSerializer
+    lateinit var initialBlockDownload: InitialBlockDownload
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
     val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
+
+    fun addPeerSyncListener(peerSyncListener: IPeerSyncListener): BitcoinCore {
+        initialBlockDownload.addPeerSyncListener(peerSyncListener)
+        return this
+    }
 
     fun addMessageParser(messageParser: IMessageParser): BitcoinCore {
         networkMessageParser.add(messageParser)

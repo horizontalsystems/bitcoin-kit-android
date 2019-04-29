@@ -79,19 +79,6 @@ class PeerManagerTest {
     }
 
     @Test
-    fun nonSyncedPeer() {
-        peerManager.add(peer1)
-        peerManager.add(peer2)
-        peerManager.add(peer3)
-
-        assertEquals(null, peerManager.nonSyncedPeer())
-
-        whenever(peer1.synced).thenReturn(false)
-        whenever(peer1.connected).thenReturn(true)
-        assertEquals(peer1, peerManager.nonSyncedPeer())
-    }
-
-    @Test
     fun isHalfSynced_moreThanHalf() {
         addPeer(host = "0.0.0.1", connected = true, synced = true)
         addPeer(host = "0.0.0.2", connected = true, synced = true)

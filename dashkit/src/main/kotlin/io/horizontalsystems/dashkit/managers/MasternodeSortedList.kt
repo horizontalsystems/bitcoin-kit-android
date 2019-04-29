@@ -19,7 +19,9 @@ class MasternodeSortedList {
                 masternode.proRegTxHash.contentEquals(hash)
             }
 
-            masternodeSet.removeAt(index)
+            if (index != -1) {
+                masternodeSet.removeAt(index)
+            }
         }
     }
 
