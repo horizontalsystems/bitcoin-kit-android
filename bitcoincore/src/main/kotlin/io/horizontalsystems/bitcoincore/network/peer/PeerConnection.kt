@@ -90,7 +90,7 @@ class PeerConnection(
             listener.disconnected()
         } catch (e: Exception) {
             logger.warning("Peer connection exception: ${e.message}")
-            listener.disconnected()
+            listener.disconnected(e)
         } finally {
             isRunning = false
         }
