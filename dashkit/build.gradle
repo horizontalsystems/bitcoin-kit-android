@@ -46,7 +46,7 @@ dependencies {
     implementation "android.arch.persistence.room:rxjava2:1.1.1"
     kapt "android.arch.persistence.room:compiler:1.1.1"
 
-    api project(':bitcoincore')
+    implementation project(':bitcoincore')
 
     // HDWallet Kit
     implementation 'com.github.horizontalsystems:hd-wallet-kit-android:a3666d8'
