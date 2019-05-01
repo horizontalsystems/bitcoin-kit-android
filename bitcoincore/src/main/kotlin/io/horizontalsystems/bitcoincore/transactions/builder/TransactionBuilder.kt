@@ -28,7 +28,7 @@ class TransactionBuilder {
     constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
         this.addressConverter = addressConverter
         this.addressManager = addressManager
-        this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator())
+        this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator(), unspentOutputProvider)
         this.unspentOutputProvider = unspentOutputProvider
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
@@ -59,8 +59,7 @@ class TransactionBuilder {
                     feeRate = feeRate,
                     outputType = ScriptType.P2PKH,
                     changeType = ScriptType.P2PKH,
-                    senderPay = senderPay,
-                    unspentOutputs = unspentOutputProvider.allUnspentOutputs()
+                    senderPay = senderPay
             ).fee
         }
 
@@ -84,8 +83,7 @@ class TransactionBuilder {
                 feeRate = feeRate,
                 outputType = address.scriptType,
                 changeType = changeScriptType,
-                senderPay = senderPay,
-                unspentOutputs = unspentOutputProvider.allUnspentOutputs()
+                senderPay = senderPay
         )
 
         if (!senderPay && selectedOutputsInfo.fee > value) {

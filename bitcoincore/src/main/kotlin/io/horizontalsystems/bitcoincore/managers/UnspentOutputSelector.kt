@@ -4,9 +4,10 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType.P2PKH
 
-class UnspentOutputSelector(private val calculator: TransactionSizeCalculator) {
+class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, val unspentOutputProvider: UnspentOutputProvider) {
 
-    fun select(value: Long, feeRate: Int, outputType: Int = P2PKH, changeType: Int = P2PKH, senderPay: Boolean, unspentOutputs: List<UnspentOutput>): SelectedUnspentOutputInfo {
+    fun select(value: Long, feeRate: Int, outputType: Int = P2PKH, changeType: Int = P2PKH, senderPay: Boolean): SelectedUnspentOutputInfo {
+        val unspentOutputs = unspentOutputProvider.allUnspentOutputs()
 
         if (unspentOutputs.isEmpty()) {
             throw Error.EmptyUnspentOutputs
