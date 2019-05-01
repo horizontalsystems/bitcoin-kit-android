@@ -3,7 +3,7 @@ package io.horizontalsystems.dashkit.storage
 import android.arch.persistence.room.*
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.models.Transaction
-import io.horizontalsystems.bitcoincore.storage.KitDatabase
+import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.dashkit.models.Masternode
 import io.horizontalsystems.dashkit.models.MasternodeListState
 
@@ -21,7 +21,7 @@ import io.horizontalsystems.dashkit.models.MasternodeListState
     Masternode::class,
     MasternodeListState::class
 ], version = 5, exportSchema = false)
-abstract class DashKitDatabase : KitDatabase() {
+abstract class DashKitDatabase : CoreDatabase() {
     abstract val masternodeDao: MasternodeDao
     abstract val masternodeListStateDao: MasternodeListStateDao
 }

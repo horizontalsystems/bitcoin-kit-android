@@ -17,7 +17,7 @@ import io.horizontalsystems.bitcoincore.models.*
     PublicKey::class
 ])
 
-abstract class KitDatabase : RoomDatabase() {
+abstract class CoreDatabase : RoomDatabase() {
 
     abstract val feeRate: FeeRateDao
     abstract val blockchainState: BlockchainStateDao

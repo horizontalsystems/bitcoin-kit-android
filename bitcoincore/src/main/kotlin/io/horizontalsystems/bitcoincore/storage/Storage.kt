@@ -4,7 +4,7 @@ import android.arch.persistence.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.*
 
-open class Storage(protected open val store: KitDatabase) : IStorage {
+open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     // FeeRate
 

@@ -11,7 +11,7 @@ import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.storage.KitDatabase
+import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
@@ -40,7 +40,7 @@ class BitcoinCashKit : AbstractKit {
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
         val databaseName = "${this.javaClass.simpleName}-${networkType.name}-$walletId"
 
-        val database = Room.databaseBuilder(context, KitDatabase::class.java, databaseName)
+        val database = Room.databaseBuilder(context, CoreDatabase::class.java, databaseName)
                 .fallbackToDestructiveMigration()
                 .allowMainThreadQueries()
                 .addMigrations()
