@@ -43,7 +43,6 @@ class BitcoinCashKit : AbstractKit {
         val database = Room.databaseBuilder(context, CoreDatabase::class.java, databaseName)
                 .fallbackToDestructiveMigration()
                 .allowMainThreadQueries()
-                .addMigrations()
                 .build()
 
         val storage = Storage(database)

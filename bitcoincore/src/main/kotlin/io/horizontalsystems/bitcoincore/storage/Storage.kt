@@ -190,7 +190,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         query += " ORDER BY timestamp DESC, `order` DESC"
 
         if (limit != null) {
-            query += ", LIMIT $limit"
+            query += " LIMIT $limit"
         }
 
         return getFullTransactionInfo(store.transaction.getTransactionWithBlockBySql(SimpleSQLiteQuery(query)))
