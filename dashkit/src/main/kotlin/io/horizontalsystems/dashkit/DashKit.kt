@@ -1,12 +1,14 @@
 package io.horizontalsystems.dashkit
 
-import android.arch.persistence.room.Room
 import android.content.Context
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.CoreDatabase
+import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.dashkit.managers.MasternodeListManager
@@ -46,22 +48,16 @@ class DashKit : AbstractKit {
             value?.let { bitcoinCore.addListener(it) }
         }
 
-    private val storage: DashStorage
-    private var masterNodeSyncer: MasternodeListSyncer? = null
-
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val databaseName = "${this.javaClass.simpleName}-${networkType.name}-$walletId"
+        val databaseName = "${javaClass.simpleName}-${networkType.name}-$walletId"
+        val coreDatabase = CoreDatabase.getInstance(context, "$databaseName-core")
+        val dashDatabase = DashKitDatabase.getInstance(context, databaseName)
 
-        val database = Room.databaseBuilder(context, DashKitDatabase::class.java, databaseName)
-                .fallbackToDestructiveMigration()
-                .allowMainThreadQueries()
-                .addMigrations()
-                .build()
-
-        storage = DashStorage(database)
+        val coreStorage = Storage(coreDatabase)
+        val dashStorage = DashStorage(dashDatabase, coreStorage)
 
         network = when (networkType) {
             NetworkType.MainNet -> MainNetDash()
@@ -82,17 +78,18 @@ class DashKit : AbstractKit {
                 .setPeerSize(peerSize)
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
-                .setStorage(storage)
+                .setStorage(coreStorage)
                 .setBlockHeaderHasher(X11Hasher())
                 .build()
 
-        // extending bitcoinCore
+        //  extending bitcoinCore
+        val blockHelper = BlockValidatorHelper(coreStorage)
 
         if (network is MainNetDash) {
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
         } else {
             bitcoinCore.addBlockValidator(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(storage, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
         }
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
@@ -106,13 +103,12 @@ class DashKit : AbstractKit {
         val masternodeListMerkleRootCalculator = MasternodeListMerkleRootCalculator(MasternodeSerializer(), merkleRootHasher, merkleRootCreator)
         val masternodeCbTxHasher = MasternodeCbTxHasher(CoinbaseTransactionSerializer(), merkleRootHasher)
 
-        val masternodeListManager = MasternodeListManager(storage, masternodeListMerkleRootCalculator, masternodeCbTxHasher, MerkleBranch(), MasternodeSortedList())
-        val masterNodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialBlockDownload)
-        bitcoinCore.addPeerTaskHandler(masterNodeSyncer)
-        bitcoinCore.addPeerSyncListener(masterNodeSyncer)
-        bitcoinCore.addPeerGroupListener(masterNodeSyncer)
+        val masternodeListManager = MasternodeListManager(dashStorage, masternodeListMerkleRootCalculator, masternodeCbTxHasher, MerkleBranch(), MasternodeSortedList())
+        val masternodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialBlockDownload)
 
-        this.masterNodeSyncer = masterNodeSyncer
+        bitcoinCore.addPeerTaskHandler(masternodeSyncer)
+        bitcoinCore.addPeerSyncListener(masternodeSyncer)
+        bitcoinCore.addPeerGroupListener(masternodeSyncer)
 
         val instantSend = InstantSend(bitcoinCore.transactionSyncer)
         bitcoinCore.addInventoryItemsHandler(instantSend)

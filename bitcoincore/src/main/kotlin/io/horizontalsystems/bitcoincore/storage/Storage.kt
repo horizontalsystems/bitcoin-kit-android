@@ -4,7 +4,7 @@ import android.arch.persistence.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.*
 
-open class Storage(protected open val store: KitDatabase) : IStorage {
+open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     // FeeRate
 
@@ -190,7 +190,7 @@ open class Storage(protected open val store: KitDatabase) : IStorage {
         query += " ORDER BY timestamp DESC, `order` DESC"
 
         if (limit != null) {
-            query += ", LIMIT $limit"
+            query += " LIMIT $limit"
         }
 
         return getFullTransactionInfo(store.transaction.getTransactionWithBlockBySql(SimpleSQLiteQuery(query)))
