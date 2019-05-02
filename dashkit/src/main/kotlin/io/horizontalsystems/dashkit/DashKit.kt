@@ -48,8 +48,6 @@ class DashKit : AbstractKit {
             value?.let { bitcoinCore.addListener(it) }
         }
 
-    private var masterNodeSyncer: MasternodeListSyncer? = null
-
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
@@ -111,8 +109,6 @@ class DashKit : AbstractKit {
         bitcoinCore.addPeerTaskHandler(masternodeSyncer)
         bitcoinCore.addPeerSyncListener(masternodeSyncer)
         bitcoinCore.addPeerGroupListener(masternodeSyncer)
-
-        masterNodeSyncer = masternodeSyncer
 
         val instantSend = InstantSend(bitcoinCore.transactionSyncer)
         bitcoinCore.addInventoryItemsHandler(instantSend)
