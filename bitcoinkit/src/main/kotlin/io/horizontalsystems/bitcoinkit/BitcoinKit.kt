@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoinkit
 
-import android.arch.persistence.room.Room
 import android.content.Context
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
@@ -39,13 +38,7 @@ class BitcoinKit : AbstractKit {
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val databaseName = "${this.javaClass.simpleName}-${networkType.name}-$walletId"
-
-        val database = Room.databaseBuilder(context, CoreDatabase::class.java, databaseName)
-                .fallbackToDestructiveMigration()
-                .allowMainThreadQueries()
-                .build()
-
+        val database = CoreDatabase.getInstance(context, "${javaClass.simpleName}-${networkType.name}-$walletId")
         val storage = Storage(database)
 
         network = when (networkType) {

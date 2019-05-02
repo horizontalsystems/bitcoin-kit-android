@@ -1,6 +1,7 @@
 package io.horizontalsystems.dashkit.storage
 
 import android.arch.persistence.room.*
+import android.content.Context
 import io.horizontalsystems.dashkit.models.Masternode
 import io.horizontalsystems.dashkit.models.MasternodeListState
 
@@ -12,6 +13,24 @@ import io.horizontalsystems.dashkit.models.MasternodeListState
 abstract class DashKitDatabase : RoomDatabase() {
     abstract val masternodeDao: MasternodeDao
     abstract val masternodeListStateDao: MasternodeListStateDao
+
+    companion object {
+
+        @Volatile
+        private var instance: DashKitDatabase? = null
+
+        @Synchronized
+        fun getInstance(context: Context, dbName: String): DashKitDatabase {
+            return instance ?: buildDatabase(context, dbName).also { instance = it }
+        }
+
+        private fun buildDatabase(context: Context, dbName: String): DashKitDatabase {
+            return Room.databaseBuilder(context, DashKitDatabase::class.java, dbName)
+                    .fallbackToDestructiveMigration()
+                    .allowMainThreadQueries()
+                    .build()
+        }
+    }
 }
 
 @Dao

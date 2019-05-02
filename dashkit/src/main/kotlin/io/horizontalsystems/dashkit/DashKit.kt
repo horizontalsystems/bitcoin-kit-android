@@ -1,6 +1,5 @@
 package io.horizontalsystems.dashkit
 
-import android.arch.persistence.room.Room
 import android.content.Context
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
@@ -55,17 +54,9 @@ class DashKit : AbstractKit {
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val databaseName = "${this.javaClass.simpleName}-${networkType.name}-$walletId"
-
-        val coreDatabase = Room.databaseBuilder(context, CoreDatabase::class.java, "$databaseName-core")
-                .fallbackToDestructiveMigration()
-                .allowMainThreadQueries()
-                .build()
-
-        val dashDatabase = Room.databaseBuilder(context, DashKitDatabase::class.java, databaseName)
-                .fallbackToDestructiveMigration()
-                .allowMainThreadQueries()
-                .build()
+        val databaseName = "${javaClass.simpleName}-${networkType.name}-$walletId"
+        val coreDatabase = CoreDatabase.getInstance(context, "$databaseName-core")
+        val dashDatabase = DashKitDatabase.getInstance(context, databaseName)
 
         val coreStorage = Storage(coreDatabase)
         val dashStorage = DashStorage(dashDatabase, coreStorage)
