@@ -2,14 +2,14 @@ package io.horizontalsystems.dashkit.validators
 
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
-import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
 import java.math.BigInteger
 import kotlin.math.min
 
 class DarkGravityWaveValidator(
-        private val storage: IStorage,
+        private val blockHelper: BlockValidatorHelper,
         private val heightInterval: Long,
         private val targetTimespan: Long,
         private val maxTargetBits: Long,
@@ -22,7 +22,7 @@ class DarkGravityWaveValidator(
 
         var actualTimeSpan = 0L
         var avgTargets = CompactBits.decode(previousBlock.bits)
-        var prevBlock = storage.getBlock(hashHash = previousBlock.previousBlockHash)
+        var prevBlock = blockHelper.getPrevious(previousBlock, 1)
 
         for (blockCount in 2..heightInterval) {
             val currentBlock = checkNotNull(prevBlock) {
@@ -34,7 +34,7 @@ class DarkGravityWaveValidator(
             avgTargets /= BigInteger.valueOf(blockCount + 1)
 
             if (blockCount < heightInterval) {
-                prevBlock = storage.getBlock(hashHash = currentBlock.previousBlockHash)
+                prevBlock = blockHelper.getPrevious(currentBlock, 1)
             } else {
                 actualTimeSpan = previousBlock.timestamp - currentBlock.timestamp
             }

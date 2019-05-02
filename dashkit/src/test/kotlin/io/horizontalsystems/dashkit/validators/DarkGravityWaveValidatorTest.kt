@@ -4,7 +4,7 @@ import com.nhaarman.mockito_kotlin.doReturn
 import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -24,12 +24,12 @@ class DarkGravityWaveValidatorTest : Spek({
             1408729647, 1408729678, 1408730179, 1408730862, 1408730914, 1408731242, 1408731256,
             1408732229, 1408732257, 1408732489) // 123433 - 123456
 
-    val storage = mock<IStorage>()
+    val blockHelper = mock<BlockValidatorHelper>()
     val candidateHeight = 25
     val heightInterval = 24
 
     val validator by memoized {
-        DarkGravityWaveValidator(storage, 24, 3600, 0x1e0fffff, 0)
+        DarkGravityWaveValidator(blockHelper, 24, 3600, 0x1e0fffff, 0)
     }
 
     describe("#validate") {
@@ -54,7 +54,7 @@ class DarkGravityWaveValidatorTest : Spek({
                         on { height } doReturn candidateHeight - i - 1
                     }
 
-                    whenever(storage.getBlock(lastBlock.previousBlockHash)).thenReturn(block)
+                    whenever(blockHelper.getPrevious(lastBlock, 1)).thenReturn(block)
 
                     lastBlock = block
                 }
@@ -62,7 +62,7 @@ class DarkGravityWaveValidatorTest : Spek({
 
             it("checks bits") {
                 assertDoesNotThrow {
-                    val prevBlock = storage.getBlock(candidate.previousBlockHash)!!
+                    val prevBlock = blockHelper.getPrevious(candidate, 1)!!
                     validator.validate(candidate, prevBlock)
                 }
             }
@@ -78,7 +78,7 @@ class DarkGravityWaveValidatorTest : Spek({
             }
 
             beforeEach {
-                whenever(storage.getBlock(previousBlock.previousBlockHash)).thenReturn(null)
+                whenever(blockHelper.getPrevious(previousBlock, 1)).thenReturn(null)
             }
 
             it("throws an exception NoPreviousBlock") {

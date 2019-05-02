@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -92,13 +93,14 @@ class DashKit : AbstractKit {
                 .setBlockHeaderHasher(X11Hasher())
                 .build()
 
-        // extending bitcoinCore
+        //  extending bitcoinCore
+        val blockHelper = BlockValidatorHelper(coreStorage)
 
         if (network is MainNetDash) {
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(coreStorage, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
         } else {
             bitcoinCore.addBlockValidator(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(coreStorage, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
         }
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
@@ -113,12 +115,13 @@ class DashKit : AbstractKit {
         val masternodeCbTxHasher = MasternodeCbTxHasher(CoinbaseTransactionSerializer(), merkleRootHasher)
 
         val masternodeListManager = MasternodeListManager(dashStorage, masternodeListMerkleRootCalculator, masternodeCbTxHasher, MerkleBranch(), MasternodeSortedList())
-        val masterNodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialBlockDownload)
-        bitcoinCore.addPeerTaskHandler(masterNodeSyncer)
-        bitcoinCore.addPeerSyncListener(masterNodeSyncer)
-        bitcoinCore.addPeerGroupListener(masterNodeSyncer)
+        val masternodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialBlockDownload)
 
-        this.masterNodeSyncer = masterNodeSyncer
+        bitcoinCore.addPeerTaskHandler(masternodeSyncer)
+        bitcoinCore.addPeerSyncListener(masternodeSyncer)
+        bitcoinCore.addPeerGroupListener(masternodeSyncer)
+
+        masterNodeSyncer = masternodeSyncer
 
         val instantSend = InstantSend(bitcoinCore.transactionSyncer)
         bitcoinCore.addInventoryItemsHandler(instantSend)
