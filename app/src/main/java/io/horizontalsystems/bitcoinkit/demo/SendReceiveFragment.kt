@@ -9,7 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
 import io.horizontalsystems.bitcoincore.models.FeePriority
 
 class SendReceiveFragment : Fragment() {
@@ -99,8 +99,8 @@ class SendReceiveFragment : Fragment() {
             message = "Transaction sent"
         } catch (e: Exception) {
             message = when (e) {
-                is UnspentOutputSelector.Error.InsufficientUnspentOutputs,
-                is UnspentOutputSelector.Error.EmptyUnspentOutputs -> "Insufficient balance"
+                is UnspentOutputSelectorError.InsufficientUnspentOutputs,
+                is UnspentOutputSelectorError.EmptyUnspentOutputs -> "Insufficient balance"
                 else -> e.message ?: "Failed to send transaction"
             }
         }

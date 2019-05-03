@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
 import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -10,7 +11,6 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
-import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
@@ -19,17 +19,15 @@ import io.horizontalsystems.hdwalletkit.HDWallet
 
 class TransactionBuilder {
     private val addressConverter: IAddressConverter
-    private val unspentOutputsSelector: UnspentOutputSelector
-    private val unspentOutputProvider: UnspentOutputProvider
+    private val unspentOutputsSelector: IUnspentOutputSelector
     private val scriptBuilder: ScriptBuilder
     private val inputSigner: InputSigner
     private val addressManager: AddressManager
 
-    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputProvider: UnspentOutputProvider) {
+    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputSelector: IUnspentOutputSelector) {
         this.addressConverter = addressConverter
         this.addressManager = addressManager
-        this.unspentOutputsSelector = UnspentOutputSelector(TransactionSizeCalculator(), unspentOutputProvider)
-        this.unspentOutputProvider = unspentOutputProvider
+        this.unspentOutputsSelector = unspentOutputSelector
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
     }
@@ -38,7 +36,6 @@ class TransactionBuilder {
         this.addressManager = addressManager
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = unspentOutputsSelector
-        this.unspentOutputProvider = unspentOutputProvider
         this.scriptBuilder = scriptBuilder
         this.inputSigner = inputSigner
     }

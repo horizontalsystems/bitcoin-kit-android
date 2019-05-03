@@ -63,7 +63,7 @@ class TransactionBuilderTest {
 
         unspentOutputs = SelectedUnspentOutputInfo(listOf(unspentOutput), previousTransaction.outputs[0].value, fee, false)
 
-        whenever(unspentOutputProvider.allUnspentOutputs()).thenReturn(unspentOutputs.outputs)
+        whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(unspentOutputs.outputs)
         whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
         whenever(transactionSizeCalculator.outputSize(any())).thenReturn(34)
 

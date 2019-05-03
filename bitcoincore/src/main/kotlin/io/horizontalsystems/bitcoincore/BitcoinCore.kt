@@ -10,7 +10,6 @@ import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BlockInfo
-import io.horizontalsystems.bitcoincore.models.FeePriority
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
@@ -157,7 +156,8 @@ class BitcoinCoreBuilder {
         transactionSender.peerGroup = peerGroup
         transactionSender.transactionSyncer = transactionSyncer
 
-        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputProvider)
+        val unspentOutputSelector = UnspentOutputSelectorChain()
+        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputSelector)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
 
         val feeRateSyncer = FeeRateSyncer(storage, apiFeeRate)
@@ -187,6 +187,7 @@ class BitcoinCoreBuilder {
         bitcoinCore.transactionSyncer = transactionSyncer
         bitcoinCore.networkMessageParser = networkMessageParser
         bitcoinCore.networkMessageSerializer = networkMessageSerializer
+        bitcoinCore.unspentOutputSelector = unspentOutputSelector
 
         peerGroup.peerTaskHandler = bitcoinCore.peerTaskHandlerChain
         peerGroup.inventoryItemsHandler = bitcoinCore.inventoryItemsHandlerChain
@@ -234,6 +235,10 @@ class BitcoinCoreBuilder {
         bitcoinCore.addInventoryItemsHandler(mempoolTransactions)
         bitcoinCore.addPeerGroupListener(mempoolTransactions)
 
+        val transactionSizeCalculator = TransactionSizeCalculator()
+        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(transactionSizeCalculator, unspentOutputProvider))
+        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(transactionSizeCalculator, unspentOutputProvider))
+
         return bitcoinCore
     }
 
@@ -256,6 +261,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     lateinit var networkMessageParser: NetworkMessageParser
     lateinit var networkMessageSerializer: NetworkMessageSerializer
     lateinit var initialBlockDownload: InitialBlockDownload
+    lateinit var unspentOutputSelector: UnspentOutputSelectorChain
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
@@ -286,6 +292,10 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     fun addPeerGroupListener(listener: PeerGroup.IPeerGroupListener) {
         peerGroup.addPeerGroupListener(listener)
+    }
+
+    fun prependUnspentOutputSelector(selector: IUnspentOutputSelector) {
+        unspentOutputSelector.prependSelector(selector)
     }
 
     fun prependAddressConverter(converter: IAddressConverter) {

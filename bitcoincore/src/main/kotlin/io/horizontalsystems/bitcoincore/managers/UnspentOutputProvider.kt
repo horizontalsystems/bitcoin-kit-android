@@ -3,9 +3,8 @@ package io.horizontalsystems.bitcoincore.managers
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
-class UnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int = 6) {
-
-    fun allUnspentOutputs(): List<UnspentOutput> {
+class UnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int = 6) : IUnspentOutputProvider {
+    override fun getUnspentOutputs(): List<UnspentOutput> {
         val lastBlockHeight = storage.lastBlock()?.height ?: 0
 
         return storage.getUnspentOutputs().filter {
@@ -20,8 +19,7 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
 
             false
         }
-
     }
 
-    fun getBalance() = allUnspentOutputs().map { it.output.value }.sum()
+    fun getBalance() = getUnspentOutputs().map { it.output.value }.sum()
 }

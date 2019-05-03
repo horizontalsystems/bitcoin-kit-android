@@ -6,11 +6,15 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
+import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
+import io.horizontalsystems.dashkit.managers.ConfirmedUnspentOutputProvider
 import io.horizontalsystems.dashkit.managers.MasternodeListManager
 import io.horizontalsystems.dashkit.managers.MasternodeListSyncer
 import io.horizontalsystems.dashkit.managers.MasternodeSortedList
@@ -113,6 +117,11 @@ class DashKit : AbstractKit {
         val instantSend = InstantSend(bitcoinCore.transactionSyncer)
         bitcoinCore.addInventoryItemsHandler(instantSend)
         bitcoinCore.addPeerTaskHandler(instantSend)
+
+        val calculator = TransactionSizeCalculator()
+        val confirmedUnspentOutputProvider = ConfirmedUnspentOutputProvider(coreStorage, confirmationsThreshold)
+        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(calculator, confirmedUnspentOutputProvider, 4))
+        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, confirmedUnspentOutputProvider))
     }
 
     companion object {

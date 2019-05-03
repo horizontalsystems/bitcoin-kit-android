@@ -47,7 +47,7 @@ class UnspentOutputProviderTest : Spek({
         whenever(storage.lastBlock()).thenReturn(lastBlock)
     }
 
-    describe("#allUnspentOutputs") {
+    describe("#getUnspentOutputs") {
         context("when transaction is outgoing") {
             beforeEach {
                 transaction.isOutgoing = true
@@ -57,7 +57,7 @@ class UnspentOutputProviderTest : Spek({
             }
 
             it("returns unspentOutput") {
-                assertArrayEquals(arrayOf(unspentOutput), provider.allUnspentOutputs().toTypedArray())
+                assertArrayEquals(arrayOf(unspentOutput), provider.getUnspentOutputs().toTypedArray())
             }
         }
 
@@ -74,7 +74,7 @@ class UnspentOutputProviderTest : Spek({
                 }
 
                 it("doesn't return unspentOutput") {
-                    assertArrayEquals(arrayOf(), provider.allUnspentOutputs().toTypedArray())
+                    assertArrayEquals(arrayOf(), provider.getUnspentOutputs().toTypedArray())
                 }
             }
 
@@ -94,7 +94,7 @@ class UnspentOutputProviderTest : Spek({
                     it("returns unspentOutput") {
                         block.height = lastBlock.height - confirmationsThreshold
 
-                        assertArrayEquals(arrayOf(unspentOutput), provider.allUnspentOutputs().toTypedArray())
+                        assertArrayEquals(arrayOf(unspentOutput), provider.getUnspentOutputs().toTypedArray())
                     }
                 }
 
@@ -102,7 +102,7 @@ class UnspentOutputProviderTest : Spek({
                     it("doesn't return unspentOutput") {
                         block.height = lastBlock.height - confirmationsThreshold + 2
 
-                        assertArrayEquals(arrayOf(), provider.allUnspentOutputs().toTypedArray())
+                        assertArrayEquals(arrayOf(), provider.getUnspentOutputs().toTypedArray())
                     }
                 }
             }
