@@ -63,8 +63,8 @@ class TransactionBuilderTest {
 
         unspentOutputs = SelectedUnspentOutputInfo(listOf(unspentOutput), previousTransaction.outputs[0].value, fee, false)
 
-        whenever(unspentOutputProvider.allUnspentOutputs()).thenReturn(unspentOutputs.outputs)
-        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
+        whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(unspentOutputs.outputs)
+        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
         whenever(transactionSizeCalculator.outputSize(any())).thenReturn(34)
 
         // receive address locking script P2PKH
@@ -165,7 +165,7 @@ class TransactionBuilderTest {
     @Test
     fun fee() {
         val unspentOutputs = SelectedUnspentOutputInfo(listOf(), 11_805_400, 112_800, false)
-        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
+        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
         val fee = transactionBuilder.fee(10_782_000, 600, true)
 
         assertEquals(112800, fee)

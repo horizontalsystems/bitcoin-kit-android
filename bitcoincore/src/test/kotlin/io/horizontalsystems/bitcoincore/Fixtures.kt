@@ -1,10 +1,13 @@
 package io.horizontalsystems.bitcoincore
 
+import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
@@ -180,5 +183,16 @@ object Fixtures {
         this.publicKey = "037d56797fbe9aa506fc263751abf23bb46c9770181a6059096808923f0a64cb15".hexToByteArray()
         this.publicKeyHash = "e4de5d630c5cacd7af96418a8f35c411c8ff3c06".hexToByteArray()
     }
+
+    fun unspentOutput(value: Long): UnspentOutput {
+        val utxo = mock<UnspentOutput>()
+        val txOutput = mock<TransactionOutput>()
+
+        whenever(utxo.output).thenReturn(txOutput)
+        whenever(txOutput.value).thenReturn(value)
+
+        return utxo
+    }
+
 
 }
