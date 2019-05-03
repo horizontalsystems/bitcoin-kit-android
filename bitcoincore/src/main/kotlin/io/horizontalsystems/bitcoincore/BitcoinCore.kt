@@ -336,12 +336,12 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         return dataProvider.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium): Long {
-        return transactionBuilder.fee(value, getFeeRate(feePriority), senderPay, address)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
+        return transactionBuilder.fee(value, feeRate, senderPay, address)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium) {
-        transactionCreator.create(address, value, getFeeRate(feePriority), senderPay)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int) {
+        transactionCreator.create(address, value, feeRate, senderPay)
     }
 
     fun receiveAddress(): String {
@@ -424,15 +424,6 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
                 it.onKitStateUpdate(state)
             }
         }
-    }
-
-    private fun getFeeRate(feePriority: FeePriority) = when (feePriority) {
-        FeePriority.Lowest -> dataProvider.feeRate.lowPriority
-        FeePriority.Low -> (dataProvider.feeRate.lowPriority + dataProvider.feeRate.mediumPriority) / 2
-        FeePriority.Medium -> dataProvider.feeRate.mediumPriority
-        FeePriority.High -> (dataProvider.feeRate.mediumPriority + dataProvider.feeRate.highPriority) / 2
-        FeePriority.Highest -> dataProvider.feeRate.highPriority
-        is FeePriority.Custom -> feePriority.feeRate
     }
 
     sealed class KitState {

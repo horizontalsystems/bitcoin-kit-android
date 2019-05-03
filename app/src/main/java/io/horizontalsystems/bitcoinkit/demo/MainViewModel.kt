@@ -70,11 +70,13 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun send(address: String, amount: Long) {
-        bitcoinKit.send(address, amount, feePriority = feePriority)
+        val feeRate = feeRateFromPriority(feePriority)
+        bitcoinKit.send(address, amount, feeRate = feeRate)
     }
 
     fun fee(value: Long, address: String? = null): Long {
-        return bitcoinKit.fee(value, address, feePriority = feePriority)
+        val feeRate = feeRateFromPriority(feePriority)
+        return bitcoinKit.fee(value, address, feeRate = feeRate)
     }
 
     fun showDebugInfo() {
@@ -105,5 +107,19 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     override fun onKitStateUpdate(state: KitState) {
         this.state.postValue(state)
+    }
+
+    private fun feeRateFromPriority(feePriority: FeePriority): Int {
+        val lowPriority = 20
+        val mediumPriority = 42
+        val highPriority = 81
+        return when (feePriority) {
+            FeePriority.Lowest -> lowPriority
+            FeePriority.Low -> (lowPriority + mediumPriority) / 2
+            FeePriority.Medium -> mediumPriority
+            FeePriority.High -> (mediumPriority + highPriority) / 2
+            FeePriority.Highest -> highPriority
+            is FeePriority.Custom -> feePriority.feeRate.toInt()
+        }
     }
 }
