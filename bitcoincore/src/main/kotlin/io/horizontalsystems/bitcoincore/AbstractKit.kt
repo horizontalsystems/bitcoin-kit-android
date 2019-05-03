@@ -40,12 +40,12 @@ abstract class AbstractKit {
         return bitcoinCore.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium): Long {
-        return bitcoinCore.fee(value, address, senderPay, feePriority)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
+        return bitcoinCore.fee(value, address, senderPay, feeRate)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feePriority: FeePriority = FeePriority.Medium) {
-        bitcoinCore.send(address, value, senderPay, feePriority)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int) {
+        bitcoinCore.send(address, value, senderPay, feeRate)
     }
 
     fun receiveAddress(): String {
