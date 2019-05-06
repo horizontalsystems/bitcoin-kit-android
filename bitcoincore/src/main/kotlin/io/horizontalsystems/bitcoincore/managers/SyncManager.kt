@@ -41,7 +41,9 @@ class SyncManager(
     //
 
     override fun onSyncingFinished() {
-        peerGroup.start()
+        if (!peerGroup.isAlive) {
+            peerGroup.start()
+        }
     }
 
     private fun syncFeeRate() {
