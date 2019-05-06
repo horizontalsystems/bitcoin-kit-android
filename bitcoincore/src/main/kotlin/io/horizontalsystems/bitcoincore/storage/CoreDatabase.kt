@@ -34,15 +34,7 @@ abstract class CoreDatabase : RoomDatabase() {
 
     companion object {
 
-        @Volatile
-        private var instance: CoreDatabase? = null
-
-        @Synchronized
         fun getInstance(context: Context, dbName: String): CoreDatabase {
-            return instance ?: buildDatabase(context, dbName).also { instance = it }
-        }
-
-        private fun buildDatabase(context: Context, dbName: String): CoreDatabase {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
