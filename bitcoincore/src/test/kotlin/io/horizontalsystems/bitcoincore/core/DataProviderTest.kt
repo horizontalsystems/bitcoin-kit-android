@@ -50,17 +50,16 @@ class DataProviderTest : Spek({
                 whenever(storage.getTransaction(fromHash.toReversedByteArray())).thenReturn(null)
             }
 
-            it("loads transactions without starting point") {
+            it("do not fetch transactions with `fromHash`") {
                 dataProvider.transactions(fromHash, limit).test().assertOf {
                     verify(storage).getTransaction(fromHash.toReversedByteArray())
-
-                    verify(storage).getFullTransactionInfo(null, limit)
+                    verify(storage, never()).getFullTransactionInfo(null, limit)
                 }
             }
         }
     }
 
-    describe("with `fromHash`") {
+    describe("without `fromHash`") {
         it("loads transactions without starting point") {
             dataProvider.transactions(null, null).test().assertOf {
                 verify(storage, never()).getTransaction(any())

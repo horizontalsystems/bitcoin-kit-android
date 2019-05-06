@@ -33,7 +33,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private var bitcoinKit: BitcoinKit
 
     init {
-        val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
+        val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
 
         bitcoinKit = BitcoinKit(App.instance, words, "MyWallet", BitcoinKit.NetworkType.TestNet)
 
