@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
-import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
@@ -89,8 +88,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
                         results = storage.getFullTransactionInfo(it, limit)
                     }
                 }
-
-                if (results.isEmpty()) {
+                else {
                     results = storage.getFullTransactionInfo(null, limit)
                 }
 
