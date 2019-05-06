@@ -1,7 +1,5 @@
 package io.horizontalsystems.dashkit
 
-import android.util.Log
-import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.network.peer.IInventoryItemsHandler
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
@@ -45,9 +43,6 @@ class InstantSend(private val transactionSyncer: TransactionSyncer?) : IInventor
                 true
             }
             is RequestTransactionLockVotesTask -> {
-                task.transactionLockVotes.forEach {
-                    Log.e("AAA", "Received tx lock vote for tx: ${it.txHash.toReversedHex()}")
-                }
                 true
             }
             else -> false

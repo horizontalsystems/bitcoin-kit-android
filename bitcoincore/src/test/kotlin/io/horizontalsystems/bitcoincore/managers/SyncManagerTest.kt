@@ -1,11 +1,8 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import io.reactivex.subjects.PublishSubject
-import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -14,10 +11,10 @@ class SyncManagerTest : Spek({
     lateinit var syncManager: SyncManager
     lateinit var timer: PublishSubject<Long>
 
-    val connectionManager = mock(ConnectionManager::class.java)
-    val feeRateSyncer = mock(FeeRateSyncer::class.java)
-    val peerGroup = mock(PeerGroup::class.java)
-    val initialSyncer = mock(InitialSyncer::class.java)
+    val connectionManager = mock<ConnectionManager>()
+    val feeRateSyncer = mock<FeeRateSyncer>()
+    val peerGroup = mock<PeerGroup>()
+    val initialSyncer = mock<InitialSyncer>()
 
     beforeEachTest {
         timer = PublishSubject.create()
