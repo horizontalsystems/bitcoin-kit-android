@@ -4,16 +4,25 @@ import android.content.Context
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
+import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
+import io.horizontalsystems.dashkit.core.DashTransactionInfoConverter
+import io.horizontalsystems.dashkit.core.SingleSha256Hasher
+import io.horizontalsystems.dashkit.instantsend.InstantSendFactory
+import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
+import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteManager
+import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteValidator
 import io.horizontalsystems.dashkit.managers.ConfirmedUnspentOutputProvider
 import io.horizontalsystems.dashkit.managers.MasternodeListManager
 import io.horizontalsystems.dashkit.managers.MasternodeListSyncer
@@ -27,6 +36,8 @@ import io.horizontalsystems.dashkit.messages.MasternodeListDiffMessageParser
 import io.horizontalsystems.dashkit.messages.TransactionLockMessageParser
 import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessageParser
 import io.horizontalsystems.dashkit.models.CoinbaseTransactionSerializer
+import io.horizontalsystems.dashkit.models.DashTransactionInfo
+import io.horizontalsystems.dashkit.models.InstantTransactionState
 import io.horizontalsystems.dashkit.models.MasternodeSerializer
 import io.horizontalsystems.dashkit.storage.DashKitDatabase
 import io.horizontalsystems.dashkit.storage.DashStorage
@@ -34,23 +45,29 @@ import io.horizontalsystems.dashkit.tasks.PeerTaskFactory
 import io.horizontalsystems.dashkit.validators.DarkGravityWaveTestnetValidator
 import io.horizontalsystems.dashkit.validators.DarkGravityWaveValidator
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.reactivex.Single
 
-class DashKit : AbstractKit {
+class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     enum class NetworkType {
         MainNet,
         TestNet
     }
 
-    interface Listener : BitcoinCore.Listener
+    interface Listener {
+        fun onTransactionsUpdate(inserted: List<DashTransactionInfo>, updated: List<DashTransactionInfo>)
+        fun onTransactionsDelete(hashes: List<String>)
+        fun onBalanceUpdate(balance: Long)
+        fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
+        fun onKitStateUpdate(state: BitcoinCore.KitState)
+    }
 
     override var bitcoinCore: BitcoinCore
     override var network: Network
 
     var listener: Listener? = null
-        set(value) {
-            field = value
-            value?.let { bitcoinCore.addListener(it) }
-        }
+
+    private val dashStorage: DashStorage
+    private val dashTransactionInfoConverter: DashTransactionInfoConverter
 
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
@@ -61,7 +78,7 @@ class DashKit : AbstractKit {
         val dashDatabase = DashKitDatabase.getInstance(context, databaseName)
 
         val coreStorage = Storage(coreDatabase)
-        val dashStorage = DashStorage(dashDatabase, coreStorage)
+        dashStorage = DashStorage(dashDatabase, coreStorage)
 
         network = when (networkType) {
             NetworkType.MainNet -> MainNetDash()
@@ -71,6 +88,10 @@ class DashKit : AbstractKit {
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
 
         val addressSelector = BitcoinAddressSelector()
+
+        val instantTransactionManager = InstantTransactionManager(dashStorage, InstantSendFactory(), InstantTransactionState())
+
+        dashTransactionInfoConverter = DashTransactionInfoConverter(BaseTransactionInfoConverter(), instantTransactionManager)
 
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
@@ -84,7 +105,10 @@ class DashKit : AbstractKit {
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(coreStorage)
                 .setBlockHeaderHasher(X11Hasher())
+                .setTransactionInfoConverter(dashTransactionInfoConverter)
                 .build()
+
+        bitcoinCore.listener = this
 
         //  extending bitcoinCore
         val blockHelper = BlockValidatorHelper(coreStorage)
@@ -114,7 +138,11 @@ class DashKit : AbstractKit {
         bitcoinCore.addPeerSyncListener(masternodeSyncer)
         bitcoinCore.addPeerGroupListener(masternodeSyncer)
 
-        val instantSend = InstantSend(bitcoinCore.transactionSyncer)
+        val singleHasher = SingleSha256Hasher()
+        val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher)
+        val instantSend = InstantSend(bitcoinCore.transactionSyncer, TransactionLockVoteManager(transactionLockVoteValidator), instantTransactionManager)
+        instantSend.delegate = this
+
         bitcoinCore.addInventoryItemsHandler(instantSend)
         bitcoinCore.addPeerTaskHandler(instantSend)
 
@@ -122,6 +150,43 @@ class DashKit : AbstractKit {
         val confirmedUnspentOutputProvider = ConfirmedUnspentOutputProvider(coreStorage, confirmationsThreshold)
         bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(calculator, confirmedUnspentOutputProvider, 4))
         bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, confirmedUnspentOutputProvider))
+    }
+
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<DashTransactionInfo>> {
+        return bitcoinCore.transactions(fromHash, limit).map {
+            it.mapNotNull { it as? DashTransactionInfo }
+        }
+    }
+
+    // BitcoinCore.Listener
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+        listener?.onTransactionsUpdate(inserted.mapNotNull { it as? DashTransactionInfo }, updated.mapNotNull { it as? DashTransactionInfo })
+    }
+
+    override fun onTransactionsDelete(hashes: List<String>) {
+        listener?.onTransactionsDelete(hashes)
+    }
+
+    override fun onBalanceUpdate(balance: Long) {
+        listener?.onBalanceUpdate(balance)
+    }
+
+    override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
+        listener?.onLastBlockInfoUpdate(blockInfo)
+    }
+
+    override fun onKitStateUpdate(state: BitcoinCore.KitState) {
+        listener?.onKitStateUpdate(state)
+    }
+
+    // IInstantTransactionDelegate
+    override fun onUpdateInstant(transactionHash: ByteArray) {
+        val transaction = dashStorage.getFullTransactionInfo(transactionHash) ?: return
+        val transactionInfo = dashTransactionInfoConverter.transactionInfo(transaction)
+
+        bitcoinCore.listenerExecutor.execute {
+            listener?.onTransactionsUpdate(listOf(), listOf(transactionInfo))
+        }
     }
 
     companion object {

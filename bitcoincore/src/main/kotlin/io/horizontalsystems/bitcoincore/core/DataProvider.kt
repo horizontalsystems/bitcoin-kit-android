@@ -12,7 +12,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val storage: IStorage, private val unspentOutputProvider: UnspentOutputProvider)
+class DataProvider(private val storage: IStorage, private val unspentOutputProvider: UnspentOutputProvider, private val transactionInfoConverter: ITransactionInfoConverter)
     : IBlockchainDataListener {
 
     interface Listener {
@@ -64,8 +64,8 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
 
     override fun onTransactionsUpdate(inserted: List<Transaction>, updated: List<Transaction>, block: Block?) {
         listener?.onTransactionsUpdate(
-                storage.getFullTransactionInfo(inserted.map { TransactionWithBlock(it, block) }).mapNotNull { transactionInfo(it) },
-                storage.getFullTransactionInfo(updated.map { TransactionWithBlock(it, block) }).mapNotNull { transactionInfo(it) }
+                storage.getFullTransactionInfo(inserted.map { TransactionWithBlock(it, block) }).map { transactionInfoConverter.transactionInfo(it) },
+                storage.getFullTransactionInfo(updated.map { TransactionWithBlock(it, block) }).map { transactionInfoConverter.transactionInfo(it) }
         )
 
         balanceUpdateSubject.onNext(true)
@@ -92,58 +92,12 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
                     results = storage.getFullTransactionInfo(null, limit)
                 }
 
-                emitter.onSuccess(results.mapNotNull { transactionInfo(it) })
+                emitter.onSuccess(results.map { transactionInfoConverter.transactionInfo(it)})
             }
 
     private fun blockInfo(block: Block) = BlockInfo(
             block.headerHash.toReversedHex(),
             block.height,
             block.timestamp)
-
-    private fun transactionInfo(fullTransaction: FullTransactionInfo): TransactionInfo? {
-        val transaction = fullTransaction.header
-
-        var totalMineInput = 0L
-        var totalMineOutput = 0L
-        val fromAddresses = mutableListOf<TransactionAddress>()
-        val toAddresses = mutableListOf<TransactionAddress>()
-
-        fullTransaction.inputs.forEach { input ->
-            var mine = false
-
-            if (input.previousOutput?.publicKeyPath != null) {
-                totalMineInput += input.previousOutput.value
-                mine = true
-
-            }
-
-            input.input.address?.let { address ->
-                fromAddresses.add(TransactionAddress(address, mine = mine))
-            }
-        }
-
-        fullTransaction.outputs.forEach { output ->
-            var mine = false
-
-            if (output.publicKeyPath != null) {
-                totalMineOutput += output.value
-                mine = true
-            }
-
-            output.address?.let { address ->
-                toAddresses.add(TransactionAddress(address, mine))
-            }
-        }
-
-        return TransactionInfo(
-                transactionHash = transaction.hash.toReversedHex(),
-                transactionIndex = transaction.order,
-                from = fromAddresses,
-                to = toAddresses,
-                amount = totalMineOutput - totalMineInput,
-                blockHeight = fullTransaction.block?.height,
-                timestamp = transaction.timestamp
-        )
-    }
 
 }

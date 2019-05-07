@@ -27,6 +27,9 @@ interface TransactionDao {
     @RawQuery
     fun getTransactionWithBlockBySql(query: SupportSQLiteQuery): List<TransactionWithBlock>
 
+    @Query("SELECT * FROM `Transaction` t LEFT JOIN Block b ON t.blockHash = b.headerHash WHERE hash = :hash")
+    fun getTransactionWithBlock(hash: ByteArray): TransactionWithBlock?
+
     @Delete
     fun delete(transaction: Transaction)
 
