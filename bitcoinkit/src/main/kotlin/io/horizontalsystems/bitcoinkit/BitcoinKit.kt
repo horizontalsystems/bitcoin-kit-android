@@ -9,12 +9,14 @@ import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjust
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.reactivex.Single
 
 class BitcoinKit : AbstractKit {
     enum class NetworkType {
@@ -31,7 +33,7 @@ class BitcoinKit : AbstractKit {
     var listener: Listener? = null
         set(value) {
             field = value
-            value?.let { bitcoinCore.addListener(it) }
+            bitcoinCore.listener = value
         }
 
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
@@ -87,5 +89,9 @@ class BitcoinKit : AbstractKit {
             bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
             bitcoinCore.addBlockValidator(BitsValidator())
         }
+    }
+
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return bitcoinCore.transactions(fromHash, limit)
     }
 }

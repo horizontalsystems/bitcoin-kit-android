@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.models
 
-data class TransactionInfo(
+open class TransactionInfo(
         val transactionHash: String,
         val transactionIndex: Int,
         val from: List<TransactionAddress>,

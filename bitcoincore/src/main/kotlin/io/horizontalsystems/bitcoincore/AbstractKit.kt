@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoincore
 
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
-import io.horizontalsystems.bitcoincore.models.FeePriority
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
-import io.reactivex.Single
 
 abstract class AbstractKit {
 
@@ -34,10 +31,6 @@ abstract class AbstractKit {
 
     fun refresh() {
         bitcoinCore.refresh()
-    }
-
-    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return bitcoinCore.transactions(fromHash, limit)
     }
 
     fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {

@@ -10,9 +10,10 @@ import org.spekframework.spek2.style.specification.describe
 class DataProviderTest : Spek({
     val storage = mock<IStorage>()
     val unspentOutputProvider = mock<UnspentOutputProvider>()
+    val transactionInfoConverter = mock<ITransactionInfoConverter>()
 
     val dataProvider by memoized {
-        DataProvider(storage, unspentOutputProvider)
+        DataProvider(storage, unspentOutputProvider, transactionInfoConverter)
     }
 
     afterEachTest {

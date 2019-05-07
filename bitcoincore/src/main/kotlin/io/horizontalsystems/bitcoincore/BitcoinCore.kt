@@ -42,6 +42,7 @@ class BitcoinCoreBuilder {
     private var newWallet = false
     private var peerSize = 10
     private var blockHeaderHasher: IHasher? = null
+    private var transactionInfoConverter: ITransactionInfoConverter? = null
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -108,6 +109,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setTransactionInfoConverter(transactionInfoConverter: ITransactionInfoConverter): BitcoinCoreBuilder {
+        this.transactionInfoConverter = transactionInfoConverter
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -118,6 +124,7 @@ class BitcoinCoreBuilder {
         val storage = checkNotNull(this.storage)
         val initialSyncApiUrl = this.initialSyncApiUrl ?: "http://btc-testnet.horizontalsystems.xyz/apg"
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
+        val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter(BaseTransactionInfoConverter())
 
         val apiFeeRate = ApiFeeRate(apiFeeRateCoinCode)
 
@@ -125,7 +132,7 @@ class BitcoinCoreBuilder {
 
         val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold)
 
-        val dataProvider = DataProvider(storage, unspentOutputProvider)
+        val dataProvider = DataProvider(storage, unspentOutputProvider, transactionInfoConverter)
 
         val connectionManager = ConnectionManager(context)
 
@@ -315,11 +322,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     val lastBlockInfo get() = dataProvider.lastBlockInfo
     val syncState get() = kitStateProvider.syncState
 
-    private val listeners = mutableListOf<Listener>()
-
-    fun addListener(listener: Listener) {
-        listeners.add(listener)
-    }
+    var listener: Listener? = null
 
     //
     // API methods
@@ -394,34 +397,25 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     //
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         listenerExecutor.execute {
-            listeners.forEach {
-                it.onTransactionsUpdate(inserted, updated)
-            }
+            listener?.onTransactionsUpdate(inserted, updated)
         }
     }
 
     override fun onTransactionsDelete(hashes: List<String>) {
         listenerExecutor.execute {
-            listeners.forEach {
-                it.onTransactionsDelete(hashes)
-            }
+            listener?.onTransactionsDelete(hashes)
         }
     }
 
     override fun onBalanceUpdate(balance: Long) {
         listenerExecutor.execute {
-            listeners.forEach {
-                it.onBalanceUpdate(balance)
-            }
-
+            listener?.onBalanceUpdate(balance)
         }
     }
 
     override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
         listenerExecutor.execute {
-            listeners.forEach {
-                it.onLastBlockInfoUpdate(blockInfo)
-            }
+            listener?.onLastBlockInfoUpdate(blockInfo)
         }
     }
 
@@ -430,9 +424,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     //
     override fun onKitStateUpdate(state: KitState) {
         listenerExecutor.execute {
-            listeners.forEach {
-                it.onKitStateUpdate(state)
-            }
+            listener?.onKitStateUpdate(state)
         }
     }
 

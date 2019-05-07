@@ -196,6 +196,20 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return getFullTransactionInfo(store.transaction.getTransactionWithBlockBySql(SimpleSQLiteQuery(query)))
     }
 
+    override fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo? {
+        return store.transaction.getTransactionWithBlock(txHash)?.let { tx ->
+            val inputs = store.input.getInputsWithPrevouts(listOf(txHash))
+            val outputs = store.output.getTransactionsOutputs(listOf(txHash))
+
+            FullTransactionInfo(
+                    tx.block,
+                    tx.transaction,
+                    inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
+                    outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) }
+            )
+        }
+    }
+
     override fun getTransaction(hash: ByteArray): Transaction? {
         return store.transaction.getByHash(hash)
     }
@@ -266,6 +280,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getTransactionInputs(transaction: Transaction): List<TransactionInput> {
         return store.input.getTransactionInputs(transaction.hash)
+    }
+
+    override fun getTransactionInputs(txHash: ByteArray): List<TransactionInput> {
+        return store.input.getTransactionInputs(txHash)
     }
 
     // PublicKey

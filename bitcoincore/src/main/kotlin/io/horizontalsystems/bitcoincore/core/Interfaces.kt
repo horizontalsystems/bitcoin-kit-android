@@ -27,7 +27,7 @@ interface IStorage {
 
     fun getBlockHashesSortedBySequenceAndHeight(limit: Int): List<BlockHash>
     fun getBlockHashHeaderHashes(): List<ByteArray>
-    fun getBlockHashHeaderHashes(except: ByteArray): List< ByteArray>
+    fun getBlockHashHeaderHashes(except: ByteArray): List<ByteArray>
     fun getLastBlockHash(): BlockHash?
 
     fun getBlockchainBlockHashes(): List<BlockHash>
@@ -60,6 +60,7 @@ interface IStorage {
 
     fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo>
     fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo>
+    fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo?
 
     fun getTransaction(hash: ByteArray): Transaction?
     fun getTransactionOfOutput(output: TransactionOutput): Transaction?
@@ -81,6 +82,7 @@ interface IStorage {
     // Transaction Input
 
     fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
+    fun getTransactionInputs(txHash: ByteArray): List<TransactionInput>
 
     // PublicKey
 
@@ -96,4 +98,8 @@ interface IStorage {
 
     fun clear()
 
+}
+
+interface ITransactionInfoConverter {
+    fun transactionInfo(transactionForInfo: FullTransactionInfo): TransactionInfo
 }

@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincash
 
-import android.arch.persistence.room.Room
 import android.content.Context
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincash.blocks.validators.DAAValidator
@@ -10,12 +9,14 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.reactivex.Single
 
 class BitcoinCashKit : AbstractKit {
     enum class NetworkType {
@@ -31,7 +32,7 @@ class BitcoinCashKit : AbstractKit {
     var listener: Listener? = null
         set(value) {
             field = value
-            value?.let { bitcoinCore.addListener(it) }
+            bitcoinCore.listener = value
         }
 
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
@@ -82,6 +83,10 @@ class BitcoinCashKit : AbstractKit {
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
             bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper))
         }
+    }
+
+    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return bitcoinCore.transactions(fromHash, limit)
     }
 
     companion object {
