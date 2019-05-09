@@ -2,20 +2,21 @@ package io.horizontalsystems.bitcoincore.managers
 
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonObject
+import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import java.util.logging.Logger
 
-class BlockHashFetcher(private val addressSelector: IAddressSelector, private val addressConverter: IAddressConverter, private val bCoinApi: BCoinApi, private val helper: BlockHashFetcherHelper) {
+class BlockHashFetcher(private val addressSelector: IAddressSelector, private val addressConverter: IAddressConverter, private val initialSyncerApi: IInitialSyncApi, private val helper: BlockHashFetcherHelper) {
 
     fun getBlockHashes(publicKeys: List<PublicKey>): Pair<List<BlockHash>, Int> {
         val addresses = publicKeys.map {
             addressSelector.getAddressVariants(addressConverter, it)
         }
 
-        val transactions = bCoinApi.getTransactions(addresses.flatten())
+        val transactions = initialSyncerApi.getTransactions(addresses.flatten())
 
         if (transactions.isEmpty()) {
             return Pair(listOf(), -1)
@@ -34,7 +35,7 @@ class BlockHashFetcher(private val addressSelector: IAddressSelector, private va
 
 class BlockHashFetcherHelper {
 
-    fun lastUsedIndex(addresses: List<List<String>>, outputs: List<BCoinApi.TransactionOutputItem>): Int {
+    fun lastUsedIndex(addresses: List<List<String>>, outputs: List<TransactionOutputItem>): Int {
         val searchAddressStrings = outputs.map { it.address }
         val searchScriptStrings = outputs.map { it.script }
 
@@ -51,10 +52,11 @@ class BlockHashFetcherHelper {
 
 }
 
-class BCoinApi(private val host: String, val httpRequester: HttpRequester) {
+class BCoinApi(private val host: String) : IInitialSyncApi {
+    private val httpRequester = HttpRequester()
     private val logger = Logger.getLogger("BCoinApi")
 
-    fun getTransactions(addresses: List<String>): List<TransactionItem> {
+    override fun getTransactions(addresses: List<String>): List<TransactionItem> {
         val requestData = JsonObject().apply {
             this["addresses"] = Json.array(*addresses.toTypedArray())
         }
@@ -91,8 +93,7 @@ class BCoinApi(private val host: String, val httpRequester: HttpRequester) {
         return transactions
     }
 
-    data class TransactionItem(val blockHash: String, val blockHeight: Int, val txOutputs: List<TransactionOutputItem>)
-    data class TransactionOutputItem(val script: String, val address: String)
-
 }
 
+data class TransactionItem(val blockHash: String, val blockHeight: Int, val txOutputs: List<TransactionOutputItem>)
+data class TransactionOutputItem(val script: String, val address: String)

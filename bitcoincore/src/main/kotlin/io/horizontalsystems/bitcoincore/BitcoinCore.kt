@@ -35,7 +35,7 @@ class BitcoinCoreBuilder {
     private var addressSelector: IAddressSelector? = null
     private var apiFeeRateCoinCode: String? = null
     private var storage: IStorage? = null
-    private var initialSyncApiUrl: String? = null
+    private var initialSyncApi: IInitialSyncApi? = null
 
     // parameters with default values
     private var confirmationsThreshold = 6
@@ -104,8 +104,8 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setInitialSyncApiUrl(initialSyncApiUrl: String?): BitcoinCoreBuilder {
-        this.initialSyncApiUrl = initialSyncApiUrl
+    fun setInitialSyncApi(initialSyncApi: IInitialSyncApi?): BitcoinCoreBuilder {
+        this.initialSyncApi = initialSyncApi
         return this
     }
 
@@ -122,7 +122,7 @@ class BitcoinCoreBuilder {
         val addressSelector = checkNotNull(this.addressSelector)
         val apiFeeRateCoinCode = checkNotNull(this.apiFeeRateCoinCode)
         val storage = checkNotNull(this.storage)
-        val initialSyncApiUrl = this.initialSyncApiUrl ?: "http://btc-testnet.horizontalsystems.xyz/apg"
+        val initialSyncApi = checkNotNull(this.initialSyncApi)
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
         val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter(BaseTransactionInfoConverter())
 
@@ -168,7 +168,7 @@ class BitcoinCoreBuilder {
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
 
         val feeRateSyncer = FeeRateSyncer(storage, apiFeeRate)
-        val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, BCoinApi(initialSyncApiUrl, HttpRequester()), BlockHashFetcherHelper())
+        val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
         val stateManager = StateManager(storage, network, newWallet)
         val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)

@@ -22,3 +22,10 @@ class BitcoinCashAddressSelector : IAddressSelector {
         return listOf(legacyAddress)
     }
 }
+
+class DashAddressSelector : IAddressSelector {
+    override fun getAddressVariants(addressConverter: IAddressConverter, pubKey: PublicKey): List<String> {
+        val legacyAddress = addressConverter.convert(pubKey.publicKeyHash, ScriptType.P2PKH).string
+        return listOf(legacyAddress)
+    }
+}

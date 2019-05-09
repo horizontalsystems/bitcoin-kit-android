@@ -6,8 +6,8 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
-import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.managers.DashAddressSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
 import io.horizontalsystems.bitcoincore.models.BlockInfo
@@ -24,10 +24,7 @@ import io.horizontalsystems.dashkit.instantsend.InstantSendFactory
 import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
 import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteManager
 import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteValidator
-import io.horizontalsystems.dashkit.managers.ConfirmedUnspentOutputProvider
-import io.horizontalsystems.dashkit.managers.MasternodeListManager
-import io.horizontalsystems.dashkit.managers.MasternodeListSyncer
-import io.horizontalsystems.dashkit.managers.MasternodeSortedList
+import io.horizontalsystems.dashkit.managers.*
 import io.horizontalsystems.dashkit.masternodelist.MasternodeCbTxHasher
 import io.horizontalsystems.dashkit.masternodelist.MasternodeListMerkleRootCalculator
 import io.horizontalsystems.dashkit.masternodelist.MerkleRootCreator
@@ -76,20 +73,26 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
         val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId))
         val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId))
+        val initialSyncUrl: String
 
         val coreStorage = Storage(coreDatabase)
         dashStorage = DashStorage(dashDatabase, coreStorage)
 
         network = when (networkType) {
-            NetworkType.MainNet -> MainNetDash()
-            NetworkType.TestNet -> TestNetDash()
+            NetworkType.MainNet -> {
+                initialSyncUrl = "https://dash.horizontalsystems.xyz/apg"
+                MainNetDash()
+            }
+            NetworkType.TestNet -> {
+                initialSyncUrl = "http://dash-testnet.horizontalsystems.xyz/apg"
+                TestNetDash()
+            }
         }
 
-        val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
-
-        val addressSelector = BitcoinAddressSelector()
-
+        val paymentAddressParser = PaymentAddressParser("dash", removeScheme = true)
+        val addressSelector = DashAddressSelector()
         val instantTransactionManager = InstantTransactionManager(dashStorage, InstantSendFactory(), InstantTransactionState())
+        val initialSyncApi = InsightApi(initialSyncUrl)
 
         dashTransactionInfoConverter = DashTransactionInfoConverter(BaseTransactionInfoConverter(), instantTransactionManager)
 
@@ -105,12 +108,14 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(coreStorage)
                 .setBlockHeaderHasher(X11Hasher())
+                .setInitialSyncApi(initialSyncApi)
                 .setTransactionInfoConverter(dashTransactionInfoConverter)
                 .build()
 
         bitcoinCore.listener = this
 
         //  extending bitcoinCore
+
         val blockHelper = BlockValidatorHelper(coreStorage)
 
         if (network is MainNetDash) {

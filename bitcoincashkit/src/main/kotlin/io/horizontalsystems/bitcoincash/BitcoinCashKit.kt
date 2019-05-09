@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
+import io.horizontalsystems.bitcoincore.managers.BCoinApi
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -42,20 +43,22 @@ class BitcoinCashKit : AbstractKit {
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
+        val initialSyncUrl: String
 
         network = when (networkType) {
-            NetworkType.MainNet -> MainNetBitcoinCash()
-            NetworkType.TestNet -> TestNetBitcoinCash()
-        }
-
-        val initialSyncApiUrl = when (networkType) {
-            NetworkType.MainNet -> "https://bch.horizontalsystems.xyz/apg"
-            NetworkType.TestNet -> "http://bch-testnet.horizontalsystems.xyz/apg"
+            NetworkType.MainNet -> {
+                initialSyncUrl = "https://bch.horizontalsystems.xyz/apg"
+                MainNetBitcoinCash()
+            }
+            NetworkType.TestNet -> {
+                initialSyncUrl = "http://bch-testnet.horizontalsystems.xyz/apg"
+                TestNetBitcoinCash()
+            }
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
-
         val addressSelector = BitcoinCashAddressSelector()
+        val initialSyncApi = BCoinApi(initialSyncUrl)
 
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
@@ -68,11 +71,10 @@ class BitcoinCashKit : AbstractKit {
                 .setNewWallet(newWallet)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
-                .setInitialSyncApiUrl(initialSyncApiUrl)
+                .setInitialSyncApi(initialSyncApi)
                 .build()
 
-
-        // extending bitcoinCore
+        //  extending bitcoinCore
 
         val bech32 = CashAddressConverter(network.addressSegwitHrp)
         bitcoinCore.prependAddressConverter(bech32)

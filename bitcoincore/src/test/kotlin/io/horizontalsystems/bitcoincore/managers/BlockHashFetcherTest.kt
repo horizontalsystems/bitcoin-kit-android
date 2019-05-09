@@ -57,12 +57,12 @@ class BlockHashFetcherTest {
         whenever(addressSelector.getAddressVariants(addressConverter, publicKey1)).thenReturn(addresses1)
         whenever(addressSelector.getAddressVariants(addressConverter, publicKey2)).thenReturn(addresses2)
 
-        val transactionResponse0 = mock<BCoinApi.TransactionItem>()
+        val transactionResponse0 = mock<TransactionItem>()
         whenever(transactionResponse0.blockHeight).thenReturn(1234)
         whenever(transactionResponse0.blockHash).thenReturn("1234")
         whenever(transactionResponse0.txOutputs).thenReturn(listOf())
 
-        val transactionResponse1 = mock<BCoinApi.TransactionItem>()
+        val transactionResponse1 = mock<TransactionItem>()
         whenever(transactionResponse1.blockHeight).thenReturn(5678)
         whenever(transactionResponse1.blockHash).thenReturn("5678")
         whenever(transactionResponse1.txOutputs).thenReturn(listOf())
