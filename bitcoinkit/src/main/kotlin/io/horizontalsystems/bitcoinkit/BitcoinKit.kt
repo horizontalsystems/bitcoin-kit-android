@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoinkit
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
@@ -40,7 +41,7 @@ class BitcoinKit : AbstractKit {
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val database = CoreDatabase.getInstance(context, "${javaClass.simpleName}-${networkType.name}-$walletId")
+        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
 
         network = when (networkType) {
@@ -94,4 +95,14 @@ class BitcoinKit : AbstractKit {
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
         return bitcoinCore.transactions(fromHash, limit)
     }
+
+    companion object {
+
+        private fun getDatabaseName(networkType: NetworkType, walletId: String): String = "Bitcoin-${networkType.name}-$walletId"
+
+        fun clear(context: Context, networkType: NetworkType, walletId: String) {
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId)))
+        }
+    }
+
 }

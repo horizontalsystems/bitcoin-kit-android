@@ -1,6 +1,7 @@
 package io.horizontalsystems.dashkit
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
@@ -73,9 +74,8 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val databaseName = "${javaClass.simpleName}-${networkType.name}-$walletId"
-        val coreDatabase = CoreDatabase.getInstance(context, "$databaseName-core")
-        val dashDatabase = DashKitDatabase.getInstance(context, databaseName)
+        val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId))
+        val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId))
 
         val coreStorage = Storage(coreDatabase)
         dashStorage = DashStorage(dashDatabase, coreStorage)
@@ -195,5 +195,16 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         const val targetSpacing = 150             // 2.5 min. for mining 1 Block
         const val targetTimespan = 3600L          // 1 hour for 24 blocks
         const val heightInterval = targetTimespan / targetSpacing
+
+        private fun getDatabaseNameCore(networkType: NetworkType, walletId: String) =
+                "${getDatabaseName(networkType, walletId)}-core"
+
+        private fun getDatabaseName(networkType: NetworkType, walletId: String) =
+                "Dash-${networkType.name}-$walletId"
+
+        fun clear(context: Context, networkType: NetworkType, walletId: String) {
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseNameCore(networkType, walletId)))
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId)))
+        }
     }
 }
