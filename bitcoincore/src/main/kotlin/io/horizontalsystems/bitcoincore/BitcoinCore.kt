@@ -33,7 +33,6 @@ class BitcoinCoreBuilder {
     private var network: Network? = null
     private var paymentAddressParser: PaymentAddressParser? = null
     private var addressSelector: IAddressSelector? = null
-    private var apiFeeRateCoinCode: String? = null
     private var storage: IStorage? = null
     private var initialSyncApi: IInitialSyncApi? = null
 
@@ -71,11 +70,6 @@ class BitcoinCoreBuilder {
 
     fun setAddressSelector(addressSelector: IAddressSelector): BitcoinCoreBuilder {
         this.addressSelector = addressSelector
-        return this
-    }
-
-    fun setApiFeeRateCoinCode(apiFeeRateCoinCode: String): BitcoinCoreBuilder {
-        this.apiFeeRateCoinCode = apiFeeRateCoinCode
         return this
     }
 
@@ -120,13 +114,10 @@ class BitcoinCoreBuilder {
         val network = checkNotNull(this.network)
         val paymentAddressParser = checkNotNull(this.paymentAddressParser)
         val addressSelector = checkNotNull(this.addressSelector)
-        val apiFeeRateCoinCode = checkNotNull(this.apiFeeRateCoinCode)
         val storage = checkNotNull(this.storage)
         val initialSyncApi = checkNotNull(this.initialSyncApi)
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
         val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter(BaseTransactionInfoConverter())
-
-        val apiFeeRate = ApiFeeRate(apiFeeRateCoinCode)
 
         val addressConverter = AddressConverterChain()
 
@@ -167,13 +158,12 @@ class BitcoinCoreBuilder {
         val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputSelector)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
 
-        val feeRateSyncer = FeeRateSyncer(storage, apiFeeRate)
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
         val stateManager = StateManager(storage, network, newWallet)
         val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)
 
-        val syncManager = SyncManager(connectionManager, feeRateSyncer, peerGroup, initialSyncer)
+        val syncManager = SyncManager(peerGroup, initialSyncer)
         initialSyncer.listener = syncManager
 
         val bitcoinCore = BitcoinCore(

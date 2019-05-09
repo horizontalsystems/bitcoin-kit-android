@@ -6,11 +6,6 @@ import io.horizontalsystems.bitcoincore.storage.*
 
 interface IStorage {
 
-    //  FeeRate
-
-    val feeRate: FeeRate?
-    fun setFeeRate(feeRate: FeeRate)
-
     //  BlockchainState
 
     val initialRestored: Boolean?
