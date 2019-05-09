@@ -318,8 +318,4 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.sentTransaction.insert(transaction)
     }
 
-    // Rest
-    override fun clear() {
-        store.clearAllTables()
-    }
 }

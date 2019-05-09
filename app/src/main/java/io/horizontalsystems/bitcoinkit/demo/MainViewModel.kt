@@ -20,7 +20,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val lastBlockHeight = MutableLiveData<Int>()
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
-    val networkName: String
+    lateinit var networkName: String
     var feePriority: FeePriority = FeePriority.Medium
     private val disposables = CompositeDisposable()
 
@@ -30,12 +30,19 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             status.value = (if (value) State.STARTED else State.STOPPED)
         }
 
-    private var bitcoinKit: BitcoinKit
+    private lateinit var bitcoinKit: BitcoinKit
+
+    private val walletId = "MyWallet"
+    private val networkType = BitcoinKit.NetworkType.MainNet
 
     init {
+        init()
+    }
+
+    private fun init() {
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
 
-        bitcoinKit = BitcoinKit(App.instance, words, "MyWallet", BitcoinKit.NetworkType.TestNet)
+        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType)
 
         bitcoinKit.listener = this
 
@@ -62,7 +69,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun clear() {
-        bitcoinKit.clear()
+        bitcoinKit.stop()
+        BitcoinKit.clear(App.instance, networkType, walletId)
+
+        init()
     }
 
     fun receiveAddress(): String {

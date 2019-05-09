@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincash
 
 import android.content.Context
+import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincash.blocks.validators.DAAValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.EDAValidator
@@ -39,7 +40,7 @@ class BitcoinCashKit : AbstractKit {
             this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
 
     constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
-        val database = CoreDatabase.getInstance(context, "${javaClass.simpleName}-${networkType.name}-$walletId")
+        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
 
         network = when (networkType) {
@@ -95,6 +96,13 @@ class BitcoinCashKit : AbstractKit {
         val targetSpacing = 10 * 60                         // 10 minutes per block.
         val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
         var heightInterval = targetTimespan / targetSpacing // 2016 blocks
+
+
+        private fun getDatabaseName(networkType: NetworkType, walletId: String): String = "BitcoinCash-${networkType.name}-$walletId"
+
+        fun clear(context: Context, networkType: NetworkType, walletId: String) {
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId)))
+        }
     }
 
 }

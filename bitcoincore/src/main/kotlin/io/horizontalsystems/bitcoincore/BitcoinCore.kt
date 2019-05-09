@@ -336,11 +336,6 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         syncManager.stop()
     }
 
-    fun clear() {
-        stop()
-        storage.clear()
-    }
-
     fun refresh() {
         start()
     }

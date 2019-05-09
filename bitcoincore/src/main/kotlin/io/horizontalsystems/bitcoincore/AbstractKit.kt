@@ -25,10 +25,6 @@ abstract class AbstractKit {
         bitcoinCore.stop()
     }
 
-    fun clear() {
-        bitcoinCore.clear()
-    }
-
     fun refresh() {
         bitcoinCore.refresh()
     }

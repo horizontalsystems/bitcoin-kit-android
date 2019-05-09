@@ -83,6 +83,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                 "\nTo: ${mapAddresses(transactionInfo.to)}" +
                 "\nAmount: $amount" +
                 "\nTx hash: ${transactionInfo.transactionHash}" +
+                "\nTx index: ${transactionInfo.transactionIndex}" +
                 "\nBlock: ${transactionInfo.blockHeight}" +
                 "\nTimestamp: ${transactionInfo.timestamp}" +
                 "\nDate: $date"
