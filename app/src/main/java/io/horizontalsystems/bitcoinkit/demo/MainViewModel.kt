@@ -2,11 +2,11 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
+import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.FeePriority
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.BitcoinKit
-import io.horizontalsystems.bitcoinkit.BitcoinKit.KitState
-import io.horizontalsystems.bitcoinkit.models.BlockInfo
-import io.horizontalsystems.bitcoinkit.models.FeePriority
-import io.horizontalsystems.bitcoinkit.models.TransactionInfo
 import io.reactivex.disposables.CompositeDisposable
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
@@ -20,7 +20,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val lastBlockHeight = MutableLiveData<Int>()
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
-    val networkName: String
+    lateinit var networkName: String
     var feePriority: FeePriority = FeePriority.Medium
     private val disposables = CompositeDisposable()
 
@@ -30,16 +30,23 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             status.value = (if (value) State.STARTED else State.STOPPED)
         }
 
-    private var bitcoinKit: BitcoinKit
+    private lateinit var bitcoinKit: BitcoinKit
+
+    private val walletId = "MyWallet"
+    private val networkType = BitcoinKit.NetworkType.MainNet
 
     init {
-        val words = listOf("used", "ugly", "meat", "glad", "balance", "divorce", "inner", "artwork", "hire", "invest", "already", "piano")
-        val networkType = BitcoinKit.NetworkType.TestNet
+        init()
+    }
 
-        bitcoinKit = BitcoinKit(words, networkType)
+    private fun init() {
+        val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
+
+        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType)
+
         bitcoinKit.listener = this
 
-        networkName = networkType.name
+        networkName = bitcoinKit.networkName
         balance.value = bitcoinKit.balance
 
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
@@ -62,7 +69,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun clear() {
-        bitcoinKit.clear()
+        bitcoinKit.stop()
+        BitcoinKit.clear(App.instance, networkType, walletId)
+
+        init()
     }
 
     fun receiveAddress(): String {
@@ -86,7 +96,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     // BitcoinKit Listener implementations
     //
-    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
             transactions.postValue(txList.sortedByDescending { it.blockHeight })
         }.let {
@@ -97,15 +107,15 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     override fun onTransactionsDelete(hashes: List<String>) {
     }
 
-    override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {
+    override fun onBalanceUpdate(balance: Long) {
         this.balance.postValue(balance)
     }
 
-    override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
+    override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
         this.lastBlockHeight.postValue(blockInfo.height)
     }
 
-    override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
+    override fun onKitStateUpdate(state: KitState) {
         this.state.postValue(state)
     }
 

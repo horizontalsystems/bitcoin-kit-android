@@ -9,8 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
-import io.horizontalsystems.bitcoinkit.managers.UnspentOutputSelector
-import io.horizontalsystems.bitcoinkit.models.FeePriority
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
+import io.horizontalsystems.bitcoincore.models.FeePriority
 
 class SendReceiveFragment : Fragment() {
 
@@ -63,7 +63,7 @@ class SendReceiveFragment : Fragment() {
         val customFeePriority = view.findViewById<EditText>(R.id.customFeePriority)
         customFeePriority.addTextChangedListener(object: TextWatcher {
             override fun afterTextChanged(s: Editable) {
-                val feePriority = s.toString().toDoubleOrNull()
+                val feePriority = s.toString().toIntOrNull()
                 feePriority?.let {
                     viewModel.feePriority = FeePriority.Custom(it)
                     updateFee()
@@ -99,8 +99,8 @@ class SendReceiveFragment : Fragment() {
             message = "Transaction sent"
         } catch (e: Exception) {
             message = when (e) {
-                is UnspentOutputSelector.Error.InsufficientUnspentOutputs,
-                is UnspentOutputSelector.Error.EmptyUnspentOutputs -> "Insufficient balance"
+                is UnspentOutputSelectorError.InsufficientUnspentOutputs,
+                is UnspentOutputSelectorError.EmptyUnspentOutputs -> "Insufficient balance"
                 else -> e.message ?: "Failed to send transaction"
             }
         }
