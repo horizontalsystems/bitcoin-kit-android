@@ -1,7 +1,5 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import io.horizontalsystems.bitcoincore.managers.BCoinApi
-import io.horizontalsystems.bitcoincore.managers.BlockHashFetcherHelper
 import org.junit.Assert
 import org.junit.Test
 
@@ -16,8 +14,8 @@ class BlockHashFetcherHelperTest {
                 listOf("address1_0", "address1_1")
         )
         val outputs = listOf(
-                BCoinApi.TransactionOutputItem("asdasd", "asdasd"),
-                BCoinApi.TransactionOutputItem("tyrty", "sdfasdf")
+                TransactionOutputItem("asdasd", "asdasd"),
+                TransactionOutputItem("tyrty", "sdfasdf")
         )
 
         val result = fetcherHelper.lastUsedIndex(addresses, outputs)
@@ -32,8 +30,8 @@ class BlockHashFetcherHelperTest {
                 listOf("address1_0", "address1_1")
         )
         val outputs = listOf(
-                BCoinApi.TransactionOutputItem("asdasd", "address0_0"),
-                BCoinApi.TransactionOutputItem("tyrty", "sdfasdf")
+                TransactionOutputItem("asdasd", "address0_0"),
+                TransactionOutputItem("tyrty", "sdfasdf")
         )
 
         val result = fetcherHelper.lastUsedIndex(addresses, outputs)
@@ -48,8 +46,8 @@ class BlockHashFetcherHelperTest {
                 listOf("address1_0", "address1_1")
         )
         val outputs = listOf(
-                BCoinApi.TransactionOutputItem("asdasd", "address0_0"),
-                BCoinApi.TransactionOutputItem("ssfdaddress1_1aaqqw", "sdfasdf")
+                TransactionOutputItem("asdasd", "address0_0"),
+                TransactionOutputItem("ssfdaddress1_1aaqqw", "sdfasdf")
         )
 
         val result = fetcherHelper.lastUsedIndex(addresses, outputs)

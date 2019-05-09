@@ -38,9 +38,6 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
     var lastBlockInfo: BlockInfo?
         private set
 
-    val feeRate: FeeRate
-        get() = storage.feeRate ?: FeeRate.defaultFeeRate
-
     init {
         lastBlockInfo = storage.lastBlock()?.let {
             blockInfo(it)

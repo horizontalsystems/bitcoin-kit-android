@@ -7,7 +7,6 @@ import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
 
 @Database(version = 1, exportSchema = false, entities = [
-    FeeRate::class,
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -21,7 +20,6 @@ import io.horizontalsystems.bitcoincore.models.*
 
 abstract class CoreDatabase : RoomDatabase() {
 
-    abstract val feeRate: FeeRateDao
     abstract val blockchainState: BlockchainStateDao
     abstract val peerAddress: PeerAddressDao
     abstract val blockHash: BlockHashDao

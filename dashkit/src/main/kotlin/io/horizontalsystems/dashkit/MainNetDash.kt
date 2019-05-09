@@ -28,13 +28,13 @@ class MainNetDash : Network() {
     )
 
     override val checkpointBlock = Block(BlockHeader(
-            536870912,
-            HashUtils.toBytesAsLE("000000000000000992e45d7b6d5204e40b24474db7c107e7b1e4884f3e76462c"),
-            HashUtils.toBytesAsLE("61694834cfd431c70975645849caff2e1bfb4c487706cf217129fd4371cd7a79"),
-            1551689319L,
-            0x193f7bf8,
-            2813674015,
-            HashUtils.toBytesAsLE("00000000000000243001bbc7deafb49dc28738204d8a237852aacb19cb262474")
-    ), 1030968)
+            version = 536870912,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000008e256ece9efbd7ce5b23391dba1129a55143b9ae90841bfc1"),
+            merkleRoot = HashUtils.toBytesAsLE("c24e8f73fa72fcbf510f48ee198243fb8d08895d95814e8f8da00dc8d463608a"),
+            timestamp = 1551689319L,
+            bits = 0x193f7bf8,
+            nonce = 2813674015,
+            hash = HashUtils.toBytesAsLE("000000000000000d1f01d32f7d3b2813d8543377668f82811cfbbe89cb7f50fe")
+    ), 1066693)
 
 }

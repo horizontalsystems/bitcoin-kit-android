@@ -1,14 +1,10 @@
 package io.horizontalsystems.bitcoincore.core
 
+import io.horizontalsystems.bitcoincore.managers.TransactionItem
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.*
 
 interface IStorage {
-
-    //  FeeRate
-
-    val feeRate: FeeRate?
-    fun setFeeRate(feeRate: FeeRate)
 
     //  BlockchainState
 
@@ -99,4 +95,8 @@ interface IStorage {
 
 interface ITransactionInfoConverter {
     fun transactionInfo(transactionForInfo: FullTransactionInfo): TransactionInfo
+}
+
+interface IInitialSyncApi {
+    fun getTransactions(addresses: List<String>): List<TransactionItem>
 }

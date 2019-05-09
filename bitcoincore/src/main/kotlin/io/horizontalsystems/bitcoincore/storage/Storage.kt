@@ -6,15 +6,6 @@ import io.horizontalsystems.bitcoincore.models.*
 
 open class Storage(protected open val store: CoreDatabase) : IStorage {
 
-    // FeeRate
-
-    override val feeRate: FeeRate?
-        get() = store.feeRate.getRate()
-
-    override fun setFeeRate(feeRate: FeeRate) {
-        return store.feeRate.insert(feeRate)
-    }
-
     // RestoreState
 
     override val initialRestored: Boolean?
