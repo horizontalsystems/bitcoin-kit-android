@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoinkit
 
 import io.horizontalsystems.bitcoincore.models.Block
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 class MainNet : Network() {
@@ -30,14 +30,14 @@ class MainNet : Network() {
     )
 
     private val blockHeader = BlockHeader(
-            version = 536870912,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000000017e5c36734296b27065045f181e028c0d91cebb336d50c"),
-            merkleRoot = HashUtils.toBytesAsLE("2f9963d6eb332a0dd03ad806f504981e6180226dbca4385dc801db8974b2c17b"),
-            timestamp = 1551026038,
-            bits = 388914000,
-            nonce = 1427093839,
-            hash = HashUtils.toBytesAsLE("0000000000000000002567dc317da20ddb0d7ef922fe1f9c2375671654f9006c")
+            version = 545259520,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000000001b2505c11119fcf29be733ec379f686518bf1090a522a"),
+            merkleRoot = HashUtils.toBytesAsLE("cc09d95fd8ccc985826b9eb46bf73f8449116f18535423129f0574500985cf90"),
+            timestamp = 1556958733,
+            bits = 388628280,
+            nonce = 2897942742,
+            hash = HashUtils.toBytesAsLE("00000000000000000008c8427670a65dec4360e88bf6c8381541ef26b30bd8fc")
     )
 
-    override val checkpointBlock = Block(blockHeader, 564480)
+    override val checkpointBlock = Block(blockHeader, 574560)
 }
