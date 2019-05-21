@@ -5,5 +5,6 @@ object DashKitErrors {
         class MasternodeNotFound : LockVoteValidation()
         class MasternodeNotInTop : LockVoteValidation()
         class TxInputNotFound : LockVoteValidation()
+        class SignatureNotValid : LockVoteValidation()
     }
 }
