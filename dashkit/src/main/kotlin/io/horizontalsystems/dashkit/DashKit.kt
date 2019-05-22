@@ -20,10 +20,7 @@ import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.dashkit.core.DashTransactionInfoConverter
 import io.horizontalsystems.dashkit.core.SingleSha256Hasher
-import io.horizontalsystems.dashkit.instantsend.InstantSendFactory
-import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
-import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteManager
-import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteValidator
+import io.horizontalsystems.dashkit.instantsend.*
 import io.horizontalsystems.dashkit.managers.*
 import io.horizontalsystems.dashkit.masternodelist.MasternodeCbTxHasher
 import io.horizontalsystems.dashkit.masternodelist.MasternodeListMerkleRootCalculator
@@ -143,7 +140,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.addPeerGroupListener(masternodeSyncer)
 
         val singleHasher = SingleSha256Hasher()
-        val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher)
+        val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher, BLS())
         val instantSend = InstantSend(bitcoinCore.transactionSyncer, TransactionLockVoteManager(transactionLockVoteValidator), instantTransactionManager)
         instantSend.delegate = this
 

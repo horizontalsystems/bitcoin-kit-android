@@ -39,7 +39,9 @@ class TransactionLockVoteMessageParser : IMessageParser {
             val outpointMasternode = Outpoint(bitcoinInput)
             val quorumModifierHash = bitcoinInput.readBytes(32)
             val masternodeProTxHash = bitcoinInput.readBytes(32)
-            val vchMasternodeSignature = bitcoinInput.readBytes(96)
+            val signatureLength = bitcoinInput.readVarInt()
+            val vchMasternodeSignature = ByteArray(signatureLength.toInt())
+            bitcoinInput.readFully(vchMasternodeSignature)
 
             val hashPayload = BitcoinOutput()
                     .write(txHash)

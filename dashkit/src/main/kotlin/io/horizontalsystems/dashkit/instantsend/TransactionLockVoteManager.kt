@@ -36,7 +36,7 @@ class TransactionLockVoteManager(private val transactionLockVoteValidator: Trans
     @Throws
     fun validate(lockVote: TransactionLockVoteMessage) {
         // validate masternode in top 10 masternodes for quorumModifier
-        transactionLockVoteValidator.validate(lockVote.quorumModifierHash, lockVote.masternodeProTxHash)
+        transactionLockVoteValidator.validate(lockVote.quorumModifierHash, lockVote.masternodeProTxHash, lockVote.vchMasternodeSignature, lockVote.hash)
     }
 
 }

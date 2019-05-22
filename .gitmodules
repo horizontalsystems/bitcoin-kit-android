@@ -1,0 +1,3 @@
+[submodule "dashkit/cpp/dashj-bls/bls-signatures"]
+	path = dashkit/cpp/dashj-bls/bls-signatures
+	url = https://github.com/Chia-Network/bls-signatures
