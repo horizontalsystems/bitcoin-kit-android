@@ -3,15 +3,8 @@ package io.horizontalsystems.dashkit.instantsend
 import io.horizontalsystems.bitcoincore.core.IHasher
 import io.horizontalsystems.dashkit.DashKitErrors
 import io.horizontalsystems.dashkit.IDashStorage
-import org.dashj.bls.InsecureSignature
-import org.dashj.bls.JNI
-import org.dashj.bls.PublicKey
 
-class TransactionLockVoteValidator(private val storage: IDashStorage, private val hasher: IHasher) {
-
-    init {
-        System.loadLibrary(JNI.LIBRARY_NAME)
-    }
+class TransactionLockVoteValidator(private val storage: IDashStorage, private val hasher: IHasher, private val bls: BLS) {
 
     companion object {
         private const val totalSignatures = 10
@@ -45,10 +38,7 @@ class TransactionLockVoteValidator(private val storage: IDashStorage, private va
 
         // 5. Check signature
         val masternode = quorumMasternodes[index].masternode
-        val pk = PublicKey.FromBytes(masternode.pubKeyOperator)
-        val insecureSignature = InsecureSignature.FromBytes(vchMasternodeSignature)
-
-        if (!insecureSignature.Verify(hash, pk)) {
+        if (!bls.verifySignature(masternode.pubKeyOperator, vchMasternodeSignature, hash)) {
             throw DashKitErrors.LockVoteValidation.SignatureNotValid()
         }
     }
