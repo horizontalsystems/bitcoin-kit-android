@@ -1,11 +1,11 @@
 package io.horizontalsystems.dashkit.messages
 
-import io.horizontalsystems.dashkit.models.CoinbaseTransaction
-import io.horizontalsystems.dashkit.models.Masternode
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
-import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
+import io.horizontalsystems.dashkit.models.CoinbaseTransaction
+import io.horizontalsystems.dashkit.models.Masternode
 import java.io.ByteArrayInputStream
 
 class MasternodeListDiffMessage(
@@ -16,13 +16,12 @@ class MasternodeListDiffMessage(
         val merkleFlags: ByteArray,
         val cbTx: CoinbaseTransaction,
         val deletedMNs: List<ByteArray>,
-        val mnList: List<Masternode>
-) : IMessage {
-    override val command: String = "mnlistdiff"
+        val mnList: List<Masternode>) : IMessage {
 
     override fun toString(): String {
         return "MnListDiffMessage(baseBlockHash=${baseBlockHash.toReversedHex()}, blockHash=${blockHash.toReversedHex()})"
     }
+
 }
 
 class MasternodeListDiffMessageParser : IMessageParser {

@@ -15,13 +15,12 @@ class TransactionLockVoteMessage(
         var quorumModifierHash: ByteArray,
         var masternodeProTxHash: ByteArray,
         var vchMasternodeSignature: ByteArray,
-        var hash: ByteArray
-) : IMessage {
-    override val command: String = "txlvote"
+        var hash: ByteArray) : IMessage {
 
     override fun toString(): String {
         return "TransactionLockVoteMessage(hash=${hash.toReversedHex()}, txHash=${txHash.toReversedHex()})"
     }
+
 }
 
 class Outpoint(input: BitcoinInput) {

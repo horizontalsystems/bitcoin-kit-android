@@ -5,8 +5,6 @@ import io.horizontalsystems.bitcoincore.models.NetworkAddress
 import java.io.ByteArrayInputStream
 
 class AddrMessage(var addresses: List<NetworkAddress>) : IMessage {
-    override val command: String = "addr"
-
     override fun toString(): String {
         return "AddrMessage(count=${addresses.size})"
     }
