@@ -96,7 +96,7 @@ class NetworkMessageSerializer(private val magic: Long) {
         }
 
         if (payload == null || serializer == null) {
-            throw CantSerializer(msg)
+            throw NoSerializer(msg)
         }
 
         return BitcoinOutput()
@@ -128,4 +128,4 @@ class NetworkMessageSerializer(private val magic: Long) {
     }
 }
 
-class CantSerializer(message: IMessage) : Exception("Cannot serialize message=$message")
+class NoSerializer(message: IMessage) : Exception("Cannot serialize message=$message")

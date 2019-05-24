@@ -18,7 +18,7 @@ import org.mockito.Mockito
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class UnspentOutputSelectorTest : Spek({
+object UnspentOutputSelectorTest : Spek({
 
     describe("#select") {
         context("when there is no limit for outputs") {

@@ -20,9 +20,7 @@ class RequestMasternodeListDiffTask(private val baseBlockHash: ByteArray, privat
 
 
     override fun start() {
-        val message = GetMasternodeListDiffMessage(baseBlockHash, blockHash)
-
-        requester?.sendMessage(message)
+        requester?.send(GetMasternodeListDiffMessage(baseBlockHash, blockHash))
         resetTimer()
     }
 

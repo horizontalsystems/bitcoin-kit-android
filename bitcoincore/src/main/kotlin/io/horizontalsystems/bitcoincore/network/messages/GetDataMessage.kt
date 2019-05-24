@@ -9,11 +9,11 @@ import java.io.ByteArrayInputStream
 class GetDataMessage(var inventory: List<InventoryItem>) : IMessage {
     override fun toString(): String {
         val invList = inventory.take(10)
-                .map { inv -> inv.type.toString() + ":" + inv.hash.toReversedHex() }
+                .map { inv -> "${inv.type} :${inv.hash.toReversedHex()}" }
                 .toTypedArray()
                 .joinToString()
 
-        return "GetDataMessage(" + inventory.size + ": [" + invList + "])"
+        return "GetDataMessage(${inventory.size}: [$invList])"
     }
 }
 

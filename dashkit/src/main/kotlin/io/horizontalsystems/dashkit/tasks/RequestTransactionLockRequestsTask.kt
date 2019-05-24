@@ -1,11 +1,12 @@
 package io.horizontalsystems.dashkit.tasks
 
-import io.horizontalsystems.dashkit.InventoryType
-import io.horizontalsystems.dashkit.messages.TransactionLockMessage
 import io.horizontalsystems.bitcoincore.models.InventoryItem
+import io.horizontalsystems.bitcoincore.network.messages.GetDataMessage
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.dashkit.InventoryType
+import io.horizontalsystems.dashkit.messages.TransactionLockMessage
 
 class RequestTransactionLockRequestsTask(hashes: List<ByteArray>) : PeerTask() {
 
@@ -13,9 +14,11 @@ class RequestTransactionLockRequestsTask(hashes: List<ByteArray>) : PeerTask() {
     var transactions = mutableListOf<FullTransaction>()
 
     override fun start() {
-        requester?.getData(hashes.map { hash ->
+        val items = hashes.map { hash ->
             InventoryItem(InventoryType.MSG_TXLOCK_REQUEST, hash)
-        })
+        }
+
+        requester?.send(GetDataMessage(items))
     }
 
     override fun handleMessage(message: IMessage) = when (message) {

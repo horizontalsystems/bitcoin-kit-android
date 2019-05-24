@@ -4,18 +4,18 @@ import com.nhaarman.mockito_kotlin.never
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoincore.RxTestRule
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.RxTestRule
 import io.reactivex.Single
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class InitialSyncerTest : Spek({
+object InitialSyncerTest : Spek({
 
     lateinit var initialSyncer: InitialSyncer
 

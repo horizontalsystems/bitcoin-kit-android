@@ -16,6 +16,7 @@ import java.net.URLConnection
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(ApiManager::class, URL::class)
+
 class ApiManagerTest {
 
     private val url = mock(URL::class.java)

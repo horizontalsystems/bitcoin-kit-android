@@ -14,7 +14,7 @@ import org.mockito.Mockito
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class UnspentOutputSelectorSingleNoChangeTest : Spek({
+object UnspentOutputSelectorSingleNoChangeTest : Spek({
     describe("#select") {
         val txSizeCalculator = Mockito.mock(TransactionSizeCalculator::class.java)
         val unspentOutputProvider = Mockito.mock(UnspentOutputProvider::class.java)

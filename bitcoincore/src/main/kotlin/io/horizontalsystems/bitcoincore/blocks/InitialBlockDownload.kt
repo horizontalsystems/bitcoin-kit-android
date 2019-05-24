@@ -11,10 +11,12 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
-class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
-                           private val peerManager: PeerManager,
-                           private val syncStateListener: ISyncStateListener
-) : IInventoryItemsHandler, IPeerTaskHandler, PeerGroup.IPeerGroupListener, GetMerkleBlocksTask.MerkleBlockHandler {
+class InitialBlockDownload(
+        private var blockSyncer: BlockSyncer?,
+        private val peerManager: PeerManager,
+        private val syncStateListener: ISyncStateListener,
+        private val merkleBlockExtractor: MerkleBlockExtractor)
+    : IInventoryItemsHandler, IPeerTaskHandler, PeerGroup.Listener, GetMerkleBlocksTask.MerkleBlockHandler {
 
     val syncedPeers = CopyOnWriteArrayList<Peer>()
     private val peerSyncListeners = mutableListOf<IPeerSyncListener>()
@@ -126,7 +128,7 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
                 if (blockHashes.isEmpty()) {
                     peer.synced = peer.blockHashesSynced
                 } else {
-                    peer.addTask(GetMerkleBlocksTask(blockHashes, this))
+                    peer.addTask(GetMerkleBlocksTask(blockHashes, this, merkleBlockExtractor))
                 }
 
                 if (!peer.blockHashesSynced) {

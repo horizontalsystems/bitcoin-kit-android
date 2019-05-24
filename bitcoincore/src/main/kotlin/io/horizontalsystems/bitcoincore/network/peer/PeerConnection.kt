@@ -10,7 +10,6 @@ import java.net.*
 import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.TimeUnit
-import java.util.logging.Level
 import java.util.logging.Logger
 
 class PeerConnection(
@@ -18,8 +17,8 @@ class PeerConnection(
         private val network: Network,
         private val listener: Listener,
         private val networkMessageParser: NetworkMessageParser,
-        private val networkMessageSerializer: NetworkMessageSerializer
-) : Thread() {
+        private val networkMessageSerializer: NetworkMessageSerializer)
+    : Thread() {
 
     interface Listener {
         fun socketConnected(address: InetAddress)
@@ -62,7 +61,7 @@ class PeerConnection(
                 val msg = sendingQueue.poll(1, TimeUnit.SECONDS)
                 if (isRunning && msg != null) {
                     // send message:
-                    logger.info("=> " + msg.toString())
+                    logger.info("=> $msg")
                     output.write(networkMessageSerializer.serialize(msg))
                 }
 
@@ -103,7 +102,7 @@ class PeerConnection(
         try {
             join(1000)
         } catch (e: Exception) {
-            logger.log(Level.SEVERE, e.message)
+            logger.severe(e.message)
         }
     }
 

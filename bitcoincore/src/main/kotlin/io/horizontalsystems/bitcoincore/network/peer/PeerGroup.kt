@@ -1,11 +1,8 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
 import io.horizontalsystems.bitcoincore.managers.ConnectionManager
-import io.horizontalsystems.bitcoincore.models.InventoryItem
-import io.horizontalsystems.bitcoincore.models.NetworkAddress
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
-import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
+import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import java.net.InetAddress
 import java.util.logging.Logger
@@ -16,10 +13,9 @@ class PeerGroup(
         private val peerManager: PeerManager,
         private val peerSize: Int,
         private val networkMessageParser: NetworkMessageParser,
-        private val networkMessageSerializer: NetworkMessageSerializer
-) : Thread(), Peer.Listener {
+        private val networkMessageSerializer: NetworkMessageSerializer) : Thread(), Peer.Listener {
 
-    interface IPeerGroupListener {
+    interface Listener {
         fun onStart() = Unit
         fun onStop() = Unit
         fun onPeerCreate(peer: Peer) = Unit
@@ -36,9 +32,9 @@ class PeerGroup(
     @Volatile
     private var running = false
     private val logger = Logger.getLogger("PeerGroup")
-    private val peerGroupListeners = mutableListOf<IPeerGroupListener>()
+    private val peerGroupListeners = mutableListOf<Listener>()
 
-    fun addPeerGroupListener(listener: IPeerGroupListener) {
+    fun addPeerGroupListener(listener: Listener) {
         peerGroupListeners.add(listener)
     }
 
@@ -121,18 +117,19 @@ class PeerGroup(
 
     }
 
-    override fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>) {
-        inventoryItemsHandler?.handleInventoryItems(peer, inventoryItems)
-    }
+    override fun onReceiveMessage(peer: Peer, message: IMessage) {
+        if (message is AddrMessage) {
+            val addrs = message.addresses
+            val peerIps = mutableListOf<String>()
+            for (address in addrs) {
+                val addr = InetAddress.getByAddress(address.address)
+                peerIps.add(addr.hostAddress)
+            }
 
-    override fun onReceiveAddress(addrs: List<NetworkAddress>) {
-        val peerIps = mutableListOf<String>()
-        for (address in addrs) {
-            val addr = InetAddress.getByAddress(address.address)
-            peerIps.add(addr.hostAddress)
+            hostManager.addIps(peerIps.toTypedArray())
+        } else if (message is InvMessage) {
+            inventoryItemsHandler?.handleInventoryItems(peer, message.inventory)
         }
-
-        hostManager.addIps(peerIps.toTypedArray())
     }
 
     override fun onTaskComplete(peer: Peer, task: PeerTask) {

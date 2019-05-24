@@ -218,7 +218,10 @@ class BitcoinCoreBuilder {
         bloomFilterManager.listener = bloomFilterLoader
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 
-        val initialBlockDownload = InitialBlockDownload(BlockSyncer(storage, Blockchain(storage, bitcoinCore.blockValidatorChain, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network), peerManager, kitStateProvider)
+        val blockchain = Blockchain(storage, bitcoinCore.blockValidatorChain, dataProvider)
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network)
+        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
+
         // todo: now this part cannot be moved to another place since bitcoinCore requires initialBlockDownload to be set. find solution to do so
         bitcoinCore.initialBlockDownload = initialBlockDownload
         bitcoinCore.addPeerTaskHandler(initialBlockDownload)
@@ -287,7 +290,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         peerTaskHandlerChain.addHandler(handler)
     }
 
-    fun addPeerGroupListener(listener: PeerGroup.IPeerGroupListener) {
+    fun addPeerGroupListener(listener: PeerGroup.Listener) {
         peerGroup.addPeerGroupListener(listener)
     }
 
