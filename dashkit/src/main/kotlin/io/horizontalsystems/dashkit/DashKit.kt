@@ -26,10 +26,7 @@ import io.horizontalsystems.dashkit.masternodelist.MasternodeCbTxHasher
 import io.horizontalsystems.dashkit.masternodelist.MasternodeListMerkleRootCalculator
 import io.horizontalsystems.dashkit.masternodelist.MerkleRootCreator
 import io.horizontalsystems.dashkit.masternodelist.MerkleRootHasher
-import io.horizontalsystems.dashkit.messages.GetMasternodeListDiffMessageSerializer
-import io.horizontalsystems.dashkit.messages.MasternodeListDiffMessageParser
-import io.horizontalsystems.dashkit.messages.TransactionLockMessageParser
-import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessageParser
+import io.horizontalsystems.dashkit.messages.*
 import io.horizontalsystems.dashkit.models.CoinbaseTransactionSerializer
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.dashkit.models.InstantTransactionState
@@ -124,6 +121,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
                 .addMessageParser(TransactionLockMessageParser())
                 .addMessageParser(TransactionLockVoteMessageParser())
+                .addMessageParser(ISLockMessageParser())
 
         bitcoinCore.addMessageSerializer(GetMasternodeListDiffMessageSerializer())
 
@@ -141,7 +139,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
         val singleHasher = SingleSha256Hasher()
         val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher, BLS())
-        val instantSend = InstantSend(bitcoinCore.transactionSyncer, TransactionLockVoteManager(transactionLockVoteValidator), instantTransactionManager)
+        val instantSend = InstantSend(bitcoinCore.transactionSyncer, TransactionLockVoteManager(transactionLockVoteValidator), InstantSendLockValidator(), instantTransactionManager)
         instantSend.delegate = this
 
         bitcoinCore.addInventoryItemsHandler(instantSend)

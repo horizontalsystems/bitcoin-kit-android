@@ -14,6 +14,7 @@ interface IDashStorage {
     fun addInstantTransactionInput(instantTransactionInput: InstantTransactionInput)
     fun addInstantTransactionHash(txHash: ByteArray)
     fun removeInstantTransactionInputs(txHash: ByteArray)
+    fun isTransactionExists(txHash: ByteArray): Boolean
 
     var masternodes: List<Masternode>
     var masternodeListState: MasternodeListState?

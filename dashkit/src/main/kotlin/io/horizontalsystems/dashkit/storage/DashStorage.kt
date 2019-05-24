@@ -40,6 +40,10 @@ class DashStorage(private val dashStore: DashKitDatabase, private val coreStorag
         dashStore.instantTransactionInputDao.deleteByTx(txHash)
     }
 
+    override fun isTransactionExists(txHash: ByteArray): Boolean {
+        return coreStorage.isTransactionExists(txHash)
+    }
+
     fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo? {
         return coreStorage.getFullTransactionInfo(txHash)
     }
