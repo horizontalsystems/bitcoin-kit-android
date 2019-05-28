@@ -27,7 +27,6 @@ import io.horizontalsystems.dashkit.messages.*
 import io.horizontalsystems.dashkit.models.CoinbaseTransactionSerializer
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.dashkit.models.InstantTransactionState
-import io.horizontalsystems.dashkit.models.MasternodeSerializer
 import io.horizontalsystems.dashkit.storage.DashKitDatabase
 import io.horizontalsystems.dashkit.storage.DashStorage
 import io.horizontalsystems.dashkit.tasks.PeerTaskFactory
@@ -124,7 +123,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
         val merkleRootHasher = MerkleRootHasher()
         val merkleRootCreator = MerkleRootCreator(merkleRootHasher)
-        val masternodeListMerkleRootCalculator = MasternodeListMerkleRootCalculator(MasternodeSerializer(), merkleRootHasher, merkleRootCreator)
+        val masternodeListMerkleRootCalculator = MasternodeListMerkleRootCalculator(merkleRootCreator)
         val masternodeCbTxHasher = MasternodeCbTxHasher(CoinbaseTransactionSerializer(), merkleRootHasher)
 
         val quorumListManager = QuorumListManager(dashStorage, QuorumListMerkleRootCalculator(merkleRootCreator), QuorumSortedList())

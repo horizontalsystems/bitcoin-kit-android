@@ -4,8 +4,6 @@ import io.horizontalsystems.dashkit.models.Masternode
 
 class QuorumMasternode(val quorumHash: ByteArray, val masternode: Masternode) : Comparable<QuorumMasternode> {
 
-    // TODO ask Toha should implement Hashable?
-
     override fun compareTo(other: QuorumMasternode): Int {
         for (i in 0 until quorumHash.size) {
             val b1: Int = quorumHash[i].toInt() and 0xff
