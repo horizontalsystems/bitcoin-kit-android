@@ -5,10 +5,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.dashkit.IDashStorage
-import io.horizontalsystems.dashkit.models.InstantTransactionHash
-import io.horizontalsystems.dashkit.models.InstantTransactionInput
-import io.horizontalsystems.dashkit.models.Masternode
-import io.horizontalsystems.dashkit.models.MasternodeListState
+import io.horizontalsystems.dashkit.models.*
 
 class DashStorage(private val dashStore: DashKitDatabase, private val coreStorage: Storage) : IDashStorage {
 
@@ -61,5 +58,12 @@ class DashStorage(private val dashStore: DashKitDatabase, private val coreStorag
             value?.let {
                 dashStore.masternodeListStateDao.setState(value)
             }
+        }
+
+    override var quorums: List<Quorum>
+        get() = dashStore.quorumDao.getAll()
+        set(value) {
+            dashStore.quorumDao.clearAll()
+            dashStore.quorumDao.insertAll(value)
         }
 }

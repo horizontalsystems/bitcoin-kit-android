@@ -2,13 +2,11 @@ package io.horizontalsystems.dashkit.storage
 
 import android.arch.persistence.room.*
 import android.content.Context
-import io.horizontalsystems.dashkit.models.InstantTransactionHash
-import io.horizontalsystems.dashkit.models.InstantTransactionInput
-import io.horizontalsystems.dashkit.models.Masternode
-import io.horizontalsystems.dashkit.models.MasternodeListState
+import io.horizontalsystems.dashkit.models.*
 
-@Database(version = 1, exportSchema = false, entities = [
+@Database(version = 2, exportSchema = false, entities = [
     Masternode::class,
+    Quorum::class,
     MasternodeListState::class,
     InstantTransactionInput::class,
     InstantTransactionHash::class
@@ -17,6 +15,7 @@ import io.horizontalsystems.dashkit.models.MasternodeListState
 abstract class DashKitDatabase : RoomDatabase() {
     abstract val instantTransactionHashDao: InstantTransactionHashDao
     abstract val masternodeDao: MasternodeDao
+    abstract val quorumDao: QuorumDao
     abstract val masternodeListStateDao: MasternodeListStateDao
     abstract val instantTransactionInputDao: InstantTransactionInputDao
 
@@ -70,6 +69,18 @@ interface MasternodeDao {
     fun getAll(): List<Masternode>
 
     @Query("DELETE FROM Masternode")
+    fun clearAll()
+}
+
+@Dao
+interface QuorumDao {
+    @Insert
+    fun insertAll(masternodes: List<Quorum>)
+
+    @Query("SELECT * FROM Quorum")
+    fun getAll(): List<Quorum>
+
+    @Query("DELETE FROM Quorum")
     fun clearAll()
 }
 

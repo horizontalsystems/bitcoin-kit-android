@@ -14,7 +14,8 @@ class MasternodeListManager(
         private val masternodeListMerkleRootCalculator: MasternodeListMerkleRootCalculator,
         private val masternodeCbTxHasher: MasternodeCbTxHasher,
         private val merkleBranch: MerkleBranch,
-        private val masternodeSortedList: MasternodeSortedList
+        private val masternodeSortedList: MasternodeSortedList,
+        private val quorumListManager: QuorumListManager
 ) {
 
     open class ValidationError : Exception() {
@@ -76,9 +77,11 @@ class MasternodeListManager(
             throw ValidationError.WrongMerkleRoot
         }
 
+        quorumListManager.updateList(masternodeListDiffMessage)
+
         //07.
-        storage.masternodeListState = MasternodeListState(masternodeListDiffMessage.blockHash)
         storage.masternodes = masternodeSortedList.masternodes
+        storage.masternodeListState = MasternodeListState(masternodeListDiffMessage.blockHash)
         // todo: Can optimize. Update only difference of masternode list
     }
 

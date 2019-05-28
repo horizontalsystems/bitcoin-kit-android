@@ -22,10 +22,7 @@ import io.horizontalsystems.dashkit.core.DashTransactionInfoConverter
 import io.horizontalsystems.dashkit.core.SingleSha256Hasher
 import io.horizontalsystems.dashkit.instantsend.*
 import io.horizontalsystems.dashkit.managers.*
-import io.horizontalsystems.dashkit.masternodelist.MasternodeCbTxHasher
-import io.horizontalsystems.dashkit.masternodelist.MasternodeListMerkleRootCalculator
-import io.horizontalsystems.dashkit.masternodelist.MerkleRootCreator
-import io.horizontalsystems.dashkit.masternodelist.MerkleRootHasher
+import io.horizontalsystems.dashkit.masternodelist.*
 import io.horizontalsystems.dashkit.messages.*
 import io.horizontalsystems.dashkit.models.CoinbaseTransactionSerializer
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
@@ -130,7 +127,8 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         val masternodeListMerkleRootCalculator = MasternodeListMerkleRootCalculator(MasternodeSerializer(), merkleRootHasher, merkleRootCreator)
         val masternodeCbTxHasher = MasternodeCbTxHasher(CoinbaseTransactionSerializer(), merkleRootHasher)
 
-        val masternodeListManager = MasternodeListManager(dashStorage, masternodeListMerkleRootCalculator, masternodeCbTxHasher, MerkleBranch(), MasternodeSortedList())
+        val quorumListManager = QuorumListManager(dashStorage, QuorumListMerkleRootCalculator(merkleRootCreator), QuorumSortedList())
+        val masternodeListManager = MasternodeListManager(dashStorage, masternodeListMerkleRootCalculator, masternodeCbTxHasher, MerkleBranch(), MasternodeSortedList(), quorumListManager)
         val masternodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialBlockDownload)
 
         bitcoinCore.addPeerTaskHandler(masternodeSyncer)

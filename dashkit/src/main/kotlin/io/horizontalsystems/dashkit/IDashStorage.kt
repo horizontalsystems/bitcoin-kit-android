@@ -3,6 +3,7 @@ package io.horizontalsystems.dashkit
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.dashkit.models.InstantTransactionInput
+import io.horizontalsystems.dashkit.models.Quorum
 import io.horizontalsystems.dashkit.models.Masternode
 import io.horizontalsystems.dashkit.models.MasternodeListState
 
@@ -18,4 +19,5 @@ interface IDashStorage {
 
     var masternodes: List<Masternode>
     var masternodeListState: MasternodeListState?
+    var quorums: List<Quorum>
 }
