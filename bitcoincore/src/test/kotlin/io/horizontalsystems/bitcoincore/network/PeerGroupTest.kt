@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.models.NetworkAddress
+import io.horizontalsystems.bitcoincore.network.messages.AddrMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoincore.network.peer.Peer
@@ -84,14 +85,14 @@ class PeerGroupTest {
     }
 
     @Test
-    fun onReceiveAddresses() {
+    fun onReceiveMessage() {
         val ip4 = "0A000001"
         val raw = arrayOf("E215104D", "0100000000000000", "00000000000000000000FFFF$ip4", "208D").joinToString("")
         val input = BitcoinInput(raw.hexToByteArray())
 
         val netAddress = NetworkAddress(input, false)
 
-        peerGroup.onReceiveAddress(listOf(netAddress))
+        peerGroup.onReceiveMessage(peer1, AddrMessage(listOf(netAddress)))
 
         verify(hostManager).addIps(arrayOf("10.0.0.1"))
     }

@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoincore.network.peer.task.RequestTransactionsTas
 import io.horizontalsystems.bitcoincore.network.peer.task.SendTransactionTask
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
 
-class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskHandler, IInventoryItemsHandler, PeerGroup.IPeerGroupListener {
+class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskHandler, IInventoryItemsHandler, PeerGroup.Listener {
 
     private val requestedTransactions = hashMapOf<String, MutableList<ByteArray>>()
 

@@ -8,6 +8,8 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.*
 
+interface IMessage
+
 interface IMessageParser {
     val command: String
     fun parseMessage(payload: ByteArray): IMessage
@@ -15,11 +17,7 @@ interface IMessageParser {
 
 interface IMessageSerializer {
     val command: String
-    fun serialize(message: IMessage): ByteArray
-}
-
-interface IMessage {
-    val command: String
+    fun serialize(message: IMessage): ByteArray?
 }
 
 class NetworkMessageParser(private val magic: Long) {
@@ -49,7 +47,7 @@ class NetworkMessageParser(private val magic: Long) {
         }
 
         try {
-            return messageParsers[command]?.parseMessage(payload) ?: UnknownMessage(command, payload)
+            return messageParsers[command]?.parseMessage(payload) ?: UnknownMessage(command)
         } catch (e: Exception) {
             throw RuntimeException(e)
         }
@@ -82,14 +80,28 @@ class NetworkMessageParser(private val magic: Long) {
 }
 
 class NetworkMessageSerializer(private val magic: Long) {
-    private var messageSerializers = hashMapOf<String, IMessageSerializer>()
+    private var messageSerializers = mutableListOf<IMessageSerializer>()
 
     fun serialize(msg: IMessage): ByteArray {
-        val payload = messageSerializers[msg.command]?.serialize(msg) ?: throw NoSerializer(msg.command)
+        var payload: ByteArray? = null
+        var serializer: IMessageSerializer? = null
+
+        for (item in messageSerializers) {
+            payload = item.serialize(msg)
+
+            if (payload != null) {
+                serializer = item
+                break
+            }
+        }
+
+        if (payload == null || serializer == null) {
+            throw NoSerializer(msg)
+        }
 
         return BitcoinOutput()
-                .writeInt32(magic)      // magic
-                .write(getCommandBytes(msg.command))    // command: char[12]
+                .writeInt32(magic)                          // magic
+                .write(getCommandBytes(serializer.command)) // command: char[12]
                 .writeInt(payload.size)         // length: uint32_t
                 .write(getCheckSum(payload))    // checksum: uint32_t
                 .write(payload)                 // payload:
@@ -97,7 +109,7 @@ class NetworkMessageSerializer(private val magic: Long) {
     }
 
     fun add(messageSerializer: IMessageSerializer) {
-        messageSerializers[messageSerializer.command] = messageSerializer
+        messageSerializers.add(messageSerializer)
     }
 
     private fun getCommandBytes(cmd: String): ByteArray {
@@ -116,5 +128,4 @@ class NetworkMessageSerializer(private val magic: Long) {
     }
 }
 
-class WrongSerializer : Exception()
-class NoSerializer(command: String) : Exception("Cannot serialize message command=$command")
+class NoSerializer(message: IMessage) : Exception("Cannot serialize message=$message")

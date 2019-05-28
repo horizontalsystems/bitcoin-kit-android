@@ -17,7 +17,7 @@ import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class BlockSyncerTest : Spek({
+object BlockSyncerTest : Spek({
 
     lateinit var blockSyncer: BlockSyncer
 

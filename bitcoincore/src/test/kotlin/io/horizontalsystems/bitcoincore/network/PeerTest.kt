@@ -92,9 +92,10 @@ class PeerTest {
     }
 
     @Test
-    fun onReceiveAddresses() {
+    fun onReceiveMessage() {
         peer.connected = true
         peer.onMessage(addressMessage)
-        verify(listener).onReceiveAddress(addressMessage.addresses)
+
+        verify(listener).onReceiveMessage(peer, addressMessage)
     }
 }

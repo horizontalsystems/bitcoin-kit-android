@@ -9,8 +9,6 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import java.io.ByteArrayInputStream
 
 class TransactionLockMessage(var transaction: FullTransaction) : IMessage {
-    override val command: String = "ix"
-
     override fun toString(): String {
         return "TransactionLockMessage(${transaction.header.hash.toReversedHex()})"
     }

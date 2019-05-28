@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoincore.models.Transaction
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class DataProviderTest : Spek({
+object DataProviderTest : Spek({
     val storage = mock<IStorage>()
     val unspentOutputProvider = mock<UnspentOutputProvider>()
     val transactionInfoConverter = mock<ITransactionInfoConverter>()

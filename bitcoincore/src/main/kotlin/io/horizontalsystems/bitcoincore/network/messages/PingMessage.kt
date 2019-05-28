@@ -5,8 +5,6 @@ import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import java.io.ByteArrayInputStream
 
 class PingMessage(val nonce: Long) : IMessage {
-    override val command: String = "ping"
-
     override fun toString(): String {
         return "PingMessage(nonce=$nonce)"
     }
@@ -26,8 +24,10 @@ class PingMessageParser : IMessageParser {
 class PingMessageSerializer : IMessageSerializer {
     override val command: String = "ping"
 
-    override fun serialize(message: IMessage): ByteArray {
-        if (message !is PingMessage) throw WrongSerializer()
+    override fun serialize(message: IMessage): ByteArray? {
+        if (message !is PingMessage) {
+            return null
+        }
 
         return BitcoinOutput()
                 .writeLong(message.nonce)

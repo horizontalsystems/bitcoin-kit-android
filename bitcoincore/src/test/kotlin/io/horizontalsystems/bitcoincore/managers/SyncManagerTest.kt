@@ -7,7 +7,7 @@ import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class SyncManagerTest : Spek({
+object SyncManagerTest : Spek({
 
     val peerGroup = mock<PeerGroup>()
     val initialSyncer = mock<InitialSyncer>()

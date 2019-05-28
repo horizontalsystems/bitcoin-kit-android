@@ -1,6 +1,9 @@
 package io.horizontalsystems.bitcoincore.network.peer.task
 
 import io.horizontalsystems.bitcoincore.models.InventoryItem
+import io.horizontalsystems.bitcoincore.network.messages.GetBlocksMessage
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.messages.InvMessage
 import java.util.concurrent.TimeUnit
 
 class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expectedHashesMinCount: Int) : PeerTask() {
@@ -22,13 +25,16 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expect
     }
 
     override fun start() {
-        requester?.getBlocks(blockLocatorHashes)
+        requester?.let { it.send(GetBlocksMessage(blockLocatorHashes, it.protocolVersion, ByteArray(32))) }
         resetTimer()
     }
 
-    override fun handleInventoryItems(items: List<InventoryItem>): Boolean {
-        val newBlockHashes = items.filter { it.type == InventoryItem.MSG_BLOCK }.map { it.hash }
+    override fun handleMessage(message: IMessage): Boolean {
+        if (message !is InvMessage) {
+            return false
+        }
 
+        val newBlockHashes = message.inventory.filter { it.type == InventoryItem.MSG_BLOCK }.map { it.hash }
         if (newBlockHashes.isEmpty()) return false
 
         // When we send getblocks message the remote peer responds with 2 inv messages:

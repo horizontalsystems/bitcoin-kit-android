@@ -23,9 +23,7 @@ class MerkleBlockMessage(
         var hashCount: Int,
         var hashes: List<ByteArray>,
         var flagsCount: Int,
-        var flags: ByteArray
-) : IMessage {
-    override val command: String = "merkleblock"
+        var flags: ByteArray) : IMessage {
 
     private val blockHash: String by lazy {
         header.hash.toReversedHex()
