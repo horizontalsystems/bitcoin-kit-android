@@ -13,7 +13,7 @@ import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteManager
 import io.horizontalsystems.dashkit.messages.ISLockMessage
 import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessage
 import io.horizontalsystems.dashkit.models.InstantTransactionInput
-import io.horizontalsystems.dashkit.tasks.RequestLlmqInstantLocksTask
+import io.horizontalsystems.dashkit.tasks.RequestInstantSendLocksTask
 import io.horizontalsystems.dashkit.tasks.RequestTransactionLockRequestsTask
 import io.horizontalsystems.dashkit.tasks.RequestTransactionLockVotesTask
 import java.util.concurrent.Executors
@@ -34,7 +34,7 @@ class InstantSend(
     override fun handleInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>) {
         val transactionLockRequests = mutableListOf<ByteArray>()
         val transactionLockVotes = mutableListOf<ByteArray>()
-        val llmqInstantLocks = mutableListOf<ByteArray>()
+        val isLocks = mutableListOf<ByteArray>()
 
         inventoryItems.forEach { item ->
             when (item.type) {
@@ -45,7 +45,7 @@ class InstantSend(
                     transactionLockVotes.add(item.hash)
                 }
                 InventoryType.MSG_ISLOCK -> {
-                    llmqInstantLocks.add(item.hash)
+                    isLocks.add(item.hash)
                 }
             }
         }
@@ -58,8 +58,8 @@ class InstantSend(
             peer.addTask(RequestTransactionLockVotesTask(transactionLockVotes))
         }
 
-        if (llmqInstantLocks.isNotEmpty()) {
-            peer.addTask(RequestLlmqInstantLocksTask(llmqInstantLocks))
+        if (isLocks.isNotEmpty()) {
+            peer.addTask(RequestInstantSendLocksTask(isLocks))
         }
 
     }
@@ -78,9 +78,9 @@ class InstantSend(
                 }
                 true
             }
-            is RequestLlmqInstantLocksTask -> {
+            is RequestInstantSendLocksTask -> {
                 dispatchQueue.execute {
-                    handleLlmqInstantSendLocks(task.llmqInstantLocks)
+                    handleInstantSendLocks(task.isLocks)
                 }
                 true
             }
@@ -151,24 +151,24 @@ class InstantSend(
         }
     }
 
-    private fun handleLlmqInstantSendLocks(llmqIsLocks: List<ISLockMessage>) {
-        for (islock in llmqIsLocks) {
+    private fun handleInstantSendLocks(isLocks: List<ISLockMessage>) {
+        for (isLock in isLocks) {
             // check transaction already not in instant
-            if (instantTransactionManager.isTransactionInstant(islock.txHash)) {
+            if (instantTransactionManager.isTransactionInstant(isLock.txHash)) {
                 continue
             }
 
             // do nothing if tx doesn't exist
-            if (!instantTransactionManager.isTransactionExists(islock.txHash)) {
+            if (!instantTransactionManager.isTransactionExists(isLock.txHash)) {
                 continue
             }
 
             // validate it
             try {
-                instantSendLockValidator.validate(islock)
+                instantSendLockValidator.validate(isLock)
 
-                instantTransactionManager.makeInstant(islock.txHash)
-                delegate?.onUpdateInstant(islock.txHash)
+                instantTransactionManager.makeInstant(isLock.txHash)
+                delegate?.onUpdateInstant(isLock.txHash)
             } catch (e: Exception) {
 
             }

@@ -7,10 +7,10 @@ import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.dashkit.InventoryType
 import io.horizontalsystems.dashkit.messages.ISLockMessage
 
-class RequestLlmqInstantLocksTask(hashes: List<ByteArray>) : PeerTask() {
+class RequestInstantSendLocksTask(hashes: List<ByteArray>) : PeerTask() {
 
     val hashes = hashes.toMutableList()
-    var llmqInstantLocks = mutableListOf<ISLockMessage>()
+    var isLocks = mutableListOf<ISLockMessage>()
 
     override fun start() {
         requester?.send(GetDataMessage(hashes.map { InventoryItem(InventoryType.MSG_ISLOCK, it) }))
@@ -25,7 +25,7 @@ class RequestLlmqInstantLocksTask(hashes: List<ByteArray>) : PeerTask() {
         val hash = hashes.firstOrNull { it.contentEquals(isLockMessage.hash) } ?: return false
 
         hashes.remove(hash)
-        llmqInstantLocks.add(isLockMessage)
+        isLocks.add(isLockMessage)
 
         if (hashes.isEmpty()) {
             listener?.onTaskCompleted(this)
