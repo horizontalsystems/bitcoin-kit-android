@@ -28,7 +28,7 @@ class SendTransactionTask(val transaction: FullTransaction) : PeerTask() {
 
     private fun handleGetDataInventoryItem(item: InventoryItem): Boolean {
         if (item.type == InventoryItem.MSG_TX && item.hash.contentEquals(transaction.header.hash)) {
-            requester?.send(TransactionMessage(transaction))
+            requester?.send(TransactionMessage(transaction, 0))
             listener?.onTaskCompleted(this)
 
             return true

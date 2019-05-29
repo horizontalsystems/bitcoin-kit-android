@@ -26,6 +26,11 @@ class InitialBlockDownload(
     private val peersQueue = Executors.newSingleThreadExecutor()
     private val logger = Logger.getLogger("IBD")
 
+    private var minMerkleBlocks = 500.0
+    private var minTransactions = 50_000.0
+    private var minReceiveBytes = 100_000.0
+    private var slowPeersDisconnected = 0
+
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener) {
         peerSyncListeners.add(peerSyncListener)
     }
@@ -89,6 +94,17 @@ class InitialBlockDownload(
     }
 
     override fun onPeerDisconnect(peer: Peer, e: Exception?) {
+        if (e is GetMerkleBlocksTask.PeerTooSlow) {
+            slowPeersDisconnected += 1
+
+            if (slowPeersDisconnected >= 3) {
+                slowPeersDisconnected = 0
+                minMerkleBlocks /= 3
+                minTransactions /= 3
+                minReceiveBytes /= 3
+            }
+        }
+
         syncedPeers.remove(peer)
 
         if (peer == syncPeer) {
@@ -128,7 +144,7 @@ class InitialBlockDownload(
                 if (blockHashes.isEmpty()) {
                     peer.synced = peer.blockHashesSynced
                 } else {
-                    peer.addTask(GetMerkleBlocksTask(blockHashes, this, merkleBlockExtractor))
+                    peer.addTask(GetMerkleBlocksTask(blockHashes, this, merkleBlockExtractor, minMerkleBlocks, minTransactions, minReceiveBytes))
                 }
 
                 if (!peer.blockHashesSynced) {

@@ -12,6 +12,7 @@ open class PeerTask {
     interface Requester {
         val protocolVersion: Int
         fun send(message: IMessage)
+        fun disconnect(e: Exception)
     }
 
     var requester: Requester? = null
@@ -23,7 +24,7 @@ open class PeerTask {
     open fun start() = Unit
     open fun handleTimeout() = Unit
 
-    fun checkTimeout() {
+    open fun checkTimeout() {
         allowedIdleTime?.let { allowedIdleTime ->
             lastActiveTime?.let { lastActiveTime ->
                 if (System.currentTimeMillis() - lastActiveTime > allowedIdleTime) {

@@ -164,6 +164,10 @@ class Peer(
         peerConnection.sendMessage(message)
     }
 
+    override fun disconnect(e: Exception) {
+        close(e)
+    }
+
     open class Error(message: String) : Exception(message) {
         class UnsuitablePeerVersion(message: String) : Error(message)
     }
