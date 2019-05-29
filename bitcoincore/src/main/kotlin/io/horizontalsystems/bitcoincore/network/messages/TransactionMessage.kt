@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import java.io.ByteArrayInputStream
 
-class TransactionMessage(var transaction: FullTransaction) : IMessage {
+class TransactionMessage(var transaction: FullTransaction, val size: Int) : IMessage {
     override fun toString(): String {
         return "TransactionMessage(${transaction.header.hash.toReversedHex()})"
     }
@@ -18,7 +18,7 @@ class TransactionMessageParser : IMessageParser {
     override fun parseMessage(payload: ByteArray): IMessage {
         BitcoinInput(ByteArrayInputStream(payload)).use { input ->
             val transaction = TransactionSerializer.deserialize(input)
-            return TransactionMessage(transaction)
+            return TransactionMessage(transaction, payload.size)
         }
     }
 }
