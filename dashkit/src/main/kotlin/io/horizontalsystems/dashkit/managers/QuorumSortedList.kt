@@ -10,6 +10,7 @@ class QuorumSortedList {
 
 
     fun add(quorums: List<Quorum>) {
+        quorumList.removeAll(quorums)
         quorumList.addAll(quorums)
     }
 

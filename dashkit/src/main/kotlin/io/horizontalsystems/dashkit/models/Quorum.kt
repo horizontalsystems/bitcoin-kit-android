@@ -68,4 +68,13 @@ class Quorum() : Comparable<Quorum> {
         return 0
 
     }
+
+    override fun equals(other: Any?) = when (other) {
+        is Quorum -> hash.contentEquals(other.hash)
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        return hash.contentHashCode()
+    }
 }

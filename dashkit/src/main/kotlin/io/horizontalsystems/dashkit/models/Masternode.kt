@@ -54,4 +54,14 @@ class Masternode() : Comparable<Masternode> {
 
         return 0
     }
+
+    override fun equals(other: Any?) = when (other) {
+        is Masternode -> proRegTxHash.contentEquals(other.proRegTxHash)
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        return proRegTxHash.contentHashCode()
+    }
+
 }
