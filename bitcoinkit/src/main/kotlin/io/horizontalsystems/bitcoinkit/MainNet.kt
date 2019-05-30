@@ -19,7 +19,7 @@ class MainNet : Network() {
 
     override val maxBlockSize = 1_000_000
 
-    override var dnsSeeds: Array<String> = arrayOf(
+    override var dnsSeeds = listOf(
             "seed.bitcoin.sipa.be",             // Pieter Wuille
             "dnsseed.bluematt.me",              // Matt Corallo
             "dnsseed.bitcoin.dashjr.org",       // Luke Dashjr

@@ -19,7 +19,7 @@ class TestNet : Network() {
 
     override val maxBlockSize = 1_000_000
 
-    override var dnsSeeds: Array<String> = arrayOf(
+    override var dnsSeeds = listOf(
             "testnet-seed.bitcoin.petertodd.org",    // Peter Todd
             "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
             "testnet-seed.bluematt.me",              // Matt Corallo

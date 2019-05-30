@@ -126,7 +126,7 @@ class PeerGroup(
                 peerIps.add(addr.hostAddress)
             }
 
-            hostManager.addIps(peerIps.toTypedArray())
+            hostManager.addIps(peerIps)
         } else if (message is InvMessage) {
             inventoryItemsHandler?.handleInventoryItems(peer, message.inventory)
         }

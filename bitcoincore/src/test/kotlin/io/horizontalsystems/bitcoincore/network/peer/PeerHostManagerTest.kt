@@ -22,8 +22,8 @@ class PeerHostManagerTest {
     private val peerDiscover = mock(PeerDiscover::class.java)
     private val network = mock(Network::class.java)
 
-    private val ipsPeers = arrayOf("0.0.0.0", "1.1.1.1")
-    private val dnsSeeds = arrayOf("abc.com", "com.abc")
+    private val ipsPeers = listOf("0.0.0.0", "1.1.1.1")
+    private val dnsSeeds = listOf("abc.com", "com.abc")
 
     private lateinit var peerAddressManager: PeerAddressManager
 
@@ -87,7 +87,7 @@ class PeerHostManagerTest {
 
     @Test
     fun addPeers() {
-        val newIps = arrayOf("2.2.2.2", "2.2.2.2", "3.3.3.3", ipsPeers[0])
+        val newIps = listOf("2.2.2.2", "2.2.2.2", "3.3.3.3", ipsPeers[0])
 
         whenever(storage.getExistingPeerAddress(newIps.distinct()))
                 .thenReturn(listOf(

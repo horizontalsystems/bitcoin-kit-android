@@ -94,7 +94,7 @@ class PeerGroupTest {
 
         peerGroup.onReceiveMessage(peer1, AddrMessage(listOf(netAddress)))
 
-        verify(hostManager).addIps(arrayOf("10.0.0.1"))
+        verify(hostManager).addIps(listOf("10.0.0.1"))
     }
 
 }
