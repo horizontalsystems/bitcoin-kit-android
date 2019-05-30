@@ -80,6 +80,9 @@ interface QuorumDao {
     @Query("SELECT * FROM Quorum")
     fun getAll(): List<Quorum>
 
+    @Query("SELECT * FROM Quorum WHERE type = :type")
+    fun getByType(type: Int): List<Quorum>
+
     @Query("DELETE FROM Quorum")
     fun clearAll()
 }

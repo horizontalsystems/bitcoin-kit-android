@@ -78,3 +78,7 @@ class Quorum() : Comparable<Quorum> {
         return hash.contentHashCode()
     }
 }
+
+enum class QuorumType(val value: Int) {
+    LLMQ_50_60(1)
+}
