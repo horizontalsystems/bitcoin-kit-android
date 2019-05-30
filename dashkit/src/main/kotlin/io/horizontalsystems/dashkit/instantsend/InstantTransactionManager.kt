@@ -58,6 +58,14 @@ class InstantTransactionManager(
         return state.instantTransactionHashes.any { it.contentEquals(txHash) }
     }
 
+    fun isTransactionExists(txHash: ByteArray): Boolean {
+        return storage.isTransactionExists(txHash)
+    }
+
+    fun makeInstant(txHash: ByteArray) {
+        state.append(txHash)
+        storage.addInstantTransactionHash(txHash)
+    }
 
     private fun makeInputs(txHash: ByteArray, inputs: List<TransactionInput>): List<InstantTransactionInput> {
         val instantInputs = mutableListOf<InstantTransactionInput>()

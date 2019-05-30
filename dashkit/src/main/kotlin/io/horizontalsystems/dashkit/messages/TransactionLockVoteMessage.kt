@@ -23,9 +23,8 @@ class TransactionLockVoteMessage(
 
 }
 
-class Outpoint(input: BitcoinInput) {
-    val txHash = input.readBytes(32)
-    val vout = input.readUnsignedInt()
+class Outpoint(val txHash: ByteArray, val vout: Long) {
+    constructor(input: BitcoinInput) : this(input.readBytes(32), input.readUnsignedInt())
 }
 
 class TransactionLockVoteMessageParser : IMessageParser {

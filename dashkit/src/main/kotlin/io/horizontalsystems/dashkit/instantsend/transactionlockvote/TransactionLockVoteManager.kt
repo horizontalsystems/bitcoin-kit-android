@@ -1,5 +1,6 @@
-package io.horizontalsystems.dashkit.instantsend
+package io.horizontalsystems.dashkit.instantsend.transactionlockvote
 
+import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteValidator
 import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessage
 
 class TransactionLockVoteManager(private val transactionLockVoteValidator: TransactionLockVoteValidator) {
@@ -20,13 +21,6 @@ class TransactionLockVoteManager(private val transactionLockVoteValidator: Trans
 
     fun addChecked(vote: TransactionLockVoteMessage) {
         checkedLockVotes.add(vote)
-    }
-
-    fun removeCheckedLockVotes(txHash: ByteArray) {
-        val index = checkedLockVotes.indexOfFirst { it.txHash.contentEquals(txHash) }
-        if (index != -1) {
-            checkedLockVotes.removeAt(index)
-        }
     }
 
     fun processed(lvHash: ByteArray): Boolean {
