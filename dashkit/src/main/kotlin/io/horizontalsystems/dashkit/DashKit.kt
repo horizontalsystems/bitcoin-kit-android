@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.managers.DashAddressSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
@@ -21,6 +22,10 @@ import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.dashkit.core.DashTransactionInfoConverter
 import io.horizontalsystems.dashkit.core.SingleSha256Hasher
 import io.horizontalsystems.dashkit.instantsend.*
+import io.horizontalsystems.dashkit.instantsend.instantsendlock.InstantSendLockHandler
+import io.horizontalsystems.dashkit.instantsend.instantsendlock.InstantSendLockManager
+import io.horizontalsystems.dashkit.instantsend.transactionlockvote.TransactionLockVoteHandler
+import io.horizontalsystems.dashkit.instantsend.transactionlockvote.TransactionLockVoteManager
 import io.horizontalsystems.dashkit.managers.*
 import io.horizontalsystems.dashkit.masternodelist.*
 import io.horizontalsystems.dashkit.messages.*
@@ -55,6 +60,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     var listener: Listener? = null
 
     private val dashStorage: DashStorage
+    private val instantSend: InstantSend
     private val dashTransactionInfoConverter: DashTransactionInfoConverter
 
     constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
@@ -136,8 +142,18 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
         val singleHasher = SingleSha256Hasher()
         val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher, BLS())
-        val instantSend = InstantSend(bitcoinCore.transactionSyncer, TransactionLockVoteManager(transactionLockVoteValidator), InstantSendLockValidator(), instantTransactionManager)
-        instantSend.delegate = this
+        val instantSendLockValidator = InstantSendLockValidator()
+
+        val transactionLockVoteManager = TransactionLockVoteManager(transactionLockVoteValidator)
+        val instantSendLockManager = InstantSendLockManager(instantSendLockValidator)
+
+        val instantSendLockHandler = InstantSendLockHandler(instantTransactionManager, instantSendLockManager)
+        instantSendLockHandler.delegate = this
+        val transactionLockVoteHandler = TransactionLockVoteHandler(instantTransactionManager, transactionLockVoteManager)
+        transactionLockVoteHandler.delegate = this
+
+        val instantSend = InstantSend(bitcoinCore.transactionSyncer, transactionLockVoteHandler, instantSendLockHandler)
+        this.instantSend = instantSend
 
         bitcoinCore.addInventoryItemsHandler(instantSend)
         bitcoinCore.addPeerTaskHandler(instantSend)
@@ -156,6 +172,11 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
     // BitcoinCore.Listener
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+        // check for all new transactions if it's has instant lock
+        inserted.map { it.transactionHash.hexToByteArray().reversedArray() }.forEach {
+            instantSend.handle(it)
+        }
+
         listener?.onTransactionsUpdate(inserted.mapNotNull { it as? DashTransactionInfo }, updated.mapNotNull { it as? DashTransactionInfo })
     }
 

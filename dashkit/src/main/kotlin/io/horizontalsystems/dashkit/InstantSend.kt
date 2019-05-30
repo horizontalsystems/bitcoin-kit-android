@@ -7,29 +7,26 @@ import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
-import io.horizontalsystems.dashkit.instantsend.InstantSendLockValidator
-import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
-import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteManager
+import io.horizontalsystems.dashkit.instantsend.instantsendlock.InstantSendLockHandler
+import io.horizontalsystems.dashkit.instantsend.transactionlockvote.TransactionLockVoteHandler
 import io.horizontalsystems.dashkit.messages.ISLockMessage
 import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessage
-import io.horizontalsystems.dashkit.models.InstantTransactionInput
 import io.horizontalsystems.dashkit.tasks.RequestInstantSendLocksTask
 import io.horizontalsystems.dashkit.tasks.RequestTransactionLockRequestsTask
 import io.horizontalsystems.dashkit.tasks.RequestTransactionLockVotesTask
 import java.util.concurrent.Executors
-import java.util.logging.Logger
 
 class InstantSend(
         private val transactionSyncer: TransactionSyncer,
-        private val lockVoteManager: TransactionLockVoteManager,
-        private val instantSendLockValidator: InstantSendLockValidator,
-        private val instantTransactionManager: InstantTransactionManager
+        private val transactionLockVoteHandler: TransactionLockVoteHandler,
+        private val instantSendLockHandler: InstantSendLockHandler
 ) : IInventoryItemsHandler, IPeerTaskHandler {
 
-    var delegate: IInstantTransactionDelegate? = null
-
-    private val logger = Logger.getLogger("InstantSend")
     private val dispatchQueue = Executors.newSingleThreadExecutor()
+
+    fun handle(insertedTxHash: ByteArray) {
+        instantSendLockHandler.handle(insertedTxHash)
+    }
 
     override fun handleInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>) {
         val transactionLockRequests = mutableListOf<ByteArray>()
@@ -92,86 +89,19 @@ class InstantSend(
         transactionSyncer.handleTransactions(transactions)
 
         for (transaction in transactions) {
-            // check transaction already not in instant
-            if (instantTransactionManager.isTransactionInstant(transaction.header.hash)) {
-                continue
-            }
-
-            // prepare instant inputs for ix
-            val inputs = instantTransactionManager.instantTransactionInputs(transaction.header.hash, transaction)
-
-            // poll relayed lock votes to update inputs
-            val relayedVotes = lockVoteManager.takeRelayedLockVotes(transaction.header.hash)
-            relayedVotes.forEach { vote ->
-                handleLockVote(vote, inputs)
-            }
+            transactionLockVoteHandler.handle(transaction)
         }
     }
 
     private fun handleTransactionLockVotes(transactionLockVotes: List<TransactionLockVoteMessage>) {
         for (vote in transactionLockVotes) {
-            // check transaction already not in instant
-            if (instantTransactionManager.isTransactionInstant(vote.txHash)) {
-                continue
-            }
-            if (lockVoteManager.processed(vote.hash)) {
-                continue
-            }
-
-            val inputs = instantTransactionManager.instantTransactionInputs(vote.txHash, null)
-            if (inputs.isEmpty()) {
-                lockVoteManager.addRelayed(vote)
-                continue
-            }
-
-            handleLockVote(vote, inputs)
-        }
-    }
-
-    private fun handleLockVote(lockVote: TransactionLockVoteMessage, instantInputs: List<InstantTransactionInput>) {
-        lockVoteManager.addChecked(lockVote)
-
-        // ignore votes for inputs which already has 6 votes
-        instantInputs.firstOrNull { it.inputTxHash.contentEquals(lockVote.outpoint.txHash) }?.let { input ->
-            if (input.voteCount >= requiredVoteCount) {
-                return
-            }
-        }
-
-        try {
-            lockVoteManager.validate(lockVote)
-            instantTransactionManager.updateInput(lockVote.outpoint.txHash, instantInputs)
-
-            val instant = instantTransactionManager.isTransactionInstant(lockVote.txHash)
-            if (instant) {
-                delegate?.onUpdateInstant(lockVote.txHash)
-            }
-        } catch (e: Exception) {
-            logger?.severe("${e.message}")
+            transactionLockVoteHandler.handle(vote)
         }
     }
 
     private fun handleInstantSendLocks(isLocks: List<ISLockMessage>) {
         for (isLock in isLocks) {
-            // check transaction already not in instant
-            if (instantTransactionManager.isTransactionInstant(isLock.txHash)) {
-                continue
-            }
-
-            // do nothing if tx doesn't exist
-            if (!instantTransactionManager.isTransactionExists(isLock.txHash)) {
-                continue
-            }
-
-            // validate it
-            try {
-                instantSendLockValidator.validate(isLock)
-
-                instantTransactionManager.makeInstant(isLock.txHash)
-                delegate?.onUpdateInstant(isLock.txHash)
-            } catch (e: Exception) {
-
-            }
+            instantSendLockHandler.handle(isLock)
         }
     }
 
