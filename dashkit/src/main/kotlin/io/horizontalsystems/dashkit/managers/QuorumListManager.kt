@@ -1,9 +1,14 @@
 package io.horizontalsystems.dashkit.managers
 
-import android.util.Log
+import io.horizontalsystems.bitcoincore.core.HashBytes
+import io.horizontalsystems.bitcoincore.io.BitcoinOutput
+import io.horizontalsystems.bitcoincore.utils.HashUtils
+import io.horizontalsystems.dashkit.DashKitErrors
 import io.horizontalsystems.dashkit.IDashStorage
 import io.horizontalsystems.dashkit.masternodelist.QuorumListMerkleRootCalculator
 import io.horizontalsystems.dashkit.messages.MasternodeListDiffMessage
+import io.horizontalsystems.dashkit.models.Quorum
+import io.horizontalsystems.dashkit.models.QuorumType
 
 class QuorumListManager(
         private val storage: IDashStorage,
@@ -24,8 +29,7 @@ class QuorumListManager(
         quorumSortedList.remove(masternodeListDiffMessage.deletedQuorums)
         //03. Verify each final commitment found in "newQuorums", by the same rules found in DIP6 - Long-Living Masternode Quorums. If any final commitment is invalid, abort the process and ask for diffs from another node.
         masternodeListDiffMessage.quorumList.forEach {
-            //            TODO()
-            Log.e("AAA", "Ask Toha to implement it")
+            // TODO()
         }
         //04. Add the LLMQ defined by the final commitments found in "newQuorums" to the corresponding active LLMQ sets.
         quorumSortedList.add(masternodeListDiffMessage.quorumList)
@@ -44,4 +48,24 @@ class QuorumListManager(
         storage.quorums = quorumSortedList.quorums
     }
 
+    fun getQuorum(quorumType: QuorumType, requestId: ByteArray): Quorum {
+        val typedQuorums = storage.getQuorumsByType(quorumType)
+
+        return typedQuorums.minWith(Comparator { quorum1, quorum2 ->
+            val orderingHash1 = orderingHash(quorum1, requestId)
+            val orderingHash2 = orderingHash(quorum2, requestId)
+
+            orderingHash1.compareTo(orderingHash2)
+        }) ?: throw DashKitErrors.ISLockValidation.QuorumNotFound()
+    }
+
+    private fun orderingHash(quorum: Quorum, requestId: ByteArray): HashBytes {
+        val orderingPayload = BitcoinOutput()
+                .writeByte(quorum.type)
+                .write(quorum.quorumHash)
+                .write(requestId)
+                .toByteArray()
+
+        return HashBytes(HashUtils.doubleSha256(orderingPayload))
+    }
 }

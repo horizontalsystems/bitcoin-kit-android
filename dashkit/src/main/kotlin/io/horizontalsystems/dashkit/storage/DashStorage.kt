@@ -41,6 +41,10 @@ class DashStorage(private val dashStore: DashKitDatabase, private val coreStorag
         return coreStorage.isTransactionExists(txHash)
     }
 
+    override fun getQuorumsByType(quorumType: QuorumType): List<Quorum> {
+        return dashStore.quorumDao.getByType(quorumType.value)
+    }
+
     fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo? {
         return coreStorage.getFullTransactionInfo(txHash)
     }

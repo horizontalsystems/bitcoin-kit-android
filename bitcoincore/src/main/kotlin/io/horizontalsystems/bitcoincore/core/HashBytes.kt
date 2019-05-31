@@ -23,13 +23,12 @@ class HashBytes(val bytes: ByteArray) : Comparable<HashBytes> {
     }
 
     override fun compareTo(other: HashBytes): Int {
-        for (i in hashLength - 1 downTo 0) {
-            val otherByte = other.bytes[i].toInt() and 0xff
-            val thisByte = bytes[i].toInt() and 0xff
-            if (thisByte > otherByte)
-                return 1
-            if (thisByte < otherByte)
-                return -1
+        for (i in 0 until hashLength) {
+            val b1 = bytes[i].toInt() and 0xff
+            val b2 = other.bytes[i].toInt() and 0xff
+
+            val res = b1.compareTo(b2)
+            if (res != 0) return res
         }
 
         return 0

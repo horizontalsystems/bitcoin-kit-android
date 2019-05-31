@@ -141,8 +141,9 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.addPeerGroupListener(masternodeSyncer)
 
         val singleHasher = SingleSha256Hasher()
-        val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher, BLS())
-        val instantSendLockValidator = InstantSendLockValidator()
+        val bls = BLS()
+        val transactionLockVoteValidator = TransactionLockVoteValidator(dashStorage, singleHasher, bls)
+        val instantSendLockValidator = InstantSendLockValidator(quorumListManager, bls)
 
         val transactionLockVoteManager = TransactionLockVoteManager(transactionLockVoteValidator)
         val instantSendLockManager = InstantSendLockManager(instantSendLockValidator)
