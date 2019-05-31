@@ -130,6 +130,7 @@ class Peer(
             message.lastBlock < localBestBlockHeight -> throw Error.UnsuitablePeerVersion("Peer has expired blockchain ${message.lastBlock} vs ${localBestBlockHeight}(local)")
             !message.hasBlockChain(network) -> throw Error.UnsuitablePeerVersion("Peer does not have a copy of the block chain.")
             !message.supportsBloomFilter(network) -> throw Error.UnsuitablePeerVersion("Peer does not support Bloom Filter.")
+            message.protocolVersion < network.protocolVersion -> throw Error.UnsuitablePeerVersion("Peer protocol version ${message.protocolVersion} vs ${network.protocolVersion}(local)")
         }
     }
 
