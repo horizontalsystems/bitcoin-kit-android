@@ -102,3 +102,7 @@ interface ITransactionInfoConverter {
 interface IInitialSyncApi {
     fun getTransactions(addresses: List<String>): List<TransactionItem>
 }
+
+interface IAddressKeyHashConverter {
+    fun convert(keyHash: ByteArray, type: Int): ByteArray
+}

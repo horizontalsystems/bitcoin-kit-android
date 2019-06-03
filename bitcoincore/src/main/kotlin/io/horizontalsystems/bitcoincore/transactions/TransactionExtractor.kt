@@ -113,11 +113,10 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
 
         if (output.scriptType == ScriptType.P2WPKH) {
             keyHash = keyHash.drop(2).toByteArray()
+        } else if(output.scriptType == ScriptType.P2SH) {
             storage.getPublicKeyByHash(keyHash, isWPKH = true)?.let {
-                if (output.scriptType == ScriptType.P2WPKH) {
-                    output.scriptType = ScriptType.P2WPKHSH
-                }
-
+                output.scriptType = ScriptType.P2WPKHSH
+                output.keyHash = it.publicKeyHash
                 return it
             }
         }
