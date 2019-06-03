@@ -22,11 +22,13 @@ class Peer(
         fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
-    var connected = false
-    var synced = false
     var blockHashesSynced = false
-    var announcedLastBlockHeight: Int = 0
-    var localBestBlockHeight: Int = 0
+    var announcedLastBlockHeight = 0
+    var localBestBlockHeight = 0
+    var synced = false
+    var connected = false
+    var connectionTime: Long = 1000
+    private var connectStartTime: Long? = null
 
     private val peerConnection = PeerConnection(host, network, this, networkMessageParser, networkMessageSerializer)
     private var tasks = mutableListOf<PeerTask>()
@@ -37,6 +39,7 @@ class Peer(
 
     fun start() {
         peerConnection.start()
+        connectStartTime = System.currentTimeMillis()
     }
 
     fun close(disconnectError: Exception? = null) {
@@ -118,8 +121,14 @@ class Peer(
     }
 
     private fun handleVerackMessage() {
-        connected = true
+        if (connectStartTime == null) {
+            return close()
+        }
 
+        connected = true
+        connectStartTime?.let {
+            connectionTime = System.currentTimeMillis() - it
+        }
         listener.onConnect(this)
     }
 

@@ -11,7 +11,7 @@ class PeerGroup(
         private val hostManager: PeerAddressManager,
         private val network: Network,
         private val peerManager: PeerManager,
-        private val peerSize: Int,
+        peerSize: Int,
         private val networkMessageParser: NetworkMessageParser,
         private val networkMessageSerializer: NetworkMessageSerializer,
         private val connectionManager: ConnectionManager)
@@ -33,12 +33,17 @@ class PeerGroup(
     private val logger = Logger.getLogger("PeerGroup")
     private val peerGroupListeners = mutableListOf<Listener>()
 
+    private val peerCountToHold = peerSize  // number of peers held
+    private var peerCountToConnect = 100    // number of peers to connect to
+    private var peerCountConnected = 0      // number of peers connected to
+
     fun start() {
         if (running || !connectionManager.isConnected) {
             return
         }
 
         running = true
+        peerCountConnected = 0
         peerGroupListeners.forEach { it.onStart() }
         connectPeersIfRequired()
     }
@@ -72,7 +77,15 @@ class PeerGroup(
     // PeerListener implementations
     //
     override fun onConnect(peer: Peer) {
+        hostManager.markConnected(peer)
         peerGroupListeners.forEach { it.onPeerConnect(peer) }
+
+        if (peerCountToHold > 1 && peerCountToHold < peerCountToConnect) {
+            val sortedPeers = peerManager.sorted()
+            if (sortedPeers.size >= peerCountToHold) {
+                sortedPeers.lastOrNull()?.close()
+            }
+        }
     }
 
     override fun onReady(peer: Peer) {
@@ -128,10 +141,10 @@ class PeerGroup(
             return
         }
 
-        for (i in peerManager.peersCount until peerSize) {
+        for (i in peerManager.peersCount until peerCountToHold) {
             val ip = hostManager.getIp() ?: break
-            logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this, networkMessageParser, networkMessageSerializer)
+            peerCountConnected += 1
             peerGroupListeners.forEach { it.onPeerCreate(peer) }
             peerManager.add(peer)
             peer.start()

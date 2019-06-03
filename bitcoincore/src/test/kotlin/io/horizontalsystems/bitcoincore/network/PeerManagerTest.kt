@@ -11,9 +11,9 @@ import org.spekframework.spek2.style.specification.describe
 
 object PeerManagerTest : Spek({
 
-    val peer1 = mock<Peer> { on { host } doReturn "8.8.8.8" }
-    val peer2 = mock<Peer> { on { host } doReturn "9.9.9.9" }
-    val peer3 = mock<Peer> { on { host } doReturn "0.0.0.0" }
+    val peer1 by memoized { mock<Peer> { on { host } doReturn "8.8.8.8" } }
+    val peer2 by memoized { mock<Peer> { on { host } doReturn "9.9.9.9" } }
+    val peer3 by memoized { mock<Peer> { on { host } doReturn "0.0.0.0" } }
 
     val peerManager by memoized { PeerManager() }
 
@@ -86,6 +86,22 @@ object PeerManagerTest : Spek({
             whenever(peer2.connected).thenReturn(true)
             whenever(peer3.connected).thenReturn(true)
             assertEquals(listOf(peer2, peer3), peerManager.connected())
+        }
+    }
+
+    describe("#sorted") {
+        it("gets connected peers sorted by connection time") {
+            peerManager.add(peer1)
+            peerManager.add(peer2)
+            peerManager.add(peer3)
+            assertEquals(listOf<Peer>(), peerManager.sorted())
+
+            whenever(peer2.connected).thenReturn(true)
+            whenever(peer2.connectionTime).thenReturn(102)
+            whenever(peer3.connected).thenReturn(true)
+            whenever(peer3.connectionTime).thenReturn(100)
+
+            assertEquals(listOf(peer3, peer2), peerManager.sorted())
         }
     }
 
