@@ -18,7 +18,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
     private val peerDiscover = PeerDiscover(this)
 
     fun getIp(): String? {
-        val peerAddress = storage.getLeastScorePeerAddressExcludingIps(state.usedPeers)
+        val peerAddress = storage.getLeastScoreFastestPeerAddressExcludingIps(state.usedPeers)
         if (peerAddress == null) {
             peerDiscover.lookup(network.dnsSeeds)
             return null
@@ -47,6 +47,10 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         state.remove(ip)
 
         storage.increasePeerAddressScore(ip)
+    }
+
+    fun markConnected(peer: Peer) {
+        storage.setPeerConnectionTime(peer.host, peer.connectionTime)
     }
 
     class State {

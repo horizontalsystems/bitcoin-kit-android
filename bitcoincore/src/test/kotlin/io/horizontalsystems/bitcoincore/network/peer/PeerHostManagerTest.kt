@@ -38,7 +38,7 @@ class PeerHostManagerTest {
                 .thenReturn(peerDiscover)
 
         whenever(network.dnsSeeds).thenReturn(dnsSeeds)
-        whenever(storage.getLeastScorePeerAddressExcludingIps(anyList()))
+        whenever(storage.getLeastScoreFastestPeerAddressExcludingIps(anyList()))
                 .thenReturn(
                         PeerAddress(ipsPeers[0]),
                         PeerAddress(ipsPeers[1]))
@@ -49,7 +49,7 @@ class PeerHostManagerTest {
 
     @Test
     fun getPeerIp_withoutPeerAddresses() {
-        whenever(storage.getLeastScorePeerAddressExcludingIps(anyList()))
+        whenever(storage.getLeastScoreFastestPeerAddressExcludingIps(anyList()))
                 .thenReturn(null)
 
         val peerIp = peerAddressManager.getIp()
