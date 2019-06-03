@@ -24,14 +24,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
     }
 
     fun addIps(ips: List<String>) {
-        val newPeerIps = ips.distinct()
-        val existingPeers = storage.getExistingPeerAddress(newPeerIps).map { it.ip }
-
-        val peerAddresses = newPeerIps.subtract(existingPeers).map {
-            PeerAddress(it, 0)
-        }
-
-        storage.setPeerAddresses(peerAddresses)
+        storage.setPeerAddresses(ips.map { PeerAddress(it, 0) })
 
         logger.info("Added new addresses: ${ips.size}")
     }

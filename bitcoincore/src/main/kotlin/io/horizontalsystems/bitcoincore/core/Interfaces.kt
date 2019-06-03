@@ -14,7 +14,6 @@ interface IStorage {
     //  PeerAddress
 
     fun getLeastScorePeerAddressExcludingIps(ips: List<String>): PeerAddress?
-    fun getExistingPeerAddress(ips: List<String>): List<PeerAddress>
     fun increasePeerAddressScore(ip: String)
     fun deletePeerAddress(ip: String)
     fun setPeerAddresses(list: List<PeerAddress>)

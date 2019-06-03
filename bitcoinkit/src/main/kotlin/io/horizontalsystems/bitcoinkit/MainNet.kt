@@ -40,4 +40,16 @@ class MainNet : Network() {
     )
 
     override val checkpointBlock = Block(blockHeader, 574560)
+//
+//     private val genesisHeader = BlockHeader(
+//             version = 1,
+//             previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000"),
+//             merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
+//             timestamp = 1231006505,
+//             bits = 0x1d00ffff,
+//             nonce = 2083236893,
+//             hash = HashUtils.toBytesAsLE("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
+//     )
+//
+//     override val checkpointBlock = Block(genesisHeader, 0)
 }
