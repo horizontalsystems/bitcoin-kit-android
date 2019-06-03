@@ -114,10 +114,10 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         val blockHelper = BlockValidatorHelper(coreStorage)
 
         if (network is MainNetDash) {
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height, 68589))
         } else {
             bitcoinCore.addBlockValidator(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height, 4002))
         }
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
