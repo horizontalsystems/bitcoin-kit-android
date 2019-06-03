@@ -22,7 +22,6 @@ class Peer(
         fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
-    // TODO seems like property connected is not needed. It is always true in PeerManager. Need to check it and remove
     var connected = false
     var synced = false
     var blockHashesSynced = false
@@ -165,12 +164,7 @@ class Peer(
         peerConnection.sendMessage(message)
     }
 
-    override fun disconnect(e: Exception) {
-        close(e)
-    }
-
     open class Error(message: String) : Exception(message) {
         class UnsuitablePeerVersion(message: String) : Error(message)
     }
-
 }

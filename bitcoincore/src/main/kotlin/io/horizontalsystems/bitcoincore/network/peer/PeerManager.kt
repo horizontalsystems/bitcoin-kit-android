@@ -6,6 +6,9 @@ class PeerManager {
 
     private var peers = ConcurrentHashMap<String, Peer>()
 
+    val peersCount: Int
+        get() = peers.size
+
     fun add(peer: Peer) {
         peers[peer.host] = peer
     }
@@ -17,10 +20,6 @@ class PeerManager {
     fun disconnectAll() {
         peers.values.forEach { it.close() }
         peers.clear()
-    }
-
-    fun peersCount(): Int {
-        return peers.size
     }
 
     fun someReadyPeers(): List<Peer> {

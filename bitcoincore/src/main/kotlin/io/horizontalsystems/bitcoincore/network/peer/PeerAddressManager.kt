@@ -7,6 +7,12 @@ import java.util.logging.Logger
 
 class PeerAddressManager(private val network: Network, private val storage: IStorage) {
 
+    interface Listener {
+        fun onAddAddress()
+    }
+
+    var listener: Listener? = null
+
     private val state = State()
     private val logger = Logger.getLogger("PeerHostManager")
     private val peerDiscover = PeerDiscover(this)
@@ -27,6 +33,8 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         storage.setPeerAddresses(ips.map { PeerAddress(it, 0) })
 
         logger.info("Added new addresses: ${ips.size}")
+
+        listener?.onAddAddress()
     }
 
     fun markFailed(ip: String) {

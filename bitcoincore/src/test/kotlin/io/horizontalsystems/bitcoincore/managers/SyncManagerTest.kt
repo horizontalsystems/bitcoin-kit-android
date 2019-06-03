@@ -32,13 +32,13 @@ object SyncManagerTest : Spek({
         it("stops :peerGroup") {
             syncManager.stop()
 
-            verify(peerGroup).close()
+            verify(peerGroup).stop()
         }
 
         it("stops :initialSyncer") {
             syncManager.stop()
 
-            verify(peerGroup).close()
+            verify(peerGroup).stop()
         }
     }
 

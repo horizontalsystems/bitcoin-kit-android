@@ -145,8 +145,8 @@ class BitcoinCoreBuilder {
         val networkMessageParser = NetworkMessageParser(network.magic)
         val networkMessageSerializer = NetworkMessageSerializer(network.magic)
 
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer)
-        peerGroup.connectionManager = connectionManager
+        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager)
+        peerHostManager.listener = peerGroup
 
         val transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
 
@@ -165,6 +165,7 @@ class BitcoinCoreBuilder {
 
         val syncManager = SyncManager(peerGroup, initialSyncer)
         initialSyncer.listener = syncManager
+        connectionManager.listener = syncManager
 
         val bitcoinCore = BitcoinCore(
                 storage,
@@ -214,7 +215,7 @@ class BitcoinCoreBuilder {
                 .addMessageSerializer(VerAckMessageSerializer())
                 .addMessageSerializer(VersionMessageSerializer())
 
-        val bloomFilterLoader = BloomFilterLoader(bloomFilterManager)
+        val bloomFilterLoader = BloomFilterLoader(bloomFilterManager, peerManager)
         bloomFilterManager.listener = bloomFilterLoader
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 

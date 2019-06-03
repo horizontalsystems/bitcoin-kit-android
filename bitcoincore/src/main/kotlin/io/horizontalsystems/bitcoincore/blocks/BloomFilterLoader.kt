@@ -4,24 +4,19 @@ import io.horizontalsystems.bitcoincore.crypto.BloomFilter
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
-import java.util.concurrent.CopyOnWriteArrayList
+import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 
-class BloomFilterLoader(private val bloomFilterManager: BloomFilterManager) : PeerGroup.Listener, BloomFilterManager.Listener {
-    private val peers = CopyOnWriteArrayList<Peer>()
+class BloomFilterLoader(private val bloomFilterManager: BloomFilterManager, private val peerManager: PeerManager)
+    : PeerGroup.Listener, BloomFilterManager.Listener {
 
     override fun onPeerConnect(peer: Peer) {
         bloomFilterManager.bloomFilter?.let {
             peer.filterLoad(it)
         }
-        peers.add(peer)
-    }
-
-    override fun onPeerDisconnect(peer: Peer, e: Exception?) {
-        peers.remove(peer)
     }
 
     override fun onFilterUpdated(bloomFilter: BloomFilter) {
-        peers.forEach {
+        peerManager.connected().forEach {
             it.filterLoad(bloomFilter)
         }
     }

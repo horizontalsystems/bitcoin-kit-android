@@ -13,7 +13,9 @@ class PeerGroup(
         private val peerManager: PeerManager,
         private val peerSize: Int,
         private val networkMessageParser: NetworkMessageParser,
-        private val networkMessageSerializer: NetworkMessageSerializer) : Thread(), Peer.Listener {
+        private val networkMessageSerializer: NetworkMessageSerializer,
+        private val connectionManager: ConnectionManager)
+    : Peer.Listener, PeerAddressManager.Listener {
 
     interface Listener {
         fun onStart() = Unit
@@ -24,15 +26,28 @@ class PeerGroup(
         fun onPeerReady(peer: Peer) = Unit
     }
 
-    var connectionManager: ConnectionManager? = null
-
     var inventoryItemsHandler: IInventoryItemsHandler? = null
     var peerTaskHandler: IPeerTaskHandler? = null
 
-    @Volatile
     private var running = false
     private val logger = Logger.getLogger("PeerGroup")
     private val peerGroupListeners = mutableListOf<Listener>()
+
+    fun start() {
+        if (running || !connectionManager.isConnected) {
+            return
+        }
+
+        running = true
+        peerGroupListeners.forEach { it.onStart() }
+        connectPeersIfRequired()
+    }
+
+    fun stop() {
+        running = false
+        peerManager.disconnectAll()
+        peerGroupListeners.forEach { it.onStop() }
+    }
 
     fun addPeerGroupListener(listener: Listener) {
         peerGroupListeners.add(listener)
@@ -44,7 +59,7 @@ class PeerGroup(
 
     @Throws
     fun checkPeersSynced() {
-        if (peerManager.peersCount() < 1) {
+        if (peerManager.peersCount < 1) {
             throw Error("No peers connected")
         }
 
@@ -53,48 +68,10 @@ class PeerGroup(
         }
     }
 
-    fun close() {
-        running = false
-
-        interrupt()
-        try {
-            join(5000)
-        } catch (e: InterruptedException) {
-        }
-    }
-
-    //
-    // Thread implementations
-    //
-    override fun run() {
-        running = true
-
-        peerGroupListeners.forEach { it.onStart() }
-
-        while (running) {
-            if (connectionManager?.isOnline == true && peerManager.peersCount() < peerSize) {
-                startConnection()
-            }
-
-            try {
-                Thread.sleep(2000L)
-            } catch (e: InterruptedException) {
-                break
-            }
-        }
-
-        peerGroupListeners.forEach { it.onStop() }
-        logger.info("Closing all peer connections...")
-
-        peerManager.disconnectAll()
-    }
-
     //
     // PeerListener implementations
     //
     override fun onConnect(peer: Peer) {
-        peerManager.add(peer)
-
         peerGroupListeners.forEach { it.onPeerConnect(peer) }
     }
 
@@ -114,7 +91,7 @@ class PeerGroup(
         }
 
         peerGroupListeners.forEach { it.onPeerDisconnect(peer, e) }
-
+        connectPeersIfRequired()
     }
 
     override fun onReceiveMessage(peer: Peer, message: IMessage) {
@@ -137,18 +114,27 @@ class PeerGroup(
     }
 
     //
+    // PeerAddressManager Listener
+    //
+    override fun onAddAddress() {
+        connectPeersIfRequired()
+    }
+
+    //
     // Private methods
     //
-    private fun startConnection() {
-        logger.info("Try open new peer connection...")
-        val ip = hostManager.getIp()
-        if (ip != null) {
+    private fun connectPeersIfRequired() {
+        if (!running || !connectionManager.isConnected) {
+            return
+        }
+
+        for (i in peerManager.peersCount until peerSize) {
+            val ip = hostManager.getIp() ?: break
             logger.info("Try open new peer connection to $ip...")
             val peer = Peer(ip, network, this, networkMessageParser, networkMessageSerializer)
             peerGroupListeners.forEach { it.onPeerCreate(peer) }
+            peerManager.add(peer)
             peer.start()
-        } else {
-            logger.info("No peers found yet.")
         }
     }
 
