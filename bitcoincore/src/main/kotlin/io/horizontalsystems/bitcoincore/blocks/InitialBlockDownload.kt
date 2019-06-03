@@ -75,8 +75,6 @@ class InitialBlockDownload(
 
     override fun onStop() {
         syncStateListener.onSyncStop()
-        // set blockSyncer to null to make sure that there won't be any further interaction with blockSyncer
-        blockSyncer = null
     }
 
     override fun onPeerCreate(peer: Peer) {

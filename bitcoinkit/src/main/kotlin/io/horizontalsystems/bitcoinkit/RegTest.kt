@@ -19,7 +19,7 @@ class RegTest : Network() {
     override val maxBlockSize = 1_000_000
     override val syncableFromApi = false
 
-    override var dnsSeeds: Array<String> = arrayOf(
+    override var dnsSeeds = listOf(
             "btc-regtest.horizontalsystems.xyz",
             "btc01-regtest.horizontalsystems.xyz",
             "btc02-regtest.horizontalsystems.xyz",

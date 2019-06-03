@@ -5,11 +5,8 @@ import io.horizontalsystems.bitcoincore.models.PeerAddress
 
 @Dao
 interface PeerAddressDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertAll(peers: List<PeerAddress>)
-
-    @Query("SELECT * FROM PeerAddress WHERE ip IN(:ips)")
-    fun getExisting(ips: List<String>): List<PeerAddress>
 
     @Query("SELECT * FROM PeerAddress WHERE ip NOT IN(:ips) ORDER BY ip DESC LIMIT 1")
     fun getLeastScore(ips: List<String>): PeerAddress?

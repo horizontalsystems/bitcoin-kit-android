@@ -23,7 +23,7 @@ class TestNetBitcoinCash : Network() {
     override val sigHashForked = true
     override val sigHashValue = Sighash.FORKID or Sighash.ALL
 
-    override var dnsSeeds: Array<String> = arrayOf(
+    override var dnsSeeds = listOf(
             "testnet-seed.bitcoinabc.org",          // Bitcoin ABC seeder
             "testnet-seed-abc.bitcoinforks.org",    // bitcoinforks seeders
             "testnet-seed.bitprim.org",             // Bitprim

@@ -21,7 +21,7 @@ class MainNetDash : Network() {
 
     override val maxBlockSize = 1_000_000
 
-    override var dnsSeeds: Array<String> = arrayOf(
+    override var dnsSeeds = listOf(
             "dnsseed.dash.org",
             "dnsseed.dashdot.io",
             "dnsseed.masternode.io"

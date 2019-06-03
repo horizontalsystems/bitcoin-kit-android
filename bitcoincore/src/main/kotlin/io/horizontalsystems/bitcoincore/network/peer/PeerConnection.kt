@@ -87,10 +87,11 @@ class PeerConnection(
         }
     }
 
-    fun close(disconnectError: Exception?) {
-        this.disconnectError = disconnectError
-
+    fun close(error: Exception?) {
+        disconnectError = error
+        outputStream = null
         isRunning = false
+
         try {
             join(1000)
         } catch (e: Exception) {

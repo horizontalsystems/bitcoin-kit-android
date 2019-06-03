@@ -7,13 +7,17 @@ import java.util.logging.Logger
 
 class PeerAddressManager(private val network: Network, private val storage: IStorage) {
 
+    interface Listener {
+        fun onAddAddress()
+    }
+
+    var listener: Listener? = null
+
     private val state = State()
     private val logger = Logger.getLogger("PeerHostManager")
     private val peerDiscover = PeerDiscover(this)
 
     fun getIp(): String? {
-        logger.info("Try get an unused peer from peer addresses...")
-
         val peerAddress = storage.getLeastScorePeerAddressExcludingIps(state.usedPeers)
         if (peerAddress == null) {
             peerDiscover.lookup(network.dnsSeeds)
@@ -25,19 +29,12 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         return peerAddress.ip
     }
 
-    fun addIps(ips: Array<String>) {
-        logger.info("Add discovered ${ips.size} peer addresses...")
+    fun addIps(ips: List<String>) {
+        storage.setPeerAddresses(ips.map { PeerAddress(it, 0) })
 
-        val newPeerIps = ips.distinct()
-        val existingPeers = storage.getExistingPeerAddress(newPeerIps).map { it.ip }
+        logger.info("Added new addresses: ${ips.size}")
 
-        val peerAddresses = newPeerIps.subtract(existingPeers).map {
-            PeerAddress(it, 0)
-        }
-
-        storage.setPeerAddresses(peerAddresses)
-
-        logger.info("Total peer addresses: ${ips.size}")
+        listener?.onAddAddress()
     }
 
     fun markFailed(ip: String) {

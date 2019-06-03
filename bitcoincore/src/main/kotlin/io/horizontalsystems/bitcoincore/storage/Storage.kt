@@ -21,10 +21,6 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.peerAddress.getLeastScore(ips)
     }
 
-    override fun getExistingPeerAddress(ips: List<String>): List<PeerAddress> {
-        return store.peerAddress.getExisting(ips)
-    }
-
     override fun increasePeerAddressScore(ip: String) {
         store.peerAddress.increaseScore(ip)
     }

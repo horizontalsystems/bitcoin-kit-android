@@ -71,7 +71,7 @@ class GetMerkleBlocksTask(
         }
 
         if (maxWarningCount < 1) {
-            requester?.disconnect(PeerTooSlow(
+            listener?.onTaskFailed(this, PeerTooSlow(
                     "Received ${receivedMerkleBlocks / totalWaitingTime} blocks, " +
                             "${receivedTransactions / totalWaitingTime} txs and $receivedBytes bytes per second; " +
                             "Required ${minMerkleBlocks / totalWaitingTime} blocks, " +

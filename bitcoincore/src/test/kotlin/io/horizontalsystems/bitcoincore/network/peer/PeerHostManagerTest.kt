@@ -1,5 +1,8 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
+import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockito_kotlin.verifyNoMoreInteractions
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.PeerAddress
@@ -8,7 +11,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.mockito.Mockito.*
+import org.mockito.ArgumentMatchers.anyList
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
@@ -17,13 +20,13 @@ import org.powermock.modules.junit4.PowerMockRunner
 @PrepareForTest(PeerAddressManager::class)
 
 class PeerHostManagerTest {
-    private val storage = mock(IStorage::class.java)
+    private val storage = mock<IStorage>()
+    private val peerDiscover = mock<PeerDiscover>()
+    private val network = mock<Network>()
+    private val listener = mock<PeerGroup>()
 
-    private val peerDiscover = mock(PeerDiscover::class.java)
-    private val network = mock(Network::class.java)
-
-    private val ipsPeers = arrayOf("0.0.0.0", "1.1.1.1")
-    private val dnsSeeds = arrayOf("abc.com", "com.abc")
+    private val ipsPeers = listOf("0.0.0.0", "1.1.1.1")
+    private val dnsSeeds = listOf("abc.com", "com.abc")
 
     private lateinit var peerAddressManager: PeerAddressManager
 
@@ -41,6 +44,7 @@ class PeerHostManagerTest {
                         PeerAddress(ipsPeers[1]))
 
         peerAddressManager = PeerAddressManager(network, storage)
+        peerAddressManager.listener = listener
     }
 
     @Test
@@ -87,18 +91,14 @@ class PeerHostManagerTest {
 
     @Test
     fun addPeers() {
-        val newIps = arrayOf("2.2.2.2", "2.2.2.2", "3.3.3.3", ipsPeers[0])
-
-        whenever(storage.getExistingPeerAddress(newIps.distinct()))
-                .thenReturn(listOf(
-                        PeerAddress(ipsPeers[0]),
-                        PeerAddress(ipsPeers[1])))
+        val newIps = listOf("2.2.2.2", "3.3.3.3")
 
         peerAddressManager.addIps(newIps)
 
+        verify(listener).onAddAddress()
         verify(storage).setPeerAddresses(listOf(
                 PeerAddress(ip = newIps[0], score = 0),
-                PeerAddress(ip = newIps[2], score = 0)))
+                PeerAddress(ip = newIps[1], score = 0)))
     }
 }
 

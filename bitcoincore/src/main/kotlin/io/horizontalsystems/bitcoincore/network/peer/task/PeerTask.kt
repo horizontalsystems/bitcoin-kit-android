@@ -12,7 +12,6 @@ open class PeerTask {
     interface Requester {
         val protocolVersion: Int
         fun send(message: IMessage)
-        fun disconnect(e: Exception)
     }
 
     var requester: Requester? = null

@@ -48,7 +48,7 @@ class PeerGroupTest {
         whenever(peer1.host).thenReturn(peerIp)
         whenever(peer2.host).thenReturn(peerIp2)
         whenever(hostManager.getIp()).thenReturn(peerIp, peerIp2)
-        whenever(connectionManager.isOnline).thenReturn(true)
+        whenever(connectionManager.isConnected).thenReturn(true)
 
         // Peer
         PowerMockito.whenNew(Peer::class.java)
@@ -60,22 +60,15 @@ class PeerGroupTest {
                 .withAnyArguments()
                 .thenReturn(relayTransactionTask)
 
-        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer)
-        peerGroup.connectionManager = connectionManager
+        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer, connectionManager)
     }
 
     @Test
-    fun run() { // creates peer connection with given IP address
+    fun start() { // creates peer connection with given IP address
         peerGroup.start()
 
-        Thread.sleep(500L)
         verify(peer1).start()
-
-        // close thread:
-        peerGroup.close()
-        peerGroup.join()
     }
-
 
     @Test
     fun disconnected_withError() { // removes peer from connection list
@@ -94,7 +87,7 @@ class PeerGroupTest {
 
         peerGroup.onReceiveMessage(peer1, AddrMessage(listOf(netAddress)))
 
-        verify(hostManager).addIps(arrayOf("10.0.0.1"))
+        verify(hostManager).addIps(listOf("10.0.0.1"))
     }
 
 }

@@ -33,20 +33,20 @@ object PeerManagerTest : Spek({
         it("adds peer") {
             peerManager.add(peer1)
 
-            assertEquals(1, peerManager.peersCount())
+            assertEquals(1, peerManager.peersCount)
         }
     }
 
     describe("#remove") {
         it("remove peer") {
             peerManager.add(peer1)
-            assertEquals(1, peerManager.peersCount())
+            assertEquals(1, peerManager.peersCount)
 
             peerManager.add(peer2)
-            assertEquals(2, peerManager.peersCount())
+            assertEquals(2, peerManager.peersCount)
 
             peerManager.remove(peer1)
-            assertEquals(1, peerManager.peersCount())
+            assertEquals(1, peerManager.peersCount)
         }
     }
 
@@ -54,10 +54,10 @@ object PeerManagerTest : Spek({
         it("disconnects all peers") {
             peerManager.add(peer1)
             peerManager.add(peer2)
-            assertEquals(2, peerManager.peersCount())
+            assertEquals(2, peerManager.peersCount)
 
             peerManager.disconnectAll()
-            assertEquals(0, peerManager.peersCount())
+            assertEquals(0, peerManager.peersCount)
         }
     }
 
@@ -68,7 +68,7 @@ object PeerManagerTest : Spek({
             peerManager.add(peer1)
             peerManager.add(peer2)
             peerManager.add(peer3)
-            assertEquals(3, peerManager.peersCount())
+            assertEquals(3, peerManager.peersCount)
 
             val somePeers = peerManager.someReadyPeers()
             assertEquals(1, somePeers.size)
