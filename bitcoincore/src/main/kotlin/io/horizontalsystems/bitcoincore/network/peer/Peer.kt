@@ -5,13 +5,15 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import java.net.InetAddress
+import java.util.concurrent.ExecutorService
 
 class Peer(
         val host: String,
         private val network: Network,
         private val listener: Listener,
         networkMessageParser: NetworkMessageParser,
-        networkMessageSerializer: NetworkMessageSerializer)
+        networkMessageSerializer: NetworkMessageSerializer,
+        executorService: ExecutorService)
     : PeerConnection.Listener, PeerTask.Listener, PeerTask.Requester {
 
     interface Listener {
@@ -30,7 +32,7 @@ class Peer(
     var connectionTime: Long = 1000
     private var connectStartTime: Long? = null
 
-    private val peerConnection = PeerConnection(host, network, this, networkMessageParser, networkMessageSerializer)
+    private val peerConnection = PeerConnection(host, network, this, executorService, networkMessageParser, networkMessageSerializer)
     private var tasks = mutableListOf<PeerTask>()
     private val timer = PeerTimer()
 

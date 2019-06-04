@@ -8,12 +8,14 @@ import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerialize
 import java.io.IOException
 import java.io.OutputStream
 import java.net.*
+import java.util.concurrent.ExecutorService
 import java.util.logging.Logger
 
 class PeerConnection(
         private val host: String,
         private val network: Network,
         private val listener: Listener,
+        private val sendingExecutor: ExecutorService,
         private val networkMessageParser: NetworkMessageParser,
         private val networkMessageSerializer: NetworkMessageSerializer)
     : Thread() {
@@ -101,8 +103,14 @@ class PeerConnection(
 
     @Synchronized
     fun sendMessage(message: IMessage) {
-        logger.info("=> $message")
-        outputStream?.write(networkMessageSerializer.serialize(message))
+        sendingExecutor.execute {
+            try {
+                logger.info("=> $message")
+                outputStream?.write(networkMessageSerializer.serialize(message))
+            } catch (e: Exception) {
+                close(e)
+            }
+        }
     }
 
 }
