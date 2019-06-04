@@ -98,6 +98,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
 
             val pubkeyHash = when (scriptType) {
                 ScriptType.P2PK -> Utils.sha256Hash160(outKeyHash)
+                ScriptType.P2WPKHSH -> Utils.sha256Hash160(OpCodes.scriptWPKH(outKeyHash))
                 else -> outKeyHash
             }
 
@@ -113,11 +114,11 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
 
         if (output.scriptType == ScriptType.P2WPKH) {
             keyHash = keyHash.drop(2).toByteArray()
+            output.keyHash = keyHash
+        } else if(output.scriptType == ScriptType.P2SH) {
             storage.getPublicKeyByHash(keyHash, isWPKH = true)?.let {
-                if (output.scriptType == ScriptType.P2WPKH) {
-                    output.scriptType = ScriptType.P2WPKHSH
-                }
-
+                output.scriptType = ScriptType.P2WPKHSH
+                output.keyHash = it.publicKeyHash
                 return it
             }
         }

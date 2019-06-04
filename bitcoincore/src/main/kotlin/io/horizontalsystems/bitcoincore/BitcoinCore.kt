@@ -42,6 +42,7 @@ class BitcoinCoreBuilder {
     private var peerSize = 10
     private var blockHeaderHasher: IHasher? = null
     private var transactionInfoConverter: ITransactionInfoConverter? = null
+    private var addressKeyHashConverter: IAddressKeyHashConverter? = null
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -108,6 +109,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setAddressKeyHashConverter(addressKeyHashConverter: IAddressKeyHashConverter): BitcoinCoreBuilder {
+        this.addressKeyHashConverter = addressKeyHashConverter
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -129,7 +135,7 @@ class BitcoinCoreBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType)
 
-        val addressManager = AddressManager.create(storage, hdWallet, addressConverter)
+        val addressManager = AddressManager.create(storage, hdWallet, addressConverter, addressKeyHashConverter)
 
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage)
@@ -346,8 +352,8 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         transactionCreator.create(address, value, feeRate, senderPay)
     }
 
-    fun receiveAddress(): String {
-        return addressManager.receiveAddress()
+    fun receiveAddress(type: Int): String {
+        return addressManager.receiveAddress(type)
     }
 
     fun validateAddress(address: String) {

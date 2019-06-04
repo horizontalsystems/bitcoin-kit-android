@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore
 
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 abstract class AbstractKit {
 
@@ -37,8 +38,8 @@ abstract class AbstractKit {
         bitcoinCore.send(address, value, senderPay, feeRate)
     }
 
-    fun receiveAddress(): String {
-        return bitcoinCore.receiveAddress()
+    fun receiveAddress(type: Int = ScriptType.P2PKH): String {
+        return bitcoinCore.receiveAddress(type)
     }
 
     fun validateAddress(address: String) {

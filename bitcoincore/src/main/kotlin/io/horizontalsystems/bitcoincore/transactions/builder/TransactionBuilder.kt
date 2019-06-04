@@ -125,7 +125,7 @@ class TransactionBuilder {
 
                 ScriptType.P2WPKHSH -> {
                     transaction.segwit = true
-                    val witnessProgram = OpCodes.push(0) + OpCodes.push(unspentOutput.publicKey.publicKeyHash)
+                    val witnessProgram = OpCodes.scriptWPKH(unspentOutput.publicKey.publicKeyHash)
 
                     inputToSign.input.sigScript = scriptBuilder.unlockingScript(listOf(witnessProgram))
                     inputToSign.input.witness = sigScriptData

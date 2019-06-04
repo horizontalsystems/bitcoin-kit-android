@@ -1,12 +1,13 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.core.IAddressKeyHashConverter
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.publicKey
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 
-class AddressManager(private val storage: IStorage, private val hdWallet: HDWallet, private val addressConverter: IAddressConverter) {
+class AddressManager(private val storage: IStorage, private val hdWallet: HDWallet, private val addressConverter: IAddressConverter, private val addressKeyHashConverter: IAddressKeyHashConverter?) {
 
     @Throws
     fun changePublicKey(): PublicKey {
@@ -14,11 +15,11 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     }
 
     @Throws
-    fun receiveAddress(): String {
-        val publicKey = getPublicKey(external = true)
-        val address = addressConverter.convert(publicKey.publicKeyHash)
+    fun receiveAddress(type: Int): String {
+        val keyHash = getPublicKey(external = true).publicKeyHash
+        val correctKeyHash = addressKeyHashConverter?.convert(keyHash, type) ?: keyHash
 
-        return address.string
+        return addressConverter.convert(correctKeyHash, type).string
     }
 
     fun fillGap() {
@@ -101,8 +102,8 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     }
 
     companion object {
-        fun create(storage: IStorage, hdWallet: HDWallet, addressConverter: IAddressConverter): AddressManager {
-            val addressManager = AddressManager(storage, hdWallet, addressConverter)
+        fun create(storage: IStorage, hdWallet: HDWallet, addressConverter: IAddressConverter, addressKeyHashConverter: IAddressKeyHashConverter?): AddressManager {
+            val addressManager = AddressManager(storage, hdWallet, addressConverter, addressKeyHashConverter)
             addressManager.fillGap()
             return addressManager
         }
