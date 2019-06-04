@@ -156,6 +156,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.block.deleteBlocksWithoutTransactions(toHeight)
     }
 
+    override fun unstaleAllBlocks() {
+        store.block.unstaleAllBlocks()
+    }
+
     // Transaction
 
     override fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo> {

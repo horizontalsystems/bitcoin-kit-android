@@ -52,6 +52,7 @@ interface IStorage {
     fun updateBlock(staleBlock: Block)
     fun deleteBlocks(blocks: List<Block>)
     fun deleteBlocksWithoutTransactions(toHeight: Int)
+    fun unstaleAllBlocks()
 
     //  Transaction
 

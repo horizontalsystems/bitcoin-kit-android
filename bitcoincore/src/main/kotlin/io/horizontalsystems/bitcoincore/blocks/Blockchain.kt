@@ -55,13 +55,13 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
             if (lastStaleHeight > lastNotStaleHeight) {
                 val notStaleBlocks = storage.getBlocks(heightGreaterOrEqualTo = firstStaleHeight, stale = false)
                 deleteBlocks(notStaleBlocks)
-                unstaleAllBlocks()
+                storage.unstaleAllBlocks()
             } else {
                 val staleBlocks = storage.getBlocks(stale = true)
                 deleteBlocks(staleBlocks)
             }
         } else {
-            unstaleAllBlocks()
+            storage.unstaleAllBlocks()
         }
     }
 
@@ -82,12 +82,5 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
         dataListener.onBlockInsert(block)
 
         return block
-    }
-
-    private fun unstaleAllBlocks() {
-        storage.getBlocks(stale = true).forEach { staleBlock ->
-            staleBlock.stale = false
-            storage.updateBlock(staleBlock)
-        }
     }
 }
