@@ -25,6 +25,10 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
 
         block.stale = true
 
+        if (block.height % 2016 == 0) {
+            storage.deleteBlocksWithoutTransactions(block.height - 2016)
+        }
+
         return addBlockAndNotify(block)
     }
 

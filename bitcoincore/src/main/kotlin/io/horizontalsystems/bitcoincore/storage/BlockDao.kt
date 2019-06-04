@@ -47,6 +47,9 @@ interface BlockDao {
     @Query("SELECT COUNT(headerHash) FROM Block")
     fun count(): Int
 
+    @Query("DELETE FROM Block WHERE height < :toHeight AND hasTransactions = 0")
+    fun deleteBlocksWithoutTransactions(toHeight: Int)
+
     @Delete
     fun delete(block: Block)
 
