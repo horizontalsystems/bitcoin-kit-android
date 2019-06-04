@@ -88,10 +88,14 @@ class TransactionProcessor(
     }
 
     private fun relay(transaction: Transaction, order: Int, block: Block?) {
-        transaction.blockHash = block?.headerHash
+        if (transaction.blockHash != null && block == null) {
+            return
+        }
+
         transaction.status = Transaction.Status.RELAYED
-        transaction.timestamp = block?.timestamp ?: (System.currentTimeMillis() / 1000)
         transaction.order = order
+        transaction.blockHash = block?.headerHash
+        transaction.timestamp = block?.timestamp ?: (System.currentTimeMillis() / 1000)
 
         if (block != null && !block.hasTransactions) {
             block.hasTransactions = true
