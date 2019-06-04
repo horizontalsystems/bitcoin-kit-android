@@ -1,17 +1,12 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.network.Network
 
-class StateManager(private val storage: IStorage, private val network: Network, private val newWallet: Boolean) {
+class StateManager(private val storage: IStorage, private val restoreFromApi: Boolean) {
 
     var restored: Boolean
         get() {
-            if (!network.syncableFromApi) {
-                return true
-            }
-
-            if (newWallet) {
+            if (!restoreFromApi) {
                 return true
             }
 

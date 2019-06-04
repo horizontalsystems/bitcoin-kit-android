@@ -27,14 +27,23 @@ class MainNetDash : Network() {
             "dnsseed.masternode.io"
     )
 
-    override val checkpointBlock = Block(BlockHeader(
-            version = 536870912,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000008d97c982f13b79db8e6992e3e3735050ed4a8e1cab8b252e9"),
-            merkleRoot = HashUtils.toBytesAsLE("104d81ab298edb237539e4f0a6189f46825bea2de1375aacf846377ab5353c51"),
-            timestamp = 1557390509,
-            bits = 421233986,
-            nonce = 2584914130,
-            hash = HashUtils.toBytesAsLE("0000000000000003bb7d2b3945dff00674f750b48e5de5b65139cbcd2a6f0d3e")
-    ), 1067177)
+    override val bip44CheckpointBlock = Block(BlockHeader(
+            version = 1,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000"),
+            merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
+            timestamp = 1231006505,
+            bits = 486604799,
+            nonce = 2083236893,
+            hash = HashUtils.toBytesAsLE("00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6")
+    ), 0)
 
+    override val lastCheckpointBlock = Block(BlockHeader(
+            version = 536870928,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000000000fcbac491b68a0774d1b9f82edeae8742eb492815e8fa76ca5"),
+            merkleRoot = HashUtils.toBytesAsLE("91e15e6045c20d06abc41eb5feb17813ccc723f6f018ca8fd01485e8837bc761"),
+            timestamp = 1559624664,
+            bits = 0x191a414a,
+            nonce = 838341360,
+            hash = HashUtils.toBytesAsLE("00000000000000011ce58a8bb55333277640b015e97689f9277d582a4c1f9999")
+    ), 1081358)
 }

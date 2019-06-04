@@ -32,15 +32,23 @@ class MainNetBitcoinCash : Network() {
             "seeder.criptolayer.net"                // criptolayer.net
     )
 
-    private val blockHeader = BlockHeader(
-            version = 805289984,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000000000000e1f8ea917f17c378fdfd8d13f23160c6cb522d406c37ab"),
-            merkleRoot = HashUtils.toBytesAsLE("923fb5f581b3dfe4bc6103891c63e5789abbaac7d8fcd2ba4b25ac2abccdba9c"),
-            timestamp = 1557394860,
-            bits = 402883015,
-            nonce = 3963128149,
-            hash = HashUtils.toBytesAsLE("0000000000000000030e41502adfbcb20fdca66b15cc9e157449585c6c85da6e")
-    )
+    override val bip44CheckpointBlock = Block(BlockHeader(
+            version = 2,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000006bcf448b771c8f4db4e2ca653474e3b29504ec08422b3fba"),
+            merkleRoot = HashUtils.toBytesAsLE("4ea18e999a57fc55fb390558dbb88a7b9c55c71c7de4cec160c045802ee587d2"),
+            timestamp = 1397755646,
+            bits = 419470732,
+            nonce = 2160181286,
+            hash = HashUtils.toBytesAsLE("00000000000000003decdbb5f3811eab3148fbc29d3610528eb3b50d9ee5723f")
+    ), 296352)
 
-    override val checkpointBlock = Block(blockHeader, 581790)
+    override val lastCheckpointBlock = Block(BlockHeader(
+            version = 0x2000e000,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000000000002a1f5acfab47e5e1afcac9f50eb9b7c875e6c736d099763"),
+            merkleRoot = HashUtils.toBytesAsLE("e6a8e517f708d294f426895c255cfd0a443d7f55a768b04398eadde0c516027c"),
+            timestamp = 1559650598,
+            bits = 0x1803769a,
+            nonce = 0xed7bb8ff,
+            hash = HashUtils.toBytesAsLE("00000000000000000040f26002e04126dc84700d6f82c0785efab2293080fe68")
+    ), 585504)
 }

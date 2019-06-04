@@ -26,7 +26,7 @@ class RegTest : Network() {
             "btc03-regtest.horizontalsystems.xyz"
     )
 
-    private val blockHeader = BlockHeader(
+    override val bip44CheckpointBlock = Block(BlockHeader(
             version = 1,
             previousBlockHeaderHash = zeroHashBytes,
             merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
@@ -34,8 +34,16 @@ class RegTest : Network() {
             bits = 545259519,
             nonce = 2,
             hash = byteArrayOf()
-    )
+    ), 0)
 
-    override val checkpointBlock = Block(blockHeader, 0)
+    override val lastCheckpointBlock = Block(BlockHeader(
+            version = 1,
+            previousBlockHeaderHash = zeroHashBytes,
+            merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
+            timestamp = 1296688602,
+            bits = 545259519,
+            nonce = 2,
+            hash = byteArrayOf()
+    ), 0)
 
 }

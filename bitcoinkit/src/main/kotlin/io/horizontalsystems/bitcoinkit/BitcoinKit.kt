@@ -39,10 +39,10 @@ class BitcoinKit : AbstractKit {
             bitcoinCore.listener = value
         }
 
-    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
-            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
+    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) :
+            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
-    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
+    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
         var initialSyncUrl = ""
@@ -72,7 +72,7 @@ class BitcoinKit : AbstractKit {
                 .setAddressSelector(addressSelector)
                 .setAddressKeyHashConverter(addressKeyHashConverter)
                 .setPeerSize(peerSize)
-                .setNewWallet(newWallet)
+                .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
