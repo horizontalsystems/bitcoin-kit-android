@@ -83,7 +83,7 @@ class BitcoinCashKit : AbstractKit {
 
             bitcoinCore.addBlockValidator(DAAValidator(targetSpacing, blockHelper))
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper))
+            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height))
         }
     }
 
