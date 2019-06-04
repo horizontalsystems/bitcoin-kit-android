@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import java.net.InetAddress
+import java.util.concurrent.Executors
 import java.util.logging.Logger
 
 class PeerGroup(
@@ -32,6 +33,7 @@ class PeerGroup(
     private var running = false
     private val logger = Logger.getLogger("PeerGroup")
     private val peerGroupListeners = mutableListOf<Listener>()
+    private val executorService = Executors.newCachedThreadPool()
 
     private val peerCountToHold = peerSize  // number of peers held
     private var peerCountToConnect = 100    // number of peers to connect to
@@ -143,7 +145,7 @@ class PeerGroup(
 
         for (i in peerManager.peersCount until peerCountToHold) {
             val ip = hostManager.getIp() ?: break
-            val peer = Peer(ip, network, this, networkMessageParser, networkMessageSerializer)
+            val peer = Peer(ip, network, this, networkMessageParser, networkMessageSerializer, executorService)
             peerCountConnected += 1
             peerGroupListeners.forEach { it.onPeerCreate(peer) }
             peerManager.add(peer)
