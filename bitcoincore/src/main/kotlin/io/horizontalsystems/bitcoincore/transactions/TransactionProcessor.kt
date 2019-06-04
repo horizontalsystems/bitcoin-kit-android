@@ -10,7 +10,6 @@ import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import java.util.*
 
 class TransactionProcessor(
         private val storage: IStorage,
@@ -91,8 +90,13 @@ class TransactionProcessor(
     private fun relay(transaction: Transaction, order: Int, block: Block?) {
         transaction.blockHash = block?.headerHash
         transaction.status = Transaction.Status.RELAYED
-        transaction.timestamp = block?.timestamp ?: (Date().time / 1000)
+        transaction.timestamp = block?.timestamp ?: (System.currentTimeMillis() / 1000)
         transaction.order = order
+
+        if (block != null && !block.hasTransactions) {
+            block.hasTransactions = true
+            storage.updateBlock(block)
+        }
     }
 
     private fun hasUnspentOutputs(transaction: FullTransaction): Boolean {
