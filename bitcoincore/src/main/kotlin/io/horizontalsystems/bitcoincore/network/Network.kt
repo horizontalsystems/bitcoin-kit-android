@@ -26,7 +26,8 @@ abstract class Network {
     abstract var addressSegwitHrp: String
     abstract var addressScriptVersion: Int
 
-    abstract val checkpointBlock: Block
+    abstract val bip44CheckpointBlock: Block
+    abstract val lastCheckpointBlock: Block
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
 }

@@ -63,10 +63,10 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     private val instantSend: InstantSend
     private val dashTransactionInfoConverter: DashTransactionInfoConverter
 
-    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
-            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
+    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) :
+            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
-    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
+    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) {
         val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId))
         val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val initialSyncUrl: String
@@ -99,7 +99,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)
-                .setNewWallet(newWallet)
+                .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(coreStorage)
                 .setBlockHeaderHasher(X11Hasher())
@@ -114,10 +114,10 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         val blockHelper = BlockValidatorHelper(coreStorage)
 
         if (network is MainNetDash) {
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height, 68589))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.lastCheckpointBlock.height, 68589))
         } else {
             bitcoinCore.addBlockValidator(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.checkpointBlock.height, 4002))
+            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.lastCheckpointBlock.height, 4002))
         }
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())

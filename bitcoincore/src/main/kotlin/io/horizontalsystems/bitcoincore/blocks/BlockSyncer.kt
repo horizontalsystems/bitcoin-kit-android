@@ -4,9 +4,9 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 import io.horizontalsystems.bitcoincore.managers.AddressManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
+import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
-import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.transactions.TransactionProcessor
 
 class BlockSyncer(
@@ -16,7 +16,7 @@ class BlockSyncer(
         private val addressManager: AddressManager,
         private val bloomFilterManager: BloomFilterManager,
         private val listener: ISyncStateListener,
-        private val network: Network,
+        private val checkpointBlock: Block,
         private val state: State = State()) {
 
     private val sqliteMaxVariableNumber = 999
@@ -37,7 +37,7 @@ class BlockSyncer(
 
     init {
         if (storage.blocksCount() == 0) {
-            storage.saveBlock(network.checkpointBlock)
+            storage.saveBlock(checkpointBlock)
         }
 
         listener.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight)
@@ -81,14 +81,14 @@ class BlockSyncer(
         }
 
         if (result.isEmpty()) {
-            storage.getBlocks(heightGreaterThan = network.checkpointBlock.height, sortedBy = "height", limit = 10).forEach {
+            storage.getBlocks(heightGreaterThan = checkpointBlock.height, sortedBy = "height", limit = 10).forEach {
                 result.add(it.headerHash)
             }
         }
 
         val lastBlock = storage.getBlock(peerLastBlockHeight)
         if (lastBlock == null) {
-            result.add(network.checkpointBlock.headerHash)
+            result.add(checkpointBlock.headerHash)
         } else if (!result.contains(lastBlock.headerHash)) {
             result.add(lastBlock.headerHash)
         }
@@ -133,7 +133,7 @@ class BlockSyncer(
     }
 
     private fun clearPartialBlocks() {
-        val toDelete = storage.getBlockHashHeaderHashes(except = network.checkpointBlock.headerHash)
+        val toDelete = storage.getBlockHashHeaderHashes(except = checkpointBlock.headerHash)
 
         toDelete.chunked(sqliteMaxVariableNumber).forEach {
             val blocksToDelete = storage.getBlocks(hashes = it)

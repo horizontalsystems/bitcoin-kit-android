@@ -29,27 +29,23 @@ class MainNet : Network() {
             "seed.bitcoin.sprovoost.nl"         // Sjors Provoost
     )
 
-    private val blockHeader = BlockHeader(
-            version = 545259520,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000000001b2505c11119fcf29be733ec379f686518bf1090a522a"),
-            merkleRoot = HashUtils.toBytesAsLE("cc09d95fd8ccc985826b9eb46bf73f8449116f18535423129f0574500985cf90"),
-            timestamp = 1556958733,
-            bits = 388628280,
-            nonce = 2897942742,
-            hash = HashUtils.toBytesAsLE("00000000000000000008c8427670a65dec4360e88bf6c8381541ef26b30bd8fc")
-    )
+    override val bip44CheckpointBlock = Block(BlockHeader(
+            version = 2,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000006bcf448b771c8f4db4e2ca653474e3b29504ec08422b3fba"),
+            merkleRoot = HashUtils.toBytesAsLE("4ea18e999a57fc55fb390558dbb88a7b9c55c71c7de4cec160c045802ee587d2"),
+            timestamp = 1397755646,
+            bits = 419470732,
+            nonce = 2160181286,
+            hash = HashUtils.toBytesAsLE("00000000000000003decdbb5f3811eab3148fbc29d3610528eb3b50d9ee5723f")
+    ), 296352)
 
-    override val checkpointBlock = Block(blockHeader, 574560)
-//
-//     private val genesisHeader = BlockHeader(
-//             version = 1,
-//             previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000"),
-//             merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
-//             timestamp = 1231006505,
-//             bits = 0x1d00ffff,
-//             nonce = 2083236893,
-//             hash = HashUtils.toBytesAsLE("000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f")
-//     )
-//
-//     override val checkpointBlock = Block(genesisHeader, 0)
+    override val lastCheckpointBlock = Block(BlockHeader(
+            version = 0x20000000,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000000000485ab94f5ea60203aacfc9740b3e42700d7e7012f76d7"),
+            merkleRoot = HashUtils.toBytesAsLE("2e76c50d3dcecc46264b7ff8e653d5c9f06680f4d88f5b239d58a531a3c12279"),
+            timestamp = 1559277784,
+            bits = 0x1725bb76,
+            nonce = 0x423310ae,
+            hash = HashUtils.toBytesAsLE("00000000000000000001791f463d849ce5363d751c91f7d3cd2ff18981ae221d")
+    ), 578592)
 }
