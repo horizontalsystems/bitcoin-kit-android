@@ -60,7 +60,7 @@ class PeerGroupTest {
                 .withAnyArguments()
                 .thenReturn(relayTransactionTask)
 
-        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer, connectionManager)
+        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer, connectionManager, 100)
     }
 
     @Test

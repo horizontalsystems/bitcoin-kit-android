@@ -151,7 +151,16 @@ class BitcoinCoreBuilder {
         val networkMessageParser = NetworkMessageParser(network.magic)
         val networkMessageSerializer = NetworkMessageSerializer(network.magic)
 
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager)
+        val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
+        val blockchain = Blockchain(storage, blockValidatorChain, dataProvider)
+        val checkpointBlock = when (syncMode) {
+            is BitcoinCore.SyncMode.Full -> network.bip44CheckpointBlock
+            else -> network.lastCheckpointBlock
+        }
+
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, checkpointBlock)
+        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
+        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
         val transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
@@ -182,7 +191,8 @@ class BitcoinCoreBuilder {
                 transactionBuilder,
                 transactionCreator,
                 paymentAddressParser,
-                syncManager)
+                syncManager,
+                blockValidatorChain)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -225,15 +235,6 @@ class BitcoinCoreBuilder {
         bloomFilterManager.listener = bloomFilterLoader
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 
-        val blockchain = Blockchain(storage, bitcoinCore.blockValidatorChain, dataProvider)
-        val checkpointBlock = when (syncMode) {
-            is BitcoinCore.SyncMode.Full -> network.bip44CheckpointBlock
-            else -> network.lastCheckpointBlock
-        }
-
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, checkpointBlock)
-        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
-
         // todo: now this part cannot be moved to another place since bitcoinCore requires initialBlockDownload to be set. find solution to do so
         bitcoinCore.initialBlockDownload = initialBlockDownload
         bitcoinCore.addPeerTaskHandler(initialBlockDownload)
@@ -256,7 +257,7 @@ class BitcoinCoreBuilder {
 
 }
 
-class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager)
+class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager, private val blockValidatorChain: BlockValidatorChain)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -277,7 +278,6 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
-    val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
 
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener): BitcoinCore {
         initialBlockDownload.addPeerSyncListener(peerSyncListener)
@@ -450,9 +450,9 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     }
 
     sealed class SyncMode {
-        class Full: SyncMode()
-        class Api: SyncMode()
-        class NewWallet: SyncMode()
+        class Full : SyncMode()
+        class Api : SyncMode()
+        class NewWallet : SyncMode()
     }
 
     companion object {

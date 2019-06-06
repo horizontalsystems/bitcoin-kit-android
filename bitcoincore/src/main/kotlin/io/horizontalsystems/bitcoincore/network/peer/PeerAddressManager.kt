@@ -17,8 +17,17 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
     private val logger = Logger.getLogger("PeerHostManager")
     private val peerDiscover = PeerDiscover(this)
 
+    val hasFreshIps: Boolean
+        get() {
+            getLeastScoreFastestPeer()?.let { peerAddress ->
+                return peerAddress.connectionTime == null
+            }
+
+            return false
+        }
+
     fun getIp(): String? {
-        val peerAddress = storage.getLeastScoreFastestPeerAddressExcludingIps(state.usedPeers.toList())
+        val peerAddress = getLeastScoreFastestPeer()
         if (peerAddress == null) {
             peerDiscover.lookup(network.dnsSeeds)
             return null
@@ -51,6 +60,10 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
 
     fun markConnected(peer: Peer) {
         storage.setPeerConnectionTime(peer.host, peer.connectionTime)
+    }
+
+    private fun getLeastScoreFastestPeer(): PeerAddress? {
+        return storage.getLeastScoreFastestPeerAddressExcludingIps(state.usedPeers.toList())
     }
 
     class State {

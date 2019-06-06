@@ -10,8 +10,7 @@ import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.*
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -122,7 +121,7 @@ object TransactionExtractorTest : Spek({
             transactionOutput.lockingScript = keyHash
             extractor.extractOutputs(fullTransaction)
 
-            assertEquals(keyHash, fullTransaction.outputs[0].keyHash)
+            assertArrayEquals(keyHash.drop(2).toByteArray(), fullTransaction.outputs[0].keyHash)
             assertEquals(ScriptType.P2WPKH, fullTransaction.outputs[0].scriptType)
         }
 

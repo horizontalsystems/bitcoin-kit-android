@@ -155,14 +155,7 @@ object BlockchainTest : Spek({
             it("makes new blocks not stale") {
                 blockchain.handleFork()
 
-                argumentCaptor<Block>().apply {
-                    verify(storage, times(3)).updateBlock(capture())
-
-                    mockedBlocks.newBlocks.forEachIndexed { index, block ->
-                        assertEquals(false, allValues[index].stale)
-                        assertEquals(block.headerHash, allValues[index].headerHash)
-                    }
-                }
+                verify(storage).unstaleAllBlocks()
             }
         }
 
@@ -185,14 +178,7 @@ object BlockchainTest : Spek({
             it("makes new blocks not stale") {
                 blockchain.handleFork()
 
-                argumentCaptor<Block>().apply {
-                    verify(storage, times(3)).updateBlock(capture())
-
-                    mockedBlocks.newBlocks.forEachIndexed { index, block ->
-                        assertEquals(false, allValues[index].stale)
-                        assertEquals(block.headerHash, allValues[index].headerHash)
-                    }
-                }
+                verify(storage).unstaleAllBlocks()
             }
         }
 
@@ -259,15 +245,7 @@ object BlockchainTest : Spek({
                 blockchain.handleFork()
 
                 verify(storage, never()).deleteBlocks(any())
-
-                argumentCaptor<Block>().apply {
-                    verify(storage, times(3)).updateBlock(capture())
-
-                    mockedBlocks.newBlocks.forEachIndexed { index, block ->
-                        assertEquals(false, allValues[index].stale)
-                        assertEquals(block.headerHash, allValues[index].headerHash)
-                    }
-                }
+                verify(storage).unstaleAllBlocks()
             }
         }
 
