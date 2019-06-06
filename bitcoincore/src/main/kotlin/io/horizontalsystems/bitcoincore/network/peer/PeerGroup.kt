@@ -15,7 +15,8 @@ class PeerGroup(
         peerSize: Int,
         private val networkMessageParser: NetworkMessageParser,
         private val networkMessageSerializer: NetworkMessageSerializer,
-        private val connectionManager: ConnectionManager)
+        private val connectionManager: ConnectionManager,
+        private val localDownloadedBestBlockHeight: Int)
     : Peer.Listener, PeerAddressManager.Listener {
 
     interface Listener {
@@ -35,9 +36,11 @@ class PeerGroup(
     private val peerGroupListeners = mutableListOf<Listener>()
     private val executorService = Executors.newCachedThreadPool()
 
-    private val peerCountToHold = peerSize  // number of peers held
-    private var peerCountToConnect = 100    // number of peers to connect to
-    private var peerCountConnected = 0      // number of peers connected to
+    private val acceptableBlockHeightDifference = 50_000
+    private var peerCountToConnectMax = 100
+    private var peerCountToConnect: Int? = null // number of peers to connect to
+    private val peerCountToHold = peerSize      // number of peers held
+    private var peerCountConnected = 0          // number of peers connected to
 
     fun start() {
         if (running || !connectionManager.isConnected) {
@@ -82,12 +85,7 @@ class PeerGroup(
         hostManager.markConnected(peer)
         peerGroupListeners.forEach { it.onPeerConnect(peer) }
 
-        if (peerCountToHold > 1 && peerCountToHold < peerCountToConnect) {
-            val sortedPeers = peerManager.sorted()
-            if (sortedPeers.size >= peerCountToHold) {
-                sortedPeers.lastOrNull()?.close()
-            }
-        }
+        peerCountToConnect?.let { disconnectSlowestPeer(it) } ?: setPeerCountToConnect(peer)
     }
 
     override fun onReady(peer: Peer) {
@@ -138,6 +136,24 @@ class PeerGroup(
     //
     // Private methods
     //
+
+    private fun setPeerCountToConnect(peer: Peer) {
+        if (peer.announcedLastBlockHeight - localDownloadedBestBlockHeight > acceptableBlockHeightDifference) {
+            peerCountToConnect = peerCountToConnectMax
+        } else {
+            peerCountToConnect = 0
+        }
+    }
+
+    private fun disconnectSlowestPeer(peerCountToConnect: Int) {
+        if (peerCountToConnect > peerCountConnected && peerCountToHold > 1 && hostManager.hasFreshIps) {
+            val sortedPeers = peerManager.sorted()
+            if (sortedPeers.size >= peerCountToHold) {
+                sortedPeers.lastOrNull()?.close()
+            }
+        }
+    }
+
     private fun connectPeersIfRequired() {
         if (!running || !connectionManager.isConnected) {
             return
