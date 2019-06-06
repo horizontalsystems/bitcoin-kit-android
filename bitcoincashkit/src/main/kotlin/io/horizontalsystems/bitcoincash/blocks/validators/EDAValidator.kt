@@ -31,7 +31,8 @@ class EDAValidator(private val maxTargetBits: Long, private val blockValidatorHe
 
         val mpt6blocks = blockValidatorHelper.medianTimePast(previousBlock) - blockValidatorHelper.medianTimePast(cursorBlock)
         if (mpt6blocks >= 12 * 3600) {
-            val pow = CompactBits.decode(previousBlock.bits) shr 2
+            val decodedBits = CompactBits.decode(previousBlock.bits)
+            val pow = decodedBits + (decodedBits shr 2)
             var powBits = CompactBits.encode(pow)
             if (powBits > maxTargetBits)
                 powBits = maxTargetBits
