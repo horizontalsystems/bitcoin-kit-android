@@ -9,8 +9,8 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
-import io.horizontalsystems.bitcoincore.managers.BCoinApi
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
+import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -47,18 +47,18 @@ class BitcoinCashKit : AbstractKit {
 
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://bch.horizontalsystems.xyz/apg"
+                initialSyncUrl = "https://blockdozer.com/api"
                 MainNetBitcoinCash()
             }
             NetworkType.TestNet -> {
-                initialSyncUrl = "http://bch-testnet.horizontalsystems.xyz/apg"
+                initialSyncUrl = "https://tbch.blockdozer.com/api"
                 TestNetBitcoinCash()
             }
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
         val addressSelector = BitcoinCashAddressSelector()
-        val initialSyncApi = BCoinApi(initialSyncUrl)
+        val initialSyncApi = InsightApi(initialSyncUrl)
 
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)

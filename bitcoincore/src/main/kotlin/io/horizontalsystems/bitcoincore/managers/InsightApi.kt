@@ -1,9 +1,6 @@
-package io.horizontalsystems.dashkit.managers
+package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
-import io.horizontalsystems.bitcoincore.managers.ApiManager
-import io.horizontalsystems.bitcoincore.managers.TransactionItem
-import io.horizontalsystems.bitcoincore.managers.TransactionOutputItem
 import java.util.logging.Logger
 
 class InsightApi(host: String) : IInitialSyncApi {
