@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 
-class DarkGravityWaveTestnetValidator(private val targetSpacing: Int, private val targetTimespan: Long, private val maxTargetBits: Long) : IBlockValidator {
+class DarkGravityWaveTestnetValidator(private val targetSpacing: Int, private val targetTimespan: Long, private val maxTargetBits: Long, private val powDGWHeight: Int) : IBlockValidator {
 
     override fun validate(block: Block, previousBlock: Block) {
         if (block.timestamp > previousBlock.timestamp + 2 * targetTimespan) { // more than 2 cycles
@@ -29,6 +29,6 @@ class DarkGravityWaveTestnetValidator(private val targetSpacing: Int, private va
     }
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
-        return block.timestamp > previousBlock.timestamp + 4 * targetSpacing
+        return block.height >= powDGWHeight && block.timestamp > previousBlock.timestamp + 4 * targetSpacing
     }
 }
