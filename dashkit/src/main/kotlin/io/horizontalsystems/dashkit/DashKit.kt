@@ -7,10 +7,7 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
-import io.horizontalsystems.bitcoincore.managers.DashAddressSelector
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
+import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
