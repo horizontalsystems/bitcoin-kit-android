@@ -38,10 +38,11 @@ class BitcoinCoreBuilder {
 
     // parameters with default values
     private var confirmationsThreshold = 6
-    private var newWallet = false
+    private var syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api()
     private var peerSize = 10
     private var blockHeaderHasher: IHasher? = null
     private var transactionInfoConverter: ITransactionInfoConverter? = null
+    private var addressKeyHashConverter: IAddressKeyHashConverter? = null
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -78,8 +79,8 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setNewWallet(newWallet: Boolean): BitcoinCoreBuilder {
-        this.newWallet = newWallet
+    fun setSyncMode(syncMode: BitcoinCore.SyncMode): BitcoinCoreBuilder {
+        this.syncMode = syncMode
         return this
     }
 
@@ -108,6 +109,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setAddressKeyHashConverter(addressKeyHashConverter: IAddressKeyHashConverter): BitcoinCoreBuilder {
+        this.addressKeyHashConverter = addressKeyHashConverter
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -129,7 +135,7 @@ class BitcoinCoreBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType)
 
-        val addressManager = AddressManager.create(storage, hdWallet, addressConverter)
+        val addressManager = AddressManager.create(storage, hdWallet, addressConverter, addressKeyHashConverter)
 
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage)
@@ -145,8 +151,17 @@ class BitcoinCoreBuilder {
         val networkMessageParser = NetworkMessageParser(network.magic)
         val networkMessageSerializer = NetworkMessageSerializer(network.magic)
 
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer)
-        peerGroup.connectionManager = connectionManager
+        val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
+        val blockchain = Blockchain(storage, blockValidatorChain, dataProvider)
+        val checkpointBlock = when (syncMode) {
+            is BitcoinCore.SyncMode.Full -> network.bip44CheckpointBlock
+            else -> network.lastCheckpointBlock
+        }
+
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, checkpointBlock)
+        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
+        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
+        peerHostManager.listener = peerGroup
 
         val transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
 
@@ -159,12 +174,13 @@ class BitcoinCoreBuilder {
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
 
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
-        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.checkpointBlock.height)
-        val stateManager = StateManager(storage, network, newWallet)
+        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)
+        val stateManager = StateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
         val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)
 
         val syncManager = SyncManager(peerGroup, initialSyncer)
         initialSyncer.listener = syncManager
+        connectionManager.listener = syncManager
 
         val bitcoinCore = BitcoinCore(
                 storage,
@@ -175,7 +191,8 @@ class BitcoinCoreBuilder {
                 transactionBuilder,
                 transactionCreator,
                 paymentAddressParser,
-                syncManager)
+                syncManager,
+                blockValidatorChain)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -214,11 +231,10 @@ class BitcoinCoreBuilder {
                 .addMessageSerializer(VerAckMessageSerializer())
                 .addMessageSerializer(VersionMessageSerializer())
 
-        val bloomFilterLoader = BloomFilterLoader(bloomFilterManager)
+        val bloomFilterLoader = BloomFilterLoader(bloomFilterManager, peerManager)
         bloomFilterManager.listener = bloomFilterLoader
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 
-        val initialBlockDownload = InitialBlockDownload(BlockSyncer(storage, Blockchain(storage, bitcoinCore.blockValidatorChain, dataProvider), transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, network), peerManager, kitStateProvider)
         // todo: now this part cannot be moved to another place since bitcoinCore requires initialBlockDownload to be set. find solution to do so
         bitcoinCore.initialBlockDownload = initialBlockDownload
         bitcoinCore.addPeerTaskHandler(initialBlockDownload)
@@ -241,7 +257,7 @@ class BitcoinCoreBuilder {
 
 }
 
-class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager)
+class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager, private val blockValidatorChain: BlockValidatorChain)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -262,7 +278,6 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
-    val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
 
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener): BitcoinCore {
         initialBlockDownload.addPeerSyncListener(peerSyncListener)
@@ -287,7 +302,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         peerTaskHandlerChain.addHandler(handler)
     }
 
-    fun addPeerGroupListener(listener: PeerGroup.IPeerGroupListener) {
+    fun addPeerGroupListener(listener: PeerGroup.Listener) {
         peerGroup.addPeerGroupListener(listener)
     }
 
@@ -342,8 +357,8 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         transactionCreator.create(address, value, feeRate, senderPay)
     }
 
-    fun receiveAddress(): String {
-        return addressManager.receiveAddress()
+    fun receiveAddress(type: Int): String {
+        return addressManager.receiveAddress(type)
     }
 
     fun validateAddress(address: String) {
@@ -432,6 +447,12 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
             }
             return result
         }
+    }
+
+    sealed class SyncMode {
+        class Full : SyncMode()
+        class Api : SyncMode()
+        class NewWallet : SyncMode()
     }
 
     companion object {

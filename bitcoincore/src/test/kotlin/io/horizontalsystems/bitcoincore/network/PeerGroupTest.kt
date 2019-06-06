@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.models.NetworkAddress
+import io.horizontalsystems.bitcoincore.network.messages.AddrMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoincore.network.peer.Peer
@@ -47,7 +48,7 @@ class PeerGroupTest {
         whenever(peer1.host).thenReturn(peerIp)
         whenever(peer2.host).thenReturn(peerIp2)
         whenever(hostManager.getIp()).thenReturn(peerIp, peerIp2)
-        whenever(connectionManager.isOnline).thenReturn(true)
+        whenever(connectionManager.isConnected).thenReturn(true)
 
         // Peer
         PowerMockito.whenNew(Peer::class.java)
@@ -59,22 +60,15 @@ class PeerGroupTest {
                 .withAnyArguments()
                 .thenReturn(relayTransactionTask)
 
-        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer)
-        peerGroup.connectionManager = connectionManager
+        peerGroup = PeerGroup(hostManager, network, peerManager, 2, networkMessageParser, networkMessageSerializer, connectionManager, 100)
     }
 
     @Test
-    fun run() { // creates peer connection with given IP address
+    fun start() { // creates peer connection with given IP address
         peerGroup.start()
 
-        Thread.sleep(500L)
         verify(peer1).start()
-
-        // close thread:
-        peerGroup.close()
-        peerGroup.join()
     }
-
 
     @Test
     fun disconnected_withError() { // removes peer from connection list
@@ -84,16 +78,16 @@ class PeerGroupTest {
     }
 
     @Test
-    fun onReceiveAddresses() {
+    fun onReceiveMessage() {
         val ip4 = "0A000001"
         val raw = arrayOf("E215104D", "0100000000000000", "00000000000000000000FFFF$ip4", "208D").joinToString("")
         val input = BitcoinInput(raw.hexToByteArray())
 
         val netAddress = NetworkAddress(input, false)
 
-        peerGroup.onReceiveAddress(listOf(netAddress))
+        peerGroup.onReceiveMessage(peer1, AddrMessage(listOf(netAddress)))
 
-        verify(hostManager).addIps(arrayOf("10.0.0.1"))
+        verify(hostManager).addIps(listOf("10.0.0.1"))
     }
 
 }

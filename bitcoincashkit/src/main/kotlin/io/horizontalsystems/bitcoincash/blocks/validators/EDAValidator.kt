@@ -7,13 +7,16 @@ import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 
 // Emergency Difficulty Adjustment
-class EDAValidator(private val maxTargetBits: Long, private val blockValidatorHelper: BitcoinCashBlockValidatorHelper) : IBlockValidator {
+class EDAValidator(private val maxTargetBits: Long, private val blockValidatorHelper: BitcoinCashBlockValidatorHelper, val firstCheckpointHeight: Int) : IBlockValidator {
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return true
     }
 
     override fun validate(block: Block, previousBlock: Block) {
+        // we must trust first 6 blocks from checkpoint, because can't calculate it's bits
+        if (previousBlock.height < firstCheckpointHeight + 6) return
+
         if (previousBlock.bits == maxTargetBits) {
             if (block.bits != maxTargetBits) {
                 throw BlockValidatorException.NotEqualBits()
@@ -28,7 +31,8 @@ class EDAValidator(private val maxTargetBits: Long, private val blockValidatorHe
 
         val mpt6blocks = blockValidatorHelper.medianTimePast(previousBlock) - blockValidatorHelper.medianTimePast(cursorBlock)
         if (mpt6blocks >= 12 * 3600) {
-            val pow = CompactBits.decode(previousBlock.bits) shr 2
+            val decodedBits = CompactBits.decode(previousBlock.bits)
+            val pow = decodedBits + (decodedBits shr 2)
             var powBits = CompactBits.encode(pow)
             if (powBits > maxTargetBits)
                 powBits = maxTargetBits

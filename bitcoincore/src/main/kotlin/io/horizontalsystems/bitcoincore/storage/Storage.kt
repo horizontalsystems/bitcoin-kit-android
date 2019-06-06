@@ -17,12 +17,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     // PeerAddress
 
-    override fun getLeastScorePeerAddressExcludingIps(ips: List<String>): PeerAddress? {
-        return store.peerAddress.getLeastScore(ips)
-    }
-
-    override fun getExistingPeerAddress(ips: List<String>): List<PeerAddress> {
-        return store.peerAddress.getExisting(ips)
+    override fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress? {
+        return store.peerAddress.getLeastScoreFastest(ips)
     }
 
     override fun increasePeerAddressScore(ip: String) {
@@ -35,6 +31,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun setPeerAddresses(list: List<PeerAddress>) {
         store.peerAddress.insertAll(list)
+    }
+
+    override fun setPeerConnectionTime(ip: String, time: Long) {
+        store.peerAddress.setConnectionTime(time, ip)
     }
 
     // BlockHash
@@ -150,6 +150,14 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         }
 
         store.block.deleteAll(blocks)
+    }
+
+    override fun deleteBlocksWithoutTransactions(toHeight: Int) {
+        store.block.deleteBlocksWithoutTransactions(toHeight)
+    }
+
+    override fun unstaleAllBlocks() {
+        store.block.unstaleAllBlocks()
     }
 
     // Transaction

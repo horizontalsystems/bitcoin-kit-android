@@ -9,8 +9,8 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
-import io.horizontalsystems.bitcoincore.managers.BCoinApi
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
+import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -37,28 +37,28 @@ class BitcoinCashKit : AbstractKit {
             bitcoinCore.listener = value
         }
 
-    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) :
-            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, newWallet, confirmationsThreshold)
+    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) :
+            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
-    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, newWallet: Boolean = false, confirmationsThreshold: Int = 6) {
+    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
         val initialSyncUrl: String
 
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://bch.horizontalsystems.xyz/apg"
+                initialSyncUrl = "https://blockdozer.com/api"
                 MainNetBitcoinCash()
             }
             NetworkType.TestNet -> {
-                initialSyncUrl = "http://bch-testnet.horizontalsystems.xyz/apg"
+                initialSyncUrl = "https://tbch.blockdozer.com/api"
                 TestNetBitcoinCash()
             }
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
         val addressSelector = BitcoinCashAddressSelector()
-        val initialSyncApi = BCoinApi(initialSyncUrl)
+        val initialSyncApi = InsightApi(initialSyncUrl)
 
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
@@ -67,7 +67,7 @@ class BitcoinCashKit : AbstractKit {
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)
-                .setNewWallet(newWallet)
+                .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
@@ -83,7 +83,7 @@ class BitcoinCashKit : AbstractKit {
 
             bitcoinCore.addBlockValidator(DAAValidator(targetSpacing, blockHelper))
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper))
+            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height))
         }
     }
 

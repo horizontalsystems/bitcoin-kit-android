@@ -1,12 +1,14 @@
 package io.horizontalsystems.bitcoincore.storage
 
+import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Database
 import android.arch.persistence.room.Room
 import android.arch.persistence.room.RoomDatabase
+import android.arch.persistence.room.migration.Migration
 import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
 
-@Database(version = 1, exportSchema = false, entities = [
+@Database(version = 3, exportSchema = false, entities = [
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -36,7 +38,24 @@ abstract class CoreDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
+                    .addMigrations(
+                            add_connectionTime_to_PeerAddress,
+                            add_hasTransaction_to_Block
+                    )
                     .build()
+        }
+
+        private val add_connectionTime_to_PeerAddress = object : Migration(1, 2) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE PeerAddress ADD COLUMN connectionTime INTEGER")
+            }
+        }
+
+        private val add_hasTransaction_to_Block = object : Migration(2, 3) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE Block ADD COLUMN hasTransactions INTEGER DEFAULT 0 NOT NULL")
+                database.execSQL("UPDATE Block SET hasTransactions = 1")
+            }
         }
     }
 }

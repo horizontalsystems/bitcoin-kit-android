@@ -21,12 +21,13 @@ abstract class Network {
     abstract var bip32HeaderPub: Int
     abstract var bip32HeaderPriv: Int
     abstract var coinType: Int
-    abstract var dnsSeeds: Array<String>
+    abstract var dnsSeeds: List<String>
     abstract var addressVersion: Int
     abstract var addressSegwitHrp: String
     abstract var addressScriptVersion: Int
 
-    abstract val checkpointBlock: Block
+    abstract val bip44CheckpointBlock: Block
+    abstract val lastCheckpointBlock: Block
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
 }

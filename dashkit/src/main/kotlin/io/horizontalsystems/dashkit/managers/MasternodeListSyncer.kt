@@ -16,8 +16,8 @@ class MasternodeListSyncer(
         private val bitcoinCore: BitcoinCore,
         private val peerTaskFactory: PeerTaskFactory,
         private val masternodeListManager: MasternodeListManager,
-        private val initialBlockDownload: InitialBlockDownload
-) : IPeerTaskHandler, IPeerSyncListener, PeerGroup.IPeerGroupListener {
+        private val initialBlockDownload: InitialBlockDownload)
+    : IPeerTaskHandler, IPeerSyncListener, PeerGroup.Listener {
 
     @Volatile
     private var workingPeer: Peer? = null

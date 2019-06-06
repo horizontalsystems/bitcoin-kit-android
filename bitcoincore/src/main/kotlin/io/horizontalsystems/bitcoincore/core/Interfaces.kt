@@ -13,11 +13,11 @@ interface IStorage {
 
     //  PeerAddress
 
-    fun getLeastScorePeerAddressExcludingIps(ips: List<String>): PeerAddress?
-    fun getExistingPeerAddress(ips: List<String>): List<PeerAddress>
+    fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress?
     fun increasePeerAddressScore(ip: String)
     fun deletePeerAddress(ip: String)
     fun setPeerAddresses(list: List<PeerAddress>)
+    fun setPeerConnectionTime(ip: String, time: Long)
 
     //  BlockHash
 
@@ -51,6 +51,8 @@ interface IStorage {
     fun lastBlock(): Block?
     fun updateBlock(staleBlock: Block)
     fun deleteBlocks(blocks: List<Block>)
+    fun deleteBlocksWithoutTransactions(toHeight: Int)
+    fun unstaleAllBlocks()
 
     //  Transaction
 
@@ -99,4 +101,8 @@ interface ITransactionInfoConverter {
 
 interface IInitialSyncApi {
     fun getTransactions(addresses: List<String>): List<TransactionItem>
+}
+
+interface IAddressKeyHashConverter {
+    fun convert(keyHash: ByteArray, type: Int): ByteArray
 }

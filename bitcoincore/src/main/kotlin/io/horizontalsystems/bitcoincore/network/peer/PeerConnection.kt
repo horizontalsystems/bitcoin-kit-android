@@ -6,20 +6,19 @@ import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import java.io.IOException
+import java.io.OutputStream
 import java.net.*
-import java.util.concurrent.ArrayBlockingQueue
-import java.util.concurrent.BlockingQueue
-import java.util.concurrent.TimeUnit
-import java.util.logging.Level
+import java.util.concurrent.ExecutorService
 import java.util.logging.Logger
 
 class PeerConnection(
         private val host: String,
         private val network: Network,
         private val listener: Listener,
+        private val sendingExecutor: ExecutorService,
         private val networkMessageParser: NetworkMessageParser,
-        private val networkMessageSerializer: NetworkMessageSerializer
-) : Thread() {
+        private val networkMessageSerializer: NetworkMessageSerializer)
+    : Thread() {
 
     interface Listener {
         fun socketConnected(address: InetAddress)
@@ -29,8 +28,8 @@ class PeerConnection(
     }
 
     private val logger = Logger.getLogger("Peer[$host]")
-    private val sendingQueue: BlockingQueue<IMessage> = ArrayBlockingQueue(100)
     private val socket = Socket()
+    private var outputStream: OutputStream? = null
     private var disconnectError: Exception? = null
 
     @Volatile
@@ -48,8 +47,8 @@ class PeerConnection(
             socket.connect(InetSocketAddress(host, network.port), 10000)
             socket.soTimeout = 10000
 
-            val input = socket.getInputStream()
-            val output = socket.getOutputStream()
+            outputStream = socket.getOutputStream()
+            val inStream = socket.getInputStream()
 
             logger.info("Socket $host connected.")
 
@@ -58,17 +57,11 @@ class PeerConnection(
             while (isRunning) {
                 listener.onTimePeriodPassed()
 
-                // try get message to send:
-                val msg = sendingQueue.poll(1, TimeUnit.SECONDS)
-                if (isRunning && msg != null) {
-                    // send message:
-                    logger.info("=> " + msg.toString())
-                    output.write(networkMessageSerializer.serialize(msg))
-                }
+                sleep(1000)
 
                 // try receive message:
-                while (isRunning && input.available() > 0) {
-                    val inputStream = BitcoinInput(input)
+                while (isRunning && inStream.available() > 0) {
+                    val inputStream = BitcoinInput(inStream)
                     val parsedMsg = networkMessageParser.parseMessage(inputStream)
                     logger.info("<= $parsedMsg")
                     listener.onMessage(parsedMsg)
@@ -96,19 +89,28 @@ class PeerConnection(
         }
     }
 
-    fun close(disconnectError: Exception?) {
-        this.disconnectError = disconnectError
-
+    fun close(error: Exception?) {
+        disconnectError = error
+        outputStream = null
         isRunning = false
+
         try {
             join(1000)
         } catch (e: Exception) {
-            logger.log(Level.SEVERE, e.message)
+            logger.severe(e.message)
         }
     }
 
+    @Synchronized
     fun sendMessage(message: IMessage) {
-        sendingQueue.add(message)
+        sendingExecutor.execute {
+            try {
+                logger.info("=> $message")
+                outputStream?.write(networkMessageSerializer.serialize(message))
+            } catch (e: Exception) {
+                close(e)
+            }
+        }
     }
 
 }

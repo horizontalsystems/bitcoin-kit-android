@@ -2,9 +2,7 @@ package io.horizontalsystems.dashkit
 
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.TransactionInput
-import io.horizontalsystems.dashkit.models.InstantTransactionInput
-import io.horizontalsystems.dashkit.models.Masternode
-import io.horizontalsystems.dashkit.models.MasternodeListState
+import io.horizontalsystems.dashkit.models.*
 
 interface IDashStorage {
     fun getBlock(blockHash: ByteArray): Block?
@@ -14,7 +12,10 @@ interface IDashStorage {
     fun addInstantTransactionInput(instantTransactionInput: InstantTransactionInput)
     fun addInstantTransactionHash(txHash: ByteArray)
     fun removeInstantTransactionInputs(txHash: ByteArray)
+    fun isTransactionExists(txHash: ByteArray): Boolean
+    fun getQuorumsByType(quorumType: QuorumType): List<Quorum>
 
     var masternodes: List<Masternode>
     var masternodeListState: MasternodeListState?
+    var quorums: List<Quorum>
 }

@@ -5,27 +5,29 @@ import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
-import org.junit.Before
-import org.junit.Test
 import org.mockito.Mockito
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
-class TransactionCreatorTest {
-    private val transactionBuilder = Mockito.mock(TransactionBuilder::class.java)
-    private val transactionProcessor = Mockito.mock(TransactionProcessor::class.java)
-    private val transactionSender = Mockito.mock(TransactionSender::class.java)
-    private val transactionP2PKH = Fixtures.transactionP2PKH
-    private val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
+object TransactionCreatorTest : Spek({
 
-    @Before
-    fun setUp() {
+    val transactionBuilder = Mockito.mock(TransactionBuilder::class.java)
+    val transactionProcessor = Mockito.mock(TransactionProcessor::class.java)
+    val transactionSender = Mockito.mock(TransactionSender::class.java)
+    val transactionP2PKH = Fixtures.transactionP2PKH
+    val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
+
+    beforeEachTest {
         whenever(transactionBuilder.buildTransaction(any(), any(), any(), any())).thenReturn(transactionP2PKH)
     }
 
-    @Test
-    fun create_Success() {
-        transactionCreator.create("address", 10_000_000, 8, true)
+    describe("#create") {
+        it("success") {
+            transactionCreator.create("address", 10_000_000, 8, true)
 
-        verify(transactionProcessor).processOutgoing(transactionP2PKH)
+            verify(transactionProcessor).processOutgoing(transactionP2PKH)
+        }
     }
-}
+
+})
 

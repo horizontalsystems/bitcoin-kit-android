@@ -9,7 +9,6 @@ import java.io.ByteArrayInputStream
 import java.net.InetAddress
 
 class VersionMessage(val protocolVersion: Int, val services: Long, val timestamp: Long, val recipientAddress: NetworkAddress) : IMessage {
-    override val command: String = "version"
 
     lateinit var senderAddress: NetworkAddress
 
@@ -76,8 +75,10 @@ class VersionMessageParser : IMessageParser {
 class VersionMessageSerializer : IMessageSerializer {
     override val command: String = "version"
 
-    override fun serialize(message: IMessage): ByteArray {
-        if (message !is VersionMessage) throw WrongSerializer()
+    override fun serialize(message: IMessage): ByteArray? {
+        if (message !is VersionMessage) {
+            return null
+        }
 
         val output = BitcoinOutput()
         output.writeInt(message.protocolVersion)

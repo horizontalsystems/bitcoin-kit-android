@@ -306,4 +306,8 @@ object OpCodes {
         return bytes + data
     }
 
+    fun scriptWPKH(data: ByteArray, versionByte: Int = 0): ByteArray {
+        return push(versionByte) + push(data)
+    }
+
 }

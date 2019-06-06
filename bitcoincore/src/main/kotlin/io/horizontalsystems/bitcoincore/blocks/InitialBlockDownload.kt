@@ -11,18 +11,27 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.logging.Logger
 
-class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
-                           private val peerManager: PeerManager,
-                           private val syncStateListener: ISyncStateListener
-) : IInventoryItemsHandler, IPeerTaskHandler, PeerGroup.IPeerGroupListener, GetMerkleBlocksTask.MerkleBlockHandler {
+class InitialBlockDownload(
+        private var blockSyncer: BlockSyncer,
+        private val peerManager: PeerManager,
+        private val syncStateListener: ISyncStateListener,
+        private val merkleBlockExtractor: MerkleBlockExtractor)
+    : IInventoryItemsHandler, IPeerTaskHandler, PeerGroup.Listener, GetMerkleBlocksTask.MerkleBlockHandler {
 
     val syncedPeers = CopyOnWriteArrayList<Peer>()
     private val peerSyncListeners = mutableListOf<IPeerSyncListener>()
+    private val peerSwitchMinimumRatio = 1.5
 
     @Volatile
     private var syncPeer: Peer? = null
+    private var selectNewPeer = false
     private val peersQueue = Executors.newSingleThreadExecutor()
     private val logger = Logger.getLogger("IBD")
+
+    private var minMerkleBlocks = 500.0
+    private var minTransactions = 50_000.0
+    private var minReceiveBytes = 100_000.0
+    private var slowPeersDisconnected = 0
 
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener) {
         peerSyncListeners.add(peerSyncListener)
@@ -44,12 +53,12 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
                 if (task.blockHashes.isEmpty()) {
                     peer.blockHashesSynced = true
                 } else {
-                    blockSyncer?.addBlockHashes(task.blockHashes)
+                    blockSyncer.addBlockHashes(task.blockHashes)
                 }
                 true
             }
             is GetMerkleBlocksTask -> {
-                blockSyncer?.downloadIterationCompleted()
+                blockSyncer.downloadIterationCompleted()
                 true
             }
             else -> false
@@ -58,25 +67,28 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
 
     override fun handleMerkleBlock(merkleBlock: MerkleBlock) {
         val maxBlockHeight = syncPeer?.announcedLastBlockHeight ?: 0
-        blockSyncer?.handleMerkleBlock(merkleBlock, maxBlockHeight)
+        blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
     }
 
     override fun onStart() {
         syncStateListener.onSyncStart()
-        blockSyncer?.prepareForDownload()
+        blockSyncer.prepareForDownload()
     }
 
     override fun onStop() {
         syncStateListener.onSyncStop()
-        // set blockSyncer to null to make sure that there won't be any further interaction with blockSyncer
-        blockSyncer = null
     }
 
     override fun onPeerCreate(peer: Peer) {
-        peer.localBestBlockHeight = blockSyncer?.localDownloadedBestBlockHeight ?: 0
+        peer.localBestBlockHeight = blockSyncer.localDownloadedBestBlockHeight
     }
 
     override fun onPeerConnect(peer: Peer) {
+        syncPeer?.let {
+            if (it.connectionTime > peer.connectionTime * peerSwitchMinimumRatio) {
+                selectNewPeer = true
+            }
+        }
         assignNextSyncPeer()
     }
 
@@ -87,11 +99,22 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
     }
 
     override fun onPeerDisconnect(peer: Peer, e: Exception?) {
+        if (e is GetMerkleBlocksTask.PeerTooSlow) {
+            slowPeersDisconnected += 1
+
+            if (slowPeersDisconnected >= 3) {
+                slowPeersDisconnected = 0
+                minMerkleBlocks /= 3
+                minTransactions /= 3
+                minReceiveBytes /= 3
+            }
+        }
+
         syncedPeers.remove(peer)
 
         if (peer == syncPeer) {
             syncPeer = null
-            blockSyncer?.downloadFailed()
+            blockSyncer.downloadFailed()
             assignNextSyncPeer()
         }
     }
@@ -99,14 +122,14 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
     private fun assignNextSyncPeer() {
         peersQueue.execute {
             if (syncPeer == null) {
-                val notSyncedPeers = peerManager.connected().filter { !it.synced }
+                val notSyncedPeers = peerManager.sorted().filter { !it.synced }
                 if (notSyncedPeers.isEmpty()) {
                     peerSyncListeners.forEach { it.onAllPeersSynced() }
                 }
 
                 notSyncedPeers.firstOrNull { it.ready }?.let { nonSyncedPeer ->
                     syncPeer = nonSyncedPeer
-                    blockSyncer?.downloadStarted()
+                    blockSyncer.downloadStarted()
 
                     logger.info("Start syncing peer ${nonSyncedPeer.host}")
 
@@ -117,34 +140,39 @@ class InitialBlockDownload(private var blockSyncer: BlockSyncer?,
     }
 
     private fun downloadBlockchain() {
-        if (syncPeer?.ready != true) return
-
         syncPeer?.let { peer ->
-            blockSyncer?.let { blockSyncer ->
+            if (!peer.ready) return
 
-                val blockHashes = blockSyncer.getBlockHashes()
-                if (blockHashes.isEmpty()) {
-                    peer.synced = peer.blockHashesSynced
-                } else {
-                    peer.addTask(GetMerkleBlocksTask(blockHashes, this))
-                }
+            if (selectNewPeer) {
+                selectNewPeer = false
+                blockSyncer.downloadCompleted()
+                syncPeer = null
+                assignNextSyncPeer()
+                return
+            }
 
-                if (!peer.blockHashesSynced) {
-                    val expectedHashesMinCount = Math.max(peer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
-                    peer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(peer.announcedLastBlockHeight), expectedHashesMinCount))
-                }
+            val blockHashes = blockSyncer.getBlockHashes()
+            if (blockHashes.isEmpty()) {
+                peer.synced = peer.blockHashesSynced
+            } else {
+                peer.addTask(GetMerkleBlocksTask(blockHashes, this, merkleBlockExtractor, minMerkleBlocks, minTransactions, minReceiveBytes))
+            }
 
-                if (peer.synced) {
-                    syncedPeers.add(peer)
+            if (!peer.blockHashesSynced) {
+                val expectedHashesMinCount = Math.max(peer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
+                peer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(peer.announcedLastBlockHeight), expectedHashesMinCount))
+            }
 
-                    blockSyncer.downloadCompleted()
-                    syncStateListener.onSyncFinish()
-                    peer.sendMempoolMessage()
-                    logger.info("Peer synced ${peer.host}")
-                    syncPeer = null
-                    assignNextSyncPeer()
-                    peerSyncListeners.forEach { it.onPeerSynced(peer) }
-                }
+            if (peer.synced) {
+                syncedPeers.add(peer)
+
+                blockSyncer.downloadCompleted()
+                syncStateListener.onSyncFinish()
+                peer.sendMempoolMessage()
+                logger.info("Peer synced ${peer.host}")
+                syncPeer = null
+                assignNextSyncPeer()
+                peerSyncListeners.forEach { it.onPeerSynced(peer) }
             }
         }
     }

@@ -3,30 +3,30 @@ package io.horizontalsystems.dashkit.managers
 import io.horizontalsystems.dashkit.models.Masternode
 
 class MasternodeSortedList {
-    private val masternodeSet = mutableListOf<Masternode>()
+    private val masternodeList = mutableListOf<Masternode>()
 
     val masternodes: List<Masternode>
-        get() = masternodeSet.sorted()
-
+        get() = masternodeList.sorted()
 
     fun add(masternodes: List<Masternode>) {
-        masternodeSet.addAll(masternodes)
+        masternodeList.removeAll(masternodes)
+        masternodeList.addAll(masternodes)
     }
 
     fun remove(proRegTxHashes: List<ByteArray>) {
         proRegTxHashes.forEach { hash ->
-            val index = masternodeSet.indexOfFirst { masternode ->
+            val index = masternodeList.indexOfFirst { masternode ->
                 masternode.proRegTxHash.contentEquals(hash)
             }
 
             if (index != -1) {
-                masternodeSet.removeAt(index)
+                masternodeList.removeAt(index)
             }
         }
     }
 
     fun removeAll() {
-        masternodeSet.clear()
+        masternodeList.clear()
     }
 
 }

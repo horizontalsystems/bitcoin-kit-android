@@ -1,11 +1,12 @@
 package io.horizontalsystems.dashkit.messages
 
-import io.horizontalsystems.dashkit.models.CoinbaseTransaction
-import io.horizontalsystems.dashkit.models.Masternode
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
-import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
+import io.horizontalsystems.dashkit.models.CoinbaseTransaction
+import io.horizontalsystems.dashkit.models.Masternode
+import io.horizontalsystems.dashkit.models.Quorum
 import java.io.ByteArrayInputStream
 
 class MasternodeListDiffMessage(
@@ -16,13 +17,15 @@ class MasternodeListDiffMessage(
         val merkleFlags: ByteArray,
         val cbTx: CoinbaseTransaction,
         val deletedMNs: List<ByteArray>,
-        val mnList: List<Masternode>
+        val mnList: List<Masternode>,
+        val deletedQuorums: List<Pair<Int, ByteArray>>,
+        val quorumList: List<Quorum>
 ) : IMessage {
-    override val command: String = "mnlistdiff"
 
     override fun toString(): String {
         return "MnListDiffMessage(baseBlockHash=${baseBlockHash.toReversedHex()}, blockHash=${blockHash.toReversedHex()})"
     }
+
 }
 
 class MasternodeListDiffMessageParser : IMessageParser {
@@ -52,7 +55,18 @@ class MasternodeListDiffMessageParser : IMessageParser {
                 mnList.add(Masternode(input))
             }
 
-            return MasternodeListDiffMessage(baseBlockHash, blockHash, totalTransactions, merkleHashes, merkleFlags, cbTx, deletedMNs, mnList)
+            val deletedQuorumsCount = input.readVarInt()
+            val deletedQuorums = mutableListOf<Pair<Int, ByteArray>>()
+            repeat(deletedQuorumsCount.toInt()) {
+                deletedQuorums.add(Pair(input.read(), input.readBytes(32)))
+            }
+            val newQuorumsCount = input.readVarInt()
+            val quorumList = mutableListOf<Quorum>()
+            repeat(newQuorumsCount.toInt()) {
+                quorumList.add(Quorum(input))
+            }
+
+            return MasternodeListDiffMessage(baseBlockHash, blockHash, totalTransactions, merkleHashes, merkleFlags, cbTx, deletedMNs, mnList, deletedQuorums, quorumList)
         }
     }
 }

@@ -3,27 +3,43 @@ package io.horizontalsystems.dashkit.models
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinOutput
+import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 @Entity
 class Masternode() : Comparable<Masternode> {
 
     @PrimaryKey
-    var proRegTxHash: ByteArray = byteArrayOf()
-    var confirmedHash: ByteArray = byteArrayOf()
-    var ipAddress: ByteArray = byteArrayOf()
-    var port: Int = 0
-    var pubKeyOperator: ByteArray = byteArrayOf()
-    var keyIDVoting: ByteArray = byteArrayOf()
-    var isValid: Boolean = false
+    var proRegTxHash = byteArrayOf()
+    var confirmedHash = byteArrayOf()
+    var ipAddress = byteArrayOf()
+    var port = 0
+    var pubKeyOperator = byteArrayOf()
+    var keyIDVoting = byteArrayOf()
+    var isValid = false
+
+    var hash = byteArrayOf()
 
     constructor(input: BitcoinInput) : this() {
-        this.proRegTxHash = input.readBytes(32)
-        this.confirmedHash = input.readBytes(32)
-        this.ipAddress = input.readBytes(16)
-        this.port = input.readUnsignedShort()
-        this.pubKeyOperator = input.readBytes(48)
-        this.keyIDVoting = input.readBytes(20)
-        this.isValid = input.readByte().toInt() != 0
+        proRegTxHash = input.readBytes(32)
+        confirmedHash = input.readBytes(32)
+        ipAddress = input.readBytes(16)
+        port = input.readUnsignedShort()
+        pubKeyOperator = input.readBytes(48)
+        keyIDVoting = input.readBytes(20)
+        isValid = input.read() != 0
+
+        val hashPayload = BitcoinOutput()
+                .write(proRegTxHash)
+                .write(confirmedHash)
+                .write(ipAddress)
+                .writeUnsignedShort(port)
+                .write(pubKeyOperator)
+                .write(keyIDVoting)
+                .writeByte(if (isValid) 1 else 0)
+                .toByteArray()
+
+        hash = HashUtils.doubleSha256(hashPayload)
     }
 
     override fun compareTo(other: Masternode): Int {
@@ -38,4 +54,14 @@ class Masternode() : Comparable<Masternode> {
 
         return 0
     }
+
+    override fun equals(other: Any?) = when (other) {
+        is Masternode -> proRegTxHash.contentEquals(other.proRegTxHash)
+        else -> false
+    }
+
+    override fun hashCode(): Int {
+        return proRegTxHash.contentHashCode()
+    }
+
 }

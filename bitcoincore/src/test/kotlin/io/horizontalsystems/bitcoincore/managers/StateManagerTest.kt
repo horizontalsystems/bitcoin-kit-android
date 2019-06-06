@@ -5,57 +5,52 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.network.Network
 import junit.framework.Assert.assertTrue
 import org.junit.Assert.assertFalse
-import org.junit.Before
-import org.junit.Test
 import org.mockito.Mockito.mock
-import org.mockito.Mockito.verify
+import org.spekframework.spek2.Spek
+import org.spekframework.spek2.style.specification.describe
 
-class StateManagerTest {
+object StateManagerTest : Spek({
 
-    private val storage = mock(IStorage::class.java)
+    lateinit var stateManager: StateManager
 
-    private lateinit var stateManager: StateManager
-    private val networkSyncableFromApi = mock(Network::class.java)
-    private val networkNotSyncableFromApi = mock(Network::class.java)
+    val storage = mock(IStorage::class.java)
+    val networkSyncableFromApi = mock(Network::class.java)
+    val networkNotSyncableFromApi = mock(Network::class.java)
 
-    @Before
-    fun setup() {
+    beforeEachTest {
         whenever(networkSyncableFromApi.syncableFromApi).thenReturn(true)
         whenever(networkNotSyncableFromApi.syncableFromApi).thenReturn(false)
     }
 
-    @Test
-    fun apiSynced() {
+    describe("#restored") {
 
-        stateManager = StateManager(storage, networkSyncableFromApi, newWallet = false)
-        assertFalse(stateManager.restored)
+        context("when `restoreFromApi` is true") {
+            it("marks as `restored`") {
+                stateManager = StateManager(storage, false)
+                assertTrue(stateManager.restored)
+            }
+        }
+
+        context("when already restored") {
+            beforeEach {
+                whenever(storage.initialRestored).thenReturn(true)
+            }
+
+            it("marks as `restored`") {
+                stateManager = StateManager(storage, true)
+                assertTrue(stateManager.restored)
+            }
+        }
+
+        context("when not restored yet") {
+            beforeEach {
+                whenever(storage.initialRestored).thenReturn(false)
+            }
+
+            it("marks as not `restored`") {
+                stateManager = StateManager(storage, true)
+                assertFalse(stateManager.restored)
+            }
+        }
     }
-
-    @Test
-    fun apiSynced_RegTest() {
-        stateManager = StateManager(storage, networkNotSyncableFromApi, newWallet = false)
-        assertTrue(stateManager.restored)
-    }
-
-    @Test
-    fun apiSynced_newWallet() {
-        stateManager = StateManager(storage, networkSyncableFromApi, newWallet = true)
-        assertTrue(stateManager.restored)
-    }
-
-    @Test
-    fun apiSynced_SetTrue() {
-        stateManager = StateManager(storage, networkSyncableFromApi, newWallet = false)
-        stateManager.restored = true
-
-        verify(storage).setInitialRestored(true)
-    }
-
-    @Test
-    fun apiSynced_SetFalse() {
-        stateManager = StateManager(storage, networkSyncableFromApi, newWallet = false)
-        stateManager.restored = false
-
-        verify(storage).setInitialRestored(false)
-    }
-}
+})

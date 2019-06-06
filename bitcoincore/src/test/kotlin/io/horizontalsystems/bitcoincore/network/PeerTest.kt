@@ -15,6 +15,7 @@ import org.mockito.Mockito.mock
 import org.powermock.api.mockito.PowerMockito
 import org.powermock.core.classloader.annotations.PrepareForTest
 import org.powermock.modules.junit4.PowerMockRunner
+import java.util.concurrent.ExecutorService
 
 @RunWith(PowerMockRunner::class)
 @PrepareForTest(Peer::class)
@@ -28,6 +29,7 @@ class PeerTest {
     private val addressMessage = mock(AddrMessage::class.java)
     private val networkMessageParser = mock(NetworkMessageParser::class.java)
     private val networkMessageSerializer = mock(NetworkMessageSerializer::class.java)
+    private val executorService = mock(ExecutorService::class.java)
 
     private lateinit var peer: Peer
 
@@ -38,7 +40,7 @@ class PeerTest {
                 .withAnyArguments()
                 .thenReturn(peerConnection)
 
-        peer = Peer("host", network, listener, networkMessageParser, networkMessageSerializer)
+        peer = Peer("host", network, listener, networkMessageParser, networkMessageSerializer, executorService)
     }
 
     @Test
@@ -92,9 +94,10 @@ class PeerTest {
     }
 
     @Test
-    fun onReceiveAddresses() {
+    fun onReceiveMessage() {
         peer.connected = true
         peer.onMessage(addressMessage)
-        verify(listener).onReceiveAddress(addressMessage.addresses)
+
+        verify(listener).onReceiveMessage(peer, addressMessage)
     }
 }

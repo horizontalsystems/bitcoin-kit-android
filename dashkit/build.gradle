@@ -9,9 +9,16 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
-        versionName "0.3.0"
+        versionName "0.4.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
+        externalNativeBuild {
+            cmake {
+                cFlags '-DHAVE_CONFIG_H -DWORD=32'
+                cppFlags ""
+            }
+        }
     }
 
     buildTypes {
@@ -31,6 +38,12 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    externalNativeBuild {
+        cmake {
+            path 'cpp/CMakeLists.txt'
+        }
+    }
 }
 
 dependencies {
@@ -47,6 +60,7 @@ dependencies {
     kapt "android.arch.persistence.room:compiler:1.1.1"
 
     api project(':bitcoincore')
+    api 'org.dashj:dashj-bls:0.15.3'
 
     // HDWallet Kit
     implementation 'com.github.horizontalsystems:hd-wallet-kit-android:a3666d8'

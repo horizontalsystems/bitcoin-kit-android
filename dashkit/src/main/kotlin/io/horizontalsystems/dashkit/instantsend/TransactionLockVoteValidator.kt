@@ -4,14 +4,14 @@ import io.horizontalsystems.bitcoincore.core.IHasher
 import io.horizontalsystems.dashkit.DashKitErrors
 import io.horizontalsystems.dashkit.IDashStorage
 
-class TransactionLockVoteValidator(private val storage: IDashStorage, private val hasher: IHasher) {
+class TransactionLockVoteValidator(private val storage: IDashStorage, private val hasher: IHasher, private val bls: BLS) {
 
     companion object {
         private const val totalSignatures = 10
     }
 
     @Throws
-    fun validate(quorumModifierHash: ByteArray, masternodeProTxHash: ByteArray) {
+    fun validate(quorumModifierHash: ByteArray, masternodeProTxHash: ByteArray, vchMasternodeSignature: ByteArray, hash: ByteArray) {
         val masternodes = storage.masternodes.filter { it.isValid }
 
         val quorumMasternodes = mutableListOf<QuorumMasternode>()
@@ -34,6 +34,12 @@ class TransactionLockVoteValidator(private val storage: IDashStorage, private va
         // 4. Check masternode in first 10 scores
         if (index > totalSignatures) {
             throw DashKitErrors.LockVoteValidation.MasternodeNotInTop()
+        }
+
+        // 5. Check signature
+        val masternode = quorumMasternodes[index].masternode
+        if (!bls.verifySignature(masternode.pubKeyOperator, vchMasternodeSignature, hash)) {
+            throw DashKitErrors.LockVoteValidation.SignatureNotValid()
         }
     }
 }

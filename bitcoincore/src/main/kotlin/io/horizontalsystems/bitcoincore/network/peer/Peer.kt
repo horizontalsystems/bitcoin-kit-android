@@ -1,43 +1,38 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
-import io.horizontalsystems.bitcoincore.blocks.InvalidMerkleBlockException
-import io.horizontalsystems.bitcoincore.blocks.MerkleBlockExtractor
 import io.horizontalsystems.bitcoincore.crypto.BloomFilter
-import io.horizontalsystems.bitcoincore.models.InventoryItem
-import io.horizontalsystems.bitcoincore.models.NetworkAddress
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
-import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
-import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import java.net.InetAddress
+import java.util.concurrent.ExecutorService
 
 class Peer(
         val host: String,
         private val network: Network,
         private val listener: Listener,
         networkMessageParser: NetworkMessageParser,
-        networkMessageSerializer: NetworkMessageSerializer
-) : PeerConnection.Listener, PeerTask.Listener, PeerTask.Requester {
+        networkMessageSerializer: NetworkMessageSerializer,
+        executorService: ExecutorService)
+    : PeerConnection.Listener, PeerTask.Listener, PeerTask.Requester {
 
     interface Listener {
         fun onConnect(peer: Peer)
         fun onReady(peer: Peer)
         fun onDisconnect(peer: Peer, e: Exception?)
-        fun onReceiveInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>)
-        fun onReceiveAddress(addrs: List<NetworkAddress>)
+        fun onReceiveMessage(peer: Peer, message: IMessage)
         fun onTaskComplete(peer: Peer, task: PeerTask)
     }
 
-    // TODO seems like property connected is not needed. It is always true in PeerManager. Need to check it and remove
-    var connected = false
-    var synced = false
     var blockHashesSynced = false
-    var announcedLastBlockHeight: Int = 0
-    var localBestBlockHeight: Int = 0
+    var announcedLastBlockHeight = 0
+    var localBestBlockHeight = 0
+    var synced = false
+    var connected = false
+    var connectionTime: Long = 1000
+    private var connectStartTime: Long? = null
 
-    private val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
-    private val peerConnection = PeerConnection(host, network, this, networkMessageParser, networkMessageSerializer)
+    private val peerConnection = PeerConnection(host, network, this, executorService, networkMessageParser, networkMessageSerializer)
     private var tasks = mutableListOf<PeerTask>()
     private val timer = PeerTimer()
 
@@ -46,6 +41,7 @@ class Peer(
 
     fun start() {
         peerConnection.start()
+        connectStartTime = System.currentTimeMillis()
     }
 
     fun close(disconnectError: Exception? = null) {
@@ -78,7 +74,8 @@ class Peer(
 
             tasks.firstOrNull()?.checkTimeout()
         } catch (e: PeerTimer.Error.Idle) {
-            ping((Math.random() * Long.MAX_VALUE).toLong())
+            val nonce = (Math.random() * Long.MAX_VALUE)
+            send(PingMessage(nonce.toLong()))
             timer.pingSent()
         } catch (e: PeerTimer.Error.Timeout) {
             peerConnection.close(e)
@@ -97,23 +94,12 @@ class Peer(
 
         when (message) {
             is PingMessage -> peerConnection.sendMessage(PongMessage(message.nonce))
-            is PongMessage -> handlePongMessage(message)
-            is AddrMessage -> handleAddrMessage(message)
-            is MerkleBlockMessage -> try {
-                handleMerkleBlockMessage(message)
-            } catch (e: InvalidMerkleBlockException) {
-                peerConnection.close(e)
+            is PongMessage -> {
             }
-            is TransactionMessage -> handleTransactionMessage(message)
-            is InvMessage -> handleInvMessage(message)
-            is GetDataMessage -> {
-                for (inv in message.inventory) {
-                    if (tasks.any { it.handleGetDataInventoryItem(inv) }) {
-                        continue
-                    }
-                }
+            is AddrMessage -> listener.onReceiveMessage(this, message)
+            else -> if (tasks.none { it.handleMessage(message) }) {
+                listener.onReceiveMessage(this, message)
             }
-            else -> tasks.any { it.handleMessage(message) }
         }
     }
 
@@ -137,13 +123,15 @@ class Peer(
     }
 
     private fun handleVerackMessage() {
+        if (connectStartTime == null) {
+            return close()
+        }
+
         connected = true
-
+        connectStartTime?.let {
+            connectionTime = System.currentTimeMillis() - it
+        }
         listener.onConnect(this)
-    }
-
-    private fun handleAddrMessage(message: AddrMessage) {
-        listener.onReceiveAddress(message.addresses)
     }
 
     private fun validatePeerVersion(message: VersionMessage) {
@@ -152,6 +140,7 @@ class Peer(
             message.lastBlock < localBestBlockHeight -> throw Error.UnsuitablePeerVersion("Peer has expired blockchain ${message.lastBlock} vs ${localBestBlockHeight}(local)")
             !message.hasBlockChain(network) -> throw Error.UnsuitablePeerVersion("Peer does not have a copy of the block chain.")
             !message.supportsBloomFilter(network) -> throw Error.UnsuitablePeerVersion("Peer does not support Bloom Filter.")
+            message.protocolVersion < network.protocolVersion -> throw Error.UnsuitablePeerVersion("Peer protocol version ${message.protocolVersion} vs ${network.protocolVersion}(local)")
         }
     }
 
@@ -179,53 +168,14 @@ class Peer(
     //
     // PeerTask Requester implementations
     //
-    override fun getBlocks(hashes: List<ByteArray>) {
-        peerConnection.sendMessage(GetBlocksMessage(hashes, network.protocolVersion, network.zeroHashBytes))
-    }
 
-    override fun getData(items: List<InventoryItem>) {
-        peerConnection.sendMessage(GetDataMessage(items))
-    }
+    override val protocolVersion = network.protocolVersion
 
-    override fun ping(nonce: Long) {
-        peerConnection.sendMessage(PingMessage(nonce))
-    }
-
-    override fun sendTransactionInventory(hash: ByteArray) {
-        peerConnection.sendMessage(InvMessage(InventoryItem.MSG_TX, hash))
-    }
-
-    override fun send(transaction: FullTransaction) {
-        peerConnection.sendMessage(TransactionMessage(transaction))
-    }
-
-    override fun sendMessage(message: IMessage) {
+    override fun send(message: IMessage) {
         peerConnection.sendMessage(message)
-    }
-
-    //
-    // Private methods
-    //
-    private fun handleInvMessage(message: InvMessage) {
-        if (tasks.none { it.handleInventoryItems(message.inventory) }) {
-            listener.onReceiveInventoryItems(this, message.inventory)
-        }
-    }
-
-    private fun handleMerkleBlockMessage(message: MerkleBlockMessage) {
-        val merkleBlock = merkleBlockExtractor.extract(message)
-        tasks.any { it.handleMerkleBlock(merkleBlock) }
-    }
-
-    private fun handleTransactionMessage(message: TransactionMessage) {
-        tasks.any { it.handleTransaction(message.transaction) }
-    }
-
-    private fun handlePongMessage(message: PongMessage) {
     }
 
     open class Error(message: String) : Exception(message) {
         class UnsuitablePeerVersion(message: String) : Error(message)
     }
-
 }

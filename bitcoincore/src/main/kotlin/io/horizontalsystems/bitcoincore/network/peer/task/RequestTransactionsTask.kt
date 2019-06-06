@@ -1,6 +1,9 @@
 package io.horizontalsystems.bitcoincore.network.peer.task
 
 import io.horizontalsystems.bitcoincore.models.InventoryItem
+import io.horizontalsystems.bitcoincore.network.messages.GetDataMessage
+import io.horizontalsystems.bitcoincore.network.messages.IMessage
+import io.horizontalsystems.bitcoincore.network.messages.TransactionMessage
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
@@ -8,12 +11,19 @@ class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
     var transactions = mutableListOf<FullTransaction>()
 
     override fun start() {
-        requester?.getData(hashes.map { hash ->
+        val items = hashes.map { hash ->
             InventoryItem(InventoryItem.MSG_TX, hash)
-        })
+        }
+
+        requester?.send(GetDataMessage(items))
     }
 
-    override fun handleTransaction(transaction: FullTransaction): Boolean {
+    override fun handleMessage(message: IMessage): Boolean {
+        if (message !is TransactionMessage) {
+            return false
+        }
+
+        val transaction = message.transaction
         val hash = hashes.firstOrNull { it.contentEquals(transaction.header.hash) } ?: return false
 
         hashes.remove(hash)

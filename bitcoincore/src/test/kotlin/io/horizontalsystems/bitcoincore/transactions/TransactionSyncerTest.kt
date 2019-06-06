@@ -13,7 +13,7 @@ import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class TransactionSyncerTest : Spek({
+object TransactionSyncerTest : Spek({
     lateinit var syncer: TransactionSyncer
 
     val storage = mock(IStorage::class.java)

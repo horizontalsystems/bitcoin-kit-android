@@ -7,7 +7,7 @@ import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class SyncManagerTest : Spek({
+object SyncManagerTest : Spek({
 
     val peerGroup = mock<PeerGroup>()
     val initialSyncer = mock<InitialSyncer>()
@@ -32,13 +32,13 @@ class SyncManagerTest : Spek({
         it("stops :peerGroup") {
             syncManager.stop()
 
-            verify(peerGroup).close()
+            verify(peerGroup).stop()
         }
 
         it("stops :initialSyncer") {
             syncManager.stop()
 
-            verify(peerGroup).close()
+            verify(peerGroup).stop()
         }
     }
 

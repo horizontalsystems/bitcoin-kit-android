@@ -10,7 +10,7 @@ import org.junit.Assert
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class MerkleBlockExtractorTest : Spek({
+object MerkleBlockExtractorTest : Spek({
     val merkleRootHasher = DoubleSha256Hasher()
     val blockHeaderParser = BlockHeaderParser(merkleRootHasher)
     val messageParser = MerkleBlockMessageParser(blockHeaderParser)

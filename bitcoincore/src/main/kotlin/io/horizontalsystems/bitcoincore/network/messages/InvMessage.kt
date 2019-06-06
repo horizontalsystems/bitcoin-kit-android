@@ -7,8 +7,6 @@ import io.horizontalsystems.bitcoincore.models.InventoryItem
 import java.io.ByteArrayInputStream
 
 class InvMessage : IMessage {
-    override val command: String = "inv"
-
     var inventory: List<InventoryItem>
 
     constructor(type: Int, hash: ByteArray) {
@@ -50,8 +48,10 @@ class InvMessageParser : IMessageParser {
 class InvMessageSerializer : IMessageSerializer {
     override val command: String = "inv"
 
-    override fun serialize(message: IMessage): ByteArray {
-        if (message !is InvMessage) throw WrongSerializer()
+    override fun serialize(message: IMessage): ByteArray? {
+        if (message !is InvMessage) {
+            return null
+        }
 
         val output = BitcoinOutput()
         output.writeVarInt(message.inventory.size.toLong())

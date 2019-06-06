@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import com.nhaarman.mockito_kotlin.whenever
+import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
@@ -10,14 +11,13 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoincore.Fixtures
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.mockito.Mockito.mock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class UnspentOutputProviderTest : Spek({
+object UnspentOutputProviderTest : Spek({
     val storage = mock(IStorage::class.java)
 
     val output = TransactionOutput(value = 1, index = 0, script = byteArrayOf(), type = ScriptType.P2PKH, keyHash = "000010000".hexToByteArray())

@@ -9,7 +9,7 @@ android {
         minSdkVersion 23
         targetSdkVersion 28
         versionCode 1
-        versionName "0.3.0"
+        versionName "0.4.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
@@ -40,6 +40,7 @@ dependencies {
 
     // RxJava
     implementation 'io.reactivex.rxjava2:rxjava:2.2.2'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.0'
 
     // Room
     implementation "android.arch.persistence.room:runtime:1.1.1"

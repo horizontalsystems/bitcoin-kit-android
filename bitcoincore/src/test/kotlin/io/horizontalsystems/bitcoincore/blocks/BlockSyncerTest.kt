@@ -17,7 +17,7 @@ import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class BlockSyncerTest : Spek({
+object BlockSyncerTest : Spek({
 
     lateinit var blockSyncer: BlockSyncer
 
@@ -34,12 +34,12 @@ class BlockSyncerTest : Spek({
 
     beforeEachTest {
         whenever(checkpointBlock.height).thenReturn(1)
-        whenever(network.checkpointBlock).thenReturn(checkpointBlock)
+        whenever(network.lastCheckpointBlock).thenReturn(checkpointBlock)
 
         whenever(storage.blocksCount()).thenReturn(1)
         whenever(storage.lastBlock()).thenReturn(null)
 
-        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network, state)
+        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
     }
 
     afterEachTest {
@@ -56,7 +56,7 @@ class BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(1)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
             }
 
             it("does not saves block to storage") {
@@ -73,7 +73,7 @@ class BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(0)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
             }
 
             it("saves block to storage") {

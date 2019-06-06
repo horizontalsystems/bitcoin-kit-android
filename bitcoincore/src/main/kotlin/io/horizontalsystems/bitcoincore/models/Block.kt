@@ -30,6 +30,7 @@ class Block() {
     var timestamp: Long = 0
     var bits: Long = 0
     var nonce: Long = 0
+    var hasTransactions = false
 
     @PrimaryKey
     var headerHash: ByteArray = byteArrayOf()

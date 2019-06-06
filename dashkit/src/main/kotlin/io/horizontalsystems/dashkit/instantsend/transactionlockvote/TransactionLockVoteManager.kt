@@ -1,5 +1,6 @@
-package io.horizontalsystems.dashkit.instantsend
+package io.horizontalsystems.dashkit.instantsend.transactionlockvote
 
+import io.horizontalsystems.dashkit.instantsend.TransactionLockVoteValidator
 import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessage
 
 class TransactionLockVoteManager(private val transactionLockVoteValidator: TransactionLockVoteValidator) {
@@ -22,13 +23,6 @@ class TransactionLockVoteManager(private val transactionLockVoteValidator: Trans
         checkedLockVotes.add(vote)
     }
 
-    fun removeCheckedLockVotes(txHash: ByteArray) {
-        val index = checkedLockVotes.indexOfFirst { it.txHash.contentEquals(txHash) }
-        if (index != -1) {
-            checkedLockVotes.removeAt(index)
-        }
-    }
-
     fun processed(lvHash: ByteArray): Boolean {
         return relayedLockVotes.any { it.hash.contentEquals(lvHash) } || checkedLockVotes.any { it.hash.contentEquals(lvHash) }
     }
@@ -36,7 +30,7 @@ class TransactionLockVoteManager(private val transactionLockVoteValidator: Trans
     @Throws
     fun validate(lockVote: TransactionLockVoteMessage) {
         // validate masternode in top 10 masternodes for quorumModifier
-        transactionLockVoteValidator.validate(lockVote.quorumModifierHash, lockVote.masternodeProTxHash)
+        transactionLockVoteValidator.validate(lockVote.quorumModifierHash, lockVote.masternodeProTxHash, lockVote.vchMasternodeSignature, lockVote.hash)
     }
 
 }

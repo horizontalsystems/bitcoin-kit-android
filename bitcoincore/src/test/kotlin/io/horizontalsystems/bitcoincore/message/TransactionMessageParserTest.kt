@@ -7,7 +7,7 @@ import org.junit.Assert.assertEquals
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-class TransactionMessageParserTest : Spek({
+object TransactionMessageParserTest : Spek({
     val messageParser by memoized {
         TransactionMessageParser()
     }

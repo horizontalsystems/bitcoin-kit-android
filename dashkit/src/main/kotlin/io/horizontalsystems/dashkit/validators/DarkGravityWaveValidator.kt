@@ -13,7 +13,9 @@ class DarkGravityWaveValidator(
         private val heightInterval: Long,
         private val targetTimespan: Long,
         private val maxTargetBits: Long,
-        private val firstCheckpoint: Int) : IBlockValidator {
+        private val firstCheckpoint: Int,
+        private val powDGWHeight: Int
+) : IBlockValidator {
 
     override fun validate(block: Block, previousBlock: Block) {
         check(previousBlock.height >= firstCheckpoint + heightInterval) {
@@ -57,6 +59,6 @@ class DarkGravityWaveValidator(
     }
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
-        return true
+        return block.height >= powDGWHeight
     }
 }
