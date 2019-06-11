@@ -5,10 +5,12 @@ import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincash.blocks.validators.DAAValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.EDAValidator
+import io.horizontalsystems.bitcoincash.blocks.validators.ForkValidator
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.BitcoinCashAddressSelector
 import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -81,7 +83,12 @@ class BitcoinCashKit : AbstractKit {
         if (networkType == NetworkType.MainNet) {
             val blockHelper = BitcoinCashBlockValidatorHelper(storage)
 
-            bitcoinCore.addBlockValidator(DAAValidator(targetSpacing, blockHelper))
+            val svForkHeight = 556767
+            val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
+
+            val daaValidator = DAAValidator(targetSpacing, blockHelper)
+            bitcoinCore.addBlockValidator(ForkValidator(svForkHeight, abcForkBlockHash, daaValidator))
+            bitcoinCore.addBlockValidator(daaValidator)
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
             bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height))
         }
