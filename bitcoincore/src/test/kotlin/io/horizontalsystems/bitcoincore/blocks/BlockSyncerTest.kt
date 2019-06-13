@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.blocks
 
 import com.nhaarman.mockito_kotlin.*
+import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.KitStateProvider
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
@@ -74,10 +75,6 @@ object BlockSyncerTest : Spek({
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
                 BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
-            }
-
-            it("saves block to storage") {
-                verify(storage).saveBlock(checkpointBlock)
             }
 
             it("triggers #onInitialBestBlockHeightUpdate event on listener") {
@@ -459,6 +456,68 @@ object BlockSyncerTest : Spek({
             whenever(storage.getBlock(hashHash)).thenReturn(block)
 
             assertEquals(false, blockSyncer.shouldRequest(hashHash))
+        }
+    }
+
+    describe("#getCheckpointBlock") {
+        val bip44CheckpointBlock = mock<Block>()
+        val lastCheckpointBlock = mock<Block>()
+        val lastBlockInDB = mock<Block>()
+
+        beforeEach {
+            whenever(network.bip44CheckpointBlock).thenReturn(bip44CheckpointBlock)
+            whenever(network.lastCheckpointBlock).thenReturn(lastCheckpointBlock)
+            whenever(storage.lastBlock()).thenReturn(lastBlockInDB)
+        }
+
+        context("when sync mode is Full") {
+            val syncMode = BitcoinCore.SyncMode.Full()
+
+            it("equals to bip44CheckpointBlock") {
+                val actual = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
+                assertEquals(bip44CheckpointBlock, actual)
+            }
+        }
+
+        context("when sync mode is Api or New") {
+            val syncMode = BitcoinCore.SyncMode.Api()
+
+            context("when last block in DB earlier than checkpoint block") {
+                beforeEach {
+                    whenever(lastBlockInDB.height).thenReturn(100)
+                    whenever(lastCheckpointBlock.height).thenReturn(200)
+                }
+
+                it("equals to bip44CheckpointBlock") {
+                    val actual = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
+                    assertEquals(bip44CheckpointBlock, actual)
+                }
+            }
+
+            context("when last block in DB later than checkpoint block") {
+                beforeEach {
+                    whenever(storage.lastBlock()).thenReturn(lastBlockInDB)
+                    whenever(lastBlockInDB.height).thenReturn(200)
+                    whenever(lastCheckpointBlock.height).thenReturn(100)
+                }
+
+                it("equals to lastCheckpointBlock") {
+                    val actual = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
+                    assertEquals(lastCheckpointBlock, actual)
+                }
+            }
+        }
+
+        context("when DB has no block") {
+            beforeEach {
+                whenever(storage.lastBlock()).thenReturn(null)
+            }
+
+            it("saves checkpoint block to DB") {
+                BlockSyncer.getCheckpointBlock(BitcoinCore.SyncMode.Full(), network, storage)
+
+                verify(storage).saveBlock(bip44CheckpointBlock)
+            }
         }
     }
 

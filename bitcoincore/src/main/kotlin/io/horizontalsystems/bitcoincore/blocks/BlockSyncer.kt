@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.blocks
 
+import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 import io.horizontalsystems.bitcoincore.managers.AddressManager
@@ -7,6 +8,7 @@ import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
+import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.transactions.TransactionProcessor
 
 class BlockSyncer(
@@ -36,10 +38,6 @@ class BlockSyncer(
         }
 
     init {
-        if (storage.blocksCount() == 0) {
-            storage.saveBlock(checkpointBlock)
-        }
-
         listener.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight)
     }
 
@@ -152,4 +150,28 @@ class BlockSyncer(
     }
 
     class State(var iterationHasPartialBlocks: Boolean = false)
+
+    companion object {
+        fun getCheckpointBlock(syncMode: BitcoinCore.SyncMode, network: Network, storage: IStorage): Block {
+            val lastBlock = storage.lastBlock()
+
+            val checkpointBlock = if (syncMode is BitcoinCore.SyncMode.Full) {
+                network.bip44CheckpointBlock
+            } else if (lastBlock != null && lastBlock.height < network.lastCheckpointBlock.height) {
+                // during app updating there may be case when the last block in DB is earlier than new checkpoint block
+                // in this case we set the very first checkpoint block for bip44,
+                // since it surely will be earlier than the last block in DB
+                network.bip44CheckpointBlock
+            } else {
+                network.lastCheckpointBlock
+            }
+
+            if (lastBlock == null) {
+                storage.saveBlock(checkpointBlock)
+            }
+
+            return checkpointBlock
+        }
+    }
+
 }

@@ -153,10 +153,7 @@ class BitcoinCoreBuilder {
 
         val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
         val blockchain = Blockchain(storage, blockValidatorChain, dataProvider)
-        val checkpointBlock = when (syncMode) {
-            is BitcoinCore.SyncMode.Full -> network.bip44CheckpointBlock
-            else -> network.lastCheckpointBlock
-        }
+        val checkpointBlock = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
 
         val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, checkpointBlock)
         val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
