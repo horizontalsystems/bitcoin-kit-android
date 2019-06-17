@@ -43,7 +43,7 @@ class MainNet : Network() {
             version = 0x20000000,
             previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000000000485ab94f5ea60203aacfc9740b3e42700d7e7012f76d7"),
             merkleRoot = HashUtils.toBytesAsLE("2e76c50d3dcecc46264b7ff8e653d5c9f06680f4d88f5b239d58a531a3c12279"),
-            timestamp = 1559277784,
+            timestamp = 1559256184,
             bits = 0x1725bb76,
             nonce = 0x423310ae,
             hash = HashUtils.toBytesAsLE("00000000000000000001791f463d849ce5363d751c91f7d3cd2ff18981ae221d")
