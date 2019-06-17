@@ -8,7 +8,7 @@ import android.arch.persistence.room.migration.Migration
 import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
 
-@Database(version = 3, exportSchema = false, entities = [
+@Database(version = 4, exportSchema = false, entities = [
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -40,7 +40,8 @@ abstract class CoreDatabase : RoomDatabase() {
                     .allowMainThreadQueries()
                     .addMigrations(
                             add_connectionTime_to_PeerAddress,
-                            add_hasTransaction_to_Block
+                            add_hasTransaction_to_Block,
+                            update_block_timestamp
                     )
                     .build()
         }
@@ -55,6 +56,12 @@ abstract class CoreDatabase : RoomDatabase() {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE Block ADD COLUMN hasTransactions INTEGER DEFAULT 0 NOT NULL")
                 database.execSQL("UPDATE Block SET hasTransactions = 1")
+            }
+        }
+
+        private val update_block_timestamp = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("UPDATE Block SET block_timestamp = 1559256184 WHERE height = 578592 AND block_timestamp = 1559277784")
             }
         }
     }
