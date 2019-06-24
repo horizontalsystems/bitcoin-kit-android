@@ -271,8 +271,12 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.output.getListByPath(publicKey.path)
     }
 
-    override fun getMyOutputs(): List<FullOutputInfo> {
+    override fun getMyOutputs(): List<TransactionOutput> {
         return store.output.getMyOutputs()
+    }
+
+    override fun getOutputsForBloomFilter(blockHeight: Int): List<TransactionOutput> {
+        return store.output.getOutputsForBloomFilter(blockHeight)
     }
 
     // TransactionInput
