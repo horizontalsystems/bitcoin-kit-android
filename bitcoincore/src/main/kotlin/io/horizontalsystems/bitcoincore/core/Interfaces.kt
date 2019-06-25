@@ -2,7 +2,10 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.managers.TransactionItem
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoincore.storage.*
+import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
+import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 interface IStorage {
 
@@ -75,7 +78,8 @@ interface IStorage {
     fun getPreviousOutput(input: TransactionInput): TransactionOutput?
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
-    fun getMyOutputs(): List<FullOutputInfo>
+    fun getMyOutputs(): List<TransactionOutput>
+    fun getOutputsForBloomFilter(blockHeight: Int): List<TransactionOutput>
 
     // Transaction Input
 

@@ -105,7 +105,7 @@ class TransactionProcessor(
 
     private fun hasUnspentOutputs(transaction: FullTransaction): Boolean {
         return transaction.outputs.any {
-            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH)
+            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH || it.scriptType == ScriptType.P2WPKHSH)
         }
     }
 
