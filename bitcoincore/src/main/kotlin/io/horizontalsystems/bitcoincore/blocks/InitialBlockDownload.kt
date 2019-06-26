@@ -167,10 +167,8 @@ class InitialBlockDownload(
                 syncedPeers.add(peer)
 
                 blockSyncer.downloadCompleted()
-                if (peerManager.isHalfSynced()) {
-                    syncStateListener.onSyncFinish()
-                }
-                 peer.sendMempoolMessage()
+                syncStateListener.onSyncFinish()
+                peer.sendMempoolMessage()
                 logger.info("Peer synced ${peer.host}")
                 syncPeer = null
                 assignNextSyncPeer()
