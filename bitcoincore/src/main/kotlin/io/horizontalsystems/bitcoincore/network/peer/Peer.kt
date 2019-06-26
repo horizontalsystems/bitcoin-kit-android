@@ -105,6 +105,7 @@ class Peer(
 
     override fun socketConnected(address: InetAddress) {
         peerConnection.sendMessage(VersionMessage(localBestBlockHeight, address, network))
+        timer.restart()
     }
 
     override fun disconnected(e: Exception?) {
