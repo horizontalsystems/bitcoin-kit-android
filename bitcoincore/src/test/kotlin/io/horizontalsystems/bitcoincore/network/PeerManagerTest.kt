@@ -105,23 +105,23 @@ object PeerManagerTest : Spek({
         }
     }
 
-    describe("isHalfSynced") {
-        it("more than half synced") {
+    describe("hasSyncedPeer") {
+        it("is true when at least one peer is synced") {
             addPeer(host = "0.0.0.1", connected = true, synced = true)
             addPeer(host = "0.0.0.2", connected = true, synced = true)
             addPeer(host = "0.0.0.3", connected = false, synced = false)
             addPeer(host = "0.0.0.4", connected = false, synced = false)
 
-            assertEquals(true, peerManager.isHalfSynced())
+            assertEquals(true, peerManager.hasSyncedPeer())
         }
 
-        it("less than half synced") {
-            addPeer(host = "0.0.0.1", connected = true, synced = true)
+        it("is false when no peer is synced") {
+            addPeer(host = "0.0.0.1", connected = true, synced = false)
             addPeer(host = "0.0.0.2", connected = true, synced = false)
             addPeer(host = "0.0.0.3", connected = false, synced = false)
-            addPeer(host = "0.0.0.4", connected = false, synced = true)
+            addPeer(host = "0.0.0.4", connected = false, synced = false)
 
-            assertEquals(false, peerManager.isHalfSynced())
+            assertEquals(false, peerManager.hasSyncedPeer())
         }
     }
 })
