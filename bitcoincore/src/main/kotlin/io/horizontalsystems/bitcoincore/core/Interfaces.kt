@@ -88,7 +88,9 @@ interface IStorage {
 
     // PublicKey
 
-    fun getPublicKeyByHash(keyHash: ByteArray, isWPKH: Boolean = false): PublicKey?
+    fun getPublicKeyByScriptHashForP2PWKH(keyHash: ByteArray): PublicKey?
+    fun getPublicKeyByKeyOrKeyHash(keyHash: ByteArray): PublicKey?
+
     fun getPublicKeys(): List<PublicKey>
     fun savePublicKeys(keys: List<PublicKey>)
 
