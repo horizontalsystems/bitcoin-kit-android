@@ -219,6 +219,7 @@ class BitcoinCoreBuilder {
                 .addMessageParser(TransactionMessageParser())
                 .addMessageParser(VerAckMessageParser())
                 .addMessageParser(VersionMessageParser())
+                .addMessageParser(RejectMessageParser())
 
         bitcoinCore.addMessageSerializer(FilterLoadMessageSerializer())
                 .addMessageSerializer(GetBlocksMessageSerializer())
