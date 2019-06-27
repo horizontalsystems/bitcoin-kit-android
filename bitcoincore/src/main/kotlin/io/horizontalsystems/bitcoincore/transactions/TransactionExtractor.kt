@@ -76,7 +76,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             else if (sigScript.size == 23 && sigScript[0] == 0x16.toByte() &&
                     (sigScript[1] == 0.toByte() || sigScript[1] in 0x50..0x61) &&
                     sigScript[2] == 0x14.toByte()) {
-                payload = sigScript
+                payload = sigScript.drop(1).toByteArray()
                 scriptType = ScriptType.P2WPKHSH
             } else continue
 
@@ -114,7 +114,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
 
         if (output.scriptType == ScriptType.P2WPKH) {
             keyHash = keyHash.drop(2).toByteArray()
-        } else if(output.scriptType == ScriptType.P2SH) {
+        } else if (output.scriptType == ScriptType.P2SH) {
             storage.getPublicKeyByScriptHashForP2PWKH(keyHash)?.let {
                 output.scriptType = ScriptType.P2WPKHSH
                 output.keyHash = it.publicKeyHash
