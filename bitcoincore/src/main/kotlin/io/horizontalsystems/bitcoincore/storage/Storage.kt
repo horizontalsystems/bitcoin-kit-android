@@ -291,12 +291,12 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     // PublicKey
 
-    override fun getPublicKeyByHash(keyHash: ByteArray, isWPKH: Boolean): PublicKey? {
-        return if (isWPKH) {
-            store.publicKey.getByScriptHashWPKH(keyHash)
-        } else {
-            store.publicKey.getByKeyOrKeyHash(keyHash)
-        }
+    override fun getPublicKeyByScriptHashForP2PWKH(keyHash: ByteArray): PublicKey? {
+        return store.publicKey.getByScriptHashWPKH(keyHash)
+    }
+
+    override fun getPublicKeyByKeyOrKeyHash(keyHash: ByteArray): PublicKey? {
+        return store.publicKey.getByKeyOrKeyHash(keyHash)
     }
 
     override fun getPublicKeys(): List<PublicKey> {
