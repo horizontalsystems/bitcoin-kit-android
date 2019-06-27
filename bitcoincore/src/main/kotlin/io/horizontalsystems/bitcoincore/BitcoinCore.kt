@@ -171,7 +171,7 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputSelector)
-        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
+        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)

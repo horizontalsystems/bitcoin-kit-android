@@ -40,10 +40,8 @@ class BloomFilterManager(private val storage: IStorage) {
 
         if (elements.isNotEmpty()) {
             BloomFilter(elements).let {
-                if (it != bloomFilter) {
-                    bloomFilter = it
-                    listener?.onFilterUpdated(it)
-                }
+                bloomFilter = it
+                listener?.onFilterUpdated(it)
             }
         }
     }
