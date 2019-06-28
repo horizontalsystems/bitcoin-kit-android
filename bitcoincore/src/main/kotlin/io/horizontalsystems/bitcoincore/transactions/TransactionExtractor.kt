@@ -76,7 +76,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             else if (sigScript.size == 23 && sigScript[0] == 0x16.toByte() &&
                     (sigScript[1] == 0.toByte() || sigScript[1] in 0x50..0x61) &&
                     sigScript[2] == 0x14.toByte()) {
-                payload = sigScript
+                payload = sigScript.drop(1).toByteArray()
                 scriptType = ScriptType.P2WPKHSH
             } else continue
 
@@ -114,16 +114,15 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
 
         if (output.scriptType == ScriptType.P2WPKH) {
             keyHash = keyHash.drop(2).toByteArray()
-            output.keyHash = keyHash
-        } else if(output.scriptType == ScriptType.P2SH) {
-            storage.getPublicKeyByHash(keyHash, isWPKH = true)?.let {
+        } else if (output.scriptType == ScriptType.P2SH) {
+            storage.getPublicKeyByScriptHashForP2PWKH(keyHash)?.let {
                 output.scriptType = ScriptType.P2WPKHSH
                 output.keyHash = it.publicKeyHash
                 return it
             }
         }
 
-        return storage.getPublicKeyByHash(keyHash, isWPKH = false)
+        return storage.getPublicKeyByKeyOrKeyHash(keyHash)
     }
 
     //
@@ -158,7 +157,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
     // 22 bytes script: {version-byte 00/81-96} 14 {20-byte-key-hash}
     private fun isP2WPKH(lockingScript: ByteArray): Boolean {
         return (lockingScript.size == 22 &&
-                (lockingScript[0] == 0.toByte() || lockingScript[1] in 0x50..0x61) &&
+                (lockingScript[0] == 0.toByte() || lockingScript[0] in 0x50..0x61) &&
                 lockingScript[1] == 20.toByte())
     }
 

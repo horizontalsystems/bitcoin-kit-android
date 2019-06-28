@@ -38,6 +38,9 @@ interface TransactionOutputDao {
     @Query("select * from TransactionOutput where publicKeyPath = :path")
     fun getListByPath(path: String): List<TransactionOutput>
 
+    @Query("SELECT * FROM TransactionOutput WHERE publicKeyPath IS NOT NULL")
+    fun getMyOutputs(): List<TransactionOutput>
+
     @Query("""
         SELECT outputs.*
         FROM TransactionOutput AS outputs
@@ -52,10 +55,11 @@ interface TransactionOutputDao {
           INNER JOIN `Transaction` AS transactions ON inputs.transactionHash = transactions.hash
           LEFT JOIN Block ON transactions.blockHash = Block.headerHash
         )
-        AS input ON input.txHash = outputs.transactionHash AND input.previousOutputIndex = outputs.`index`
-        WHERE outputs.scriptType = ${ScriptType.P2WPKH} OR outputs.scriptType = ${ScriptType.P2PK}
+        AS input ON input.previousOutputTxHash = outputs.transactionHash AND input.previousOutputIndex = outputs.`index`
+        WHERE outputs.scriptType IN(${ScriptType.P2WPKH}, ${ScriptType.P2PK}, ${ScriptType.P2WPKHSH})
+        AND (height IS NULL OR height > :blockHeight)
     """)
-    fun getMyOutputs(): List<FullOutputInfo>
+    fun getOutputsForBloomFilter(blockHeight: Int): List<TransactionOutput>
 
 }
 

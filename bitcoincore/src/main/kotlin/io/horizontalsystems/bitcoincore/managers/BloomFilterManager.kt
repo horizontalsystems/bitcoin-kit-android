@@ -2,8 +2,6 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.crypto.BloomFilter
-import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
-import io.horizontalsystems.bitcoincore.storage.FullOutputInfo
 import io.horizontalsystems.bitcoincore.utils.Utils
 
 class BloomFilterManager(private val storage: IStorage) {
@@ -30,41 +28,22 @@ class BloomFilterManager(private val storage: IStorage) {
             elements.add(publicKey.scriptHashP2WPKH)
         }
 
-        var transactionOutputs = storage.getMyOutputs()
+        val transactionOutputs = storage.lastBlock()?.height?.let { lastBlockHeight ->
+            // get transaction outputs which are unspent or spent in last 100 blocks
+            storage.getOutputsForBloomFilter(lastBlockHeight - 100)
+        } ?: listOf()
 
-        storage.lastBlock()?.height?.let { bestBlockHeight ->
-            transactionOutputs = transactionOutputs.filter { needToSetToBloomFilter(it, bestBlockHeight) }
-        }
-
-        for (out in transactionOutputs) {
-            val outpoint = out.output.transactionHash + Utils.intToByteArray(out.output.index).reversedArray()
+        for (output in transactionOutputs) {
+            val outpoint = output.transactionHash + Utils.intToByteArray(output.index).reversedArray()
             elements.add(outpoint)
         }
 
         if (elements.isNotEmpty()) {
             BloomFilter(elements).let {
-                if (it != bloomFilter) {
-                    bloomFilter = it
-                    listener?.onFilterUpdated(it)
-                }
+                bloomFilter = it
+                listener?.onFilterUpdated(it)
             }
         }
-    }
-
-    /**
-     * @return false if transaction output is spent more then 100 blocks before, otherwise true
-     */
-    private fun needToSetToBloomFilter(output: FullOutputInfo, bestBlockHeight: Int): Boolean {
-        if (output.input == null) {
-            return true
-        }
-
-        val outputSpentBlockHeight = output.input.block?.height
-        if (outputSpentBlockHeight != null) {
-            return bestBlockHeight - outputSpentBlockHeight < 100
-        }
-
-        return true
     }
 
 }

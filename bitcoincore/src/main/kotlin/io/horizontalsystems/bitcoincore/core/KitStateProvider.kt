@@ -60,7 +60,7 @@ class KitStateProvider : ISyncStateListener {
         }
 
         if (progress >= 1) {
-            syncState = KitState.Syncing(1.0)
+            syncState = KitState.Synced
         } else {
             syncState = KitState.Syncing(progress)
         }

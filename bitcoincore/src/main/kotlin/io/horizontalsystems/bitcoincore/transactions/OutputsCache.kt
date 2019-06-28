@@ -37,7 +37,7 @@ class OutputsCache {
             val outputsCache = OutputsCache()
             val outputs = storage.getMyOutputs()
 
-            outputsCache.add(outputs.map { it.output })
+            outputsCache.add(outputs)
 
             return outputsCache
         }

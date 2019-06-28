@@ -4,6 +4,7 @@ import com.nhaarman.mockito_kotlin.any
 import com.nhaarman.mockito_kotlin.verify
 import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
+import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
@@ -15,7 +16,8 @@ object TransactionCreatorTest : Spek({
     val transactionProcessor = Mockito.mock(TransactionProcessor::class.java)
     val transactionSender = Mockito.mock(TransactionSender::class.java)
     val transactionP2PKH = Fixtures.transactionP2PKH
-    val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender)
+    val bloomFilterManager = Mockito.mock(BloomFilterManager::class.java)
+    val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
     beforeEachTest {
         whenever(transactionBuilder.buildTransaction(any(), any(), any(), any())).thenReturn(transactionP2PKH)

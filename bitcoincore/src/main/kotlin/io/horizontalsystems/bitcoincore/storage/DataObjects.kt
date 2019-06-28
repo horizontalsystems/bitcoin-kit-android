@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoincore.storage
 
 import android.arch.persistence.room.Embedded
-import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.utils.HashUtils
@@ -19,7 +18,7 @@ class FullTransaction(val header: Transaction, val inputs: List<TransactionInput
 
     init {
         if (header.hash.isEmpty()) {
-            header.hash = HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = true))
+            header.hash = HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = false))
         }
 
         inputs.forEach {
@@ -52,12 +51,6 @@ class UnspentOutput(
         @Embedded val publicKey: PublicKey,
         @Embedded val transaction: Transaction,
         @Embedded val block: Block?)
-
-class InputBlock(@Embedded val block: Block?)
-
-class FullOutputInfo(
-        @Embedded val output: TransactionOutput,
-        @Embedded val input: InputBlock?)
 
 class FullTransactionInfo(
         val block: Block?,

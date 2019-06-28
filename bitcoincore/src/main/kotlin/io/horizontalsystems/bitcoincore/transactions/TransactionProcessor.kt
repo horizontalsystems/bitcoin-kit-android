@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.managers.AddressManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
@@ -27,6 +28,10 @@ class TransactionProcessor(
 
         storage.addTransaction(transaction)
         dataListener.onTransactionsUpdate(listOf(transaction.header), listOf(), null)
+
+        if (expiresBloomFilter(transaction.outputs)) {
+            throw BloomFilterManager.BloomFilterExpired
+        }
     }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
@@ -41,6 +46,10 @@ class TransactionProcessor(
             for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
                 val transactionInDB = storage.getTransaction(transaction.header.hash)
                 if (transactionInDB != null) {
+
+                    if (transactionInDB.blockHash != null && block == null) {
+                        continue
+                    }
                     relay(transactionInDB, index, block)
                     storage.updateTransaction(transactionInDB)
 
@@ -57,7 +66,7 @@ class TransactionProcessor(
                     inserted.add(transaction.header)
 
                     if (!skipCheckBloomFilter) {
-                        needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts() || hasUnspentOutputs(transaction)
+                        needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts() || expiresBloomFilter(transaction.outputs)
                     }
                 }
             }
@@ -88,10 +97,6 @@ class TransactionProcessor(
     }
 
     private fun relay(transaction: Transaction, order: Int, block: Block?) {
-        if (transaction.blockHash != null && block == null) {
-            return
-        }
-
         transaction.status = Transaction.Status.RELAYED
         transaction.order = order
         transaction.blockHash = block?.headerHash
@@ -103,9 +108,9 @@ class TransactionProcessor(
         }
     }
 
-    private fun hasUnspentOutputs(transaction: FullTransaction): Boolean {
-        return transaction.outputs.any {
-            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH)
+    private fun expiresBloomFilter(outputs: List<TransactionOutput>): Boolean {
+        return outputs.any {
+            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH || it.scriptType == ScriptType.P2WPKHSH)
         }
     }
 

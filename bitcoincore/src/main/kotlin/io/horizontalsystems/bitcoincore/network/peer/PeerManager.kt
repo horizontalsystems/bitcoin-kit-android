@@ -43,8 +43,8 @@ class PeerManager {
         return connected().sortedBy { it.connectionTime }
     }
 
-    fun isHalfSynced(): Boolean {
-        return (peers.size / 2) <= peers.values.filter { it.connected && it.synced }.size
+    fun hasSyncedPeer(): Boolean {
+        return peers.values.any { it.connected && it.synced }
     }
 
 }
