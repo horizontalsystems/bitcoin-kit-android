@@ -14,8 +14,9 @@ class WitnessConverter {
     }
 
     @TypeConverter
-    fun toWitness(data: String): List<ByteArray> {
-        return data.split(", ").map {
+    fun toWitness(data: String): List<ByteArray> = when {
+        data.isEmpty() -> listOf()
+        else -> data.split(", ").map {
             it.hexToByteArray()
         }
     }
