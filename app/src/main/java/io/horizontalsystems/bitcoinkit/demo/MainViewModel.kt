@@ -50,7 +50,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         balance.value = bitcoinKit.balance
 
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.value = txList.sortedByDescending { it.blockHeight }
+            transactions.value = txList
         }.let {
             disposables.add(it)
         }
@@ -98,7 +98,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.postValue(txList.sortedByDescending { it.blockHeight })
+            transactions.postValue(txList)
         }.let {
             disposables.add(it)
         }
