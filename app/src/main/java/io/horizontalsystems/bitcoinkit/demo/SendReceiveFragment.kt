@@ -19,6 +19,7 @@ class SendReceiveFragment : Fragment() {
     private lateinit var receiveAddressText: TextView
 
     private lateinit var sendButton: Button
+    private lateinit var maxButton: Button
     private lateinit var sendAmount: EditText
     private lateinit var sendAddress: EditText
     private lateinit var txFeeValue: TextView
@@ -48,6 +49,7 @@ class SendReceiveFragment : Fragment() {
         sendAddress = view.findViewById(R.id.sendAddress)
         sendAmount = view.findViewById(R.id.sendAmount)
         sendButton = view.findViewById(R.id.sendButton)
+        maxButton = view.findViewById(R.id.maxButton)
         sendButton.setOnClickListener {
             if (sendAddress.text.isEmpty()) {
                 sendAddress.error = "Send address cannot be blank"
@@ -55,6 +57,19 @@ class SendReceiveFragment : Fragment() {
                 sendAmount.error = "Send amount cannot be blank"
             } else {
                 send()
+            }
+        }
+        maxButton.setOnClickListener {
+            viewModel.balance.value?.let { balance ->
+                val fee = try {
+                    viewModel.fee(balance)
+                } catch (e: UnspentOutputSelectorError.InsufficientUnspentOutputs) {
+                    e.fee
+                } catch (e: Exception) {
+                    0L
+                }
+
+                sendAmount.setText("${balance - fee}")
             }
         }
 
@@ -101,7 +116,7 @@ class SendReceiveFragment : Fragment() {
             message = when (e) {
                 is UnspentOutputSelectorError.InsufficientUnspentOutputs,
                 is UnspentOutputSelectorError.EmptyUnspentOutputs -> "Insufficient balance"
-                else -> e.message ?: "Failed to send transaction"
+                else -> e.message ?: "Failed to send transaction (${e.javaClass.name})"
             }
         }
 
