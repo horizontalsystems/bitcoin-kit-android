@@ -85,6 +85,26 @@
         app:layout_constraintTop_toTopOf="@+id/lastBlockTitle"
         tools:text="123000" />
 
+    <TextView
+        android:id="@+id/lastBlockDateTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Until:"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/lastBlockTitle" />
+
+    <TextView
+        android:id="@+id/lastBlockDateValue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        app:layout_constraintStart_toEndOf="@+id/lastBlockDateTitle"
+        app:layout_constraintTop_toTopOf="@+id/lastBlockDateTitle"
+        tools:text="2019-01-01 12:12:12" />
+
     <Button
         android:id="@+id/buttonStart"
         android:layout_width="wrap_content"
@@ -92,7 +112,7 @@
         android:layout_marginTop="24dp"
         android:text="Start"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lastBlockTitle" />
+        app:layout_constraintTop_toBottomOf="@+id/lastBlockDateTitle" />
 
     <Button
         android:id="@+id/buttonDebug"
@@ -102,7 +122,7 @@
         android:layout_marginEnd="28dp"
         android:text="Debug info"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/lastBlockValue" />
+        app:layout_constraintTop_toBottomOf="@+id/lastBlockDateTitle" />
 
     <Button
         android:id="@+id/buttonClear"
