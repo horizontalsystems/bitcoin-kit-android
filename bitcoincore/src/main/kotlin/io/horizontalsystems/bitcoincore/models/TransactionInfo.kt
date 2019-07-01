@@ -18,5 +18,5 @@ data class TransactionAddress(
 data class BlockInfo(
         val headerHash: String,
         val height: Int,
-        val timestamp: Long?
+        val timestamp: Long
 )

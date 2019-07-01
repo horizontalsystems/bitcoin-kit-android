@@ -17,7 +17,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     val transactions = MutableLiveData<List<TransactionInfo>>()
     val balance = MutableLiveData<Long>()
-    val lastBlockHeight = MutableLiveData<Int>()
+    val lastBlock = MutableLiveData<BlockInfo>()
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
     lateinit var networkName: String
@@ -50,12 +50,12 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         balance.value = bitcoinKit.balance
 
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.value = txList.sortedByDescending { it.blockHeight }
+            transactions.value = txList
         }.let {
             disposables.add(it)
         }
 
-        lastBlockHeight.value = bitcoinKit.lastBlockInfo?.height ?: 0
+        lastBlock.value = bitcoinKit.lastBlockInfo
         state.value = KitState.NotSynced
 
         started = false
@@ -98,7 +98,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     //
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.postValue(txList.sortedByDescending { it.blockHeight })
+            transactions.postValue(txList)
         }.let {
             disposables.add(it)
         }
@@ -112,7 +112,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
-        this.lastBlockHeight.postValue(blockInfo.height)
+        this.lastBlock.postValue(blockInfo)
     }
 
     override fun onKitStateUpdate(state: KitState) {

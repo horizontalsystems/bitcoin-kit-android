@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import java.text.DateFormat
 import java.util.*
 
@@ -78,8 +79,12 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
         val date = DateFormat.getInstance().format(Date(timeInMillis))
         val amount = NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)
 
-        val text = "#$index" +
-                "\nFrom: ${mapAddresses(transactionInfo.from)}" +
+        var text = "#$index"
+        if (transactionInfo is DashTransactionInfo) {
+            text += "\nInstant: ${transactionInfo.instantTx.toString().toUpperCase()}"
+        }
+
+        text += "\nFrom: ${mapAddresses(transactionInfo.from)}" +
                 "\nTo: ${mapAddresses(transactionInfo.to)}" +
                 "\nAmount: $amount" +
                 "\nTx hash: ${transactionInfo.transactionHash}" +

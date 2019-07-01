@@ -10,12 +10,15 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import io.horizontalsystems.bitcoincore.BitcoinCore
+import java.text.SimpleDateFormat
+import java.util.*
 
 class BalanceFragment : Fragment() {
 
     lateinit var viewModel: MainViewModel
     lateinit var networkName: TextView
     lateinit var balanceValue: TextView
+    lateinit var lastBlockDateValue: TextView
     lateinit var lastBlockValue: TextView
     lateinit var stateValue: TextView
     lateinit var startButton: Button
@@ -35,8 +38,14 @@ class BalanceFragment : Fragment() {
                 }
             })
 
-            viewModel.lastBlockHeight.observe(this, Observer {
-                lastBlockValue.text = (it ?: 0).toString()
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+            viewModel.lastBlock.observe(this, Observer {
+                it?.let { blockInfo ->
+                    lastBlockValue.text = blockInfo.height.toString()
+
+                    val strDate = dateFormat.format(Date(blockInfo.timestamp * 1000))
+                    lastBlockDateValue.text = strDate
+                }
             })
 
             viewModel.state.observe(this, Observer { state ->
@@ -79,6 +88,7 @@ class BalanceFragment : Fragment() {
 
         balanceValue = view.findViewById(R.id.balanceValue)
         lastBlockValue = view.findViewById(R.id.lastBlockValue)
+        lastBlockDateValue = view.findViewById(R.id.lastBlockDateValue)
         stateValue = view.findViewById(R.id.stateValue)
         startButton = view.findViewById(R.id.buttonStart)
         clearButton = view.findViewById(R.id.buttonClear)
