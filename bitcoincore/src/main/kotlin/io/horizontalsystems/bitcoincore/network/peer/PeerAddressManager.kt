@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.network.peer
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.PeerAddress
 import io.horizontalsystems.bitcoincore.network.Network
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.logging.Logger
 
 class PeerAddressManager(private val network: Network, private val storage: IStorage) {
@@ -66,20 +67,16 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         return storage.getLeastScoreFastestPeerAddressExcludingIps(state.usedPeers.toList())
     }
 
-    class State {
-        var usedPeers = mutableListOf<String>()
+    private class State {
+        var usedPeers = CopyOnWriteArrayList<String>()
             private set
 
         fun add(ip: String) {
-            synchronized(usedPeers) {
-                usedPeers.add(ip)
-            }
+            usedPeers.add(ip)
         }
 
         fun remove(ip: String) {
-            synchronized(usedPeers) {
-                usedPeers.removeAll { it == ip }
-            }
+            usedPeers.removeAll { it == ip }
         }
     }
 }
