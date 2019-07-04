@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import java.util.concurrent.Executors
 
 class ConnectionManager(context: Context) {
 
@@ -12,6 +13,7 @@ class ConnectionManager(context: Context) {
         fun onConnectionChange(isConnected: Boolean)
     }
 
+    private val executorService = Executors.newCachedThreadPool()
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     var listener: Listener? = null
@@ -20,7 +22,9 @@ class ConnectionManager(context: Context) {
     init {
         context.registerReceiver(object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                onUpdateStatus()
+                executorService.execute {
+                    onUpdateStatus()
+                }
             }
         }, IntentFilter("android.net.conn.CONNECTIVITY_CHANGE"))
     }
