@@ -56,6 +56,9 @@ dependencies {
     // HDWallet Kit
     implementation 'com.github.horizontalsystems:hd-wallet-kit-android:a3666d8'
 
+    //Logging
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+
     // Test helpers
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.4.1'

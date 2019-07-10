@@ -1,9 +1,9 @@
 package io.horizontalsystems.dashkit.instantsend.instantsendlock
 
+import io.horizontalsystems.bitcoincore.utils.HSLogger
 import io.horizontalsystems.dashkit.IInstantTransactionDelegate
 import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
 import io.horizontalsystems.dashkit.messages.ISLockMessage
-import java.util.logging.Logger
 
 class InstantSendLockHandler(
         private val instantTransactionManager: InstantTransactionManager,
@@ -11,7 +11,7 @@ class InstantSendLockHandler(
 ) {
 
     var delegate: IInstantTransactionDelegate? = null
-    private val logger = Logger.getLogger("InstantSendLockHandler")
+    private val logger = HSLogger("InstantSendLockHandler")
 
     fun handle(transactionHash: ByteArray) {
         // get relayed lock for inserted transaction and check it
@@ -43,7 +43,7 @@ class InstantSendLockHandler(
             instantTransactionManager.makeInstant(isLock.txHash)
             delegate?.onUpdateInstant(isLock.txHash)
         } catch (e: Exception) {
-            logger?.severe(e.message)
+            logger.e(e)
         }
     }
 

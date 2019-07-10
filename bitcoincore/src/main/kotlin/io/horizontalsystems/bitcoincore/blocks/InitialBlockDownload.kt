@@ -7,9 +7,9 @@ import io.horizontalsystems.bitcoincore.network.peer.*
 import io.horizontalsystems.bitcoincore.network.peer.task.GetBlockHashesTask
 import io.horizontalsystems.bitcoincore.network.peer.task.GetMerkleBlocksTask
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
+import io.horizontalsystems.bitcoincore.utils.HSLogger
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
-import java.util.logging.Logger
 
 class InitialBlockDownload(
         private var blockSyncer: BlockSyncer,
@@ -26,7 +26,7 @@ class InitialBlockDownload(
     private var syncPeer: Peer? = null
     private var selectNewPeer = false
     private val peersQueue = Executors.newSingleThreadExecutor()
-    private val logger = Logger.getLogger("IBD")
+    private val logger = HSLogger("IBD")
 
     private var minMerkleBlocks = 500.0
     private var minTransactions = 50_000.0
@@ -131,7 +131,7 @@ class InitialBlockDownload(
                     syncPeer = nonSyncedPeer
                     blockSyncer.downloadStarted()
 
-                    logger.info("Start syncing peer ${nonSyncedPeer.host}")
+                    logger.i("Start syncing peer ${nonSyncedPeer.host}")
 
                     downloadBlockchain()
                 }
@@ -169,7 +169,7 @@ class InitialBlockDownload(
                 blockSyncer.downloadCompleted()
                 syncStateListener.onSyncFinish()
                 peer.sendMempoolMessage()
-                logger.info("Peer synced ${peer.host}")
+                logger.i("Peer synced ${peer.host}")
                 syncPeer = null
                 assignNextSyncPeer()
                 peerSyncListeners.forEach { it.onPeerSynced(peer) }

@@ -3,8 +3,8 @@ package io.horizontalsystems.bitcoincore.network.peer
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.PeerAddress
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.utils.HSLogger
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.logging.Logger
 
 class PeerAddressManager(private val network: Network, private val storage: IStorage) {
 
@@ -15,7 +15,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
     var listener: Listener? = null
 
     private val state = State()
-    private val logger = Logger.getLogger("PeerHostManager")
+    private val logger = HSLogger("PeerAddressManager")
     private val peerDiscover = PeerDiscover(this)
 
     val hasFreshIps: Boolean
@@ -42,7 +42,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
     fun addIps(ips: List<String>) {
         storage.setPeerAddresses(ips.map { PeerAddress(it, 0) })
 
-        logger.info("Added new addresses: ${ips.size}")
+        logger.i("Added new addresses: ${ips.size}")
 
         listener?.onAddAddress()
     }

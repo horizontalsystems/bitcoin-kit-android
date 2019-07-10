@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoinkit.demo
 import android.app.Application
 import com.facebook.stetho.Stetho
 import com.squareup.leakcanary.LeakCanary
-import io.horizontalsystems.bitcoinkit.BitcoinKit
+import timber.log.Timber
 
 class App : Application() {
 
@@ -20,6 +20,7 @@ class App : Application() {
         }
 
         LeakCanary.install(this)
+        Timber.plant(Timber.DebugTree())
 
         instance = this
     }
