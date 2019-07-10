@@ -22,7 +22,7 @@ class PeerDiscover(private val peerAddressManager: PeerAddressManager) {
                         ips.add(it.hostAddress)
                     }
                 } catch (e: UnknownHostException) {
-                    logger.w( "Cannot look up host: $host")
+                    logger.w( "Cannot look up host: %s", host)
                 }
             }
             peerAddressManager.addIps(ips)

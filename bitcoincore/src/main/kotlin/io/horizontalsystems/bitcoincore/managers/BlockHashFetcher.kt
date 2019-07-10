@@ -61,11 +61,11 @@ class BCoinApi(private val host: String) : IInitialSyncApi {
             this["addresses"] = Json.array(*addresses.toTypedArray())
         }
 
-        logger.i("Request transactions for ${addresses.size} addresses: [${addresses.first()}, ...]")
+        logger.i("Request transactions for %s addresses: [%s, ...]", addresses.size, addresses.first())
 
         val response = httpRequester.post("$host/tx/address", requestData.toString()).asArray()
 
-        logger.i("Got ${response.size()} transactions for requested addresses")
+        logger.i("Got %s transactions for requested addresses", response.size())
 
         val transactions = mutableListOf<TransactionItem>()
 

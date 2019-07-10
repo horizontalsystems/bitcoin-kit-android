@@ -42,7 +42,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
     fun addIps(ips: List<String>) {
         storage.setPeerAddresses(ips.map { PeerAddress(it, 0) })
 
-        logger.i("Added new addresses: ${ips.size}")
+        logger.i("Added new addresses: %d", ips.size)
 
         listener?.onAddAddress()
     }

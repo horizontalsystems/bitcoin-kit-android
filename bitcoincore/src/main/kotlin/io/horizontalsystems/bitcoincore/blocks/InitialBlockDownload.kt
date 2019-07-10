@@ -131,7 +131,7 @@ class InitialBlockDownload(
                     syncPeer = nonSyncedPeer
                     blockSyncer.downloadStarted()
 
-                    logger.i("Start syncing peer ${nonSyncedPeer.host}")
+                    logger.i("Start syncing peer %s", nonSyncedPeer.host)
 
                     downloadBlockchain()
                 }
@@ -169,7 +169,7 @@ class InitialBlockDownload(
                 blockSyncer.downloadCompleted()
                 syncStateListener.onSyncFinish()
                 peer.sendMempoolMessage()
-                logger.i("Peer synced ${peer.host}")
+                logger.i("Peer synced %s", peer.host)
                 syncPeer = null
                 assignNextSyncPeer()
                 peerSyncListeners.forEach { it.onPeerSynced(peer) }

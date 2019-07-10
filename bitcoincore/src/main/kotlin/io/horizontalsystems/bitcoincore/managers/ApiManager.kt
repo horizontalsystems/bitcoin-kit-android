@@ -23,7 +23,7 @@ class ApiManager(private val host: String) {
     private fun getJsonValue(file: String): JsonValue {
         val resource = "$host/$file"
 
-        logger.i("Fetching $resource")
+        logger.i("Fetching %s", resource)
 
         return URL(resource)
                 .openConnection()

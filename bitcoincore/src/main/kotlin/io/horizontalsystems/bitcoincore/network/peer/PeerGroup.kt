@@ -96,10 +96,10 @@ class PeerGroup(
         peerManager.remove(peer)
 
         if (e == null) {
-            logger.i("Peer ${peer.host} disconnected.")
+            logger.i("Peer %s disconnected.", peer.host)
             hostManager.markSuccess(peer.host)
         } else {
-            logger.w("Peer ${peer.host} disconnected with error ${e.javaClass.simpleName}, ${e.message}.")
+            logger.w(e, "Peer %s disconnected with error", peer.host)
             hostManager.markFailed(peer.host)
         }
 
