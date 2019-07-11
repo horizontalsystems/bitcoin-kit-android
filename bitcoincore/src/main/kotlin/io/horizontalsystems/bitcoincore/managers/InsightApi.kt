@@ -8,7 +8,7 @@ class InsightApi(host: String) : IInitialSyncApi {
     private val logger = HSLogger("InsightApi")
 
     override fun getTransactions(addresses: List<String>): List<TransactionItem> {
-        logger.i("Request transactions for %d addresses: [%s, ...]", addresses.size, addresses.first())
+        logger.i("Request transactions for ${addresses.size} addresses: [${addresses.first()}, ...]")
 
         val transactions = mutableListOf<TransactionItem>()
 

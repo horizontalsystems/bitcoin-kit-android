@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoincore.utils.HSLogger
-import timber.log.Timber
 import java.io.IOException
 import java.io.OutputStream
 import java.net.*
@@ -51,7 +50,7 @@ class PeerConnection(
             outputStream = socket.getOutputStream()
             val inStream = socket.getInputStream()
 
-            logger.i("Socket %s connected.", host)
+            logger.i("Socket $host connected.")
 
             listener.socketConnected(socket.inetAddress)
             // loop:
@@ -64,26 +63,26 @@ class PeerConnection(
                 while (isRunning && inStream.available() > 0) {
                     val inputStream = BitcoinInput(inStream)
                     val parsedMsg = networkMessageParser.parseMessage(inputStream)
-                    Timber.i("<= %s", parsedMsg.toString())
+                    logger.i("<= $parsedMsg")
                     listener.onMessage(parsedMsg)
                 }
             }
 
             listener.disconnected(disconnectError)
         } catch (e: SocketTimeoutException) {
-            logger.w(e, "Socket timeout exception")
+            logger.w("Socket timeout exception: ${e.message}")
             listener.disconnected(e)
         } catch (e: ConnectException) {
-            logger.w(e, "Connect exception")
+            logger.w("Connect exception: ${e.message}")
             listener.disconnected(e)
         } catch (e: IOException) {
-            logger.w(e, "IOException")
+            logger.w("IOException: ${e.message}")
             listener.disconnected(e)
         } catch (e: InterruptedException) {
-            logger.w(e, "Peer connection thread interrupted")
+            logger.w("Peer connection thread interrupted: ${e.message}")
             listener.disconnected()
         } catch (e: Exception) {
-            logger.w(e, "Peer connection exception")
+            logger.w("Peer connection exception: ${e.message}")
             listener.disconnected(e)
         } finally {
             isRunning = false
@@ -106,7 +105,7 @@ class PeerConnection(
     fun sendMessage(message: IMessage) {
         sendingExecutor.execute {
             try {
-                logger.i("=> %s", message.toString())
+                logger.i("=> $message")
                 outputStream?.write(networkMessageSerializer.serialize(message))
             } catch (e: Exception) {
                 close(e)
