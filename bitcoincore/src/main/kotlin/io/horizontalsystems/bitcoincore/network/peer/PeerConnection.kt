@@ -64,7 +64,7 @@ class PeerConnection(
                 while (isRunning && inStream.available() > 0) {
                     val inputStream = BitcoinInput(inStream)
                     val parsedMsg = networkMessageParser.parseMessage(inputStream)
-                    Timber.i("<= %s", parsedMsg)
+                    Timber.i("<= %s", parsedMsg.toString())
                     listener.onMessage(parsedMsg)
                 }
             }
@@ -106,7 +106,7 @@ class PeerConnection(
     fun sendMessage(message: IMessage) {
         sendingExecutor.execute {
             try {
-                logger.i("=> %s", message)
+                logger.i("=> %s", message.toString())
                 outputStream?.write(networkMessageSerializer.serialize(message))
             } catch (e: Exception) {
                 close(e)
