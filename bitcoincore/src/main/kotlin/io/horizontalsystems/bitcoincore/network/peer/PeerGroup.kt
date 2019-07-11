@@ -4,9 +4,9 @@ import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
-import io.horizontalsystems.bitcoincore.utils.HSLogger
 import java.net.InetAddress
 import java.util.concurrent.Executors
+import java.util.logging.Logger
 
 class PeerGroup(
         private val hostManager: PeerAddressManager,
@@ -32,7 +32,7 @@ class PeerGroup(
     var peerTaskHandler: IPeerTaskHandler? = null
 
     private var running = false
-    private val logger = HSLogger("PeerGroup")
+    private val logger = Logger.getLogger("PeerGroup")
     private val peerGroupListeners = mutableListOf<Listener>()
     private val executorService = Executors.newCachedThreadPool()
 
@@ -96,10 +96,10 @@ class PeerGroup(
         peerManager.remove(peer)
 
         if (e == null) {
-            logger.i("Peer %s disconnected.", peer.host)
+            logger.info("Peer ${peer.host} disconnected.")
             hostManager.markSuccess(peer.host)
         } else {
-            logger.w(e, "Peer %s disconnected with error", peer.host)
+            logger.warning("Peer ${peer.host} disconnected with error ${e.javaClass.simpleName}, ${e.message}.")
             hostManager.markFailed(peer.host)
         }
 

@@ -4,10 +4,10 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.utils.HSLogger
 import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
+import java.util.logging.Logger
 
 class InitialSyncer(
         private val storage: IStorage,
@@ -22,7 +22,7 @@ class InitialSyncer(
 
     var listener: Listener? = null
 
-    private val logger = HSLogger("InitialSyncer")
+    private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
     private var isRestoring = false
 
@@ -90,7 +90,7 @@ class InitialSyncer(
     }
 
     private fun handle(error: Throwable) {
-        logger.e(error,"Initial Sync Error")
+        logger.severe("Initial Sync Error: ${error.message}")
         isRestoring = false
         stateListener.onSyncStop()
     }

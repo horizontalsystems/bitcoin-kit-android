@@ -4,11 +4,11 @@ import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonArray
 import com.eclipsesource.json.JsonObject
 import com.eclipsesource.json.JsonValue
-import io.horizontalsystems.bitcoincore.utils.HSLogger
 import java.net.URL
+import java.util.logging.Logger
 
 class ApiManager(private val host: String) {
-    private val logger = HSLogger("ApiManager")
+    private val logger = Logger.getLogger("ApiManager")
 
     @Throws
     fun getJson(file: String): JsonObject {
@@ -23,7 +23,7 @@ class ApiManager(private val host: String) {
     private fun getJsonValue(file: String): JsonValue {
         val resource = "$host/$file"
 
-        logger.i("Fetching %s", resource)
+        logger.info("Fetching $resource")
 
         return URL(resource)
                 .openConnection()
