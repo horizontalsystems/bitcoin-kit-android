@@ -1,14 +1,14 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
-import io.horizontalsystems.bitcoincore.utils.HSLogger
+import java.util.logging.Logger
 
 class InsightApi(host: String) : IInitialSyncApi {
     private val apiManager = ApiManager(host)
-    private val logger = HSLogger("InsightApi")
+    private val logger = Logger.getLogger("InsightApi")
 
     override fun getTransactions(addresses: List<String>): List<TransactionItem> {
-        logger.i("Request transactions for ${addresses.size} addresses: [${addresses.first()}, ...]")
+        logger.info("Request transactions for ${addresses.size} addresses: [${addresses.first()}, ...]")
 
         val transactions = mutableListOf<TransactionItem>()
 

@@ -277,8 +277,6 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
 
-    private val logger = HSLogger("BitcoinCore")
-
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener): BitcoinCore {
         initialBlockDownload.addPeerSyncListener(peerSyncListener)
         return this
@@ -384,10 +382,10 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
 //                    } catch (e: Exception) {
 //                        ""
 //                    }
-                logger.i("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHash.toHexString()} ---- legacy: $legacy")
+                println("${pubKey.index} --- extrnl: ${pubKey.external} --- hash: ${pubKey.publicKeyHash.toHexString()} ---- legacy: $legacy")
 //                    println("legacy: $legacy --- bech32: $bechAddress --- SH(WPKH): $wpkh")
             } catch (e: Exception) {
-                logger.e(e)
+                println(e.message)
             }
         }
     }

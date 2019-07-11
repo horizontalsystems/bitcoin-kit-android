@@ -1,12 +1,12 @@
 package io.horizontalsystems.dashkit.instantsend
 
-import io.horizontalsystems.bitcoincore.utils.HSLogger
 import org.dashj.bls.InsecureSignature
 import org.dashj.bls.JNI
 import org.dashj.bls.PublicKey
+import java.util.logging.Logger
 
 class BLS {
-    private val logger = HSLogger("BLS")
+    private val logger = Logger.getLogger("BLS")
 
     init {
         System.loadLibrary(JNI.LIBRARY_NAME)
@@ -19,7 +19,7 @@ class BLS {
 
             insecureSignature.Verify(hash, pk)
         } catch (e: Exception) {
-            logger.e(e, "Verifying BLS signature failed with exception")
+            logger.severe("Verifying BLS signature failed with exception: $e")
 
             false
         }
