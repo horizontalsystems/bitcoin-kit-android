@@ -1,11 +1,11 @@
 package io.horizontalsystems.dashkit.instantsend.transactionlockvote
 
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.utils.HSLogger
 import io.horizontalsystems.dashkit.IInstantTransactionDelegate
 import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
 import io.horizontalsystems.dashkit.messages.TransactionLockVoteMessage
 import io.horizontalsystems.dashkit.models.InstantTransactionInput
-import java.util.logging.Logger
 
 class TransactionLockVoteHandler(
         private val instantTransactionManager: InstantTransactionManager,
@@ -14,7 +14,7 @@ class TransactionLockVoteHandler(
 ) {
     var delegate: IInstantTransactionDelegate? = null
 
-    private val logger = Logger.getLogger("TransactionLockVoteHandler")
+    private val logger = HSLogger("TransactionLockVoteHandler")
 
     fun handle(transaction: FullTransaction) {
         // check transaction already not in instant
@@ -68,7 +68,7 @@ class TransactionLockVoteHandler(
                 delegate?.onUpdateInstant(lockVote.txHash)
             }
         } catch(e: Exception) {
-            logger?.severe(e.message)
+            logger.e(e)
         }
     }
 }
