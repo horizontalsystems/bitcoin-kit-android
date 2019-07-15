@@ -3,8 +3,8 @@ package io.horizontalsystems.bitcoincore.transactions
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class TransactionSizeCalculator {
-    private val signatureLength = 74 + 1      // signature length + pushByte
-    private val pubKeyLength = 33 + 1         // pubKey length + pushByte
+    val signatureLength = 74 + 1      // signature length + pushByte
+    val pubKeyLength = 33 + 1         // pubKey length + pushByte
     private val p2wpkhShLength = 22 + 1       // 0014<20-byte-script-hash> + pushByte
 
     private val legacyTx = 16 + 4 + 4 + 16    // 40 Version + number of inputs + number of outputs + locktime

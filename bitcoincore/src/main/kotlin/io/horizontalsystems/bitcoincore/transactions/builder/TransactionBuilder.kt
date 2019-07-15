@@ -11,6 +11,8 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
@@ -23,21 +25,24 @@ class TransactionBuilder {
     private val scriptBuilder: ScriptBuilder
     private val inputSigner: InputSigner
     private val addressManager: AddressManager
+    private val transactionSizeCalculator: TransactionSizeCalculator
 
-    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputSelector: IUnspentOutputSelector) {
+    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, addressManager: AddressManager, unspentOutputSelector: IUnspentOutputSelector, transactionSizeCalculator: TransactionSizeCalculator) {
         this.addressConverter = addressConverter
         this.addressManager = addressManager
         this.unspentOutputsSelector = unspentOutputSelector
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
+        this.transactionSizeCalculator = transactionSizeCalculator
     }
 
-    constructor(addressConverter: IAddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager) {
+    constructor(addressConverter: IAddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, addressManager: AddressManager, transactionSizeCalculator: TransactionSizeCalculator) {
         this.addressManager = addressManager
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = unspentOutputsSelector
         this.scriptBuilder = scriptBuilder
         this.inputSigner = inputSigner
+        this.transactionSizeCalculator = transactionSizeCalculator
     }
 
     fun fee(value: Long, feeRate: Int, senderPay: Boolean, address: String? = null): Long {
@@ -144,6 +149,48 @@ class TransactionBuilder {
         transaction.isOutgoing = true
 
         return FullTransaction(transaction, inputsToSign.map { it.input }, outputs)
+    }
+
+    fun buildTransaction(unspentOutput: UnspentOutput, addressStr: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
+        val address = addressConverter.convert(addressStr)
+
+        //  calculate fee
+        val emptySignature = ByteArray(transactionSizeCalculator.signatureLength)
+        val emptyPublicKey = ByteArray(transactionSizeCalculator.pubKeyLength)
+
+        val transactionSize = transactionSizeCalculator.transactionSize(listOf(ScriptType.P2SH), listOf(ScriptType.P2PKH)) +
+                signatureScriptFunction.invoke(emptySignature, emptyPublicKey).size
+        val fee = transactionSize * feeRate
+
+        if (fee > unspentOutput.output.value) {
+            throw BuilderException.FeeMoreThanValue()
+        }
+
+        //  add input without unlocking scripts
+        val transactionInput = TransactionInput(unspentOutput.output.transactionHash, unspentOutput.output.index.toLong())
+        if (unspentOutput.output.scriptType == ScriptType.P2WPKH) {
+            unspentOutput.output.keyHash = unspentOutput.output.keyHash?.drop(2)?.toByteArray()
+        }
+        val inputToSign = InputToSign(transactionInput, unspentOutput.output, unspentOutput.publicKey)
+
+        // calculate receiveValue
+        val receivedValue = unspentOutput.output.value - fee
+
+        // add output
+        val output = TransactionOutput(receivedValue, 0, scriptBuilder.lockingScript(address), address.scriptType, address.string, address.hash)
+
+        // build transaction
+        val transaction = Transaction(version = 1, lockTime = 0)
+
+        // sign input
+        val sigScriptData = inputSigner.sigScriptData(transaction, listOf(inputToSign), listOf(output), 0)
+        inputToSign.input.sigScript = signatureScriptFunction.invoke(sigScriptData[0], sigScriptData[1])
+
+        transaction.status = Transaction.Status.NEW
+        transaction.isMine = true
+        transaction.isOutgoing = false
+
+        return FullTransaction(transaction, listOf(inputToSign.input), listOf(output))
     }
 
     open class BuilderException : Exception() {

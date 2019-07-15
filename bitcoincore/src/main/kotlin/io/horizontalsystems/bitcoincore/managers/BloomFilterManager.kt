@@ -14,6 +14,7 @@ class BloomFilterManager(private val storage: IStorage) {
 
     var listener: Listener? = null
     var bloomFilter: BloomFilter? = null
+    private var bloomFilterProviders = mutableListOf<IBloomFilterProvider>()
 
     init {
         regenerateBloomFilter()
@@ -38,6 +39,10 @@ class BloomFilterManager(private val storage: IStorage) {
             elements.add(outpoint)
         }
 
+        bloomFilterProviders.forEach {
+            elements.addAll(it.getBloomFilterElements())
+        }
+
         if (elements.isNotEmpty()) {
             BloomFilter(elements).let {
                 bloomFilter = it
@@ -46,4 +51,14 @@ class BloomFilterManager(private val storage: IStorage) {
         }
     }
 
+    fun addBloomFilterProvider(provider: IBloomFilterProvider) {
+        provider.bloomFilterManager = this
+        bloomFilterProviders.add(provider)
+    }
+}
+
+interface IBloomFilterProvider {
+    var bloomFilterManager: BloomFilterManager?
+
+    fun getBloomFilterElements(): List<ByteArray>
 }

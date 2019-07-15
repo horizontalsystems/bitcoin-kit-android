@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.WatchedTransactionManager
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
@@ -18,6 +19,8 @@ class TransactionProcessor(
         private val outputsCache: OutputsCache,
         private val addressManager: AddressManager,
         private val dataListener: IBlockchainDataListener) {
+
+    var listener: WatchedTransactionManager? = null
 
     fun processOutgoing(transaction: FullTransaction) {
         if (storage.getTransaction(transaction.header.hash) != null) {
@@ -58,6 +61,8 @@ class TransactionProcessor(
                 }
 
                 process(transaction)
+
+                listener?.onTransactionReceived(transaction)
 
                 if (transaction.header.isMine) {
                     relay(transaction.header, index, block)
