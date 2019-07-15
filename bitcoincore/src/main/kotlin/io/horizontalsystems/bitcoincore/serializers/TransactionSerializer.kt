@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 object TransactionSerializer {
@@ -106,7 +107,18 @@ object TransactionSerializer {
             val previousOutput = checkNotNull(inputToSign.previousOutput) { throw Exception("no previous output") }
 
             buffer.write(InputSerializer.serializeOutpoint(inputToSign))
-            buffer.write(OpCodes.push(OpCodes.p2pkhStart + OpCodes.push(previousOutput.keyHash!!) + OpCodes.p2pkhEnd))
+
+            when (previousOutput.scriptType) {
+                ScriptType.P2SH -> {
+                    val script = previousOutput.redeemScript ?: throw Exception("no previous output script")
+                    buffer.writeVarInt(script.size.toLong())
+                    buffer.write(script)
+                }
+                else -> {
+                    buffer.write(OpCodes.push(OpCodes.p2pkhStart + OpCodes.push(previousOutput.keyHash!!) + OpCodes.p2pkhEnd))
+                }
+            }
+
             buffer.writeLong(previousOutput.value)
             buffer.writeInt32(inputToSign.input.sequence)
 

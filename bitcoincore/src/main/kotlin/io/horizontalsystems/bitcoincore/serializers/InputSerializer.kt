@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.storage.InputToSign
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 object InputSerializer {
 
@@ -41,8 +42,14 @@ object InputSerializer {
                 .writeUnsignedInt(previousOutput.index.toLong())
 
         if (forCurrentInputSignature) {
-            output.writeVarInt(previousOutput.lockingScript.size.toLong())
-                    .write(previousOutput.lockingScript)
+            val script = when (previousOutput.scriptType) {
+                ScriptType.P2SH -> {
+                    previousOutput.redeemScript ?: throw Exception("no previous output script")
+                }
+                else -> previousOutput.lockingScript
+            }
+            output.writeVarInt(script.size.toLong())
+                    .write(script)
         } else {
             output.writeVarInt(0L)
         }

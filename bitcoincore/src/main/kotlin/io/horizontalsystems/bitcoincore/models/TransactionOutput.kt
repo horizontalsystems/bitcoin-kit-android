@@ -36,6 +36,7 @@ class TransactionOutput {
 
     var value: Long = 0
     var lockingScript: ByteArray = byteArrayOf()
+    var redeemScript: ByteArray? = null
     var index: Int = 0
 
     var transactionHash = byteArrayOf()
