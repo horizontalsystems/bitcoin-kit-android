@@ -154,6 +154,7 @@ class PeerGroup(
         }
     }
 
+    @Synchronized
     private fun connectPeersIfRequired() {
         if (!running || !connectionManager.isConnected) {
             return
