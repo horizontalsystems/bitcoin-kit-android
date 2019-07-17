@@ -72,11 +72,15 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
             private set
 
         fun add(ip: String) {
-            usedPeers.add(ip)
+            synchronized(this) {
+                usedPeers.add(ip)
+            }
         }
 
         fun remove(ip: String) {
-            usedPeers.removeAll { it == ip }
+            synchronized(this) {
+                usedPeers.removeAll { it == ip }
+            }
         }
     }
 }
