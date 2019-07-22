@@ -10,8 +10,19 @@ import io.horizontalsystems.hdwalletkit.HDWallet
 class AddressManager(private val storage: IStorage, private val hdWallet: HDWallet, private val addressConverter: IAddressConverter, private val addressKeyHashConverter: IAddressKeyHashConverter?) {
 
     @Throws
+    fun receivePublicKey(): PublicKey {
+        return getPublicKey(true)
+    }
+
+    @Throws
     fun changePublicKey(): PublicKey {
         return getPublicKey(external = false)
+    }
+
+    fun getPublicKeyByPath(path: String): PublicKey {
+        val parts = path.split("/").map { it.toInt() }
+
+        return hdWallet.publicKey(parts[0], parts[2], parts[1] == 1)
     }
 
     @Throws

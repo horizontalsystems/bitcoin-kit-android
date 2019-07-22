@@ -53,7 +53,7 @@ object TransactionBuilderTest : Spek({
         addressConverter = AddressConverterChain()
         addressConverter.prependConverter(Base58AddressConverter(111, 196))
 
-        transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, addressManager)
+        transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, addressManager, transactionSizeCalculator)
 
         previousTransaction = Fixtures.transactionP2PKH
 

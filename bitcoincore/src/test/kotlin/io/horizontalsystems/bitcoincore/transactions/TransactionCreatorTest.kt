@@ -20,7 +20,7 @@ object TransactionCreatorTest : Spek({
     val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
     beforeEachTest {
-        whenever(transactionBuilder.buildTransaction(any(), any(), any(), any())).thenReturn(transactionP2PKH)
+        whenever(transactionBuilder.buildTransaction(any<Long>(), any(), any(), any())).thenReturn(transactionP2PKH)
     }
 
     describe("#create") {

@@ -1,7 +1,10 @@
 package io.horizontalsystems.bitcoincore
 
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
+import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 abstract class AbstractKit {
@@ -34,12 +37,28 @@ abstract class AbstractKit {
         return bitcoinCore.fee(value, address, senderPay, feeRate)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int) {
-        bitcoinCore.send(address, value, senderPay, feeRate)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+        return bitcoinCore.send(address, value, senderPay, feeRate)
+    }
+
+    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate)
+    }
+
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
+        return bitcoinCore.redeem(unspentOutput, address, feeRate, signatureScriptFunction)
     }
 
     fun receiveAddress(type: Int = ScriptType.P2PKH): String {
         return bitcoinCore.receiveAddress(type)
+    }
+
+    fun receivePublicKey(): PublicKey {
+        return bitcoinCore.receivePublicKey()
+    }
+
+    fun changePublicKey(): PublicKey {
+        return bitcoinCore.changePublicKey()
     }
 
     fun validateAddress(address: String) {
@@ -52,5 +71,13 @@ abstract class AbstractKit {
 
     fun showDebugInfo() {
         bitcoinCore.showDebugInfo()
+    }
+
+    fun getPublicKeyByPath(path: String) : PublicKey {
+        return bitcoinCore.getPublicKeyByPath(path)
+    }
+
+    fun watchTransaction(filter: TransactionFilter, listener: WatchedTransactionManager.Listener) {
+        bitcoinCore.watchTransaction(filter, listener)
     }
 }
