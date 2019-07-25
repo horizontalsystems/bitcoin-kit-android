@@ -249,6 +249,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         }
     }
 
+    override fun isRelayedTransactionExists(hash: ByteArray): Boolean {
+        return store.transaction.getByHashAndStatus(hash, Transaction.Status.RELAYED) != null
+    }
+
     override fun isTransactionExists(hash: ByteArray): Boolean {
         return store.transaction.getByHash(hash) != null
     }

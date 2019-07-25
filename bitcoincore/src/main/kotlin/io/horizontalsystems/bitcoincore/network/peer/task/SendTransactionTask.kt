@@ -13,27 +13,16 @@ class SendTransactionTask(val transaction: FullTransaction) : PeerTask() {
     }
 
     override fun handleMessage(message: IMessage): Boolean {
-        if (message !is GetDataMessage) {
-            return false
-        }
+        val transactionRequested =
+                message is GetDataMessage &&
+                message.inventory.any { it.type == InventoryItem.MSG_TX && it.hash.contentEquals(transaction.header.hash) }
 
-        for (inv in message.inventory) {
-            if (handleGetDataInventoryItem(inv)) {
-                continue
-            }
-        }
-
-        return true
-    }
-
-    private fun handleGetDataInventoryItem(item: InventoryItem): Boolean {
-        if (item.type == InventoryItem.MSG_TX && item.hash.contentEquals(transaction.header.hash)) {
+        if (transactionRequested) {
             requester?.send(TransactionMessage(transaction, 0))
             listener?.onTaskCompleted(this)
-
-            return true
         }
 
-        return false
+        return transactionRequested
     }
+
 }
