@@ -61,6 +61,6 @@ class TransactionSyncer(
     }
 
     fun shouldRequestTransaction(hash: ByteArray): Boolean {
-        return !storage.isTransactionExists(hash)
+        return !storage.isRelayedTransactionExists(hash)
     }
 }

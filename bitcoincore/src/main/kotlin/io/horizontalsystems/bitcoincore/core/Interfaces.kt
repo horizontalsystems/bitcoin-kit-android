@@ -70,6 +70,7 @@ interface IStorage {
     fun getBlockTransactions(block: Block): List<Transaction>
     fun getNewTransactions(): List<FullTransaction>
     fun getNewTransaction(hash: ByteArray): Transaction?
+    fun isRelayedTransactionExists(hash: ByteArray): Boolean
     fun isTransactionExists(hash: ByteArray): Boolean
 
     //  Transaction Output

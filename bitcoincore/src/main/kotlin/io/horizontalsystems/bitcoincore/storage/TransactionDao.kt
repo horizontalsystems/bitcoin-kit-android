@@ -12,6 +12,9 @@ interface TransactionDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update(transaction: Transaction)
 
+    @Query("select * from `Transaction` where hash = :hash and status = :status")
+    fun getByHashAndStatus(hash: ByteArray, status: Int): Transaction?
+
     @Query("select * from `Transaction` where hash = :hash")
     fun getByHash(hash: ByteArray): Transaction?
 
