@@ -29,12 +29,14 @@ val words = listOf("skill", ..., "century")
 #### Bitcoin
 
 ```kotlin
-val bitcoinKit = BitcoinKit(words, BitcoinKit.NetworkType.MainNet)
+val context: Context = App.instance
+val walletId = 'MyWalletId'
+val bitcoinKit = BitcoinKit(context, walletId, words, BitcoinKit.NetworkType.MainNet)
 ```
 
 #### Bitcoin Cash
 ```kotlin
-val bitCashKit = BitcoinKit(words, BitcoinKit.NetworkType.MainNetBitCash)
+val bitCashKit = BitcoinCashKit(context, walletId, words, BitcoinCashKit.NetworkType.MainNet)
 ```
 
 Both networks can be configured to work in `MainNet` or `TestNet`
