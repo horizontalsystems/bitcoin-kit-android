@@ -69,17 +69,17 @@ class TransactionBuilder {
                 value = value,
                 feeRate = feeRate,
                 senderPay = senderPay,
-                toAddress = address!!
+                toAddress = address!!,
+                changeScriptType = ScriptType.P2PKH
         )
 
         return TransactionSerializer.serialize(transaction, withWitness = false).size * feeRate.toLong()
     }
 
-    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean): FullTransaction {
+    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean, changeScriptType: Int): FullTransaction {
 
         val address = addressConverter.convert(toAddress)
         val changePubKey = addressManager.changePublicKey()
-        val changeScriptType = ScriptType.P2PKH
         val selectedOutputsInfo = unspentOutputsSelector.select(
                 value = value,
                 feeRate = feeRate,

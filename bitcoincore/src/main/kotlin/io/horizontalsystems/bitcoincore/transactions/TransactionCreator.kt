@@ -11,10 +11,10 @@ class TransactionCreator(private val builder: TransactionBuilder,
                          private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
-    fun create(address: String, value: Long, feeRate: Int, senderPay: Boolean): FullTransaction {
+    fun create(address: String, value: Long, feeRate: Int, senderPay: Boolean, changeScriptType: Int): FullTransaction {
         transactionSender.canSendTransaction()
 
-        val transaction = builder.buildTransaction(value, address, feeRate, senderPay)
+        val transaction = builder.buildTransaction(value, address, feeRate, senderPay, changeScriptType)
 
         try {
             processor.processOutgoing(transaction)

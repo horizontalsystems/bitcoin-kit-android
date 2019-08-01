@@ -360,13 +360,13 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         return transactionBuilder.fee(value, feeRate, senderPay, address)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): FullTransaction {
+        return transactionCreator.create(address, value, feeRate, senderPay, changeScriptType)
     }
 
-    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay)
+        return transactionCreator.create(address.string, value, feeRate, senderPay, changeScriptType)
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
