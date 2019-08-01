@@ -37,12 +37,12 @@ abstract class AbstractKit {
         return bitcoinCore.fee(value, address, senderPay, feeRate)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int = ScriptType.P2PKH): FullTransaction {
+        return bitcoinCore.send(address, value, senderPay, feeRate, changeScriptType)
     }
 
-    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate)
+    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int = ScriptType.P2PKH): FullTransaction {
+        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, changeScriptType)
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
