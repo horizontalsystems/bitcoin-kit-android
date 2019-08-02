@@ -33,8 +33,8 @@ abstract class AbstractKit {
         bitcoinCore.refresh()
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
-        return bitcoinCore.fee(value, address, senderPay, feeRate)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int = ScriptType.P2PKH): Long {
+        return bitcoinCore.fee(value, address, senderPay, feeRate, changeScriptType)
     }
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int = ScriptType.P2PKH): FullTransaction {

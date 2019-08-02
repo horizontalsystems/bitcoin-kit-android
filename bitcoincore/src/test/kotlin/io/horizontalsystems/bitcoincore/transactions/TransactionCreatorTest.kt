@@ -6,6 +6,7 @@ import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -20,12 +21,12 @@ object TransactionCreatorTest : Spek({
     val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
     beforeEachTest {
-        whenever(transactionBuilder.buildTransaction(any<Long>(), any(), any(), any())).thenReturn(transactionP2PKH)
+        whenever(transactionBuilder.buildTransaction(any(), any(), any(), any(), any())).thenReturn(transactionP2PKH)
     }
 
     describe("#create") {
         it("success") {
-            transactionCreator.create("address", 10_000_000, 8, true)
+            transactionCreator.create("address", 10_000_000, 8, true, ScriptType.P2PKH)
 
             verify(transactionProcessor).processOutgoing(transactionP2PKH)
         }
