@@ -171,7 +171,7 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputSelector, transactionSizeCalculator)
+        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputSelector, transactionSizeCalculator, addressKeyHashConverter)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
@@ -356,8 +356,8 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         return dataProvider.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
-        return transactionBuilder.fee(value, feeRate, senderPay, address)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): Long {
+        return transactionBuilder.fee(value, feeRate, senderPay, address, changeScriptType)
     }
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): FullTransaction {
