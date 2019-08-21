@@ -19,6 +19,7 @@ class DashTransactionInfoConverter(
                 txInfo.from,
                 txInfo.to,
                 txInfo.amount,
+                txInfo.fee,
                 txInfo.blockHeight,
                 txInfo.timestamp,
                 instantTransactionManager.isTransactionInstant(transactionForInfo.header.hash)

@@ -9,7 +9,8 @@ class DashTransactionInfo(
         from: List<TransactionAddress>,
         to: List<TransactionAddress>,
         amount: Long,
+        fee: Long?,
         blockHeight: Int?,
         timestamp: Long,
         var instantTx: Boolean = false
-) : TransactionInfo(transactionHash, transactionIndex, from, to, amount, blockHeight, timestamp)
+) : TransactionInfo(transactionHash, transactionIndex, from, to, amount, fee, blockHeight, timestamp)

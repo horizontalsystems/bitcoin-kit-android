@@ -15,13 +15,16 @@ class BaseTransactionInfoConverter {
         val fromAddresses = mutableListOf<TransactionAddress>()
         val toAddresses = mutableListOf<TransactionAddress>()
 
+        var hasOnlyMyInputs = true
+
         fullTransaction.inputs.forEach { input ->
             var mine = false
 
             if (input.previousOutput?.publicKeyPath != null) {
                 totalMineInput += input.previousOutput.value
                 mine = true
-
+            } else {
+                hasOnlyMyInputs = false
             }
 
             input.input.address?.let { address ->
@@ -42,12 +45,23 @@ class BaseTransactionInfoConverter {
             }
         }
 
+        var fee: Long? = null
+        var amount = totalMineOutput - totalMineInput
+
+        if (hasOnlyMyInputs) {
+            val outputsSum = fullTransaction.outputs.sumByDouble { it.value.toDouble() }.toLong()
+
+            fee = totalMineInput - outputsSum
+            amount += fee
+        }
+
         return TransactionInfo(
                 transactionHash = transaction.hash.toReversedHex(),
                 transactionIndex = transaction.order,
                 from = fromAddresses,
                 to = toAddresses,
-                amount = totalMineOutput - totalMineInput,
+                amount = amount,
+                fee = fee,
                 blockHeight = fullTransaction.block?.height,
                 timestamp = transaction.timestamp
         )
