@@ -78,6 +78,9 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
 
         val date = DateFormat.getInstance().format(Date(timeInMillis))
         val amount = NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)
+        val fee = transactionInfo.fee?.let {
+            NumberFormatHelper.cryptoAmountFormat.format(it / 100_000_000.0)
+        } ?: ""
 
         var text = "#$index"
         if (transactionInfo is DashTransactionInfo) {
@@ -87,6 +90,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
         text += "\nFrom: ${mapAddresses(transactionInfo.from)}" +
                 "\nTo: ${mapAddresses(transactionInfo.to)}" +
                 "\nAmount: $amount" +
+                "\nFee: $fee" +
                 "\nTx hash: ${transactionInfo.transactionHash}" +
                 "\nTx index: ${transactionInfo.transactionIndex}" +
                 "\nBlock: ${transactionInfo.blockHeight}" +

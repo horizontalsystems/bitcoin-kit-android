@@ -6,6 +6,7 @@ open class TransactionInfo(
         val from: List<TransactionAddress>,
         val to: List<TransactionAddress>,
         val amount: Long,
+        val fee: Long?,
         val blockHeight: Int?,
         val timestamp: Long
 )
