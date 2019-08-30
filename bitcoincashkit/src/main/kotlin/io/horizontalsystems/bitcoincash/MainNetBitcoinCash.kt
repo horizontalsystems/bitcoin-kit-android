@@ -43,12 +43,12 @@ class MainNetBitcoinCash : Network() {
     ), 296352)
 
     override val lastCheckpointBlock = Block(BlockHeader(
-            version = 0x2000e000,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000000000002a1f5acfab47e5e1afcac9f50eb9b7c875e6c736d099763"),
-            merkleRoot = HashUtils.toBytesAsLE("e6a8e517f708d294f426895c255cfd0a443d7f55a768b04398eadde0c516027c"),
-            timestamp = 1559650598,
-            bits = 0x1803769a,
-            nonce = 0xed7bb8ff,
-            hash = HashUtils.toBytesAsLE("00000000000000000040f26002e04126dc84700d6f82c0785efab2293080fe68")
-    ), 585504)
+            version = 536870912,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000000000000553bfbe09e381b8bf90aaf5918aec2a9ca04cbb380de4c"),
+            merkleRoot = HashUtils.toBytesAsLE("eddba5abfaf472c82adfdb0585eb672fbcb142b4ca485d00e76afd9e71184991"),
+            timestamp = 1566454348,
+            bits = 0x18039165,
+            nonce = 2279816485,
+            hash = HashUtils.toBytesAsLE("00000000000000000376c7174b3d07ca1797dbbda4247e0df02147a8748489e8")
+    ), 596855)
 }
