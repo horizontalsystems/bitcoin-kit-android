@@ -38,13 +38,13 @@ class TestNet : Network() {
     ), 199584)
 
     override val lastCheckpointBlock = Block(BlockHeader(
-            version = 0x20400000,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000001386a3904f0ba4f25dc7ace09b67a6fe8977e7aecc55813fa9ac5"),
-            merkleRoot = HashUtils.toBytesAsLE("c75984136598aaec589cbe0f61b1caf6c1eb69614c412861b474aedce5d71b7a"),
-            timestamp = 1560904860,
-            bits = 0x1b008690,
-            nonce = 0xcf731739,
-            hash = HashUtils.toBytesAsLE("000000000000608edb398b7969795bc0681c1fa280234f44cb2c506f853ae41e")
-    ), 1560384)
+            version = 1073676288,
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000525de83fba2439549ef0ed78d6d08516a0513abb972b0fca95"),
+            merkleRoot = HashUtils.toBytesAsLE("1c2f9a7885b2334096fbc1cd1373a1ac6d42b3eacee91d32758bb6f9f5018670"),
+            timestamp = 1565789713,
+            bits = 436336433,
+            nonce = 1552477045,
+            hash = HashUtils.toBytesAsLE("00000000000001d6d3fcee88c80ac371d82b370f0158cc2737bebad6d13ff47b")
+    ), 1574496)
 
 }
