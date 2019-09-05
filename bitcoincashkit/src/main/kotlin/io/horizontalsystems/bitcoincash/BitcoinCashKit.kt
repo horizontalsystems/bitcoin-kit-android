@@ -47,9 +47,8 @@ class BitcoinCashKit : AbstractKit {
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
             syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
-    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+            confirmationsThreshold: Int = 6
+    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     constructor(
             context: Context,
@@ -58,8 +57,7 @@ class BitcoinCashKit : AbstractKit {
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
             syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+            confirmationsThreshold: Int = 6
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
@@ -84,7 +82,6 @@ class BitcoinCashKit : AbstractKit {
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
-                .setBip(bip)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)

@@ -34,7 +34,6 @@ import io.horizontalsystems.dashkit.storage.DashStorage
 import io.horizontalsystems.dashkit.tasks.PeerTaskFactory
 import io.horizontalsystems.dashkit.validators.DarkGravityWaveTestnetValidator
 import io.horizontalsystems.dashkit.validators.DarkGravityWaveValidator
-import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 
@@ -68,9 +67,8 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
             syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
-    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+            confirmationsThreshold: Int = 6
+    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     constructor(
             context: Context,
@@ -79,8 +77,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
             syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+            confirmationsThreshold: Int = 6
     ) {
         val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId))
         val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId))
@@ -111,7 +108,6 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
-                .setBip(bip)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)

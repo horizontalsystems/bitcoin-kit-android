@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoinkit.demo
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
+import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.FeePriority
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -42,7 +43,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private fun init() {
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
 
-        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType)
+        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, bip = Bip.BIP49)
 
         bitcoinKit.listener = this
 

@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
+import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
@@ -26,26 +27,29 @@ class TransactionBuilder {
     private val inputSigner: InputSigner
     private val publicKeyManager: PublicKeyManager
     private val transactionSizeCalculator: TransactionSizeCalculator
+    private val bip: Bip
 
-    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, publicKeyManager: PublicKeyManager, unspentOutputSelector: IUnspentOutputSelector, transactionSizeCalculator: TransactionSizeCalculator) {
+    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, publicKeyManager: PublicKeyManager, unspentOutputSelector: IUnspentOutputSelector, transactionSizeCalculator: TransactionSizeCalculator, bip: Bip) {
         this.addressConverter = addressConverter
         this.publicKeyManager = publicKeyManager
         this.unspentOutputsSelector = unspentOutputSelector
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
         this.transactionSizeCalculator = transactionSizeCalculator
+        this.bip = bip
     }
 
-    constructor(addressConverter: IAddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, publicKeyManager: PublicKeyManager, transactionSizeCalculator: TransactionSizeCalculator) {
+    constructor(addressConverter: IAddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, publicKeyManager: PublicKeyManager, transactionSizeCalculator: TransactionSizeCalculator, bip: Bip) {
         this.publicKeyManager = publicKeyManager
         this.addressConverter = addressConverter
         this.unspentOutputsSelector = unspentOutputsSelector
         this.scriptBuilder = scriptBuilder
         this.inputSigner = inputSigner
         this.transactionSizeCalculator = transactionSizeCalculator
+        this.bip = bip
     }
 
-    fun fee(value: Long, feeRate: Int, senderPay: Boolean, address: String? = null, changeScriptType: Int): Long {
+    fun fee(value: Long, feeRate: Int, senderPay: Boolean, address: String? = null): Long {
         val estimatedFee = if (address == null) {
             true
         } else try { // if address is valid then calculate actual fee
@@ -69,21 +73,20 @@ class TransactionBuilder {
                 value = value,
                 feeRate = feeRate,
                 senderPay = senderPay,
-                toAddress = address!!,
-                changeScriptType = changeScriptType
+                toAddress = address!!
         )
 
         return TransactionSerializer.serialize(transaction, withWitness = false).size * feeRate.toLong()
     }
 
-    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean, changeScriptType: Int): FullTransaction {
+    fun buildTransaction(value: Long, toAddress: String, feeRate: Int, senderPay: Boolean): FullTransaction {
 
         val address = addressConverter.convert(toAddress)
         val selectedOutputsInfo = unspentOutputsSelector.select(
                 value = value,
                 feeRate = feeRate,
                 outputType = address.scriptType,
-                changeType = changeScriptType,
+                changeType = bip.scriptType,
                 senderPay = senderPay
         )
 
@@ -116,8 +119,8 @@ class TransactionBuilder {
 
         if (selectedOutputsInfo.addChangeOutput) {
             val changePublicKey = publicKeyManager.changePublicKey()
-            val changeAddress = addressConverter.convert(changePublicKey, changeScriptType)
-            outputs.add(TransactionOutput(selectedOutputsInfo.totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), changeScriptType, changeAddress.string, changeAddress.hash))
+            val changeAddress = addressConverter.convert(changePublicKey, bip.scriptType)
+            outputs.add(TransactionOutput(selectedOutputsInfo.totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), bip.scriptType, changeAddress.string, changeAddress.hash))
         }
 
         // sign inputs
