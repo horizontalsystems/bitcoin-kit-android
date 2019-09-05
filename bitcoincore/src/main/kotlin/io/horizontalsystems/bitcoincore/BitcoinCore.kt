@@ -145,11 +145,11 @@ class BitcoinCoreBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType, purpose = bip)
 
-        val addressManager = AddressManager.create(storage, hdWallet, addressConverter, addressKeyHashConverter)
+        val publicKeyManager = PublicKeyManager.create(storage, hdWallet, addressConverter, addressKeyHashConverter)
 
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage)
-        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, addressManager, dataProvider)
+        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, dataProvider)
 
         val kitStateProvider = KitStateProvider()
 
@@ -165,12 +165,12 @@ class BitcoinCoreBuilder {
         val blockchain = Blockchain(storage, blockValidatorChain, dataProvider)
         val checkpointBlock = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
 
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, addressManager, bloomFilterManager, kitStateProvider, checkpointBlock)
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, bloomFilterManager, kitStateProvider, checkpointBlock)
         val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
-        val transactionSyncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
+        val transactionSyncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager, bloomFilterManager)
 
         val transactionSender = TransactionSender()
         transactionSender.peerGroup = peerGroup
@@ -178,13 +178,13 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, addressManager, unspentOutputSelector, transactionSizeCalculator, addressKeyHashConverter)
+        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, publicKeyManager, unspentOutputSelector, transactionSizeCalculator, addressKeyHashConverter)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)
         val stateManager = StateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
-        val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, kitStateProvider)
+        val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, kitStateProvider)
 
         val syncManager = SyncManager(peerGroup, initialSyncer)
         initialSyncer.listener = syncManager
@@ -193,7 +193,7 @@ class BitcoinCoreBuilder {
         val bitcoinCore = BitcoinCore(
                 storage,
                 dataProvider,
-                addressManager,
+                publicKeyManager,
                 addressConverter,
                 kitStateProvider,
                 transactionBuilder,
@@ -270,7 +270,7 @@ class BitcoinCoreBuilder {
 
 }
 
-class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val addressManager: AddressManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager, private val blockValidatorChain: BlockValidatorChain)
+class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val publicKeyManager: PublicKeyManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager, private val blockValidatorChain: BlockValidatorChain)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -381,19 +381,19 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     }
 
     fun receiveAddress(type: Int): String {
-        return addressManager.receiveAddress(type)
+        return publicKeyManager.receiveAddress(type)
     }
 
     fun receivePublicKey(): PublicKey {
-        return addressManager.receivePublicKey()
+        return publicKeyManager.receivePublicKey()
     }
 
     fun changePublicKey(): PublicKey {
-        return addressManager.changePublicKey()
+        return publicKeyManager.changePublicKey()
     }
 
     fun getPublicKeyByPath(path: String): PublicKey {
-        return addressManager.getPublicKeyByPath(path)
+        return publicKeyManager.getPublicKeyByPath(path)
     }
 
     fun validateAddress(address: String) {
@@ -405,7 +405,7 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
     }
 
     fun showDebugInfo() {
-        addressManager.fillGap()
+        publicKeyManager.fillGap()
         storage.getPublicKeys().forEach { pubKey ->
             try {
 //                    val scriptType = if (network is MainNetBitcoinCash || network is TestNetBitcoinCash)

@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.SentTransaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 class TransactionSyncer(
         private val storage: IStorage,
         private val transactionProcessor: TransactionProcessor,
-        private val addressManager: AddressManager,
+        private val publicKeyManager: PublicKeyManager,
         private val bloomFilterManager: BloomFilterManager) {
 
     private val maxRetriesCount: Int = 3
@@ -28,7 +28,7 @@ class TransactionSyncer(
         }
 
         if (needToUpdateBloomFilter) {
-            addressManager.fillGap()
+            publicKeyManager.fillGap()
             bloomFilterManager.regenerateBloomFilter()
         }
     }

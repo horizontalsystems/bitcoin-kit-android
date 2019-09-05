@@ -6,7 +6,7 @@ import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
-import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.SelectedUnspentOutputInfo
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
@@ -34,7 +34,7 @@ object TransactionBuilderTest : Spek({
     val scriptBuilder = Mockito.mock(ScriptBuilder::class.java)
     val transactionSizeCalculator = Mockito.mock(TransactionSizeCalculator::class.java)
     val inputSigner = Mockito.mock(InputSigner::class.java)
-    val addressManager = Mockito.mock(AddressManager::class.java)
+    val publicKeyManager = Mockito.mock(PublicKeyManager::class.java)
 
     lateinit var previousTransaction: FullTransaction
     lateinit var unspentOutputs: SelectedUnspentOutputInfo
@@ -53,7 +53,7 @@ object TransactionBuilderTest : Spek({
         addressConverter = AddressConverterChain()
         addressConverter.prependConverter(Base58AddressConverter(111, 196))
 
-        transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, addressManager, transactionSizeCalculator)
+        transactionBuilder = TransactionBuilder(addressConverter, unspentOutputSelector, unspentOutputProvider, scriptBuilder, inputSigner, publicKeyManager, transactionSizeCalculator)
 
         previousTransaction = Fixtures.transactionP2PKH
 

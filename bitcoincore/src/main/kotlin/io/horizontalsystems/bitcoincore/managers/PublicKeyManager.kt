@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 
-class AddressManager(private val storage: IStorage, private val hdWallet: HDWallet, private val addressConverter: IAddressConverter, private val addressKeyHashConverter: IAddressKeyHashConverter?) {
+class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWallet, private val addressConverter: IAddressConverter, private val addressKeyHashConverter: IAddressKeyHashConverter?) {
 
     @Throws
     fun receivePublicKey(): PublicKey {
@@ -113,8 +113,8 @@ class AddressManager(private val storage: IStorage, private val hdWallet: HDWall
     }
 
     companion object {
-        fun create(storage: IStorage, hdWallet: HDWallet, addressConverter: IAddressConverter, addressKeyHashConverter: IAddressKeyHashConverter?): AddressManager {
-            val addressManager = AddressManager(storage, hdWallet, addressConverter, addressKeyHashConverter)
+        fun create(storage: IStorage, hdWallet: HDWallet, addressConverter: IAddressConverter, addressKeyHashConverter: IAddressKeyHashConverter?): PublicKeyManager {
+            val addressManager = PublicKeyManager(storage, hdWallet, addressConverter, addressKeyHashConverter)
             addressManager.fillGap()
             return addressManager
         }
