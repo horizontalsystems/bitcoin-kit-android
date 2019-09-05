@@ -34,6 +34,7 @@ import io.horizontalsystems.dashkit.storage.DashStorage
 import io.horizontalsystems.dashkit.tasks.PeerTaskFactory
 import io.horizontalsystems.dashkit.validators.DarkGravityWaveTestnetValidator
 import io.horizontalsystems.dashkit.validators.DarkGravityWaveValidator
+import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 
@@ -51,19 +52,36 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         fun onKitStateUpdate(state: BitcoinCore.KitState)
     }
 
+    var listener: Listener? = null
+
     override var bitcoinCore: BitcoinCore
     override var network: Network
-
-    var listener: Listener? = null
 
     private val dashStorage: DashStorage
     private val instantSend: InstantSend
     private val dashTransactionInfoConverter: DashTransactionInfoConverter
 
-    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) :
-            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+    constructor(
+            context: Context,
+            words: List<String>,
+            walletId: String,
+            networkType: NetworkType = NetworkType.MainNet,
+            peerSize: Int = 10,
+            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            confirmationsThreshold: Int = 6,
+            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
-    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) {
+    constructor(
+            context: Context,
+            seed: ByteArray,
+            walletId: String,
+            networkType: NetworkType = NetworkType.MainNet,
+            peerSize: Int = 10,
+            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            confirmationsThreshold: Int = 6,
+            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+    ) {
         val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId))
         val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val initialSyncUrl: String
@@ -93,6 +111,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
+                .setBip(bip)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)
