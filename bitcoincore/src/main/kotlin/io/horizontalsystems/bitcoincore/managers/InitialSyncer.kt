@@ -13,7 +13,7 @@ class InitialSyncer(
         private val storage: IStorage,
         private val blockDiscovery: IBlockDiscovery,
         private val stateManager: StateManager,
-        private val addressManager: AddressManager,
+        private val publicKeyManager: PublicKeyManager,
         private val stateListener: ISyncStateListener) {
 
     interface Listener {
@@ -78,7 +78,7 @@ class InitialSyncer(
     }
 
     private fun handle(account: Int, keys: List<PublicKey>, blockHashes: List<BlockHash>) {
-        addressManager.addKeys(keys)
+        publicKeyManager.addKeys(keys)
 
         if (blockHashes.isNotEmpty()) {
             storage.addBlockHashes(blockHashes)

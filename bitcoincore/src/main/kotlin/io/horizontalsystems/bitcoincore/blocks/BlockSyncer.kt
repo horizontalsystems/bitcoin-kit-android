@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoincore.blocks
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
-import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.BlockHash
@@ -15,7 +15,7 @@ class BlockSyncer(
         private val storage: IStorage,
         private val blockchain: Blockchain,
         private val transactionProcessor: TransactionProcessor,
-        private val addressManager: AddressManager,
+        private val publicKeyManager: PublicKeyManager,
         private val bloomFilterManager: BloomFilterManager,
         private val listener: ISyncStateListener,
         private val checkpointBlock: Block,
@@ -140,7 +140,7 @@ class BlockSyncer(
     }
 
     private fun handlePartialBlocks() {
-        addressManager.fillGap()
+        publicKeyManager.fillGap()
         bloomFilterManager.regenerateBloomFilter()
         state.iterationHasPartialBlocks = false
     }

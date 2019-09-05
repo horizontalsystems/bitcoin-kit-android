@@ -6,7 +6,7 @@ import com.nhaarman.mockito_kotlin.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
@@ -27,14 +27,13 @@ object TransactionProcessorTest : Spek({
     val storage = mock(IStorage::class.java)
     val outputsCache = mock(OutputsCache::class.java)
     val extractor = mock(TransactionExtractor::class.java)
-    val addressManager = mock(AddressManager::class.java)
+    val publicKeyManager = mock(PublicKeyManager::class.java)
     val blockchainDataListener = mock(IBlockchainDataListener::class.java)
-
 
     beforeEachTest {
         fullTransaction = Fixtures.transactionP2PKH
         transaction = fullTransaction.header
-        processor = TransactionProcessor(storage, extractor, outputsCache, addressManager, blockchainDataListener)
+        processor = TransactionProcessor(storage, extractor, outputsCache, publicKeyManager, blockchainDataListener)
     }
 
     fun transactions(): List<FullTransaction> {

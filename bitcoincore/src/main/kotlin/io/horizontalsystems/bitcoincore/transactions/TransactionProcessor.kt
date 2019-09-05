@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -17,7 +17,7 @@ class TransactionProcessor(
         private val storage: IStorage,
         private val extractor: TransactionExtractor,
         private val outputsCache: OutputsCache,
-        private val addressManager: AddressManager,
+        private val publicKeyManager: PublicKeyManager,
         private val dataListener: IBlockchainDataListener) {
 
     var listener: WatchedTransactionManager? = null
@@ -71,7 +71,7 @@ class TransactionProcessor(
                     inserted.add(transaction.header)
 
                     if (!skipCheckBloomFilter) {
-                        needToUpdateBloomFilter = needToUpdateBloomFilter || addressManager.gapShifts() || expiresBloomFilter(transaction.outputs)
+                        needToUpdateBloomFilter = needToUpdateBloomFilter || publicKeyManager.gapShifts() || expiresBloomFilter(transaction.outputs)
                     }
                 }
             }

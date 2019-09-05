@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoincore.transactions
 
 import com.nhaarman.mockito_kotlin.*
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.managers.AddressManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.SentTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -18,7 +18,7 @@ object TransactionSyncerTest : Spek({
 
     val storage = mock(IStorage::class.java)
     val transactionProcessor = mock(TransactionProcessor::class.java)
-    val addressManager = mock(AddressManager::class.java)
+    val publicKeyManager = mock(PublicKeyManager::class.java)
     val bloomFilterManager = mock(BloomFilterManager::class.java)
 
     val fullTransaction = mock(FullTransaction::class.java)
@@ -32,11 +32,11 @@ object TransactionSyncerTest : Spek({
         whenever(transaction.hash).thenReturn(byteArrayOf(1, 2, 3))
         whenever(fullTransaction.header).thenReturn(transaction)
 
-        syncer = TransactionSyncer(storage, transactionProcessor, addressManager, bloomFilterManager)
+        syncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager, bloomFilterManager)
     }
 
     afterEachTest {
-        reset(storage, transactionProcessor, addressManager, bloomFilterManager)
+        reset(storage, transactionProcessor, publicKeyManager, bloomFilterManager)
     }
 
     describe("handleTransactions") {
@@ -45,7 +45,7 @@ object TransactionSyncerTest : Spek({
                 syncer.handleTransactions(listOf())
 
                 verify(transactionProcessor, never()).processIncoming(any(), any(), any())
-                verify(addressManager, never()).fillGap()
+                verify(publicKeyManager, never()).fillGap()
                 verify(bloomFilterManager, never()).regenerateBloomFilter()
             }
         }
@@ -63,7 +63,7 @@ object TransactionSyncerTest : Spek({
                     syncer.handleTransactions(transactions)
 
                     verify(transactionProcessor).processIncoming(eq(transactions), eq(null), eq(true))
-                    verify(addressManager).fillGap()
+                    verify(publicKeyManager).fillGap()
                     verify(bloomFilterManager).regenerateBloomFilter()
                 }
             }
@@ -73,7 +73,7 @@ object TransactionSyncerTest : Spek({
                     syncer.handleTransactions(transactions)
 
                     verify(transactionProcessor).processIncoming(eq(transactions), eq(null), eq(true))
-                    verify(addressManager, never()).fillGap()
+                    verify(publicKeyManager, never()).fillGap()
                     verify(bloomFilterManager, never()).regenerateBloomFilter()
                 }
             }

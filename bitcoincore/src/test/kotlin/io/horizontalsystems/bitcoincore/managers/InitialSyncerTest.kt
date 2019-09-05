@@ -22,19 +22,19 @@ object InitialSyncerTest : Spek({
     val storage = mock(IStorage::class.java)
     val blockDiscovery = mock(IBlockDiscovery::class.java)
     val stateManager = mock(StateManager::class.java)
-    val addressManager = mock(AddressManager::class.java)
+    val publicKeyManager = mock(PublicKeyManager::class.java)
     val stateListener = mock(ISyncStateListener::class.java)
     val listener = mock(SyncManager::class.java)
 
     beforeEachTest {
         RxTestRule.setup()
 
-        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, addressManager, stateListener)
+        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, stateListener)
         initialSyncer.listener = listener
     }
 
     afterEachTest {
-        reset(storage, blockDiscovery, stateManager, addressManager, stateListener, listener)
+        reset(storage, blockDiscovery, stateManager, publicKeyManager, stateListener, listener)
     }
 
     describe("#sync") {
@@ -116,8 +116,8 @@ object InitialSyncerTest : Spek({
                 }
 
                 it("adds received addresses to address manager") {
-                    verify(addressManager).addKeys(listOf(publicKey1, publicKey2))
-                    verify(addressManager).addKeys(listOf())
+                    verify(publicKeyManager).addKeys(listOf(publicKey1, publicKey2))
+                    verify(publicKeyManager).addKeys(listOf())
                 }
 
                 it("saves fetched block hashes to storage") {
