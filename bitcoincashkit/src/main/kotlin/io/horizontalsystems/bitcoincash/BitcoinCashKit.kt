@@ -19,6 +19,7 @@ import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
+import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 
@@ -39,10 +40,27 @@ class BitcoinCashKit : AbstractKit {
             bitcoinCore.listener = value
         }
 
-    constructor(context: Context, words: List<String>, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) :
-            this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+    constructor(
+            context: Context,
+            words: List<String>,
+            walletId: String,
+            networkType: NetworkType = NetworkType.MainNet,
+            peerSize: Int = 10,
+            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            confirmationsThreshold: Int = 6,
+            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
-    constructor(context: Context, seed: ByteArray, walletId: String, networkType: NetworkType = NetworkType.MainNet, peerSize: Int = 10, syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(), confirmationsThreshold: Int = 6) {
+    constructor(
+            context: Context,
+            seed: ByteArray,
+            walletId: String,
+            networkType: NetworkType = NetworkType.MainNet,
+            peerSize: Int = 10,
+            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            confirmationsThreshold: Int = 6,
+            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+    ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
         val initialSyncUrl: String
@@ -66,6 +84,7 @@ class BitcoinCashKit : AbstractKit {
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
+                .setBip(bip)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)

@@ -23,6 +23,7 @@ import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
+import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 import java.util.concurrent.Executor
@@ -38,6 +39,7 @@ class BitcoinCoreBuilder {
     private var addressSelector: IAddressSelector? = null
     private var storage: IStorage? = null
     private var initialSyncApi: IInitialSyncApi? = null
+    private var bip: Purpose = Purpose.BIP44
 
     // parameters with default values
     private var confirmationsThreshold = 6
@@ -64,6 +66,11 @@ class BitcoinCoreBuilder {
 
     fun setNetwork(network: Network): BitcoinCoreBuilder {
         this.network = network
+        return this
+    }
+
+    fun setBip(bip: Purpose): BitcoinCoreBuilder {
+        this.bip = bip
         return this
     }
 
@@ -136,7 +143,7 @@ class BitcoinCoreBuilder {
 
         val connectionManager = ConnectionManager(context)
 
-        val hdWallet = HDWallet(seed, network.coinType)
+        val hdWallet = HDWallet(seed, network.coinType, purpose = bip)
 
         val addressManager = AddressManager.create(storage, hdWallet, addressConverter, addressKeyHashConverter)
 
