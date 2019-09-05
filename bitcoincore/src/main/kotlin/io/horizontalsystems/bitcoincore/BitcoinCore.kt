@@ -23,7 +23,6 @@ import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
-import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 import java.util.concurrent.Executor
@@ -39,8 +38,7 @@ class BitcoinCoreBuilder {
     private var addressSelector: IAddressSelector? = null
     private var storage: IStorage? = null
     private var initialSyncApi: IInitialSyncApi? = null
-    private var bip: Purpose = Purpose.BIP44
-    private var scriptType = ScriptType.P2PKH
+    private var bip: Bip = Bip.BIP44
 
     // parameters with default values
     private var confirmationsThreshold = 6
@@ -69,13 +67,8 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setBip(bip: Purpose): BitcoinCoreBuilder {
+    fun setBip(bip: Bip): BitcoinCoreBuilder {
         this.bip = bip
-        this.scriptType = when (bip) {
-            Purpose.BIP44 -> ScriptType.P2PKH
-            Purpose.BIP49 -> ScriptType.P2WPKHSH
-            Purpose.BIP84 -> ScriptType.P2WPKH
-        }
         return this
     }
 
@@ -143,7 +136,7 @@ class BitcoinCoreBuilder {
 
         val connectionManager = ConnectionManager(context)
 
-        val hdWallet = HDWallet(seed, network.coinType, purpose = bip)
+        val hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
 
         val publicKeyManager = PublicKeyManager.create(storage, hdWallet)
 
@@ -178,7 +171,7 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, publicKeyManager, unspentOutputSelector, transactionSizeCalculator)
+        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, publicKeyManager, unspentOutputSelector, transactionSizeCalculator, bip)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
@@ -201,7 +194,7 @@ class BitcoinCoreBuilder {
                 paymentAddressParser,
                 syncManager,
                 blockValidatorChain,
-                scriptType)
+                bip)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -281,7 +274,7 @@ class BitcoinCore(
         private val paymentAddressParser: PaymentAddressParser,
         private val syncManager: SyncManager,
         private val blockValidatorChain: BlockValidatorChain,
-        private val scriptType: Int)
+        private val bip: Bip)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -374,17 +367,17 @@ class BitcoinCore(
         return dataProvider.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): Long {
-        return transactionBuilder.fee(value, feeRate, senderPay, address, changeScriptType)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
+        return transactionBuilder.fee(value, feeRate, senderPay, address)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay, changeScriptType)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+        return transactionCreator.create(address, value, feeRate, senderPay)
     }
 
-    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int, changeScriptType: Int): FullTransaction {
+    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay, changeScriptType)
+        return transactionCreator.create(address.string, value, feeRate, senderPay)
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
@@ -392,7 +385,7 @@ class BitcoinCore(
     }
 
     fun receiveAddress(): String {
-        return addressConverter.convert(publicKeyManager.receivePublicKey(), scriptType).string
+        return addressConverter.convert(publicKeyManager.receivePublicKey(), bip.scriptType).string
     }
 
     fun receivePublicKey(): PublicKey {

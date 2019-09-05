@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
+import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.managers.BCoinApi
 import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
@@ -17,7 +18,6 @@ import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
-import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 
@@ -47,7 +47,7 @@ class BitcoinKit : AbstractKit {
             peerSize: Int = 10,
             syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
             confirmationsThreshold: Int = 6,
-            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+            bip: Bip = Bip.BIP44
     ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
     constructor(
@@ -58,7 +58,7 @@ class BitcoinKit : AbstractKit {
             peerSize: Int = 10,
             syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
             confirmationsThreshold: Int = 6,
-            bip: HDWallet.Purpose = HDWallet.Purpose.BIP44
+            bip: Bip = Bip.BIP44
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
         val storage = Storage(database)
