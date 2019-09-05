@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.utils
 
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.models.Address
+import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IAddressConverter {
@@ -10,6 +11,9 @@ interface IAddressConverter {
 
     @Throws
     fun convert(bytes: ByteArray, scriptType: Int = ScriptType.P2PKH): Address
+
+    @Throws
+    fun convert(publicKey: PublicKey, scriptType: Int = ScriptType.P2PKH): Address
 }
 
 class AddressConverterChain : IAddressConverter {
@@ -57,4 +61,21 @@ class AddressConverterChain : IAddressConverter {
         throw exception
     }
 
+    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+        val exceptions = mutableListOf<Exception>()
+
+        for (converter in concreteConverters) {
+            try {
+                return converter.convert(publicKey, scriptType)
+            } catch (e: Exception) {
+                exceptions.add(e)
+            }
+        }
+
+        val exception = AddressFormatException("No converter in chain could process the address").also {
+            exceptions.forEach { it.addSuppressed(it) }
+        }
+
+        throw exception
+    }
 }

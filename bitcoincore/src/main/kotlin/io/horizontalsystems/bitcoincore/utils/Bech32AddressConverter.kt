@@ -3,9 +3,8 @@ package io.horizontalsystems.bitcoincore.utils
 import io.horizontalsystems.bitcoincore.crypto.Bech32Cash
 import io.horizontalsystems.bitcoincore.crypto.Bech32Segwit
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
-import io.horizontalsystems.bitcoincore.models.AddressType
-import io.horizontalsystems.bitcoincore.models.CashAddress
-import io.horizontalsystems.bitcoincore.models.SegWitAddress
+import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import java.util.*
@@ -44,6 +43,11 @@ class SegwitAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(
         val addressString = Bech32Segwit.encode(hrp, byteArrayOf(version.toByte()) + witnessScript)
 
         return SegWitAddress(addressString, keyHash, addressType, version)
+    }
+
+    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+        val keyHash = OpCodes.scriptWPKH(publicKey.publicKeyHash)
+        return convert(keyHash, scriptType)
     }
 
     private fun witnessVersion(opcode: Int): Int? {
@@ -147,5 +151,9 @@ class CashAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(ad
         val addressString = Bech32Cash.encode(hrp, addressBytes)
 
         return CashAddress(addressString, bytes, addressType)
+    }
+
+    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+        return convert(publicKey.publicKeyHash, scriptType)
     }
 }
