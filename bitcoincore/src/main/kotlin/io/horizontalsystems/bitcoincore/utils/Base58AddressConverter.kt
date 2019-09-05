@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.AddressType
 import io.horizontalsystems.bitcoincore.models.LegacyAddress
+import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import java.util.*
 
@@ -55,4 +56,13 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
         return LegacyAddress(addressString, bytes, addressType)
     }
 
+    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+        var keyhash = publicKey.publicKeyHash
+
+        if (scriptType == ScriptType.P2WPKHSH) {
+            keyhash = publicKey.scriptHashP2WPKH
+        }
+
+        return convert(keyhash, scriptType)
+    }
 }

@@ -17,7 +17,6 @@ import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
-import io.horizontalsystems.bitcoinkit.segwit.SegWitBech32KeyHashConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
@@ -79,7 +78,6 @@ class BitcoinKit : AbstractKit {
 
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
         val addressSelector = BitcoinAddressSelector()
-        val addressKeyHashConverter = SegWitBech32KeyHashConverter()
         val initialSyncApi = BCoinApi(initialSyncUrl)
 
         bitcoinCore = BitcoinCoreBuilder()
@@ -89,14 +87,12 @@ class BitcoinKit : AbstractKit {
                 .setBip(bip)
                 .setPaymentAddressParser(paymentAddressParser)
                 .setAddressSelector(addressSelector)
-                .setAddressKeyHashConverter(addressKeyHashConverter)
                 .setPeerSize(peerSize)
                 .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
                 .build()
-
 
         //  extending bitcoinCore
 

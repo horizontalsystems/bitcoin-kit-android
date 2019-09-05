@@ -40,6 +40,7 @@ class BitcoinCoreBuilder {
     private var storage: IStorage? = null
     private var initialSyncApi: IInitialSyncApi? = null
     private var bip: Purpose = Purpose.BIP44
+    private var scriptType = ScriptType.P2PKH
 
     // parameters with default values
     private var confirmationsThreshold = 6
@@ -47,7 +48,6 @@ class BitcoinCoreBuilder {
     private var peerSize = 10
     private var blockHeaderHasher: IHasher? = null
     private var transactionInfoConverter: ITransactionInfoConverter? = null
-    private var addressKeyHashConverter: IAddressKeyHashConverter? = null
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -71,6 +71,11 @@ class BitcoinCoreBuilder {
 
     fun setBip(bip: Purpose): BitcoinCoreBuilder {
         this.bip = bip
+        this.scriptType = when (bip) {
+            Purpose.BIP44 -> ScriptType.P2PKH
+            Purpose.BIP49 -> ScriptType.P2WPKHSH
+            Purpose.BIP84 -> ScriptType.P2WPKH
+        }
         return this
     }
 
@@ -119,11 +124,6 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setAddressKeyHashConverter(addressKeyHashConverter: IAddressKeyHashConverter): BitcoinCoreBuilder {
-        this.addressKeyHashConverter = addressKeyHashConverter
-        return this
-    }
-
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -145,7 +145,7 @@ class BitcoinCoreBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType, purpose = bip)
 
-        val publicKeyManager = PublicKeyManager.create(storage, hdWallet, addressConverter, addressKeyHashConverter)
+        val publicKeyManager = PublicKeyManager.create(storage, hdWallet)
 
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage)
@@ -178,7 +178,7 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, publicKeyManager, unspentOutputSelector, transactionSizeCalculator, addressKeyHashConverter)
+        val transactionBuilder = TransactionBuilder(addressConverter, hdWallet, network, publicKeyManager, unspentOutputSelector, transactionSizeCalculator)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, initialSyncApi, BlockHashFetcherHelper())
@@ -200,7 +200,8 @@ class BitcoinCoreBuilder {
                 transactionCreator,
                 paymentAddressParser,
                 syncManager,
-                blockValidatorChain)
+                blockValidatorChain,
+                scriptType)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -267,10 +268,20 @@ class BitcoinCoreBuilder {
 
         return bitcoinCore
     }
-
 }
 
-class BitcoinCore(private val storage: IStorage, private val dataProvider: DataProvider, private val publicKeyManager: PublicKeyManager, private val addressConverter: AddressConverterChain, private val kitStateProvider: KitStateProvider, private val transactionBuilder: TransactionBuilder, private val transactionCreator: TransactionCreator, private val paymentAddressParser: PaymentAddressParser, private val syncManager: SyncManager, private val blockValidatorChain: BlockValidatorChain)
+class BitcoinCore(
+        private val storage: IStorage,
+        private val dataProvider: DataProvider,
+        private val publicKeyManager: PublicKeyManager,
+        private val addressConverter: AddressConverterChain,
+        private val kitStateProvider: KitStateProvider,
+        private val transactionBuilder: TransactionBuilder,
+        private val transactionCreator: TransactionCreator,
+        private val paymentAddressParser: PaymentAddressParser,
+        private val syncManager: SyncManager,
+        private val blockValidatorChain: BlockValidatorChain,
+        private val scriptType: Int)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -380,8 +391,8 @@ class BitcoinCore(private val storage: IStorage, private val dataProvider: DataP
         return transactionCreator.create(unspentOutput, address, feeRate, signatureScriptFunction)
     }
 
-    fun receiveAddress(type: Int): String {
-        return publicKeyManager.receiveAddress(type)
+    fun receiveAddress(): String {
+        return addressConverter.convert(publicKeyManager.receivePublicKey(), scriptType).string
     }
 
     fun receivePublicKey(): PublicKey {

@@ -49,8 +49,8 @@ abstract class AbstractKit {
         return bitcoinCore.redeem(unspentOutput, address, feeRate, signatureScriptFunction)
     }
 
-    fun receiveAddress(type: Int = ScriptType.P2PKH): String {
-        return bitcoinCore.receiveAddress(type)
+    fun receiveAddress(): String {
+        return bitcoinCore.receiveAddress()
     }
 
     fun receivePublicKey(): PublicKey {

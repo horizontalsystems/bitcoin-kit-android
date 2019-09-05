@@ -1,8 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
-import io.horizontalsystems.bitcoincore.core.IAddressKeyHashConverter
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -27,16 +26,14 @@ class TransactionBuilder {
     private val inputSigner: InputSigner
     private val publicKeyManager: PublicKeyManager
     private val transactionSizeCalculator: TransactionSizeCalculator
-    private val addressKeyHashConverter: IAddressKeyHashConverter?
 
-    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, publicKeyManager: PublicKeyManager, unspentOutputSelector: IUnspentOutputSelector, transactionSizeCalculator: TransactionSizeCalculator, addressKeyHashConverter: IAddressKeyHashConverter?) {
+    constructor(addressConverter: IAddressConverter, wallet: HDWallet, network: Network, publicKeyManager: PublicKeyManager, unspentOutputSelector: IUnspentOutputSelector, transactionSizeCalculator: TransactionSizeCalculator) {
         this.addressConverter = addressConverter
         this.publicKeyManager = publicKeyManager
         this.unspentOutputsSelector = unspentOutputSelector
         this.scriptBuilder = ScriptBuilder()
         this.inputSigner = InputSigner(wallet, network)
         this.transactionSizeCalculator = transactionSizeCalculator
-        this.addressKeyHashConverter = addressKeyHashConverter
     }
 
     constructor(addressConverter: IAddressConverter, unspentOutputsSelector: UnspentOutputSelector, unspentOutputProvider: UnspentOutputProvider, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, publicKeyManager: PublicKeyManager, transactionSizeCalculator: TransactionSizeCalculator) {
@@ -46,7 +43,6 @@ class TransactionBuilder {
         this.scriptBuilder = scriptBuilder
         this.inputSigner = inputSigner
         this.transactionSizeCalculator = transactionSizeCalculator
-        this.addressKeyHashConverter = null
     }
 
     fun fee(value: Long, feeRate: Int, senderPay: Boolean, address: String? = null, changeScriptType: Int): Long {
@@ -119,10 +115,8 @@ class TransactionBuilder {
         outputs.add(TransactionOutput(receivedValue, 0, scriptBuilder.lockingScript(address), address.scriptType, address.string, address.hash))
 
         if (selectedOutputsInfo.addChangeOutput) {
-            val keyHash = publicKeyManager.changePublicKey().publicKeyHash
-            val correctKeyHash = addressKeyHashConverter?.convert(keyHash, changeScriptType) ?: keyHash
-
-            val changeAddress = addressConverter.convert(correctKeyHash, changeScriptType)
+            val changePublicKey = publicKeyManager.changePublicKey()
+            val changeAddress = addressConverter.convert(changePublicKey, changeScriptType)
             outputs.add(TransactionOutput(selectedOutputsInfo.totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), changeScriptType, changeAddress.string, changeAddress.hash))
         }
 
