@@ -10,7 +10,6 @@ import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjust
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.managers.BCoinApi
-import io.horizontalsystems.bitcoincore.managers.BitcoinAddressSelector
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -18,6 +17,7 @@ import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
+import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 
