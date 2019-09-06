@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.verify
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import org.mockito.Mockito.reset
 import org.spekframework.spek2.Spek

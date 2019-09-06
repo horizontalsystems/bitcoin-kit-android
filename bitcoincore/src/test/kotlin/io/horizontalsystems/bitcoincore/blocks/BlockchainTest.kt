@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.blocks
 
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockitokotlin2.*
 import io.horizontalsystems.bitcoincore.MockedBlocks
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator

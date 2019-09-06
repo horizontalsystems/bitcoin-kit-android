@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
@@ -42,7 +42,7 @@ object TransactionExtractorTest : Spek({
             val address = LegacyAddress("00112233", byteArrayOf(1), AddressType.P2SH)
             val signScript = "004830450221008c203a0881f75c731d9a3a2e6d2ffa37da7095b7dde61a9e7a906659219cd0fa02202677097ca7f7e164f73924fe8f84e1e6fc6611450efcda360ce771e98af9f73d0147304402201cba9b641483476f67a4cef08d7280f51de8d7615fcce76642d944dc07132a990220323d13175477bbf67c8c36fb243bec0e4c410bc9173a186d9f8e98ce3445363601475221025b64f7c63e30f315259393f64dcca269d18386997b1cc93da1388c4021e3ea8e210386d42d5d7027ac08ddcbb066e2140575091fe7dc1d202a008eb5e036725e975652ae"
 
-            whenever(addressConverter.convert(any(), any())).thenReturn(address)
+            whenever(addressConverter.convert(any<ByteArray>(), any())).thenReturn(address)
 
             transactionInput.sigScript = signScript.hexToByteArray()
             extractor.extractInputs(fullTransaction)
@@ -55,7 +55,7 @@ object TransactionExtractorTest : Spek({
             val address = LegacyAddress("00112233", byteArrayOf(1), AddressType.P2PKH)
             val signScript = "483045022100907103d70cd2215bc76e27e07cafa39e975cbf4a7f5897402883dbd59b42ed5e022000bbaeb898d2f5c687a420ad51e001080035ee9690b19d6af4bc192f1e0a8b17012103aac540428b6955a53bb01fcae6d4279df45253b2c61684fb993b5545935dac7a"
 
-            whenever(addressConverter.convert(any(), any())).thenReturn(address)
+            whenever(addressConverter.convert(any<ByteArray>(), any())).thenReturn(address)
 
             transactionInput.sigScript = signScript.hexToByteArray()
             extractor.extractInputs(fullTransaction)
@@ -68,7 +68,7 @@ object TransactionExtractorTest : Spek({
             val address = LegacyAddress("00112233", byteArrayOf(1), AddressType.P2SH)
             val signScript = "1600148749115073ad59a6f3587f1f9e468adedf01473f"
 
-            whenever(addressConverter.convert(any(), any())).thenReturn(address)
+            whenever(addressConverter.convert(any<ByteArray>(), any())).thenReturn(address)
 
             transactionInput.sigScript = signScript.hexToByteArray()
             extractor.extractInputs(fullTransaction)

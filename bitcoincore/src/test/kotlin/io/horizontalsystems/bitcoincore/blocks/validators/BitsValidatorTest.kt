@@ -1,14 +1,14 @@
 package io.horizontalsystems.bitcoincore.blocks.validators
 
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.models.Block
 import org.junit.jupiter.api.Assertions.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
-object BitsValidatorTest: Spek({
+object BitsValidatorTest : Spek({
     lateinit var validator: BitsValidator
     val block = mock<Block>()
     val previousBlock = mock<Block>()

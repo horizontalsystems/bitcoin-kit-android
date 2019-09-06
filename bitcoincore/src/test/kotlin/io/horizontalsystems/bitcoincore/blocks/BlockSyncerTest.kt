@@ -1,12 +1,12 @@
 package io.horizontalsystems.bitcoincore.blocks
 
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockitokotlin2.*
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.KitStateProvider
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.MerkleBlock

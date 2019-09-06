@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore
 
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.*
@@ -27,7 +27,7 @@ object Fixtures {
                 ))
 
     val block1
-        get () = Block(
+        get() = Block(
                 height = 2013, // 538269
                 header = BlockHeader(
                         version = 536870912,
@@ -41,7 +41,7 @@ object Fixtures {
         )
 
     val block2
-        get () = Block(
+        get() = Block(
                 height = 2014, // 538270
                 header = BlockHeader(
                         version = 536870912,
@@ -193,6 +193,4 @@ object Fixtures {
 
         return utxo
     }
-
-
 }
