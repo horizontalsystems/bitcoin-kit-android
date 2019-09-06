@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import com.nhaarman.mockito_kotlin.any
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
+import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.PublicKey
@@ -54,7 +54,7 @@ object UnspentOutputSelectorTest : Spek({
                 whenever(txSizeCalculator.transactionSize(any(), any())).thenReturn(100)
             }
 
-            it ("select_receiverPay") {
+            it("select_receiverPay") {
                 val selectedOutput = unspentOutputSelector.select(value = 7000, feeRate = 1, senderPay = true)
 
                 Assert.assertEquals(listOf(unspentOutputs[0], unspentOutputs[1], unspentOutputs[2], unspentOutputs[3]), selectedOutput.outputs)
@@ -63,7 +63,7 @@ object UnspentOutputSelectorTest : Spek({
                 Assert.assertEquals(true, selectedOutput.addChangeOutput)
             }
 
-            it ("select_receiverPayNoChangeOutput") {
+            it("select_receiverPayNoChangeOutput") {
                 val expectedFee = (100 + 10 + 2).toLong()  // fee for tx + fee for change input + fee for change output
                 val selectedOutputs = unspentOutputSelector.select(value = 15000L - expectedFee, feeRate = 1, senderPay = true)
 

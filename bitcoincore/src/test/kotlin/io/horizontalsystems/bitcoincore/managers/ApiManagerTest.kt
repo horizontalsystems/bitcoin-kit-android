@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.RxTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Before
