@@ -6,8 +6,12 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
+import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.managers.*
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.managers.InsightApi
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -98,7 +102,6 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         }
 
         val paymentAddressParser = PaymentAddressParser("dash", removeScheme = true)
-        val addressSelector = DashAddressSelector()
         val instantTransactionManager = InstantTransactionManager(dashStorage, InstantSendFactory(), InstantTransactionState())
         val initialSyncApi = InsightApi(initialSyncUrl)
 
@@ -109,7 +112,6 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setSeed(seed)
                 .setNetwork(network)
                 .setPaymentAddressParser(paymentAddressParser)
-                .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)
                 .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
@@ -151,6 +153,9 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.addPeerTaskHandler(masternodeSyncer)
         bitcoinCore.addPeerSyncListener(masternodeSyncer)
         bitcoinCore.addPeerGroupListener(masternodeSyncer)
+
+        bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
+
 
         val singleHasher = SingleSha256Hasher()
         val bls = BLS()

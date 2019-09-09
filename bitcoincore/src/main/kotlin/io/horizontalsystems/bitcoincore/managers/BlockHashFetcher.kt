@@ -6,14 +6,13 @@ import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import java.util.logging.Logger
 
-class BlockHashFetcher(private val addressSelector: IAddressSelector, private val addressConverter: IAddressConverter, private val initialSyncerApi: IInitialSyncApi, private val helper: BlockHashFetcherHelper) {
+class BlockHashFetcher(private val restoreKeyConverter: IRestoreKeyConverter, private val initialSyncerApi: IInitialSyncApi, private val helper: BlockHashFetcherHelper) {
 
     fun getBlockHashes(publicKeys: List<PublicKey>): Pair<List<BlockHash>, Int> {
         val addresses = publicKeys.map {
-            addressSelector.getAddressVariants(addressConverter, it)
+            restoreKeyConverter.keysForApiRestore(it)
         }
 
         val transactions = initialSyncerApi.getTransactions(addresses.flatten())

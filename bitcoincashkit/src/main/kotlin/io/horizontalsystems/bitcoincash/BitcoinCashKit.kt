@@ -10,8 +10,8 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
+import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
-import io.horizontalsystems.bitcoincash.managers.BitcoinCashAddressSelector
 import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -74,7 +74,6 @@ class BitcoinCashKit : AbstractKit {
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
-        val addressSelector = BitcoinCashAddressSelector()
         val initialSyncApi = InsightApi(initialSyncUrl)
 
         bitcoinCore = BitcoinCoreBuilder()
@@ -82,7 +81,6 @@ class BitcoinCashKit : AbstractKit {
                 .setSeed(seed)
                 .setNetwork(network)
                 .setPaymentAddressParser(paymentAddressParser)
-                .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)
                 .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
@@ -107,6 +105,8 @@ class BitcoinCashKit : AbstractKit {
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
             bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height))
         }
+
+        bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
     }
 
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
