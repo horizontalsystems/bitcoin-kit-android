@@ -121,7 +121,7 @@ object TransactionExtractorTest : Spek({
             transactionOutput.lockingScript = keyHash
             extractor.extractOutputs(fullTransaction)
 
-            assertArrayEquals(keyHash.drop(2).toByteArray(), fullTransaction.outputs[0].keyHash)
+            assertArrayEquals(keyHash, fullTransaction.outputs[0].keyHash)
             assertEquals(ScriptType.P2WPKH, fullTransaction.outputs[0].scriptType)
         }
 

@@ -34,14 +34,15 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private lateinit var bitcoinKit: BitcoinKit
 
     private val walletId = "MyWallet"
-    private val networkType = BitcoinKit.NetworkType.MainNet
+    private val networkType = BitcoinKit.NetworkType.TestNet
 
     init {
         init()
     }
 
     private fun init() {
-        val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
+         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
+//        val words = "current force clump paper shrug extra zebra employ prefer upon mobile hire".split(" ")
 
         bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, bip = Bip.BIP44)
 

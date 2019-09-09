@@ -26,7 +26,6 @@ object BlockSyncerTest : Spek({
     val blockchain = mock(Blockchain::class.java)
     val transactionProcessor = mock(TransactionProcessor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
-    val bloomFilterManager = mock(BloomFilterManager::class.java)
     val listener = mock(KitStateProvider::class.java)
     val network = mock(Network::class.java)
 
@@ -40,11 +39,11 @@ object BlockSyncerTest : Spek({
         whenever(storage.blocksCount()).thenReturn(1)
         whenever(storage.lastBlock()).thenReturn(null)
 
-        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
+        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpointBlock, state)
     }
 
     afterEachTest {
-        reset(storage, blockchain, transactionProcessor, publicKeyManager, bloomFilterManager, listener, network, state)
+        reset(storage, blockchain, transactionProcessor, publicKeyManager, listener, network, state)
     }
 
     describe("#init") {
@@ -57,7 +56,7 @@ object BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(1)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpointBlock, state)
             }
 
             it("does not saves block to storage") {
@@ -74,7 +73,7 @@ object BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(0)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, bloomFilterManager, listener, network.lastCheckpointBlock, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpointBlock, state)
             }
 
             it("triggers #onInitialBestBlockHeightUpdate event on listener") {
@@ -168,7 +167,6 @@ object BlockSyncerTest : Spek({
 
         it("handles partial blocks") {
             verify(publicKeyManager).fillGap()
-            verify(bloomFilterManager).regenerateBloomFilter()
             verify(state).iterationHasPartialBlocks = false
         }
 
@@ -196,7 +194,6 @@ object BlockSyncerTest : Spek({
                 blockSyncer.downloadIterationCompleted()
 
                 verify(publicKeyManager).fillGap()
-                verify(bloomFilterManager).regenerateBloomFilter()
                 verify(state).iterationHasPartialBlocks = false
             }
         }
@@ -211,7 +208,6 @@ object BlockSyncerTest : Spek({
 
                 verifyNoMoreInteractions(state)
                 verifyNoMoreInteractions(publicKeyManager)
-                verifyNoMoreInteractions(bloomFilterManager)
             }
         }
     }
@@ -237,7 +233,6 @@ object BlockSyncerTest : Spek({
 
         it("handles partial blocks") {
             verify(publicKeyManager).fillGap()
-            verify(bloomFilterManager).regenerateBloomFilter()
             verify(state).iterationHasPartialBlocks = false
         }
 

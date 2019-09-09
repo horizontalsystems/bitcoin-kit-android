@@ -2,9 +2,9 @@ package io.horizontalsystems.bitcoincore.managers
 
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
+import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import org.junit.Assert
 import org.mockito.Mockito
 import org.spekframework.spek2.Spek
@@ -12,12 +12,11 @@ import org.spekframework.spek2.style.specification.describe
 
 object BlockHashFetcherTest : Spek({
 
-    val addressSelector = Mockito.mock(IAddressSelector::class.java)
-    val addressConverter = Mockito.mock(IAddressConverter::class.java)
-    val apiManager = Mockito.mock(BCoinApi::class.java)
+    val restoreKeyConverter = Mockito.mock(IRestoreKeyConverter::class.java)
+    val initialSyncApi = Mockito.mock(IInitialSyncApi::class.java)
     val helper = Mockito.mock(BlockHashFetcherHelper::class.java)
 
-    val blockHashFetcher = BlockHashFetcher(addressSelector, addressConverter, apiManager, helper)
+    val blockHashFetcher = BlockHashFetcher(restoreKeyConverter, initialSyncApi, helper)
 
     describe("#getBlockHashes") {
 
@@ -32,11 +31,11 @@ object BlockHashFetcherTest : Spek({
 
             val addresses = addresses0 + addresses1 + addresses2
 
-            whenever(addressSelector.getAddressVariants(addressConverter, publicKey0)).thenReturn(addresses0)
-            whenever(addressSelector.getAddressVariants(addressConverter, publicKey1)).thenReturn(addresses1)
-            whenever(addressSelector.getAddressVariants(addressConverter, publicKey2)).thenReturn(addresses2)
+            whenever(restoreKeyConverter.keysForApiRestore(publicKey0)).thenReturn(addresses0)
+            whenever(restoreKeyConverter.keysForApiRestore(publicKey1)).thenReturn(addresses1)
+            whenever(restoreKeyConverter.keysForApiRestore(publicKey2)).thenReturn(addresses2)
 
-            whenever(apiManager.getTransactions(addresses)).thenReturn(listOf())
+            whenever(initialSyncApi.getTransactions(addresses)).thenReturn(listOf())
 
             val (blockHashes, lastUsedIndex) = blockHashFetcher.getBlockHashes(listOf(publicKey0, publicKey1, publicKey2))
 
@@ -55,9 +54,9 @@ object BlockHashFetcherTest : Spek({
 
             val addresses = addresses0 + addresses1 + addresses2
 
-            whenever(addressSelector.getAddressVariants(addressConverter, publicKey0)).thenReturn(addresses0)
-            whenever(addressSelector.getAddressVariants(addressConverter, publicKey1)).thenReturn(addresses1)
-            whenever(addressSelector.getAddressVariants(addressConverter, publicKey2)).thenReturn(addresses2)
+            whenever(restoreKeyConverter.keysForApiRestore(publicKey0)).thenReturn(addresses0)
+            whenever(restoreKeyConverter.keysForApiRestore(publicKey1)).thenReturn(addresses1)
+            whenever(restoreKeyConverter.keysForApiRestore(publicKey2)).thenReturn(addresses2)
 
             val transactionResponse0 = mock<TransactionItem>()
             whenever(transactionResponse0.blockHeight).thenReturn(1234)
@@ -69,7 +68,7 @@ object BlockHashFetcherTest : Spek({
             whenever(transactionResponse1.blockHash).thenReturn("5678")
             whenever(transactionResponse1.txOutputs).thenReturn(listOf())
 
-            whenever(apiManager.getTransactions(addresses)).thenReturn(listOf(transactionResponse0, transactionResponse1))
+            whenever(initialSyncApi.getTransactions(addresses)).thenReturn(listOf(transactionResponse0, transactionResponse1))
             val lastUsedIndex = 1
             whenever(helper.lastUsedIndex(listOf(addresses0, addresses1, addresses2), listOf())).thenReturn(lastUsedIndex)
 

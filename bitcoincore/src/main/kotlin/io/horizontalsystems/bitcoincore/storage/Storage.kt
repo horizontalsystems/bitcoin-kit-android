@@ -279,8 +279,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.output.getMyOutputs()
     }
 
-    override fun getOutputsForBloomFilter(blockHeight: Int): List<TransactionOutput> {
-        return store.output.getOutputsForBloomFilter(blockHeight)
+    override fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<Int>): List<TransactionOutput> {
+        return store.output.getOutputsForBloomFilter(blockHeight, irregularScriptTypes)
     }
 
     // TransactionInput

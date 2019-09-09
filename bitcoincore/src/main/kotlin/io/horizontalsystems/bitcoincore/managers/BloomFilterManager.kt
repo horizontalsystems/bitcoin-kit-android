@@ -1,10 +1,8 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.crypto.BloomFilter
-import io.horizontalsystems.bitcoincore.utils.Utils
 
-class BloomFilterManager(private val storage: IStorage) {
+class BloomFilterManager {
 
     object BloomFilterExpired : Exception()
 
@@ -14,7 +12,8 @@ class BloomFilterManager(private val storage: IStorage) {
 
     var listener: Listener? = null
     var bloomFilter: BloomFilter? = null
-    private var bloomFilterProviders = mutableListOf<IBloomFilterProvider>()
+
+    private val bloomFilterProviders = mutableListOf<IBloomFilterProvider>()
 
     init {
         regenerateBloomFilter()
@@ -22,16 +21,6 @@ class BloomFilterManager(private val storage: IStorage) {
 
     fun regenerateBloomFilter() {
         val elements = mutableListOf<ByteArray>()
-
-        val transactionOutputs = storage.lastBlock()?.height?.let { lastBlockHeight ->
-            // get transaction outputs which are unspent or spent in last 100 blocks
-            storage.getOutputsForBloomFilter(lastBlockHeight - 100)
-        } ?: listOf()
-
-        for (output in transactionOutputs) {
-            val outpoint = output.transactionHash + Utils.intToByteArray(output.index).reversedArray()
-            elements.add(outpoint)
-        }
 
         bloomFilterProviders.forEach {
             elements.addAll(it.getBloomFilterElements())

@@ -1,11 +1,11 @@
 package io.horizontalsystems.bitcoincore.transactions
 
 import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.eq
 import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
@@ -28,11 +28,12 @@ object TransactionProcessorTest : Spek({
     val extractor = mock(TransactionExtractor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
     val blockchainDataListener = mock(IBlockchainDataListener::class.java)
+    val irregularOutputFinder = mock(IIrregularOutputFinder::class.java)
 
     beforeEachTest {
         fullTransaction = Fixtures.transactionP2PKH
         transaction = fullTransaction.header
-        processor = TransactionProcessor(storage, extractor, outputsCache, publicKeyManager, blockchainDataListener)
+        processor = TransactionProcessor(storage, extractor, outputsCache, publicKeyManager, irregularOutputFinder, blockchainDataListener)
     }
 
     fun transactions(): List<FullTransaction> {
