@@ -16,7 +16,6 @@ class BlockSyncer(
         private val blockchain: Blockchain,
         private val transactionProcessor: TransactionProcessor,
         private val publicKeyManager: PublicKeyManager,
-        private val bloomFilterManager: BloomFilterManager,
         private val listener: ISyncStateListener,
         private val checkpointBlock: Block,
         private val state: State = State()) {
@@ -141,7 +140,6 @@ class BlockSyncer(
 
     private fun handlePartialBlocks() {
         publicKeyManager.fillGap()
-        bloomFilterManager.regenerateBloomFilter()
         state.iterationHasPartialBlocks = false
     }
 

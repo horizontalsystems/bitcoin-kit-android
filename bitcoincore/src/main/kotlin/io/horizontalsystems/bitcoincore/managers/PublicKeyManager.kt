@@ -5,7 +5,22 @@ import io.horizontalsystems.bitcoincore.core.publicKey
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.hdwalletkit.HDWallet
 
-class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWallet) {
+class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWallet, private val restoreKeyConverter: RestoreKeyConverterChain)
+    : IBloomFilterProvider {
+
+    // IBloomFilterProvider
+
+    override var bloomFilterManager: BloomFilterManager? = null
+
+    override fun getBloomFilterElements(): List<ByteArray> {
+        val elements = mutableListOf<ByteArray>()
+
+        for (publicKey in storage.getPublicKeys()) {
+            elements.addAll(restoreKeyConverter.bloomFilterElements(publicKey))
+        }
+
+        return elements
+    }
 
     @Throws
     fun receivePublicKey(): PublicKey {
@@ -39,6 +54,8 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
             fillGap(account, true)
             fillGap(account, false)
         }
+
+        bloomFilterManager?.regenerateBloomFilter()
     }
 
     fun addKeys(keys: List<PublicKey>) {
@@ -103,8 +120,8 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     }
 
     companion object {
-        fun create(storage: IStorage, hdWallet: HDWallet): PublicKeyManager {
-            val addressManager = PublicKeyManager(storage, hdWallet)
+        fun create(storage: IStorage, hdWallet: HDWallet, restoreKeyConverter: RestoreKeyConverterChain): PublicKeyManager {
+            val addressManager = PublicKeyManager(storage, hdWallet, restoreKeyConverter)
             addressManager.fillGap()
             return addressManager
         }

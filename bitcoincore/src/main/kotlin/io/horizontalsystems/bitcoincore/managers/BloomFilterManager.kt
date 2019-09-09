@@ -23,12 +23,6 @@ class BloomFilterManager(private val storage: IStorage) {
     fun regenerateBloomFilter() {
         val elements = mutableListOf<ByteArray>()
 
-        for (publicKey in storage.getPublicKeys()) {
-            elements.add(publicKey.publicKeyHash)
-            elements.add(publicKey.publicKey)
-            elements.add(publicKey.scriptHashP2WPKH)
-        }
-
         val transactionOutputs = storage.lastBlock()?.height?.let { lastBlockHeight ->
             // get transaction outputs which are unspent or spent in last 100 blocks
             storage.getOutputsForBloomFilter(lastBlockHeight - 100)
