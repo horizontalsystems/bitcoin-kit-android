@@ -43,7 +43,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private fun init() {
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
 
-        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, bip = Bip.BIP49)
+        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, bip = Bip.BIP44)
 
         bitcoinKit.listener = this
 

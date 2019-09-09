@@ -17,7 +17,6 @@ import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
-import io.horizontalsystems.bitcoinkit.managers.BitcoinAddressSelector
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 
@@ -77,7 +76,6 @@ class BitcoinKit : AbstractKit {
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
-        val addressSelector = BitcoinAddressSelector()
         val initialSyncApi = BCoinApi(initialSyncUrl)
 
         bitcoinCore = BitcoinCoreBuilder()
@@ -86,7 +84,6 @@ class BitcoinKit : AbstractKit {
                 .setNetwork(network)
                 .setBip(bip)
                 .setPaymentAddressParser(paymentAddressParser)
-                .setAddressSelector(addressSelector)
                 .setPeerSize(peerSize)
                 .setSyncMode(syncMode)
                 .setConfirmationThreshold(confirmationsThreshold)
@@ -108,6 +105,20 @@ class BitcoinKit : AbstractKit {
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
             bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
             bitcoinCore.addBlockValidator(BitsValidator())
+        }
+
+        when (bip) {
+            Bip.BIP44 -> {
+                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
+                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP49)
+                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP84)
+            }
+            Bip.BIP49 -> {
+                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP49)
+            }
+            Bip.BIP84 -> {
+                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP84)
+            }
         }
     }
 
