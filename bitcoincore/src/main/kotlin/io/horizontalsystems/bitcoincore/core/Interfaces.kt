@@ -80,7 +80,7 @@ interface IStorage {
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
     fun getMyOutputs(): List<TransactionOutput>
-    fun getOutputsForBloomFilter(blockHeight: Int): List<TransactionOutput>
+    fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<Int>): List<TransactionOutput>
 
     // Transaction Input
 

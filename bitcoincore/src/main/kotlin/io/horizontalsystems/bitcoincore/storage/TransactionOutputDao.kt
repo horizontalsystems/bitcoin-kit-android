@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoincore.storage
 
 import android.arch.persistence.room.*
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 @Dao
 interface TransactionOutputDao {
@@ -56,10 +55,9 @@ interface TransactionOutputDao {
           LEFT JOIN Block ON transactions.blockHash = Block.headerHash
         )
         AS input ON input.previousOutputTxHash = outputs.transactionHash AND input.previousOutputIndex = outputs.`index`
-        WHERE outputs.scriptType IN(${ScriptType.P2WPKH}, ${ScriptType.P2PK}, ${ScriptType.P2WPKHSH})
-        AND (height IS NULL OR height > :blockHeight)
+        WHERE outputs.scriptType IN(:irregularScriptTypes) AND (height IS NULL OR height > :blockHeight)
     """)
-    fun getOutputsForBloomFilter(blockHeight: Int): List<TransactionOutput>
+    fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<Int>): List<TransactionOutput>
 
 }
 

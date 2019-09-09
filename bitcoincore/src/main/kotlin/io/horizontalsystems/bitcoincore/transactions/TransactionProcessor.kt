@@ -5,19 +5,20 @@ import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
+import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
+import io.horizontalsystems.bitcoincore.managers.IrregularOutputFinder
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
-import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class TransactionProcessor(
         private val storage: IStorage,
         private val extractor: TransactionExtractor,
         private val outputsCache: OutputsCache,
         private val publicKeyManager: PublicKeyManager,
+        private val irregularOutputFinder: IIrregularOutputFinder,
         private val dataListener: IBlockchainDataListener) {
 
     var listener: WatchedTransactionManager? = null
@@ -32,7 +33,7 @@ class TransactionProcessor(
         storage.addTransaction(transaction)
         dataListener.onTransactionsUpdate(listOf(transaction.header), listOf(), null)
 
-        if (expiresBloomFilter(transaction.outputs)) {
+        if (irregularOutputFinder.hasIrregularOutput(transaction.outputs)) {
             throw BloomFilterManager.BloomFilterExpired
         }
     }
@@ -71,7 +72,7 @@ class TransactionProcessor(
                     inserted.add(transaction.header)
 
                     if (!skipCheckBloomFilter) {
-                        needToUpdateBloomFilter = needToUpdateBloomFilter || publicKeyManager.gapShifts() || expiresBloomFilter(transaction.outputs)
+                        needToUpdateBloomFilter = needToUpdateBloomFilter || publicKeyManager.gapShifts() || irregularOutputFinder.hasIrregularOutput(transaction.outputs)
                     }
                 }
             }
@@ -110,12 +111,6 @@ class TransactionProcessor(
         if (block != null && !block.hasTransactions) {
             block.hasTransactions = true
             storage.updateBlock(block)
-        }
-    }
-
-    private fun expiresBloomFilter(outputs: List<TransactionOutput>): Boolean {
-        return outputs.any {
-            it.publicKeyPath != null && (it.scriptType == ScriptType.P2PK || it.scriptType == ScriptType.P2WPKH || it.scriptType == ScriptType.P2WPKHSH)
         }
     }
 
