@@ -132,7 +132,7 @@ class BitcoinCoreBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
 
-        val publicKeyManager = PublicKeyManager.create(storage, hdWallet)
+        val publicKeyManager = PublicKeyManager.create(storage, hdWallet, restoreKeyConverterChain)
 
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage)
@@ -152,12 +152,12 @@ class BitcoinCoreBuilder {
         val blockchain = Blockchain(storage, blockValidatorChain, dataProvider)
         val checkpointBlock = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
 
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, bloomFilterManager, kitStateProvider, checkpointBlock)
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateProvider, checkpointBlock)
         val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
-        val transactionSyncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager, bloomFilterManager)
+        val transactionSyncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager)
         val transactionSender = TransactionSender().also {
             it.peerGroup = peerGroup
             it.transactionSyncer = transactionSyncer
@@ -195,6 +195,8 @@ class BitcoinCoreBuilder {
 
         val watchedTransactionManager = WatchedTransactionManager()
         bloomFilterManager.addBloomFilterProvider(watchedTransactionManager)
+        bloomFilterManager.addBloomFilterProvider(publicKeyManager)
+
         bitcoinCore.watchedTransactionManager = watchedTransactionManager
         transactionProcessor.listener = watchedTransactionManager
 

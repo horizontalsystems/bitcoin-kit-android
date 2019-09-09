@@ -11,7 +11,7 @@ interface IRestoreKeyConverter {
 
 class RestoreKeyConverterChain : IRestoreKeyConverter {
 
-    var converters = mutableListOf<IRestoreKeyConverter>()
+    private val converters = mutableListOf<IRestoreKeyConverter>()
 
     fun add(converter: IRestoreKeyConverter) {
         converters.add(converter)
@@ -47,7 +47,7 @@ class Bip44RestoreKeyConverter(private val addressConverter: IAddressConverter) 
     }
 
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
-        return listOf()
+        return listOf(publicKey.publicKeyHash, publicKey.publicKey)
     }
 }
 
@@ -60,7 +60,7 @@ class Bip49RestoreKeyConverter(private val addressConverter: IAddressConverter) 
     }
 
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
-        throw java.lang.Exception("bloomFilterElements(publicKey:) has not been implemented")
+        return listOf(publicKey.scriptHashP2WPKH)
     }
 }
 
@@ -74,6 +74,6 @@ class Bip84RestoreKeyConverter(private val addressConverter: IAddressConverter) 
     }
 
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
-        throw Exception("bloomFilterElements(publicKey:) has not been implemented")
+        return listOf(publicKey.publicKeyHash)
     }
 }
