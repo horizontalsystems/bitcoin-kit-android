@@ -8,8 +8,6 @@ import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.SelectedUnspentOutputInfo
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -32,8 +30,6 @@ object TransactionBuilderTest : Spek({
 
     val publicKey = mock<PublicKey>()
     val unspentOutput = mock<UnspentOutput>()
-    val unspentOutputSelector = mock<UnspentOutputSelector>()
-    val unspentOutputProvider = mock<UnspentOutputProvider>()
     val scriptBuilder = mock<ScriptBuilder>()
     val transactionSizeCalculator = mock<TransactionSizeCalculator>()
     val inputSigner = mock<InputSigner>()
@@ -55,18 +51,14 @@ object TransactionBuilderTest : Spek({
 
     beforeEachTest {
 
-        transactionBuilder = TransactionBuilder(unspentOutputSelector, scriptBuilder, inputSigner, transactionSizeCalculator)
+        transactionBuilder = TransactionBuilder(scriptBuilder, inputSigner)
 
         previousTransaction = Fixtures.transactionP2PKH
 
         whenever(unspentOutput.output).thenReturn(previousTransaction.outputs[0])
         whenever(unspentOutput.publicKey).thenReturn(publicKey)
 
-        unspentOutputs = SelectedUnspentOutputInfo(listOf(unspentOutput), previousTransaction.outputs[0].value, fee, false)
-
-        whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(unspentOutputs.outputs)
-        whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
-        whenever(transactionSizeCalculator.outputSize(any())).thenReturn(34)
+        unspentOutputs = SelectedUnspentOutputInfo(listOf(unspentOutput), previousTransaction.outputs[0].value, fee, true)
 
         // receive address locking script P2PKH
         whenever(scriptBuilder.lockingScript(argThat { hash.contentEquals("3fc6d8a8215dd60e42a3916c4def39f40d322e29".hexToByteArray()) })).thenReturn("76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexToByteArray())
@@ -82,7 +74,9 @@ object TransactionBuilderTest : Spek({
     describe("#buildTransaction") {
 
         it("P2PKH_SenderPay") {
-            val transaction = transactionBuilder.buildTransaction(txValue, addressP2PKH, feeRate, true, addressChange)
+            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+
+            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, true, addressP2PKH, null)
 
             assertTrue(transaction.header.isMine)
             assertEquals(Transaction.Status.NEW, transaction.header.status)
@@ -97,7 +91,9 @@ object TransactionBuilderTest : Spek({
         }
 
         it("P2PKH_ReceiverPay") {
-            val transaction = transactionBuilder.buildTransaction(txValue, addressP2PKH, feeRate, false, addressChange)
+            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+
+            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
 
             assertTrue(transaction.header.isMine)
             assertEquals(Transaction.Status.NEW, transaction.header.status)
@@ -112,25 +108,29 @@ object TransactionBuilderTest : Spek({
             assertEquals((txValue - fee), transaction.outputs[0].value)
         }
 
-        it("P2SH") {
-            val transaction = transactionBuilder.buildTransaction(txValue, addressP2SH, feeRate, false, addressChange)
-
-            assertTrue(transaction.header.isMine)
-            assertEquals(Transaction.Status.NEW, transaction.header.status)
-
-            assertEquals(1, transaction.inputs.size)
-            // assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
-
-            assertEquals(1, transaction.outputs.size)
-
-            assertEquals(toAddressP2SH, transaction.outputs[0].address)
-            assertEquals((txValue - fee), transaction.outputs[0].value)
-        }
+//        it("P2SH") {
+//            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2SH
+//
+//            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2SH, null)
+//
+//            assertTrue(transaction.header.isMine)
+//            assertEquals(Transaction.Status.NEW, transaction.header.status)
+//
+//            assertEquals(1, transaction.inputs.size)
+//            // assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
+//
+//            assertEquals(1, transaction.outputs.size)
+//
+//            assertEquals(toAddressP2SH, transaction.outputs[0].address)
+//            assertEquals((txValue - fee), transaction.outputs[0].value)
+//        }
 
         it("WithoutChangeOutput") {
+            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+
             val txValue = unspentOutputs.outputs[0].output.value
 
-            val transaction = transactionBuilder.buildTransaction(txValue, addressP2PKH, feeRate, false, addressChange)
+            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
 
             assertEquals(1, transaction.inputs.size)
             //assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
@@ -141,9 +141,11 @@ object TransactionBuilderTest : Spek({
         }
 
         it("ChangeNotAddedForDust") {
+            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+
             val txValue = unspentOutputs.outputs[0].output.value - transactionSizeCalculator.outputSize(scripType = ScriptType.P2PKH) * feeRate
 
-            val transaction = transactionBuilder.buildTransaction(txValue, addressP2PKH, feeRate, false, addressChange)
+            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
 
             assertEquals(1, transaction.inputs.size)
             //assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
@@ -154,21 +156,13 @@ object TransactionBuilderTest : Spek({
         }
 
         it("InputsSigned") {
-            val transaction = transactionBuilder.buildTransaction(txValue, addressP2PKH, feeRate, false, addressChange)
+            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+
+            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
 
             assertEquals(unlockingScript.toHexString(), transaction.inputs[0].sigScript.toHexString())
         }
 
     }
 
-    describe("#fee") {
-        it("fee") {
-            val unspentOutputs = SelectedUnspentOutputInfo(listOf(), 11_805_400, 112_800, false)
-
-            whenever(unspentOutputSelector.select(any(), any(), any(), any(), any())).thenReturn(unspentOutputs)
-            val builtFee = transactionBuilder.fee(10_782_000, 600, true, null, addressChange)
-
-            assertEquals(112800, builtFee)
-        }
-    }
 })

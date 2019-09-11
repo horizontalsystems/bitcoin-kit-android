@@ -11,7 +11,7 @@ interface IIrregularOutputFinder {
 
 class IrregularOutputFinder(private val storage: IStorage) : IIrregularOutputFinder, IBloomFilterProvider {
 
-    private val irregularScriptTypes = listOf(ScriptType.P2WPKH, ScriptType.P2PK, ScriptType.P2PK)
+    private val irregularScriptTypes = listOf(ScriptType.P2WPKHSH, ScriptType.P2WPKH, ScriptType.P2PK)
 
     // IIrregularOutputFinder
 
