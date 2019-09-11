@@ -19,7 +19,9 @@ import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.*
+import io.horizontalsystems.bitcoincore.transactions.builder.InputSigner
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -119,7 +121,8 @@ class BitcoinCoreBuilder {
         val storage = checkNotNull(this.storage)
         val initialSyncApi = checkNotNull(this.initialSyncApi)
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
-        val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter(BaseTransactionInfoConverter())
+        val transactionInfoConverter = this.transactionInfoConverter
+                ?: TransactionInfoConverter(BaseTransactionInfoConverter())
 
         val addressConverter = AddressConverterChain()
         val restoreKeyConverterChain = RestoreKeyConverterChain()
@@ -166,8 +169,9 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val transactionBuilder = TransactionBuilder(hdWallet, network, unspentOutputSelector, transactionSizeCalculator)
-        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, publicKeyManager, addressConverter, bip)
+        val transactionBuilder = TransactionBuilder(ScriptBuilder(), InputSigner(hdWallet, network))
+        val transactionFeeCalculator = TransactionFeeCalculator(unspentOutputSelector, transactionSizeCalculator, transactionBuilder)
+        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, publicKeyManager, addressConverter, transactionFeeCalculator, bip)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)
@@ -186,6 +190,7 @@ class BitcoinCoreBuilder {
                 restoreKeyConverterChain,
                 kitStateProvider,
                 transactionCreator,
+                transactionFeeCalculator,
                 paymentAddressParser,
                 syncManager,
                 blockValidatorChain,
@@ -269,6 +274,7 @@ class BitcoinCore(
         private val restoreKeyConverterChain: RestoreKeyConverterChain,
         private val kitStateProvider: KitStateProvider,
         private val transactionCreator: TransactionCreator,
+        private val transactionFeeCalculator: TransactionFeeCalculator,
         private val paymentAddressParser: PaymentAddressParser,
         private val syncManager: SyncManager,
         private val blockValidatorChain: BlockValidatorChain,
@@ -370,7 +376,11 @@ class BitcoinCore(
     }
 
     fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
-        return transactionCreator.fee(value, address, senderPay, feeRate)
+        val toAddress = address?.let { addressConverter.convert(address) }
+        val changePublicKey = publicKeyManager.changePublicKey()
+        val changeAddress = addressConverter.convert(changePublicKey, bip.scriptType)
+
+        return transactionFeeCalculator.fee(value, feeRate, senderPay, toAddress, changeAddress)
     }
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {

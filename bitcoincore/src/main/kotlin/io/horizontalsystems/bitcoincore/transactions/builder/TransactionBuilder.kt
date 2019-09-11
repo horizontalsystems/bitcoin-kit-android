@@ -1,74 +1,21 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
-import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
-import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
-import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.horizontalsystems.hdwalletkit.HDWallet
 
-class TransactionBuilder {
-    private val unspentOutputsSelector: IUnspentOutputSelector
-    private val scriptBuilder: ScriptBuilder
-    private val inputSigner: InputSigner
-    private val transactionSizeCalculator: TransactionSizeCalculator
+class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private val inputSigner: InputSigner) {
 
-    constructor(wallet: HDWallet, network: Network, unspentOutputSelector: IUnspentOutputSelector, transactionSizeCalculator: TransactionSizeCalculator) {
-        this.unspentOutputsSelector = unspentOutputSelector
-        this.scriptBuilder = ScriptBuilder()
-        this.inputSigner = InputSigner(wallet, network)
-        this.transactionSizeCalculator = transactionSizeCalculator
-    }
+    fun buildTransaction(value: Long, unspentOutputs: List<UnspentOutput>, fee: Long, senderPay: Boolean, address: Address, changeAddress: Address?): FullTransaction {
 
-    constructor(unspentOutputsSelector: UnspentOutputSelector, scriptBuilder: ScriptBuilder, inputSigner: InputSigner, transactionSizeCalculator: TransactionSizeCalculator) {
-        this.unspentOutputsSelector = unspentOutputsSelector
-        this.scriptBuilder = scriptBuilder
-        this.inputSigner = inputSigner
-        this.transactionSizeCalculator = transactionSizeCalculator
-    }
-
-    fun fee(value: Long, feeRate: Int, senderPay: Boolean, address: Address?, changeAddress: Address): Long {
-        if (address == null) {
-            return unspentOutputsSelector.select(
-                    value = value,
-                    feeRate = feeRate,
-                    outputType = ScriptType.P2PKH,
-                    changeType = ScriptType.P2PKH,
-                    senderPay = senderPay
-            ).fee
-        }
-
-        val transaction = buildTransaction(
-                value = value,
-                feeRate = feeRate,
-                senderPay = senderPay,
-                address = address,
-                changeAddress = changeAddress)
-
-        return TransactionSerializer.serialize(transaction, withWitness = false).size * feeRate.toLong()
-    }
-
-    fun buildTransaction(value: Long, address: Address, feeRate: Int, senderPay: Boolean, changeAddress: Address): FullTransaction {
-
-        val selectedOutputsInfo = unspentOutputsSelector.select(
-                value = value,
-                feeRate = feeRate,
-                outputType = address.scriptType,
-                changeType = changeAddress.scriptType,
-                senderPay = senderPay
-        )
-
-        if (!senderPay && selectedOutputsInfo.fee > value) {
+        if (fee > value && !senderPay) {
             throw BuilderException.FeeMoreThanValue()
         }
 
@@ -77,7 +24,7 @@ class TransactionBuilder {
         val outputs = mutableListOf<TransactionOutput>()
 
         //  add inputs
-        for (unspentOutput in selectedOutputsInfo.outputs) {
+        for (unspentOutput in unspentOutputs) {
             val previousOutput = unspentOutput.output
             val transactionInput = TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong())
 
@@ -89,23 +36,27 @@ class TransactionBuilder {
         }
 
         //  calculate fee and add change output if needed
-        val receivedValue = if (senderPay) value else value - selectedOutputsInfo.fee
-        val sentValue = if (senderPay) value + selectedOutputsInfo.fee else value
+        val receivedValue = if (senderPay) value else value - fee
+        val sentValue = if (senderPay) value + fee else value
 
         //  add output
         outputs.add(TransactionOutput(receivedValue, 0, scriptBuilder.lockingScript(address), address.scriptType, address.string, address.hash))
 
-        if (selectedOutputsInfo.addChangeOutput) {
-            outputs.add(TransactionOutput(selectedOutputsInfo.totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), changeAddress.scriptType, changeAddress.string, changeAddress.hash))
+        if (changeAddress != null) {
+            val totalValue = unspentOutputs.fold(0L) { sum, unspent -> sum + unspent.output.value }
+            outputs.add(TransactionOutput(totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), changeAddress.scriptType, changeAddress.string, changeAddress.hash))
         }
 
         // sign inputs
         inputsToSign.forEachIndexed { index, inputToSign ->
-            val unspentOutput = selectedOutputsInfo.outputs[index]
-            val output = unspentOutput.output
+            val unspentOutput = unspentOutputs[index]
             val sigScriptData = inputSigner.sigScriptData(transaction, inputsToSign, outputs, index)
 
-            when (output.scriptType) {
+            when (unspentOutput.output.scriptType) {
+                ScriptType.P2PKH -> {
+                    inputToSign.input.sigScript = scriptBuilder.unlockingScript(sigScriptData)
+                }
+
                 ScriptType.P2WPKH -> {
                     transaction.segwit = true
                     inputToSign.input.witness = sigScriptData
@@ -119,7 +70,7 @@ class TransactionBuilder {
                     inputToSign.input.witness = sigScriptData
                 }
 
-                else -> inputToSign.input.sigScript = scriptBuilder.unlockingScript(sigScriptData)
+                else -> throw BuilderException.NotSupportedScriptType()
             }
         }
 
@@ -130,16 +81,13 @@ class TransactionBuilder {
         return FullTransaction(transaction, inputsToSign.map { it.input }, outputs)
     }
 
-    fun buildTransaction(unspentOutput: UnspentOutput, address: Address, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
+    fun buildTransaction(unspentOutput: UnspentOutput, address: Address, fee: Long, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
 
-        //  calculate fee
-        val emptySignature = ByteArray(transactionSizeCalculator.signatureLength)
-        val emptyPublicKey = ByteArray(transactionSizeCalculator.pubKeyLength)
+        if (unspentOutput.output.scriptType != ScriptType.P2SH) {
+            throw BuilderException.NotSupportedScriptType()
+        }
 
-        val transactionSize = transactionSizeCalculator.transactionSize(listOf(ScriptType.P2SH), listOf(ScriptType.P2PKH)) + signatureScriptFunction.invoke(emptySignature, emptyPublicKey).size
-
-        val fee = transactionSize * feeRate
-        if (fee > unspentOutput.output.value) {
+        if (unspentOutput.output.value < fee) {
             throw BuilderException.FeeMoreThanValue()
         }
 
@@ -172,5 +120,6 @@ class TransactionBuilder {
 
     open class BuilderException : Exception() {
         class FeeMoreThanValue : BuilderException()
+        class NotSupportedScriptType : BuilderException()
     }
 }
