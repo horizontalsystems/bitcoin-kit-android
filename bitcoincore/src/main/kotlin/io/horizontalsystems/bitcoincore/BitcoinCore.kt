@@ -170,7 +170,7 @@ class BitcoinCoreBuilder {
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
         val transactionBuilder = TransactionBuilder(ScriptBuilder(), InputSigner(hdWallet, network))
-        val transactionFeeCalculator = TransactionFeeCalculator(unspentOutputSelector, transactionSizeCalculator, transactionBuilder)
+        val transactionFeeCalculator = TransactionFeeCalculator(unspentOutputSelector, transactionSizeCalculator)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, publicKeyManager, addressConverter, transactionFeeCalculator, bip)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
