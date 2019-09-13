@@ -28,7 +28,7 @@ object IrregularOutputFinderTest : Spek({
         on { lastBlock() } doReturn block
     }
 
-    val irregularScriptTypes = listOf(ScriptType.P2WPKH, ScriptType.P2PK, ScriptType.P2PK)
+    val irregularScriptTypes = listOf(ScriptType.P2WPKHSH, ScriptType.P2WPKH, ScriptType.P2PK)
     val outputFinder by memoized { IrregularOutputFinder(storage) }
 
     describe("#getBloomFilterElements") {

@@ -8,6 +8,13 @@ import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import org.mockito.Mockito
+import java.security.SecureRandom
+
+val random = SecureRandom()
+
+fun randomBytes(size: Int = 32): ByteArray {
+    return ByteArray(size).also { random.nextBytes(it) }
+}
 
 class MockedBlocks(private val storage: IStorage, private val blockHeader: BlockHeader) {
     var newBlocks = mutableListOf<Block>()
