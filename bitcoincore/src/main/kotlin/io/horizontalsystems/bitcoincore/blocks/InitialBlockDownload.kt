@@ -167,12 +167,18 @@ class InitialBlockDownload(
                 syncedPeers.add(peer)
 
                 blockSyncer.downloadCompleted()
-                syncStateListener.onSyncFinish()
                 peer.sendMempoolMessage()
                 logger.info("Peer synced ${peer.host}")
                 syncPeer = null
                 assignNextSyncPeer()
                 peerSyncListeners.forEach { it.onPeerSynced(peer) }
+
+                // Some peers fail to send InventoryMessage within expected time
+                // and become 'synced' in InitialBlockDownload without sending all of their blocks.
+                // In such case, we shouldn't call 'onSyncFinish'
+                if (blockSyncer.localDownloadedBestBlockHeight >= peer.announcedLastBlockHeight) {
+                    syncStateListener.onSyncFinish()
+                }
             }
         }
     }
