@@ -15,6 +15,9 @@ import io.horizontalsystems.bitcoincore.storage.WitnessConverter
  *  VarInt      InputScriptLength    Script length
  *  Variable    InputScript          Script
  *  4 bytes     InputSeqNumber       Input sequence number (irrelevant unless transaction LockTime is non-zero)
+ *
+ *  Note: In order to enable nLockTime and disable Replace-By-Fee, nSequenceNumber must be set to 0xfffffffe (BIP-125)
+ *
  */
 
 @Entity(primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
@@ -31,7 +34,7 @@ class TransactionInput(
         val previousOutputTxHash: ByteArray,
         val previousOutputIndex: Long,
         var sigScript: ByteArray = byteArrayOf(),
-        val sequence: Long = 0xffffffff) {
+        val sequence: Long = 0xfffffffe) {
 
     var transactionHash = byteArrayOf()
     var keyHash: ByteArray? = null
