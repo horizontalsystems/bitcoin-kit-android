@@ -13,13 +13,13 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private val inputSigner: InputSigner) {
 
-    fun buildTransaction(value: Long, unspentOutputs: List<UnspentOutput>, fee: Long, senderPay: Boolean, address: Address, changeAddress: Address?): FullTransaction {
+    fun buildTransaction(value: Long, unspentOutputs: List<UnspentOutput>, fee: Long, senderPay: Boolean, address: Address, changeAddress: Address?, lastBlockHeight: Long): FullTransaction {
 
         if (fee > value && !senderPay) {
             throw BuilderException.FeeMoreThanValue()
         }
 
-        val transaction = Transaction(version = 1, lockTime = 0)
+        val transaction = Transaction(version = 1, lockTime = lastBlockHeight)
         val inputsToSign = mutableListOf<InputToSign>()
         val outputs = mutableListOf<TransactionOutput>()
 
@@ -81,7 +81,7 @@ class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private val i
         return FullTransaction(transaction, inputsToSign.map { it.input }, outputs)
     }
 
-    fun buildTransaction(unspentOutput: UnspentOutput, address: Address, fee: Long, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
+    fun buildTransaction(unspentOutput: UnspentOutput, address: Address, fee: Long, lastBlockHeight: Long, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
 
         if (unspentOutput.output.scriptType != ScriptType.P2SH) {
             throw BuilderException.NotSupportedScriptType()
@@ -105,7 +105,7 @@ class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private val i
         val output = TransactionOutput(receivedValue, 0, scriptBuilder.lockingScript(address), address.scriptType, address.string, address.hash)
 
         //  build transaction
-        val transaction = Transaction(version = 1, lockTime = 0)
+        val transaction = Transaction(version = 1, lockTime = lastBlockHeight)
 
         //  sign input
         val sigScriptData = inputSigner.sigScriptData(transaction, listOf(inputToSign), listOf(output), 0)

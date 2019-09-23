@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
 import io.horizontalsystems.bitcoincore.core.Bip
+import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Address
@@ -17,6 +18,7 @@ class TransactionCreator(
         private val publicKeyManager: PublicKeyManager,
         private val addressConverter: IAddressConverter,
         private val transactionFeeCalculator: TransactionFeeCalculator,
+        private val storage: IStorage,
         private val bip: Bip) {
 
     @Throws
@@ -31,13 +33,15 @@ class TransactionCreator(
             changeAddress = addressConverter.convert(changePubKey, bip.scriptType)
         }
 
+        val lastBlockHeight = storage.lastBlock()?.height ?: 0
         val transaction = builder.buildTransaction(
                 value,
                 feeWithUnspentOutputs.outputs,
                 feeWithUnspentOutputs.fee,
                 senderPay,
                 address,
-                changeAddress
+                changeAddress,
+                lastBlockHeight.toLong()
         )
 
         try {
@@ -57,8 +61,9 @@ class TransactionCreator(
 
         val address = addressConverter.convert(toAddress)
         val fee = transactionFeeCalculator.fee(unspentOutput.output.scriptType, address.scriptType, feeRate, signatureScriptFunction)
+        val lastBlockHeight = storage.lastBlock()?.height ?: 0
 
-        val transaction = builder.buildTransaction(unspentOutput, address, fee, signatureScriptFunction)
+        val transaction = builder.buildTransaction(unspentOutput, address, fee, lastBlockHeight.toLong(), signatureScriptFunction)
 
         try {
             processor.processOutgoing(transaction)

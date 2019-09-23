@@ -1,168 +1,302 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
 import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.argThat
+import com.nhaarman.mockitokotlin2.doReturn
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
-import io.horizontalsystems.bitcoincore.Fixtures
-import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.extensions.toHexString
-import io.horizontalsystems.bitcoincore.managers.SelectedUnspentOutputInfo
-import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.randomBytes
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
-import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
+import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
-import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 
 object TransactionBuilderTest : Spek({
 
-    lateinit var previousTransaction: FullTransaction
-    lateinit var unspentOutputs: SelectedUnspentOutputInfo
-    lateinit var transactionBuilder: TransactionBuilder
+    val toAddressPKH = LegacyAddress("toAddressPKH", randomBytes(32), AddressType.P2PKH)
+    val toAddressSH = LegacyAddress("toAddressSH", randomBytes(32), AddressType.P2SH)
+    val changeAddressPKH = LegacyAddress("changeAddressPKH", randomBytes(32), AddressType.P2PKH)
+    val changeAddressWPKH = SegWitAddress("changeAddressWPKH", randomBytes(20), AddressType.WITNESS, 0)
 
-    val publicKey = mock<PublicKey>()
-    val unspentOutput = mock<UnspentOutput>()
-    val scriptBuilder = mock<ScriptBuilder>()
-    val transactionSizeCalculator = mock<TransactionSizeCalculator>()
-    val inputSigner = mock<InputSigner>()
+    val signatureData = listOf(randomBytes(72), randomBytes(64))
+    val sendingValue = 100_000_000L
+    val fee = 1000L
+    val lastBlockHeight = 1000L
 
-    val addressConverter = AddressConverterChain().also {
-        it.prependConverter(Base58AddressConverter(111, 196))
+    val createOutput: (Address) -> TransactionOutput = {
+        TransactionOutput(0L, 0, ByteArray(0), keyHash = it.hash)
     }
 
-    val toAddressP2PKH = "mmLB5DvGbsb4krT9PJ7WrKmv8DkyvNx1ne"
-    val toAddressP2SH = "2MyQWMrsLsqAMSUeusduAzN6pWuH2V27ykE"
-    val addressP2PKH = addressConverter.convert(toAddressP2PKH)
-    val addressChange = addressConverter.convert(toAddressP2PKH)
-    val addressP2SH = addressConverter.convert(toAddressP2SH)
+    val inputSigner = mock<InputSigner> {
+        on { sigScriptData(any(), any(), any(), any()) } doReturn signatureData
+    }
 
-    val txValue = 93_417_732L
-    val feeRate = 5406
-    val fee = 1_032_655L
-    val unlockingScript = "473044022018f03676d057a3cb350d9778697ff61da47b813c82fe9fb0f2ea87b231fb865b02200706f5cbbc5ebae6f7bd77e346767bce11c8476aea607671d7321e86a3186ec1012102ce0ef85579f055e2184c935e75e71458db8c4b759cd455b0aa5d91761794eef0".hexToByteArray()
+    val scriptBuilder = mock<ScriptBuilder> {
+        on { lockingScript(any()) } doReturn ByteArray(0)
+        on { unlockingScript(any()) } doReturn ScriptBuilder().unlockingScript(signatureData)
+    }
+
+    val transactionOutputHash = randomBytes(32)
+    val transactionOutput = mock<TransactionOutput> {
+        on { value } doReturn 200_000_000L
+        on { index } doReturn 0
+        on { lockingScript } doReturn randomBytes(32)
+        on { scriptType } doReturn ScriptType.P2PKH
+        on { transactionHash } doReturn transactionOutputHash
+    }
+
+    lateinit var unspentOutput: UnspentOutput
+    lateinit var inputToSign: InputToSign
+    lateinit var fullTransaction: FullTransaction
 
     beforeEachTest {
+        val transactionInput = mock<TransactionInput> {
+            on { previousOutputTxHash } doReturn transactionOutputHash
+            on { previousOutputIndex } doReturn 0
+            on { sigScript } doReturn ByteArray(0)
+        }
 
-        transactionBuilder = TransactionBuilder(scriptBuilder, inputSigner)
+        val publicKey = mock<PublicKey> {
+            on { publicKeyHash } doReturn randomBytes(32)
+        }
 
-        previousTransaction = Fixtures.transactionP2PKH
+        unspentOutput = mock {
+            on { this.publicKey } doReturn publicKey
+            on { this.output } doReturn transactionOutput
+        }
 
-        whenever(unspentOutput.output).thenReturn(previousTransaction.outputs[0])
-        whenever(unspentOutput.publicKey).thenReturn(publicKey)
+        inputToSign = mock {
+            on { input } doReturn transactionInput
+            on { previousOutput } doReturn transactionOutput
+            on { previousOutputPublicKey } doReturn publicKey
+        }
+    }
 
-        unspentOutputs = SelectedUnspentOutputInfo(listOf(unspentOutput), previousTransaction.outputs[0].value, fee, true)
-
-        // receive address locking script P2PKH
-        whenever(scriptBuilder.lockingScript(argThat { hash.contentEquals("3fc6d8a8215dd60e42a3916c4def39f40d322e29".hexToByteArray()) })).thenReturn("76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexToByteArray())
-        // receive address locking script P2SH
-        whenever(scriptBuilder.lockingScript(argThat { hash.contentEquals("43922a3f1dc4569f9eccce9a71549d5acabbc0ca".hexToByteArray()) })).thenReturn("76a91437a9bfe84d9e4883ace248509bbf14c9d72af01788ac".hexToByteArray())
-        // change address locking script
-        whenever(scriptBuilder.lockingScript(argThat { hash.contentEquals("563e1365e6567bb0115a5158bfc94fe834067fd6".hexToByteArray()) })).thenReturn("76a914d1997b4cc28ae0e432461479b5e89106f9d4eef488ac".hexToByteArray())
-
-        whenever(inputSigner.sigScriptData(any(), any(), any(), any())).thenReturn(listOf())
-        whenever(scriptBuilder.unlockingScript(any())).thenReturn(unlockingScript)
+    val builder by memoized {
+        TransactionBuilder(scriptBuilder, inputSigner)
     }
 
     describe("#buildTransaction") {
 
-        it("P2PKH_SenderPay") {
-            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+        context("when unspentOutput is P2PKH, senderPay is true, addChangeOutput is true") {
+            beforeEach {
+                fullTransaction = builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, true, toAddressPKH, changeAddressPKH, lastBlockHeight)
+            }
 
-            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, true, addressP2PKH, null)
+            it("adds input from unspentOutput") {
+                assertEquals(1, fullTransaction.inputs.size)
+                assertArrayEquals(inputToSign.input.previousOutputTxHash, fullTransaction.inputs[0].previousOutputTxHash)
+            }
 
-            assertTrue(transaction.header.isMine)
-            assertEquals(Transaction.Status.NEW, transaction.header.status)
+            it("adds 1 output for toAddress") {
+                val toOutput = createOutput(toAddressPKH)
 
-            assertEquals(1, transaction.inputs.size)
-            // assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
+                assertEquals(2, fullTransaction.outputs.size)
+                assertEquals(0, fullTransaction.outputs[0].index)
+                assertEquals(toOutput.keyHash, fullTransaction.outputs[0].keyHash)
+            }
 
-            assertEquals(1, transaction.outputs.size)
+            it("adds 1 output for changeAddress") {
+                val toOutput = createOutput(changeAddressPKH)
 
-            assertEquals(toAddressP2PKH, transaction.outputs[0].address)
-            assertEquals(txValue, transaction.outputs[0].value)
+                assertEquals(2, fullTransaction.outputs.size)
+                assertEquals(1, fullTransaction.outputs[1].index)
+                assertEquals(toOutput.keyHash, fullTransaction.outputs[1].keyHash)
+            }
+
+            it("signs the input") {
+                val signature = OpCodes.push(signatureData[0]) + OpCodes.push(signatureData[1])
+                assertArrayEquals(signature, fullTransaction.inputs[0].sigScript)
+            }
+
+            it("sets transaction properties") {
+                assertEquals(Transaction.Status.NEW, fullTransaction.header.status)
+                assertEquals(true, fullTransaction.header.isMine)
+                assertEquals(true, fullTransaction.header.isOutgoing)
+                assertEquals(false, fullTransaction.header.segwit)
+            }
         }
 
-        it("P2PKH_ReceiverPay") {
-            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+        context("when changeAddress is nil") {
+            beforeEach {
+                fullTransaction = builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, true, toAddressPKH, null, lastBlockHeight)
+            }
 
-            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
+            it("doesn't add 1 output for changeAddress") {
+                val output = fullTransaction.outputs[0]
 
-            assertTrue(transaction.header.isMine)
-            assertEquals(Transaction.Status.NEW, transaction.header.status)
-
-            assertEquals(1, transaction.inputs.size)
-            // assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
-            // assertNull(transaction.outputs[0].publicKey)
-
-            assertEquals(1, transaction.outputs.size)
-
-            assertEquals(toAddressP2PKH, transaction.outputs[0].address)
-            assertEquals((txValue - fee), transaction.outputs[0].value)
+                assertEquals(1, fullTransaction.outputs.size)
+                assertEquals(sendingValue, output.value)
+                assertArrayEquals(toAddressPKH.hash, output.keyHash)
+            }
         }
 
-//        it("P2SH") {
-//            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2SH
-//
-//            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2SH, null)
-//
-//            assertTrue(transaction.header.isMine)
-//            assertEquals(Transaction.Status.NEW, transaction.header.status)
-//
-//            assertEquals(1, transaction.inputs.size)
-//            // assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
-//
-//            assertEquals(1, transaction.outputs.size)
-//
-//            assertEquals(toAddressP2SH, transaction.outputs[0].address)
-//            assertEquals((txValue - fee), transaction.outputs[0].value)
-//        }
+        context("when senderPay is false") {
+            beforeEach {
+                fullTransaction = builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, false, toAddressPKH, changeAddressPKH, lastBlockHeight)
+            }
 
-        it("WithoutChangeOutput") {
-            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+            it("subtracts fee from value in receiver output") {
+                val receivedValue = sendingValue - fee
+                val output1 = fullTransaction.outputs[0]
 
-            val txValue = unspentOutputs.outputs[0].output.value
+                assertEquals(receivedValue, output1.value)
+                assertArrayEquals(toAddressPKH.hash, output1.keyHash)
+            }
 
-            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
+            it("puts the remained value in change output") {
+                val changeValue = unspentOutput.output.value - sendingValue
+                val output2 = fullTransaction.outputs[1]
 
-            assertEquals(1, transaction.inputs.size)
-            //assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
-
-            assertEquals(1, transaction.outputs.size)
-            assertEquals(toAddressP2PKH, transaction.outputs[0].address)
-            assertEquals((txValue - fee), transaction.outputs[0].value)
+                assertEquals(changeValue, output2.value)
+                assertArrayEquals(changeAddressPKH.hash, output2.keyHash)
+            }
         }
 
-        it("ChangeNotAddedForDust") {
-            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+        context("when toAddress and/or changeAddress types are P2SH or P2WPKH") {
+            beforeEach {
+                fullTransaction = builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, true, toAddressSH, changeAddressWPKH, lastBlockHeight)
+            }
 
-            val txValue = unspentOutputs.outputs[0].output.value - transactionSizeCalculator.outputSize(scripType = ScriptType.P2PKH) * feeRate
+            it("generates output with SH") {
+                val output1 = fullTransaction.outputs[0]
 
-            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
+                assertEquals(2, fullTransaction.outputs.size)
+                assertEquals(ScriptType.P2SH, output1.scriptType)
+                assertArrayEquals(toAddressSH.hash, output1.keyHash)
+            }
 
-            assertEquals(1, transaction.inputs.size)
-            //assertEquals(unspentOutputs.outputs[0], transaction.inputs[0]?.previousOutput)
+            it("generates output with WPKH") {
+                val changeOutput = fullTransaction.outputs[1]
 
-            assertEquals(1, transaction.outputs.size)
-            assertEquals(toAddressP2PKH, transaction.outputs[0].address)
-            assertEquals((txValue - fee), transaction.outputs[0].value)
+                assertEquals(2, fullTransaction.outputs.size)
+
+                assertEquals(ScriptType.P2WPKH, changeOutput.scriptType)
+                assertArrayEquals(changeAddressWPKH.hash, changeOutput.keyHash)
+            }
         }
 
-        it("InputsSigned") {
-            unspentOutputs.outputs[0].output.scriptType = ScriptType.P2PKH
+        context("when unspent output is P2WPKH") {
+            beforeEach {
+                whenever(unspentOutput.output.scriptType).thenReturn(ScriptType.P2WPKH)
 
-            val transaction = transactionBuilder.buildTransaction(txValue, unspentOutputs.outputs, unspentOutputs.fee, false, addressP2PKH, null)
+                fullTransaction = builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, true, toAddressPKH, changeAddressPKH, lastBlockHeight)
+            }
 
-            assertEquals(unlockingScript.toHexString(), transaction.inputs[0].sigScript.toHexString())
+            it("sets P2WPKH unlocking script to witnessData") {
+                assertArrayEquals(signatureData.toTypedArray(), fullTransaction.inputs[0].witness.toTypedArray())
+            }
+
+            it("sets empty data to signatureScript") {
+                assertArrayEquals(ByteArray(0), fullTransaction.inputs[0].sigScript)
+            }
+
+            it("sets segWit flag to true") {
+                assertTrue(fullTransaction.header.segwit)
+            }
         }
 
+        context("when unspent output is P2WPKH(SH") {
+            lateinit var signatureScript: ByteArray
+
+            beforeEach {
+                val witnessProgram = OpCodes.scriptWPKH(unspentOutput.publicKey.publicKeyHash)
+                signatureScript = ScriptBuilder().unlockingScript(listOf(witnessProgram))
+
+                whenever(unspentOutput.output.scriptType).thenReturn(ScriptType.P2WPKHSH)
+                whenever(scriptBuilder.unlockingScript(any())).thenReturn(signatureScript)
+
+                fullTransaction = builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, true, toAddressPKH, changeAddressPKH, lastBlockHeight)
+            }
+
+            it("sets P2WPKH unlocking script to witnessData") {
+                assertArrayEquals(signatureData.toTypedArray(), fullTransaction.inputs[0].witness.toTypedArray())
+            }
+
+            it("sets P2SH unlocking script to signatureScript") {
+                assertArrayEquals(signatureScript, fullTransaction.inputs[0].sigScript)
+            }
+
+            it("sets segWit flag to true") {
+                assertTrue(fullTransaction.header.segwit)
+            }
+        }
+
+        context("value less than fee") {
+            it("throws feeMoreThanValue exception") {
+                try {
+                    builder.buildTransaction(fee - 1, listOf(unspentOutput), fee, false, toAddressPKH, changeAddressPKH, lastBlockHeight)
+                    fail("Expecting an exception")
+                } catch (ex: TransactionBuilder.BuilderException) {
+                    assertTrue(ex is TransactionBuilder.BuilderException.FeeMoreThanValue)
+                } catch (ex: Exception) {
+                    fail("Expecting an exception")
+                }
+            }
+        }
+
+        context("when unspent output is not supported") {
+            beforeEach {
+                whenever(unspentOutput.output.scriptType).thenReturn(ScriptType.P2SH)
+            }
+
+            it("throws notSupportedScriptType exception") {
+                try {
+                    builder.buildTransaction(sendingValue, listOf(unspentOutput), fee, false, toAddressPKH, changeAddressPKH, lastBlockHeight)
+                    fail("Expecting an exception")
+                } catch (ex: TransactionBuilder.BuilderException) {
+                    assertTrue(ex is TransactionBuilder.BuilderException.NotSupportedScriptType)
+                } catch (ex: Exception) {
+                    fail("Expecting an exception")
+                }
+            }
+        }
     }
 
+    describe("#buildTransaction(P2SH)") {
+        val signatureScript = randomBytes(100)
+        val signatureScriptFunction: (a: ByteArray, b: ByteArray) -> ByteArray = { _, _ ->
+            signatureScript
+        }
+
+        beforeEach {
+            whenever(transactionOutput.scriptType).thenReturn(ScriptType.P2SH)
+        }
+
+        context("when fee is valid, unspent output type is P2SH") {
+            beforeEach {
+                fullTransaction = builder.buildTransaction(unspentOutput, toAddressPKH, fee, lastBlockHeight, signatureScriptFunction)
+            }
+
+            it("adds input from unspentOutput") {
+                assertEquals(1, fullTransaction.inputs.size)
+                assertEquals(inputToSign.input.previousOutputIndex, fullTransaction.inputs[0].previousOutputIndex)
+                assertArrayEquals(inputToSign.input.previousOutputTxHash, fullTransaction.inputs[0].previousOutputTxHash)
+            }
+
+            it("adds 1 output for toAddress") {
+                val toOutput = createOutput(toAddressPKH)
+
+                assertEquals(1, fullTransaction.outputs.size)
+                assertEquals(0, fullTransaction.outputs[0].index)
+                assertEquals(toOutput.keyHash, fullTransaction.outputs[0].keyHash)
+            }
+
+            it("signs the input") {
+                assertArrayEquals(signatureScript, fullTransaction.inputs[0].sigScript)
+            }
+
+            it("sets transaction properties") {
+                assertEquals(Transaction.Status.NEW, fullTransaction.header.status)
+                assertEquals(true, fullTransaction.header.isMine)
+                assertEquals(false, fullTransaction.header.isOutgoing)
+                assertEquals(false, fullTransaction.header.segwit)
+            }
+        }
+    }
 })
