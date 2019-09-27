@@ -29,7 +29,7 @@ import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
 import java.util.concurrent.Executor
 
-class BitcoinCoreBuilder {
+open class BitcoinCoreBuilder {
 
     // required parameters
     private var context: Context? = null
@@ -47,6 +47,7 @@ class BitcoinCoreBuilder {
     private var peerSize = 10
     private var blockHeaderHasher: IHasher? = null
     private var transactionInfoConverter: ITransactionInfoConverter? = null
+    lateinit var hdWallet : HDWallet
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -63,7 +64,7 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setNetwork(network: Network): BitcoinCoreBuilder {
+    open fun setNetwork(network: Network): BitcoinCoreBuilder {
         this.network = network
         return this
     }
@@ -113,7 +114,7 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun build(): BitcoinCore {
+    open fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
         val network = checkNotNull(this.network)
@@ -133,7 +134,7 @@ class BitcoinCoreBuilder {
 
         val connectionManager = ConnectionManager(context)
 
-        val hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
+        hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
 
         val publicKeyManager = PublicKeyManager.create(storage, hdWallet, restoreKeyConverterChain)
 
@@ -230,6 +231,8 @@ class BitcoinCoreBuilder {
                 .addMessageParser(VerAckMessageParser())
                 .addMessageParser(VersionMessageParser())
                 .addMessageParser(RejectMessageParser())
+
+
 
         bitcoinCore.addMessageSerializer(FilterLoadMessageSerializer())
                 .addMessageSerializer(GetBlocksMessageSerializer())
@@ -516,5 +519,9 @@ class BitcoinCore(
         const val targetSpacing = 10 * 60                         // 10 minutes per block.
         const val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
         const val heightInterval = targetTimespan / targetSpacing // 2016 blocks
+    }
+
+    fun replaceTransactionBuilder(transactionBuilder: TransactionBuilder) {
+        transactionCreator.replaceTransactionBuilder(transactionBuilder)
     }
 }

@@ -20,7 +20,7 @@ interface IMessageSerializer {
     fun serialize(message: IMessage): ByteArray?
 }
 
-class NetworkMessageParser(private val magic: Long) {
+open class NetworkMessageParser(private val magic: Long) {
     private var messageParsers = hashMapOf<String, IMessageParser>()
 
     /**
@@ -73,13 +73,13 @@ class NetworkMessageParser(private val magic: Long) {
         return String(b, StandardCharsets.UTF_8)
     }
 
-    private fun getCheckSum(payload: ByteArray): ByteArray {
+    open fun getCheckSum(payload: ByteArray): ByteArray {
         val hash = HashUtils.doubleSha256(payload)
         return Arrays.copyOfRange(hash, 0, 4)
     }
 }
 
-class NetworkMessageSerializer(private val magic: Long) {
+open class NetworkMessageSerializer(private val magic: Long) {
     private var messageSerializers = mutableListOf<IMessageSerializer>()
 
     fun serialize(msg: IMessage): ByteArray {
@@ -122,7 +122,7 @@ class NetworkMessageSerializer(private val magic: Long) {
         return buffer
     }
 
-    private fun getCheckSum(payload: ByteArray): ByteArray {
+    open fun getCheckSum(payload: ByteArray): ByteArray {
         val hash = HashUtils.doubleSha256(payload)
         return Arrays.copyOfRange(hash, 0, 4)
     }

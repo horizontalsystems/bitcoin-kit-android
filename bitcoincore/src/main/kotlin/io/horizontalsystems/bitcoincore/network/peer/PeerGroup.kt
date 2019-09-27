@@ -13,8 +13,8 @@ class PeerGroup(
         private val network: Network,
         private val peerManager: PeerManager,
         peerSize: Int,
-        private val networkMessageParser: NetworkMessageParser,
-        private val networkMessageSerializer: NetworkMessageSerializer,
+        private var networkMessageParser: NetworkMessageParser,
+        private var networkMessageSerializer: NetworkMessageSerializer,
         private val connectionManager: ConnectionManager,
         private val localDownloadedBestBlockHeight: Int)
     : Peer.Listener, PeerAddressManager.Listener {
@@ -174,4 +174,12 @@ class PeerGroup(
     // PeerGroup Exceptions
     //
     class Error(message: String) : Exception(message)
+
+    fun setNetworkMessageSerializer(networkMessageSerializer: NetworkMessageSerializer) {
+        this.networkMessageSerializer = networkMessageSerializer
+    }
+
+    fun setNetworkMessageParser(networkMessageParser: NetworkMessageParser) {
+        this.networkMessageParser = networkMessageParser
+    }
 }

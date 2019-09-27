@@ -7,11 +7,12 @@ import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.builder.InputSigner
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
 class TransactionCreator(
-        private val builder: TransactionBuilder,
+        private var builder: TransactionBuilder,
         private val processor: TransactionProcessor,
         private val transactionSender: TransactionSender,
         private val bloomFilterManager: BloomFilterManager,
@@ -78,5 +79,9 @@ class TransactionCreator(
 
     open class TransactionCreationException(msg: String) : Exception(msg)
     class TransactionAlreadyExists(msg: String) : TransactionCreationException(msg)
+
+    fun replaceTransactionBuilder(transactionBuilder: TransactionBuilder) {
+        builder = transactionBuilder
+    }
 
 }

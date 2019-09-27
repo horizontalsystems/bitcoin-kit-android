@@ -14,7 +14,7 @@ class BlockHeader(
         val nonce: Long,
         val hash: ByteArray)
 
-class FullTransaction(val header: Transaction, val inputs: List<TransactionInput>, val outputs: List<TransactionOutput>) {
+open class FullTransaction(val header: Transaction, val inputs: List<TransactionInput>, val outputs: List<TransactionOutput>) {
 
     init {
         if (header.hash.isEmpty()) {

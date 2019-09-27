@@ -37,4 +37,22 @@ class ApiManager(private val host: String) {
                 }
     }
 
+    @Throws(Exception::class)
+    fun getString(file: String): String {
+        val resource = "$host/$file"
+
+        logger.info("Fetching $resource")
+
+        return URL(resource)
+                .openConnection()
+                .apply {
+                    connectTimeout = 5000
+                    readTimeout = 60000
+                    setRequestProperty("Accept", "text/plain")
+                }.getInputStream()
+                .use {
+                    it.bufferedReader().readLine()
+                }
+    }
+
 }

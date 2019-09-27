@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoincore.transactions.builder
+package io.horizontalsystems.groestlcoinkit.transactions.builder
 
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -7,13 +7,16 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.builder.InputSigner
+import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.groestlcoinkit.storage.GroestlcoinFullTransaction
 
-open class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private var inputSigner: InputSigner) {
+class GroestlcoinTransactionBuilder(private val scriptBuilder: ScriptBuilder, private var inputSigner: InputSigner) : TransactionBuilder(scriptBuilder, inputSigner){
 
-    open fun buildTransaction(value: Long, unspentOutputs: List<UnspentOutput>, fee: Long, senderPay: Boolean, address: Address, changeAddress: Address?, lastBlockHeight: Long): FullTransaction {
+    override fun buildTransaction(value: Long, unspentOutputs: List<UnspentOutput>, fee: Long, senderPay: Boolean, address: Address, changeAddress: Address?, lastBlockHeight: Long): FullTransaction {
 
         if (fee > value && !senderPay) {
             throw BuilderException.FeeMoreThanValue()
@@ -78,10 +81,10 @@ open class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private 
         transaction.isMine = true
         transaction.isOutgoing = true
 
-        return FullTransaction(transaction, inputsToSign.map { it.input }, outputs)
+        return GroestlcoinFullTransaction(transaction, inputsToSign.map { it.input }, outputs)
     }
 
-    open fun buildTransaction(unspentOutput: UnspentOutput, address: Address, fee: Long, lastBlockHeight: Long, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
+    override fun buildTransaction(unspentOutput: UnspentOutput, address: Address, fee: Long, lastBlockHeight: Long, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
 
         if (unspentOutput.output.scriptType != ScriptType.P2SH) {
             throw BuilderException.NotSupportedScriptType()
@@ -115,11 +118,6 @@ open class TransactionBuilder(private val scriptBuilder: ScriptBuilder, private 
         transaction.isMine = true
         transaction.isOutgoing = false
 
-        return FullTransaction(transaction, listOf(inputToSign.input), listOf(output))
-    }
-
-    open class BuilderException : Exception() {
-        class FeeMoreThanValue : BuilderException()
-        class NotSupportedScriptType : BuilderException()
+        return GroestlcoinFullTransaction(transaction, listOf(inputToSign.input), listOf(output))
     }
 }

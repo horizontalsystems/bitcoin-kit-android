@@ -8,9 +8,9 @@ import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.hdwalletkit.HDWallet
 
-class InputSigner(private val hdWallet: HDWallet, val network: Network) {
+open class InputSigner(private val hdWallet: HDWallet, val network: Network) {
 
-    fun sigScriptData(transaction: Transaction, inputsToSign: List<InputToSign>, outputs: List<TransactionOutput>, index: Int): List<ByteArray> {
+    open fun sigScriptData(transaction: Transaction, inputsToSign: List<InputToSign>, outputs: List<TransactionOutput>, index: Int): List<ByteArray> {
 
         val input = inputsToSign[index]
         val prevOutput = input.previousOutput
