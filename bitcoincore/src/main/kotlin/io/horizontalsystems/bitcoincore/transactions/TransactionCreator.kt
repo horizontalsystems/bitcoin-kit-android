@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
-import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
@@ -15,34 +12,15 @@ class TransactionCreator(
         private val processor: TransactionProcessor,
         private val transactionSender: TransactionSender,
         private val bloomFilterManager: BloomFilterManager,
-        private val publicKeyManager: PublicKeyManager,
         private val addressConverter: IAddressConverter,
         private val transactionFeeCalculator: TransactionFeeCalculator,
-        private val storage: IStorage,
-        private val bip: Bip) {
+        private val storage: IStorage) {
 
     @Throws
     fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean): FullTransaction {
         transactionSender.canSendTransaction()
 
-        val address = addressConverter.convert(toAddress)
-        val feeWithUnspentOutputs = transactionFeeCalculator.feeWithUnspentOutputs(value, feeRate, address.scriptType, bip.scriptType, senderPay)
-        var changeAddress: Address? = null
-        if (feeWithUnspentOutputs.addChangeOutput) {
-            val changePubKey = publicKeyManager.changePublicKey()
-            changeAddress = addressConverter.convert(changePubKey, bip.scriptType)
-        }
-
-        val lastBlockHeight = storage.lastBlock()?.height ?: 0
-        val transaction = builder.buildTransaction(
-                value,
-                feeWithUnspentOutputs.outputs,
-                feeWithUnspentOutputs.fee,
-                senderPay,
-                address,
-                changeAddress,
-                lastBlockHeight.toLong()
-        )
+        val transaction = builder.buildTransaction(toAddress, value, feeRate, senderPay)
 
         try {
             processor.processOutgoing(transaction)

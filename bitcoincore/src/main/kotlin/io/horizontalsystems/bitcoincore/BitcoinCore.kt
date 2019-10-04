@@ -19,8 +19,7 @@ import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.*
-import io.horizontalsystems.bitcoincore.transactions.builder.InputSigner
-import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoincore.transactions.builder.*
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.*
@@ -171,9 +170,15 @@ class BitcoinCoreBuilder {
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val transactionBuilder = TransactionBuilder(ScriptBuilder(), InputSigner(hdWallet, network))
+        val inputSigner = InputSigner(hdWallet, network)
+        val scriptBuilder = ScriptBuilder()
+        val outputSetter = OutputSetter(scriptBuilder, addressConverter)
+        val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, scriptBuilder, bip.scriptType)
+        val signer = TransactionSigner(scriptBuilder, inputSigner)
+        val lockTimeSetter = LockTimeSetter(storage)
+        val transactionBuilder = TransactionBuilder(scriptBuilder, inputSigner, outputSetter, inputSetter, signer, lockTimeSetter)
         val transactionFeeCalculator = TransactionFeeCalculator(unspentOutputSelector, transactionSizeCalculator)
-        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, publicKeyManager, addressConverter, transactionFeeCalculator, storage, bip)
+        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, addressConverter, transactionFeeCalculator, storage)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)
