@@ -44,6 +44,7 @@ dependencies {
     kapt "android.arch.persistence.room:compiler:1.1.1"
 
     api project(':bitcoincore')
+    api project(':hodler')
 
     // Test helpers
     testImplementation 'junit:junit:4.12'

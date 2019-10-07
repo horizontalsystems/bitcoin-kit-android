@@ -172,7 +172,8 @@ class BitcoinCoreBuilder {
         val transactionSizeCalculator = TransactionSizeCalculator()
         val inputSigner = InputSigner(hdWallet, network)
         val scriptBuilder = ScriptBuilder()
-        val outputSetter = OutputSetter(scriptBuilder, addressConverter)
+        val pluginManager = PluginManager(scriptBuilder, addressConverter)
+        val outputSetter = OutputSetter(scriptBuilder, addressConverter, pluginManager)
         val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, scriptBuilder, bip.scriptType)
         val signer = TransactionSigner(scriptBuilder, inputSigner)
         val lockTimeSetter = LockTimeSetter(storage)
@@ -220,6 +221,7 @@ class BitcoinCoreBuilder {
         bitcoinCore.networkMessageParser = networkMessageParser
         bitcoinCore.networkMessageSerializer = networkMessageSerializer
         bitcoinCore.unspentOutputSelector = unspentOutputSelector
+        bitcoinCore.pluginManager = pluginManager
 
         peerGroup.peerTaskHandler = bitcoinCore.peerTaskHandlerChain
         peerGroup.inventoryItemsHandler = bitcoinCore.inventoryItemsHandlerChain
@@ -306,6 +308,7 @@ class BitcoinCore(
     lateinit var initialBlockDownload: InitialBlockDownload
     lateinit var unspentOutputSelector: UnspentOutputSelectorChain
     lateinit var watchedTransactionManager: WatchedTransactionManager
+    lateinit var pluginManager: PluginManager
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
@@ -353,6 +356,10 @@ class BitcoinCore(
         blockValidatorChain.add(validator)
     }
 
+    fun addPlugin(plugin: IPlugin) {
+        pluginManager.addPlugin(plugin)
+    }
+
     // END: Extending
 
     var listenerExecutor: Executor = DirectExecutor()
@@ -392,13 +399,13 @@ class BitcoinCore(
         return transactionFeeCalculator.fee(value, feeRate, senderPay, toAddress, changeAddress)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, extraData: Map<String, Map<String, Any>>): FullTransaction {
+        return transactionCreator.create(address, value, feeRate, senderPay, extraData)
     }
 
     fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay)
+        return transactionCreator.create(address.string, value, feeRate, senderPay, mapOf())
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {

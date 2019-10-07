@@ -18,6 +18,7 @@ import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.horizontalsystems.hodler.HodlerPlugin
 import io.reactivex.Single
 
 class BitcoinKit : AbstractKit {
@@ -120,6 +121,8 @@ class BitcoinKit : AbstractKit {
                 bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP84)
             }
         }
+
+        bitcoinCore.addPlugin(HodlerPlugin())
     }
 
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {

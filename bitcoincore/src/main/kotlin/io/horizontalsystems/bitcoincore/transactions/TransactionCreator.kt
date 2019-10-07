@@ -17,10 +17,10 @@ class TransactionCreator(
         private val storage: IStorage) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean): FullTransaction {
+    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
         transactionSender.canSendTransaction()
 
-        val transaction = builder.buildTransaction(toAddress, value, feeRate, senderPay)
+        val transaction = builder.buildTransaction(toAddress, value, feeRate, senderPay, extraData)
 
         try {
             processor.processOutgoing(transaction)
