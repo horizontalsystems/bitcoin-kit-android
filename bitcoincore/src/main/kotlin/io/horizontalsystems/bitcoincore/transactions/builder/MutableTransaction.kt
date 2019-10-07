@@ -7,6 +7,8 @@ import io.horizontalsystems.bitcoincore.storage.InputToSign
 
 class MutableTransaction {
     lateinit var paymentOutput: TransactionOutput
+    var changeOutput: TransactionOutput? = null
+    var dataOutput: TransactionOutput? = null
 
     val outputs: List<TransactionOutput>
         get() {
@@ -14,18 +16,23 @@ class MutableTransaction {
             changeOutput?.let {
                 list.add(it)
             }
+            dataOutput?.let {
+                list.add(it)
+            }
             return list
         }
 
-    val transaction = Transaction(1, 0)
-    var changeOutput: TransactionOutput? = null
-
     val inputsToSign = mutableListOf<InputToSign>()
+    val transaction = Transaction(1, 0)
 
     init {
         transaction.status = Transaction.Status.NEW
         transaction.isMine = true
         transaction.isOutgoing = true
+    }
+
+    fun getExtraDataOutputSize() : Long {
+        return 0
     }
 
     fun addInput(inputToSign: InputToSign) {

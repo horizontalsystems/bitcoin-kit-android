@@ -19,15 +19,15 @@ class TransactionBuilder(
         private val lockTimeSetter: LockTimeSetter
 ) {
 
-    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean): FullTransaction {
-        val transaction = MutableTransaction()
+    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
+        val mutableTransaction = MutableTransaction()
 
-        outputSetter.setOutputs(transaction, toAddress, value)
-        inputSetter.setInputs(transaction, feeRate, senderPay)
-        lockTimeSetter.setLockTime(transaction)
-        signer.sign(transaction)
+        outputSetter.setOutputs(mutableTransaction, toAddress, value, extraData)
+        inputSetter.setInputs(mutableTransaction, feeRate, senderPay)
+        lockTimeSetter.setLockTime(mutableTransaction)
+        signer.sign(mutableTransaction)
 
-        return transaction.build()
+        return mutableTransaction.build()
     }
 
     fun buildTransaction(unspentOutput: UnspentOutput, address: Address, fee: Long, lastBlockHeight: Long, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
