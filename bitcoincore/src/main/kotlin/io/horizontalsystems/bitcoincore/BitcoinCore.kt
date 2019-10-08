@@ -140,7 +140,9 @@ class BitcoinCoreBuilder {
 
         val irregularOutputFinder = IrregularOutputFinder(storage)
         val transactionOutputsCache = OutputsCache.create(storage)
-        val transactionExtractor = TransactionExtractor(addressConverter, storage)
+        val scriptBuilder = ScriptBuilder()
+        val pluginManager = PluginManager(scriptBuilder, addressConverter, storage)
+        val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager)
         val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider)
 
         val kitStateProvider = KitStateProvider()
@@ -171,8 +173,6 @@ class BitcoinCoreBuilder {
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
         val inputSigner = InputSigner(hdWallet, network)
-        val scriptBuilder = ScriptBuilder()
-        val pluginManager = PluginManager(scriptBuilder, addressConverter)
         val outputSetter = OutputSetter(scriptBuilder, addressConverter, pluginManager)
         val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, scriptBuilder, bip.scriptType)
         val signer = TransactionSigner(scriptBuilder, inputSigner)

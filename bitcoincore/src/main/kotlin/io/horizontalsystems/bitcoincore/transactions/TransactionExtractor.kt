@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -9,9 +10,10 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 import java.util.*
 
-class TransactionExtractor(private val addressConverter: IAddressConverter, private val storage: IStorage) {
+class TransactionExtractor(private val addressConverter: IAddressConverter, private val storage: IStorage, private val pluginManager: PluginManager) {
 
     fun extractOutputs(transaction: FullTransaction) {
+        var nullDataOutput : TransactionOutput? = null
         for (output in transaction.outputs) {
             val payload: ByteArray
             val scriptType: Int
@@ -30,6 +32,10 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             } else if (isP2WPKH(lockingScript)) {
                 payload = lockingScript
                 scriptType = ScriptType.P2WPKH
+            } else if (isNullData(lockingScript)) {
+                payload = lockingScript
+                scriptType = ScriptType.NULL_DATA
+                nullDataOutput = output
             } else continue
 
             output.scriptType = scriptType
@@ -41,6 +47,11 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
                 output.publicKeyPath = it.path
             }
         }
+
+        nullDataOutput?.let {
+            pluginManager.processTransactionWithNullData(transaction, it)
+        }
+
     }
 
     fun extractInputs(transaction: FullTransaction) {
@@ -159,6 +170,10 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
         return (lockingScript.size == 22 &&
                 (lockingScript[0] == 0.toByte() || lockingScript[0] in 0x50..0x61) &&
                 lockingScript[1] == 20.toByte())
+    }
+
+    private fun isNullData(lockingScript: ByteArray): Boolean {
+        return lockingScript[0] == OP_RETURN.toByte()
     }
 
     //
