@@ -20,7 +20,7 @@ class TransactionBuilder(
 ) {
 
     fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
-        val mutableTransaction = MutableTransaction()
+        val mutableTransaction = MutableTransaction(scriptBuilder)
 
         outputSetter.setOutputs(mutableTransaction, toAddress, value, extraData)
         inputSetter.setInputs(mutableTransaction, feeRate, senderPay)

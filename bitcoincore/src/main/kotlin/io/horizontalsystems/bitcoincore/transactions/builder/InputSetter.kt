@@ -3,9 +3,7 @@ package io.horizontalsystems.bitcoincore.transactions.builder
 import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.TransactionInput
-import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.InputToSign
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
@@ -13,14 +11,13 @@ class InputSetter(
         private val unspentOutputSelector: IUnspentOutputSelector,
         private val publicKeyManager: PublicKeyManager,
         private val addressConverter: IAddressConverter,
-        private val scriptBuilder: ScriptBuilder,
         private val changeScriptType: Int
 ) {
     fun setInputs(mutableTransaction: MutableTransaction, feeRate: Int, senderPay: Boolean) {
-        val value = mutableTransaction.paymentOutput.value
+        val value = mutableTransaction.recipientValue
 
         val extraDataOutputSize = mutableTransaction.getExtraDataOutputSize()
-        val unspentOutputInfo = unspentOutputSelector.select(value, feeRate, mutableTransaction.paymentOutput.scriptType, changeScriptType, senderPay)
+        val unspentOutputInfo = unspentOutputSelector.select(value, feeRate, mutableTransaction.recipientAddress.scriptType, changeScriptType, senderPay)
 
         val unspentOutputs = unspentOutputInfo.outputs
         for (unspentOutput in unspentOutputs) {
@@ -39,7 +36,7 @@ class InputSetter(
         val fee = unspentOutputInfo.fee
 
         val receivedValue = if (senderPay) value else value - fee
-        mutableTransaction.paymentOutput.value = receivedValue
+        mutableTransaction.recipientValue = receivedValue
 
         if (unspentOutputInfo.addChangeOutput) {
             val changePubKey = publicKeyManager.changePublicKey()
@@ -47,9 +44,9 @@ class InputSetter(
 
             val sentValue = if (senderPay) value + fee else value
             val totalValue = unspentOutputs.fold(0L) { sum, unspent -> sum + unspent.output.value }
-            val changeOutput = TransactionOutput(totalValue - sentValue, 1, scriptBuilder.lockingScript(changeAddress), changeAddress.scriptType, changeAddress.string, changeAddress.hash)
 
-            mutableTransaction.changeOutput = changeOutput
+            mutableTransaction.changeAddress = changeAddress
+            mutableTransaction.changeValue = totalValue - sentValue
         }
     }
 
