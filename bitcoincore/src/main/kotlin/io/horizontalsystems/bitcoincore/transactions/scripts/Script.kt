@@ -11,6 +11,7 @@ object ScriptType {
     const val P2WPKH = 4    // pay to witness pubkey hash
     const val P2WSH = 5     // pay to witness script hash
     const val P2WPKHSH = 6  // P2WPKH nested in P2SH
+    const val NULL_DATA = 7
     const val UNKNOWN = 0
 }
 
