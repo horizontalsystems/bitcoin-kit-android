@@ -30,8 +30,22 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
             val pluginId = nullDataChunksIterator.next()
             val plugin = plugins[pluginId.opcode] ?: break
 
-            plugin.processTransactionWithNullData(transaction, nullDataChunksIterator, storage)
+            plugin.processTransactionWithNullData(transaction, nullDataChunksIterator, storage, addressConverter)
         }
+    }
+
+    fun isSpendable(output: TransactionOutput): Boolean {
+        val plugin = plugins[output.pluginId] ?: return true
+
+        return plugin.isSpendable(output)
+    }
+
+    fun getTransactionLockTime(transaction: MutableTransaction): Long? {
+        val lockTimes = transaction.inputsToSign.mapNotNull { inputToSign ->
+            plugins[inputToSign.previousOutput.pluginId]?.getTransactionLockTime(inputToSign.previousOutput)
+        }
+
+        return lockTimes.max()
     }
 
 }
@@ -40,5 +54,9 @@ interface IPlugin {
     val id: Int
 
     fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>, addressConverter: IAddressConverter)
-    fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage)
+    fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
+    fun isSpendable(output: TransactionOutput): Boolean
+    fun getTransactionLockTime(output: TransactionOutput): Long
 }
+
+class InvalidPluginDataException : Exception()

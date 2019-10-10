@@ -90,6 +90,7 @@ class BitcoinKit : AbstractKit {
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
+                .addPlugin(HodlerPlugin())
                 .build()
 
         //  extending bitcoinCore
@@ -121,8 +122,6 @@ class BitcoinKit : AbstractKit {
                 bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP84)
             }
         }
-
-        bitcoinCore.addPlugin(HodlerPlugin())
     }
 
     fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {

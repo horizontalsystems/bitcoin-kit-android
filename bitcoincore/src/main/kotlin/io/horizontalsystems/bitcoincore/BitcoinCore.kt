@@ -49,6 +49,8 @@ class BitcoinCoreBuilder {
     private var blockHeaderHasher: IHasher? = null
     private var transactionInfoConverter: ITransactionInfoConverter? = null
 
+    private val plugins = mutableListOf<IPlugin>()
+
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
         return this
@@ -114,6 +116,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun addPlugin(plugin: IPlugin): BitcoinCoreBuilder {
+        plugins.add(plugin)
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
@@ -127,8 +134,11 @@ class BitcoinCoreBuilder {
 
         val addressConverter = AddressConverterChain()
         val restoreKeyConverterChain = RestoreKeyConverterChain()
+        val pluginManager = PluginManager(addressConverter, storage)
 
-        val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold)
+        plugins.forEach { pluginManager.addPlugin(it) }
+
+        val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold, pluginManager)
 
         val dataProvider = DataProvider(storage, unspentOutputProvider, transactionInfoConverter)
 
@@ -141,7 +151,6 @@ class BitcoinCoreBuilder {
         val irregularOutputFinder = IrregularOutputFinder(storage)
         val transactionOutputsCache = OutputsCache.create(storage)
         val scriptBuilder = ScriptBuilder()
-        val pluginManager = PluginManager(addressConverter, storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager)
         val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider)
 
@@ -176,7 +185,7 @@ class BitcoinCoreBuilder {
         val outputSetter = OutputSetter(addressConverter, pluginManager)
         val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, bip.scriptType)
         val signer = TransactionSigner(scriptBuilder, inputSigner)
-        val lockTimeSetter = LockTimeSetter(storage)
+        val lockTimeSetter = LockTimeSetter(storage, pluginManager)
         val transactionBuilder = TransactionBuilder(scriptBuilder, inputSigner, outputSetter, inputSetter, signer, lockTimeSetter)
         val transactionFeeCalculator = TransactionFeeCalculator(unspentOutputSelector, transactionSizeCalculator)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, addressConverter, transactionFeeCalculator, storage)
@@ -221,7 +230,6 @@ class BitcoinCoreBuilder {
         bitcoinCore.networkMessageParser = networkMessageParser
         bitcoinCore.networkMessageSerializer = networkMessageSerializer
         bitcoinCore.unspentOutputSelector = unspentOutputSelector
-        bitcoinCore.pluginManager = pluginManager
 
         peerGroup.peerTaskHandler = bitcoinCore.peerTaskHandlerChain
         peerGroup.inventoryItemsHandler = bitcoinCore.inventoryItemsHandlerChain
@@ -308,7 +316,6 @@ class BitcoinCore(
     lateinit var initialBlockDownload: InitialBlockDownload
     lateinit var unspentOutputSelector: UnspentOutputSelectorChain
     lateinit var watchedTransactionManager: WatchedTransactionManager
-    lateinit var pluginManager: PluginManager
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
@@ -354,10 +361,6 @@ class BitcoinCore(
 
     fun addBlockValidator(validator: IBlockValidator) {
         blockValidatorChain.add(validator)
-    }
-
-    fun addPlugin(plugin: IPlugin) {
-        pluginManager.addPlugin(plugin)
     }
 
     // END: Extending
