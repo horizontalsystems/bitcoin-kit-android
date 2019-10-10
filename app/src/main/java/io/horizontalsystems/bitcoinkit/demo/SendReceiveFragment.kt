@@ -62,14 +62,14 @@ class SendReceiveFragment : Fragment() {
         maxButton.setOnClickListener {
             viewModel.balance.value?.let { balance ->
                 val fee = try {
-                    viewModel.fee(balance)
+                    viewModel.fee(balance.spendable)
                 } catch (e: UnspentOutputSelectorError.InsufficientUnspentOutputs) {
                     e.fee
                 } catch (e: Exception) {
                     0L
                 }
 
-                sendAmount.setText("${balance - fee}")
+                sendAmount.setText("${balance.spendable - fee}")
             }
         }
 

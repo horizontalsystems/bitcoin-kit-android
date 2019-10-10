@@ -18,6 +18,7 @@ class BalanceFragment : Fragment() {
     lateinit var viewModel: MainViewModel
     lateinit var networkName: TextView
     lateinit var balanceValue: TextView
+    lateinit var balanceUnspendableValue: TextView
     lateinit var lastBlockDateValue: TextView
     lateinit var lastBlockValue: TextView
     lateinit var stateValue: TextView
@@ -32,9 +33,15 @@ class BalanceFragment : Fragment() {
             viewModel = ViewModelProviders.of(it).get(MainViewModel::class.java)
 
             viewModel.balance.observe(this, Observer { balance ->
-                balanceValue.text = when (balance) {
-                    null -> ""
-                    else -> NumberFormatHelper.cryptoAmountFormat.format(balance / 100_000_000.0)
+                when (balance) {
+                    null -> {
+                        balanceValue.text = ""
+                        balanceUnspendableValue.text = ""
+                    }
+                    else -> {
+                        balanceValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.spendable / 100_000_000.0)
+                        balanceUnspendableValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.unspendable / 100_000_000.0)
+                    }
                 }
             })
 
@@ -87,6 +94,7 @@ class BalanceFragment : Fragment() {
         networkName.text = viewModel.networkName
 
         balanceValue = view.findViewById(R.id.balanceValue)
+        balanceUnspendableValue = view.findViewById(R.id.balanceUnspendableValue)
         lastBlockValue = view.findViewById(R.id.lastBlockValue)
         lastBlockDateValue = view.findViewById(R.id.lastBlockDateValue)
         stateValue = view.findViewById(R.id.stateValue)
