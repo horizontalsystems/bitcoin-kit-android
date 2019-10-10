@@ -303,7 +303,7 @@ class BitcoinCore(
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit
         fun onTransactionsDelete(hashes: List<String>) = Unit
-        fun onBalanceUpdate(balance: Long) = Unit
+        fun onBalanceUpdate(balance: BitcoinBalance) = Unit
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo) = Unit
         fun onKitStateUpdate(state: KitState) = Unit
     }
@@ -499,7 +499,7 @@ class BitcoinCore(
         }
     }
 
-    override fun onBalanceUpdate(balance: Long) {
+    override fun onBalanceUpdate(balance: BitcoinBalance) {
         listenerExecutor.execute {
             listener?.onBalanceUpdate(balance)
         }

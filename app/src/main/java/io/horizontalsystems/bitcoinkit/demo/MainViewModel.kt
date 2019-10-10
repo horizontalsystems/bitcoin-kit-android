@@ -4,6 +4,7 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
+import io.horizontalsystems.bitcoincore.managers.BitcoinBalance
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.FeePriority
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -17,7 +18,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     val transactions = MutableLiveData<List<TransactionInfo>>()
-    val balance = MutableLiveData<Long>()
+    val balance = MutableLiveData<BitcoinBalance>()
     val lastBlock = MutableLiveData<BlockInfo>()
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
@@ -108,7 +109,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     override fun onTransactionsDelete(hashes: List<String>) {
     }
 
-    override fun onBalanceUpdate(balance: Long) {
+    override fun onBalanceUpdate(balance: BitcoinBalance) {
         this.balance.postValue(balance)
     }
 
