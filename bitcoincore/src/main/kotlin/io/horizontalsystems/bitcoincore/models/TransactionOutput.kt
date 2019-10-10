@@ -45,6 +45,9 @@ class TransactionOutput {
     var keyHash: ByteArray? = null
     var address: String? = null
 
+    var pluginId: Int? = null
+    var pluginData: String? = null
+
     constructor()
     constructor(value: Long, index: Int, script: ByteArray, type: Int = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
         this.value = value

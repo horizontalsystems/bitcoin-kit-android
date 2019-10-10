@@ -33,9 +33,16 @@ class TransactionSigner(private val scriptBuilder: ScriptBuilder, private val in
                     inputToSign.input.witness = sigScriptData
                 }
 
+                ScriptType.P2SH -> {
+                    val redeemScript = previousOutput.redeemScript ?: throw NoRedeemScriptException()
+                    inputToSign.input.sigScript = scriptBuilder.unlockingScript(sigScriptData + redeemScript)
+                }
+
                 else -> throw TransactionBuilder.BuilderException.NotSupportedScriptType()
             }
         }
     }
 
 }
+
+class NoRedeemScriptException : Exception()

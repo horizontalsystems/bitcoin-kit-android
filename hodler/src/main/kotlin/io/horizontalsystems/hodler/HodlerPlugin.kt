@@ -2,6 +2,8 @@ package io.horizontalsystems.hodler
 
 import io.horizontalsystems.bitcoincore.core.IPlugin
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.*
@@ -9,7 +11,7 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 
 class HodlerPlugin : IPlugin {
-     override val id = OP_1
+    override val id = OP_1
 
     override fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>, addressConverter: IAddressConverter) {
         val lockedUntilTimestamp = extraData["hodler"]?.get("locked_until") as? Int ?: return
@@ -30,25 +32,38 @@ class HodlerPlugin : IPlugin {
         mutableTransaction.addExtraData(id, OpCodes.push(lockedUntil) + OpCodes.push(pubkeyHash))
     }
 
-    override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage) {
+    override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter) {
         val lockedUntil = nullDataChunks.next().data
         val pubkeyHash = nullDataChunks.next().data
 
-        val pubkey = pubkeyHash?.let { storage.getPublicKeyByKeyOrKeyHash(pubkeyHash) }
-
-        if (lockedUntil != null && pubkeyHash != null && pubkey != null) {
+        if (lockedUntil != null && pubkeyHash != null) {
             val redeemScript = redeemScript(lockedUntil, pubkeyHash)
             val redeemScriptHash = Utils.sha256Hash160(redeemScript)
 
             transaction.outputs.find { it.keyHash?.contentEquals(redeemScriptHash) ?: false }?.let {
-                it.redeemScript = redeemScript
-                it.publicKeyPath = pubkey.path
-//                        val lockedUntilTimestamp = Utils.readUint32FromStream(ByteArrayInputStream(lockedUntil))
-//                        it.extraData = mapOf("hodler" to mapOf("locked_until" to lockedUntilTimestamp))
+                val lockedUntilTimestamp = BitcoinInput(lockedUntil).readUnsignedInt()
+                val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).string
 
-                transaction.header.isMine = true
+                it.pluginId = id
+                it.pluginData = HodlerData(lockedUntilTimestamp, addressString).toString()
+
+                storage.getPublicKeyByKeyOrKeyHash(pubkeyHash)?.let { pubkey ->
+                    it.redeemScript = redeemScript
+                    it.publicKeyPath = pubkey.path
+                    transaction.header.isMine = true
+                }
             }
         }
+    }
+
+    override fun isSpendable(output: TransactionOutput): Boolean {
+        val lockedUntilTimestamp = getTransactionLockTime(output)
+
+        return lockedUntilTimestamp < (System.currentTimeMillis() / 1000)
+    }
+
+    override fun getTransactionLockTime(output: TransactionOutput): Long {
+        return HodlerData.parse(output.pluginData).lockedUntilTimestamp
     }
 
     private fun redeemScript(lockedUntil: ByteArray, pubkeyHash: ByteArray): ByteArray {
