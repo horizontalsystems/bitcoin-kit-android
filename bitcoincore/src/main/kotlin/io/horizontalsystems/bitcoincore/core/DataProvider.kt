@@ -3,12 +3,8 @@ package io.horizontalsystems.bitcoincore.core
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.managers.BitcoinBalance
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
-import io.horizontalsystems.bitcoincore.models.Block
-import io.horizontalsystems.bitcoincore.models.BlockInfo
-import io.horizontalsystems.bitcoincore.models.Transaction
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.reactivex.Single
@@ -22,7 +18,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
         fun onTransactionsDelete(hashes: List<String>)
-        fun onBalanceUpdate(balance: BitcoinBalance)
+        fun onBalanceUpdate(balance: BalanceInfo)
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
     }
 
@@ -31,7 +27,7 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
     private val balanceSubjectDisposable: Disposable
 
     //  Getters
-    var balance: BitcoinBalance = unspentOutputProvider.getBalance()
+    var balance: BalanceInfo = unspentOutputProvider.getBalance()
         private set(value) {
             if (value != field) {
                 field = value

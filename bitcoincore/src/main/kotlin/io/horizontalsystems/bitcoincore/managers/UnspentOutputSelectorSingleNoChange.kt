@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider) : IUnspentOutputSelector {
 
     override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean): SelectedUnspentOutputInfo {
-        val unspentOutputs = unspentOutputProvider.getUnspentOutputs()
+        val unspentOutputs = unspentOutputProvider.getSpendableUtxo()
 
         if (unspentOutputs.isEmpty()) {
             throw UnspentOutputSelectorError.EmptyUnspentOutputs

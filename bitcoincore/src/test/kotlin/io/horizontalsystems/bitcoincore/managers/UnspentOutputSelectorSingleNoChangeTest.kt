@@ -42,7 +42,7 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
                     UnspentOutput(outputs[4], publicKey, transaction, block)
             )
 
-            whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(unspentOutputs)
+            whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
             whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
             whenever(txSizeCalculator.outputSize(any())).thenReturn(2)
             whenever(txSizeCalculator.transactionSize(any(), any())).thenReturn(100)

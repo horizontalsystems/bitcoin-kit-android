@@ -8,10 +8,7 @@ import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.core.*
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.*
-import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
-import io.horizontalsystems.bitcoincore.models.BlockInfo
-import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.*
@@ -303,7 +300,7 @@ class BitcoinCore(
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit
         fun onTransactionsDelete(hashes: List<String>) = Unit
-        fun onBalanceUpdate(balance: BitcoinBalance) = Unit
+        fun onBalanceUpdate(balance: BalanceInfo) = Unit
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo) = Unit
         fun onKitStateUpdate(state: KitState) = Unit
     }
@@ -499,7 +496,7 @@ class BitcoinCore(
         }
     }
 
-    override fun onBalanceUpdate(balance: BitcoinBalance) {
+    override fun onBalanceUpdate(balance: BalanceInfo) {
         listenerExecutor.execute {
             listener?.onBalanceUpdate(balance)
         }

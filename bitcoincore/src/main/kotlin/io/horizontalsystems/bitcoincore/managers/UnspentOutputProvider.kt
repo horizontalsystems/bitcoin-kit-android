@@ -2,23 +2,24 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.PluginManager
+import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 class UnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int = 6, val pluginManager: PluginManager) : IUnspentOutputProvider {
-    override fun getUnspentOutputs(): List<UnspentOutput> {
-        return getConfirmedUTXO().filter {
+    override fun getSpendableUtxo(): List<UnspentOutput> {
+        return getConfirmedUtxo().filter {
             pluginManager.isSpendable(it.output)
         }
     }
 
-    fun getBalance(): BitcoinBalance {
-        val spendable = getUnspentOutputs().map { it.output.value }.sum()
-        val unspendable = getUnspendableUnspentOutputs().map { it.output.value }.sum()
+    fun getBalance(): BalanceInfo {
+        val spendable = getSpendableUtxo().map { it.output.value }.sum()
+        val unspendable = getUnspendableUtxo().map { it.output.value }.sum()
 
-        return BitcoinBalance(spendable, unspendable)
+        return BalanceInfo(spendable, unspendable)
     }
 
-    private fun getConfirmedUTXO(): List<UnspentOutput> {
+    private fun getConfirmedUtxo(): List<UnspentOutput> {
         val unspentOutputs = storage.getUnspentOutputs()
 
         if (confirmationsThreshold == 0) return unspentOutputs
@@ -39,11 +40,9 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
         }
     }
 
-    private fun getUnspendableUnspentOutputs(): List<UnspentOutput> {
-        return getConfirmedUTXO().filter {
+    private fun getUnspendableUtxo(): List<UnspentOutput> {
+        return getConfirmedUtxo().filter {
             !pluginManager.isSpendable(it.output)
         }
     }
 }
-
-data class BitcoinBalance(val spendable: Long, val unspendable: Long)

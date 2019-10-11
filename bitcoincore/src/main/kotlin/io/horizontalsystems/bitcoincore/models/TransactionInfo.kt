@@ -21,3 +21,5 @@ data class BlockInfo(
         val height: Int,
         val timestamp: Long
 )
+
+data class BalanceInfo(val spendable: Long, val unspendable: Long)

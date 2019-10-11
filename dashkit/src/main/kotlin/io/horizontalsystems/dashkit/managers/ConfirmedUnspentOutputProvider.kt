@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.managers.IUnspentOutputProvider
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 class ConfirmedUnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int) : IUnspentOutputProvider {
-    override fun getUnspentOutputs(): List<UnspentOutput> {
+    override fun getSpendableUtxo(): List<UnspentOutput> {
         val lastBlockHeight = storage.lastBlock()?.height ?: 0
 
         return storage.getUnspentOutputs().filter { isOutputConfirmed(it, lastBlockHeight) }
