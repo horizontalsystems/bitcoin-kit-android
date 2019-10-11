@@ -8,7 +8,11 @@ import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.managers.*
+import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.managers.InsightApi
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
+import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -47,7 +51,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     interface Listener {
         fun onTransactionsUpdate(inserted: List<DashTransactionInfo>, updated: List<DashTransactionInfo>)
         fun onTransactionsDelete(hashes: List<String>)
-        fun onBalanceUpdate(balance: BitcoinBalance)
+        fun onBalanceUpdate(balance: BalanceInfo)
         fun onLastBlockInfoUpdate(blockInfo: BlockInfo)
         fun onKitStateUpdate(state: BitcoinCore.KitState)
     }
@@ -199,7 +203,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         listener?.onTransactionsDelete(hashes)
     }
 
-    override fun onBalanceUpdate(balance: BitcoinBalance) {
+    override fun onBalanceUpdate(balance: BalanceInfo) {
         listener?.onBalanceUpdate(balance)
     }
 

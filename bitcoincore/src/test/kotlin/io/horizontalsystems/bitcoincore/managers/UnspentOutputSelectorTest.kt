@@ -48,7 +48,7 @@ object UnspentOutputSelectorTest : Spek({
                         UnspentOutput(outputs[4], publicKey, transaction, block)
                 )
 
-                whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(unspentOutputs)
+                whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
                 whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
                 whenever(txSizeCalculator.outputSize(any())).thenReturn(2)
                 whenever(txSizeCalculator.transactionSize(any(), any())).thenReturn(100)
@@ -80,7 +80,7 @@ object UnspentOutputSelectorTest : Spek({
             }
 
             it("testEmptyOutputsError") {
-                whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(listOf())
+                whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf())
 
                 assertThrows<UnspentOutputSelectorError.EmptyUnspentOutputs> {
                     unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = true)
@@ -104,7 +104,7 @@ object UnspentOutputSelectorTest : Spek({
             val unspentOutputs = listOf(utxo1, utxo2, utxo3, utxo4, utxo5)
 
             beforeEach {
-                whenever(unspentOutputProvider.getUnspentOutputs()).thenReturn(unspentOutputs)
+                whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
                 whenever(calculator.transactionSize(any(), any())).thenReturn(123123)
             }
 
