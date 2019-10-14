@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 
 class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider, private val outputsLimit: Int? = null) : IUnspentOutputSelector {
 
-    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean): SelectedUnspentOutputInfo {
+    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
         val unspentOutputs = unspentOutputProvider.getSpendableUtxo()
 
         if (unspentOutputs.isEmpty()) {
@@ -36,7 +36,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
                 }
             }
 
-            lastCalculatedFee = calculator.transactionSize(inputs = selectedOutputTypes, outputs = listOf(outputType)) * feeRate
+            lastCalculatedFee = calculator.transactionSize(selectedOutputTypes, listOf(outputType), pluginDataOutputSize) * feeRate
             if (senderPay) {
                 fee = lastCalculatedFee
             }
@@ -54,7 +54,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
         //  if total selected outputs value more than value and fee for transaction with change output + change input -> add fee for change output and mark as need change address
         var addChangeOutput = false
         if (totalValue > value + lastCalculatedFee + (if (senderPay) dust else 0)) {
-            lastCalculatedFee = calculator.transactionSize(inputs = selectedOutputTypes, outputs = listOf(outputType, changeType)) * feeRate
+            lastCalculatedFee = calculator.transactionSize(selectedOutputTypes, listOf(outputType, changeType), pluginDataOutputSize) * feeRate
             addChangeOutput = true
         } else if (senderPay) {
             lastCalculatedFee = totalValue - value

@@ -4,7 +4,7 @@ import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 
 class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider) : IUnspentOutputSelector {
 
-    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean): SelectedUnspentOutputInfo {
+    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
         val unspentOutputs = unspentOutputProvider.getSpendableUtxo()
 
         if (unspentOutputs.isEmpty()) {
@@ -16,7 +16,7 @@ class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSiz
         //  try to find 1 unspent output with exactly matching value
         for (unspentOutput in unspentOutputs) {
             val output = unspentOutput.output
-            val fee = calculator.transactionSize(listOf(output.scriptType), listOf(outputType)) * feeRate
+            val fee = calculator.transactionSize(listOf(output.scriptType), listOf(outputType), pluginDataOutputSize) * feeRate
             val totalFee = if (senderPay) fee else 0
 
             if (value + totalFee <= output.value && value + totalFee + dust > output.value) {

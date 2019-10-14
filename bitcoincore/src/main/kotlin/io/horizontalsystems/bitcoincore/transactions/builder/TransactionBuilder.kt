@@ -7,11 +7,9 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class TransactionBuilder(
-        private val scriptBuilder: ScriptBuilder,
         private val inputSigner: InputSigner,
         private val outputSetter: OutputSetter,
         private val inputSetter: InputSetter,
@@ -20,7 +18,7 @@ class TransactionBuilder(
 ) {
 
     fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
-        val mutableTransaction = MutableTransaction(scriptBuilder)
+        val mutableTransaction = MutableTransaction()
 
         outputSetter.setOutputs(mutableTransaction, toAddress, value, extraData)
         inputSetter.setInputs(mutableTransaction, feeRate, senderPay)
@@ -51,7 +49,7 @@ class TransactionBuilder(
         val receivedValue = unspentOutput.output.value - fee
 
         //  add output
-        val output = TransactionOutput(receivedValue, 0, scriptBuilder.lockingScript(address), address.scriptType, address.string, address.hash)
+        val output = TransactionOutput(receivedValue, 0, address.lockingScript, address.scriptType, address.string, address.hash)
 
         //  build transaction
         val transaction = Transaction(version = 1, lockTime = lastBlockHeight)

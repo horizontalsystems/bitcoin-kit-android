@@ -1,10 +1,9 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
-class TransactionSigner(private val scriptBuilder: ScriptBuilder, private val inputSigner: InputSigner) {
+class TransactionSigner(private val inputSigner: InputSigner) {
 
     fun sign(mutableTransaction: MutableTransaction) {
         val inputsToSign = mutableTransaction.inputsToSign
@@ -17,7 +16,7 @@ class TransactionSigner(private val scriptBuilder: ScriptBuilder, private val in
 
             when (previousOutput.scriptType) {
                 ScriptType.P2PKH -> {
-                    inputToSign.input.sigScript = scriptBuilder.unlockingScript(sigScriptData)
+                    inputToSign.input.sigScript = signatureScript(sigScriptData)
                 }
 
                 ScriptType.P2WPKH -> {
@@ -29,13 +28,13 @@ class TransactionSigner(private val scriptBuilder: ScriptBuilder, private val in
                     mutableTransaction.transaction.segwit = true
                     val witnessProgram = OpCodes.scriptWPKH(publicKey.publicKeyHash)
 
-                    inputToSign.input.sigScript = scriptBuilder.unlockingScript(listOf(witnessProgram))
+                    inputToSign.input.sigScript = signatureScript(listOf(witnessProgram))
                     inputToSign.input.witness = sigScriptData
                 }
 
                 ScriptType.P2SH -> {
                     val redeemScript = previousOutput.redeemScript ?: throw NoRedeemScriptException()
-                    inputToSign.input.sigScript = scriptBuilder.unlockingScript(sigScriptData + redeemScript)
+                    inputToSign.input.sigScript = signatureScript(sigScriptData + redeemScript)
                 }
 
                 else -> throw TransactionBuilder.BuilderException.NotSupportedScriptType()
@@ -43,6 +42,9 @@ class TransactionSigner(private val scriptBuilder: ScriptBuilder, private val in
         }
     }
 
+    private fun signatureScript(params: List<ByteArray>): ByteArray {
+        return params.fold(byteArrayOf()) { acc, bytes -> acc + OpCodes.push(bytes) }
+    }
 }
 
 class NoRedeemScriptException : Exception()

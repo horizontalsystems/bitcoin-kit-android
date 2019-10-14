@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.models
 
+import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
+import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 enum class AddressType {
@@ -20,6 +22,13 @@ abstract class Address {
             AddressType.WITNESS ->
                 if (hash.size == 20) ScriptType.P2WPKH else ScriptType.P2WSH
         }
+
+    open val lockingScript: ByteArray
+        get() = when (type) {
+            AddressType.P2PKH -> OpCodes.p2pkhStart + OpCodes.push(hash) + OpCodes.p2pkhEnd
+            AddressType.P2SH -> OpCodes.p2pshStart + OpCodes.push(hash) + OpCodes.p2pshEnd
+            else -> throw AddressFormatException("Unknown Address Type")
+        }
 }
 
 class LegacyAddress(addressString: String, bytes: ByteArray, type: AddressType) : Address() {
@@ -36,6 +45,9 @@ class SegWitAddress(addressString: String, bytes: ByteArray, type: AddressType, 
         this.hash = bytes
         this.string = addressString
     }
+
+    override val lockingScript: ByteArray
+        get() = OpCodes.push(version) + OpCodes.push(hash)
 }
 
 class CashAddress(addressString: String, bytes: ByteArray, type: AddressType) : Address() {

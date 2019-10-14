@@ -32,8 +32,8 @@ abstract class AbstractKit {
         bitcoinCore.refresh()
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int): Long {
-        return bitcoinCore.fee(value, address, senderPay, feeRate)
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<String, Map<String, Any>> = mapOf()): Long {
+        return bitcoinCore.fee(value, address, senderPay, feeRate, pluginData)
     }
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, extraData: Map<String, Map<String, Any>> = mapOf()): FullTransaction {
