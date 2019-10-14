@@ -6,10 +6,9 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.OP_RETURN
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptBuilder
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
-class MutableTransaction(private val scriptBuilder: ScriptBuilder) {
+class MutableTransaction {
 
     val inputsToSign = mutableListOf<InputToSign>()
     val transaction = Transaction(1, 0)
@@ -29,11 +28,11 @@ class MutableTransaction(private val scriptBuilder: ScriptBuilder) {
             var index = 0
 
             recipientAddress.let {
-                list.add(TransactionOutput(recipientValue, index++, scriptBuilder.lockingScript(it), it.scriptType, it.string, it.hash))
+                list.add(TransactionOutput(recipientValue, index++, it.lockingScript, it.scriptType, it.string, it.hash))
             }
 
             changeAddress?.let {
-                list.add(TransactionOutput(changeValue, index++, scriptBuilder.lockingScript(it), it.scriptType, it.string, it.hash))
+                list.add(TransactionOutput(changeValue, index++, it.lockingScript, it.scriptType, it.string, it.hash))
             }
 
             if (extraData.isNotEmpty()) {
@@ -54,8 +53,12 @@ class MutableTransaction(private val scriptBuilder: ScriptBuilder) {
         transaction.isOutgoing = true
     }
 
-    fun getExtraDataOutputSize() : Long {
-        return 0
+    fun getPluginDataOutputSize(): Int {
+        return if (extraData.isNotEmpty()) {
+            1 + extraData.map { 1 + it.value.size }.sum()
+        } else {
+            0
+        }
     }
 
     fun addInput(inputToSign: InputToSign) {

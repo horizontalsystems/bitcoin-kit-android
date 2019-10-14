@@ -37,13 +37,21 @@ class TransactionSizeCalculator {
         return 32 + 4 + 1 + sigLength + 4 // PreviousOutputHex + OutputIndex + sigLength + sigScript + sequence
     }
 
-    fun transactionSize(inputs: List<Int>, outputs: List<Int>): Long {
+    fun transactionSize(inputs: List<Int>, outputs: List<Int>, pluginDataOutputSize: Int): Long {
         val txWeight = if (inputs.any { isWitness(it) }) witnessTx else legacyTx
 
         val inputWeight = inputs.map { inputSize(it) * 4 + if (isWitness(it)) witnessSize(it) else 0 }.sum()
-        val outputWeight = outputs.map { outputSize(it) }.sum() * 4 // to vbytes
+        var outputWeight = outputs.map { outputSize(it) }.sum() * 4 // to vbytes
+
+        if (pluginDataOutputSize > 0) {
+            outputWeight += outputSizeByScriptSize(pluginDataOutputSize) * 4
+        }
 
         return toBytes(txWeight + inputWeight + outputWeight).toLong()
+    }
+
+    private fun outputSizeByScriptSize(size: Int): Int {
+        return 8 + 1 + size            // spentValue + scriptLength + script
     }
 
     private fun witnessSize(type: Int): Int {  // in vbytes

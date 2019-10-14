@@ -4,7 +4,7 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IUnspentOutputSelector {
-    fun select(value: Long, feeRate: Int, outputType: Int = ScriptType.P2PKH, changeType: Int = ScriptType.P2PKH, senderPay: Boolean): SelectedUnspentOutputInfo
+    fun select(value: Long, feeRate: Int, outputType: Int = ScriptType.P2PKH, changeType: Int = ScriptType.P2PKH, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo
 }
 
 data class SelectedUnspentOutputInfo(
@@ -22,12 +22,12 @@ sealed class UnspentOutputSelectorError : Exception() {
 class UnspentOutputSelectorChain : IUnspentOutputSelector {
     private val concreteSelectors = mutableListOf<IUnspentOutputSelector>()
 
-    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean): SelectedUnspentOutputInfo {
+    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
         var lastError: UnspentOutputSelectorError? = null
 
         for (selector in concreteSelectors) {
             try {
-                return selector.select(value, feeRate, outputType, changeType, senderPay)
+                return selector.select(value, feeRate, outputType, changeType, senderPay, pluginDataOutputSize)
             } catch (e: UnspentOutputSelectorError) {
                 lastError = e
             }

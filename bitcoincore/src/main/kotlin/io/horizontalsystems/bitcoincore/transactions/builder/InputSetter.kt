@@ -16,8 +16,8 @@ class InputSetter(
     fun setInputs(mutableTransaction: MutableTransaction, feeRate: Int, senderPay: Boolean) {
         val value = mutableTransaction.recipientValue
 
-        val extraDataOutputSize = mutableTransaction.getExtraDataOutputSize()
-        val unspentOutputInfo = unspentOutputSelector.select(value, feeRate, mutableTransaction.recipientAddress.scriptType, changeScriptType, senderPay)
+        val pluginDataOutputSize = mutableTransaction.getPluginDataOutputSize()
+        val unspentOutputInfo = unspentOutputSelector.select(value, feeRate, mutableTransaction.recipientAddress.scriptType, changeScriptType, senderPay, pluginDataOutputSize)
 
         val unspentOutputs = unspentOutputInfo.outputs
         for (unspentOutput in unspentOutputs) {
