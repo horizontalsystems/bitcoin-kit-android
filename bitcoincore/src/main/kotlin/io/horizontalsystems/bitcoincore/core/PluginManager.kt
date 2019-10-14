@@ -1,12 +1,13 @@
 package io.horizontalsystems.bitcoincore.core
 
+import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
-class PluginManager(private val addressConverter: IAddressConverter, val storage: IStorage) {
+class PluginManager(private val addressConverter: IAddressConverter, val storage: IStorage, val blockMedianTimeHelper: BlockMedianTimeHelper) {
     private val plugins = mutableMapOf<Int, IPlugin>()
 
     fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>) {
@@ -37,7 +38,9 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
     fun isSpendable(output: TransactionOutput): Boolean {
         val plugin = plugins[output.pluginId] ?: return true
 
-        return plugin.isSpendable(output)
+        val blockMedianTime = blockMedianTimeHelper.medianTimePast ?: return false
+
+        return plugin.isSpendable(output, blockMedianTime)
     }
 
     fun getTransactionLockTime(transaction: MutableTransaction): Long? {
@@ -55,7 +58,7 @@ interface IPlugin {
 
     fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>, addressConverter: IAddressConverter)
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
-    fun isSpendable(output: TransactionOutput): Boolean
+    fun isSpendable(output: TransactionOutput, blockMedianTime: Long): Boolean
     fun getTransactionLockTime(output: TransactionOutput): Long
 }
 

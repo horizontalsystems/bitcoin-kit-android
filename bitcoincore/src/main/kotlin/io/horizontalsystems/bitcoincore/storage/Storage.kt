@@ -160,6 +160,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.block.unstaleAllBlocks()
     }
 
+    override fun timestamps(from: Int, to: Int): List<Long> {
+        return store.block.getTimestamps(from, to)
+    }
+
     // Transaction
 
     override fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo> {

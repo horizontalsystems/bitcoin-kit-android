@@ -130,7 +130,7 @@ class BitcoinCoreBuilder {
 
         val addressConverter = AddressConverterChain()
         val restoreKeyConverterChain = RestoreKeyConverterChain()
-        val pluginManager = PluginManager(addressConverter, storage)
+        val pluginManager = PluginManager(addressConverter, storage, BlockMedianTimeHelper(storage))
 
         plugins.forEach { pluginManager.addPlugin(it) }
 

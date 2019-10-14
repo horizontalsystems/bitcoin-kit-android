@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincash.blocks.validators.ForkValidator
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
@@ -103,7 +104,7 @@ class BitcoinCashKit : AbstractKit {
             bitcoinCore.addBlockValidator(ForkValidator(svForkHeight, abcForkBlockHash, daaValidator))
             bitcoinCore.addBlockValidator(daaValidator)
             bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height))
+            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height, BlockMedianTimeHelper(storage)))
         }
 
         bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)

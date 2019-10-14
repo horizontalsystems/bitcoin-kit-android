@@ -56,10 +56,8 @@ class HodlerPlugin : IPlugin {
         }
     }
 
-    override fun isSpendable(output: TransactionOutput): Boolean {
-        val lockedUntilTimestamp = getTransactionLockTime(output)
-
-        return lockedUntilTimestamp < (System.currentTimeMillis() / 1000)
+    override fun isSpendable(output: TransactionOutput, blockMedianTime: Long): Boolean {
+        return getTransactionLockTime(output) < blockMedianTime
     }
 
     override fun getTransactionLockTime(output: TransactionOutput): Long {

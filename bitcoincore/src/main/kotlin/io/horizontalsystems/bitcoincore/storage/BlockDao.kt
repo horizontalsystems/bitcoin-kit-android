@@ -59,4 +59,7 @@ interface BlockDao {
     @Delete
     fun deleteAll(blocks: List<Block>)
 
+    @Query("SELECT block_timestamp FROM Block WHERE height >= :from AND height <= :to ORDER BY block_timestamp ASC")
+    fun getTimestamps(from: Int, to: Int) : List<Long>
+
 }
