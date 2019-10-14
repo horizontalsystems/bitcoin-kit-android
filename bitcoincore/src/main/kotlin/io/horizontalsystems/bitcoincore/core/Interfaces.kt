@@ -56,6 +56,7 @@ interface IStorage {
     fun deleteBlocks(blocks: List<Block>)
     fun deleteBlocksWithoutTransactions(toHeight: Int)
     fun unstaleAllBlocks()
+    fun timestamps(from: Int, to: Int): List<Long>
 
     //  Transaction
 

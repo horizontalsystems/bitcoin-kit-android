@@ -8,10 +8,10 @@ import io.horizontalsystems.bitcoincore.models.Block
 
 class DAAValidator(private val targetSpacing: Int, private val blockValidatorHelper: BitcoinCashBlockValidatorHelper) : IBlockValidator {
     private val largestHash = 1.toBigInteger() shl 256
-    private val diffDate = 1510600000 // 2017 November 3, 14:06 GMT
+    private val consensusDaaForkHeight = 504030 // 2017 November 3, 14:06 GMT
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
-        return blockValidatorHelper.medianTimePast(block) >= diffDate
+        return previousBlock.height >= consensusDaaForkHeight
     }
 
     override fun validate(block: Block, previousBlock: Block) {
