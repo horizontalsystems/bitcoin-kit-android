@@ -34,7 +34,15 @@ class TransactionSigner(private val inputSigner: InputSigner) {
 
                 ScriptType.P2SH -> {
                     val redeemScript = previousOutput.redeemScript ?: throw NoRedeemScriptException()
-                    inputToSign.input.sigScript = signatureScript(sigScriptData + redeemScript)
+                    val signatureScriptFunction = previousOutput.signatureScriptFunction
+
+                    if (signatureScriptFunction != null) {
+                        // non-standard P2SH signature script
+                        inputToSign.input.sigScript = signatureScriptFunction(sigScriptData)
+                    } else {
+                        // standard (signature, publicKey, redeemScript) signature script
+                        inputToSign.input.sigScript = signatureScript(sigScriptData + redeemScript)
+                    }
                 }
 
                 else -> throw TransactionBuilder.BuilderException.NotSupportedScriptType()

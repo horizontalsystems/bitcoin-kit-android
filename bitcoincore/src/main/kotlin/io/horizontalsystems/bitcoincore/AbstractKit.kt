@@ -44,8 +44,8 @@ abstract class AbstractKit {
         return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate)
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
-        return bitcoinCore.redeem(unspentOutput, address, feeRate, signatureScriptFunction)
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int): FullTransaction {
+        return bitcoinCore.redeem(unspentOutput, address, feeRate)
     }
 
     fun receiveAddress(): String {

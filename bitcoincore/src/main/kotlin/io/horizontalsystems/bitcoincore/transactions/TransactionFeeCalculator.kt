@@ -7,7 +7,6 @@ import io.horizontalsystems.bitcoincore.transactions.builder.OutputSetter
 import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 
 class TransactionFeeCalculator(
-        private val transactionSizeCalculator: TransactionSizeCalculator,
         private val outputSetter: OutputSetter,
         private val inputSetter: InputSetter,
         private val addressConverter: AddressConverterChain,
@@ -25,16 +24,6 @@ class TransactionFeeCalculator(
         val outputsTotalValue = mutableTransaction.recipientValue + mutableTransaction.changeValue
 
         return inputsTotalValue - outputsTotalValue
-    }
-
-    fun fee(inputScriptType: Int, outputScriptType: Int, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): Long {
-        val emptySignature = ByteArray(transactionSizeCalculator.signatureLength)
-        val emptyPublicKey = ByteArray(transactionSizeCalculator.pubKeyLength)
-
-        val transactionSize = transactionSizeCalculator.transactionSize(listOf(inputScriptType), listOf(outputScriptType), 0) +
-                signatureScriptFunction(emptySignature, emptyPublicKey).size
-
-        return transactionSize * feeRate
     }
 
     private fun sampleAddress(): String {

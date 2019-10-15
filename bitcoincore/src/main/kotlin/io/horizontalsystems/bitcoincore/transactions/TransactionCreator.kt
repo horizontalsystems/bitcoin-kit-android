@@ -34,14 +34,10 @@ class TransactionCreator(
     }
 
     @Throws
-    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
+    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int): FullTransaction {
         transactionSender.canSendTransaction()
 
-        val address = addressConverter.convert(toAddress)
-        val fee = transactionFeeCalculator.fee(unspentOutput.output.scriptType, address.scriptType, feeRate, signatureScriptFunction)
-        val lastBlockHeight = storage.lastBlock()?.height ?: 0
-
-        val transaction = builder.buildTransaction(unspentOutput, address, fee, lastBlockHeight.toLong(), signatureScriptFunction)
+        val transaction = builder.buildTransaction(unspentOutput, toAddress, feeRate)
 
         try {
             processor.processOutgoing(transaction)
