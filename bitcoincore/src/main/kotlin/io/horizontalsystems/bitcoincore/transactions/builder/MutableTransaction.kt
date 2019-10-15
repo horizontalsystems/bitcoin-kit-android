@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.OP_RETURN
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
-class MutableTransaction {
+class MutableTransaction(isOutgoing: Boolean = true) {
 
     val inputsToSign = mutableListOf<InputToSign>()
     val transaction = Transaction(1, 0)
@@ -50,7 +50,7 @@ class MutableTransaction {
     init {
         transaction.status = Transaction.Status.NEW
         transaction.isMine = true
-        transaction.isOutgoing = true
+        transaction.isOutgoing = isOutgoing
     }
 
     fun getPluginDataOutputSize(): Int {

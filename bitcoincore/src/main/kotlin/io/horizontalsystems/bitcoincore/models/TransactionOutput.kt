@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.models
 
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
+import android.arch.persistence.room.Ignore
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 /**
@@ -47,6 +48,7 @@ class TransactionOutput {
 
     var pluginId: Int? = null
     var pluginData: String? = null
+    @Ignore var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
 
     constructor()
     constructor(value: Long, index: Int, script: ByteArray, type: Int = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {

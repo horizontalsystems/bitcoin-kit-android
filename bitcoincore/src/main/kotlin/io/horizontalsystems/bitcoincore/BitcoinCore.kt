@@ -178,11 +178,11 @@ class BitcoinCoreBuilder {
         val transactionSizeCalculator = TransactionSizeCalculator()
         val inputSigner = InputSigner(hdWallet, network)
         val outputSetter = OutputSetter(addressConverter, pluginManager)
-        val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, bip.scriptType)
+        val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, bip.scriptType, transactionSizeCalculator)
         val signer = TransactionSigner(inputSigner)
         val lockTimeSetter = LockTimeSetter(storage, pluginManager)
-        val transactionBuilder = TransactionBuilder(inputSigner, outputSetter, inputSetter, signer, lockTimeSetter)
-        val transactionFeeCalculator = TransactionFeeCalculator(transactionSizeCalculator, outputSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
+        val transactionBuilder = TransactionBuilder(outputSetter, inputSetter, signer, lockTimeSetter)
+        val transactionFeeCalculator = TransactionFeeCalculator(outputSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, addressConverter, transactionFeeCalculator, storage)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
@@ -402,8 +402,8 @@ class BitcoinCore(
         return transactionCreator.create(address.string, value, feeRate, senderPay, mapOf())
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, signatureScriptFunction: (ByteArray, ByteArray) -> ByteArray): FullTransaction {
-        return transactionCreator.create(unspentOutput, address, feeRate, signatureScriptFunction)
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int): FullTransaction {
+        return transactionCreator.create(unspentOutput, address, feeRate)
     }
 
     fun receiveAddress(): String {
