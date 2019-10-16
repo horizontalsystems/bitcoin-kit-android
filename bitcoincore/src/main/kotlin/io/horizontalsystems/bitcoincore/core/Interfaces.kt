@@ -104,6 +104,8 @@ interface IStorage {
 }
 
 interface ITransactionInfoConverter {
+    var baseConverter: BaseTransactionInfoConverter
+
     fun transactionInfo(transactionForInfo: FullTransactionInfo): TransactionInfo
 }
 

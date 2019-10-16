@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 
-class BaseTransactionInfoConverter {
+class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
 
     fun transactionInfo(fullTransaction: FullTransactionInfo): TransactionInfo {
         val transaction = fullTransaction.header
@@ -28,7 +28,7 @@ class BaseTransactionInfoConverter {
             }
 
             input.input.address?.let { address ->
-                fromAddresses.add(TransactionAddress(address, mine = mine))
+                fromAddresses.add(TransactionAddress(address, mine, null))
             }
         }
 
@@ -41,7 +41,7 @@ class BaseTransactionInfoConverter {
             }
 
             output.address?.let { address ->
-                toAddresses.add(TransactionAddress(address, mine))
+                toAddresses.add(TransactionAddress(address, mine, pluginManager.parsePluginData(output)))
             }
         }
 

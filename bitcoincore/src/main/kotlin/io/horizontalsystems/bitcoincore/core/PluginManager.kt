@@ -51,6 +51,12 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
         return lockTimes.max()
     }
 
+    fun parsePluginData(output: TransactionOutput): Map<String, Map<String, Any>>? {
+        val plugin = plugins[output.pluginId] ?: return null
+
+        return mapOf("hodler" to plugin.parsePluginData(output))
+    }
+
 }
 
 interface IPlugin {
@@ -60,6 +66,7 @@ interface IPlugin {
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
     fun isSpendable(output: TransactionOutput, blockMedianTime: Long): Boolean
     fun getTransactionLockTime(output: TransactionOutput): Long
+    fun parsePluginData(output: TransactionOutput): Map<String, Any>
 }
 
 class InvalidPluginDataException : Exception()

@@ -64,6 +64,12 @@ class HodlerPlugin : IPlugin {
         return HodlerData.parse(output.pluginData).lockedUntilTimestamp
     }
 
+    override fun parsePluginData(output: TransactionOutput): Map<String, Any> {
+        val hodlerData = HodlerData.parse(output.pluginData)
+
+        return mapOf("locked_until" to hodlerData.lockedUntilTimestamp, "address" to hodlerData.addressString)
+    }
+
     private fun redeemScript(lockedUntil: ByteArray, pubkeyHash: ByteArray): ByteArray {
         return OpCodes.push(lockedUntil) + byteArrayOf(OP_CHECKLOCKTIMEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
     }

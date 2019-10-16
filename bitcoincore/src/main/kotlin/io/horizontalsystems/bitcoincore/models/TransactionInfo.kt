@@ -13,7 +13,8 @@ open class TransactionInfo(
 
 data class TransactionAddress(
         val address: String,
-        val mine: Boolean
+        val mine: Boolean,
+        val pluginData: Map<String, Map<String, Any>>?
 )
 
 data class BlockInfo(

@@ -5,7 +5,6 @@ import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
@@ -106,7 +105,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         val instantTransactionManager = InstantTransactionManager(dashStorage, InstantSendFactory(), InstantTransactionState())
         val initialSyncApi = InsightApi(initialSyncUrl)
 
-        dashTransactionInfoConverter = DashTransactionInfoConverter(BaseTransactionInfoConverter(), instantTransactionManager)
+        dashTransactionInfoConverter = DashTransactionInfoConverter(instantTransactionManager)
 
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
