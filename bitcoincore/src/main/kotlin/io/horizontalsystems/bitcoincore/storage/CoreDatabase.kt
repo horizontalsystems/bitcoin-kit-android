@@ -36,20 +36,26 @@ abstract class CoreDatabase : RoomDatabase() {
 
         fun getInstance(context: Context, dbName: String): CoreDatabase {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
-                    .fallbackToDestructiveMigration()
                     .allowMainThreadQueries()
                     .addMigrations(
-                            add_connectionTime_to_PeerAddress,
-                            add_hasTransaction_to_Block,
+                            update_transaction_output,
                             update_block_timestamp,
-                            update_transaction_output
+                            add_hasTransaction_to_Block,
+                            add_connectionTime_to_PeerAddress
                     )
                     .build()
         }
 
-        private val add_connectionTime_to_PeerAddress = object : Migration(1, 2) {
+        private val update_transaction_output = object : Migration(6, 7) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE PeerAddress ADD COLUMN connectionTime INTEGER")
+                database.execSQL("ALTER TABLE TransactionOutput ADD COLUMN `pluginId` INTEGER")
+                database.execSQL("ALTER TABLE TransactionOutput ADD COLUMN `pluginData` TEXT")
+            }
+        }
+
+        private val update_block_timestamp = object : Migration(3, 4) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("UPDATE Block SET block_timestamp = 1559256184 WHERE height = 578592 AND block_timestamp = 1559277784")
             }
         }
 
@@ -60,16 +66,9 @@ abstract class CoreDatabase : RoomDatabase() {
             }
         }
 
-        private val update_block_timestamp = object : Migration(3, 4) {
+        private val add_connectionTime_to_PeerAddress = object : Migration(1, 2) {
             override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("UPDATE Block SET block_timestamp = 1559256184 WHERE height = 578592 AND block_timestamp = 1559277784")
-            }
-        }
-
-        private val update_transaction_output = object : Migration(6, 7) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL("ALTER TABLE TransactionOutput ADD COLUMN `pluginId` INTEGER")
-                database.execSQL("ALTER TABLE TransactionOutput ADD COLUMN `pluginData` TEXT")
+                database.execSQL("ALTER TABLE PeerAddress ADD COLUMN connectionTime INTEGER")
             }
         }
     }
