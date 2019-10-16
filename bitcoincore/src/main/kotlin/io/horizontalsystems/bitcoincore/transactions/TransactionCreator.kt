@@ -1,43 +1,34 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
-import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
 class TransactionCreator(
         private val builder: TransactionBuilder,
         private val processor: TransactionProcessor,
         private val transactionSender: TransactionSender,
-        private val bloomFilterManager: BloomFilterManager,
-        private val addressConverter: IAddressConverter,
-        private val transactionFeeCalculator: TransactionFeeCalculator,
-        private val storage: IStorage) {
+        private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
     fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
-        transactionSender.canSendTransaction()
-
-        val transaction = builder.buildTransaction(toAddress, value, feeRate, senderPay, extraData)
-
-        try {
-            processor.processOutgoing(transaction)
-        } catch (ex: BloomFilterManager.BloomFilterExpired) {
-            bloomFilterManager.regenerateBloomFilter()
+        return create {
+            builder.buildTransaction(toAddress, value, feeRate, senderPay, extraData)
         }
-
-        transactionSender.sendPendingTransactions()
-
-        return transaction
     }
 
     @Throws
     fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int): FullTransaction {
+        return create {
+            builder.buildTransaction(unspentOutput, toAddress, feeRate)
+        }
+    }
+
+    private fun create(transactionBuilderFunction: () -> FullTransaction): FullTransaction {
         transactionSender.canSendTransaction()
 
-        val transaction = builder.buildTransaction(unspentOutput, toAddress, feeRate)
+        val transaction = transactionBuilderFunction.invoke()
 
         try {
             processor.processOutgoing(transaction)
