@@ -183,7 +183,7 @@ class BitcoinCoreBuilder {
         val lockTimeSetter = LockTimeSetter(storage, pluginManager)
         val transactionBuilder = TransactionBuilder(outputSetter, inputSetter, signer, lockTimeSetter)
         val transactionFeeCalculator = TransactionFeeCalculator(outputSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
-        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager, addressConverter, transactionFeeCalculator, storage)
+        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)

@@ -38,10 +38,9 @@ class InputSetter(
             val changeAddress = addressConverter.convert(changePubKey, changeScriptType)
 
             val sentValue = if (senderPay) value + fee else value
-            val totalValue = unspentOutputs.fold(0L) { sum, unspent -> sum + unspent.output.value }
 
             mutableTransaction.changeAddress = changeAddress
-            mutableTransaction.changeValue = totalValue - sentValue
+            mutableTransaction.changeValue = unspentOutputInfo.totalValue - sentValue
         }
     }
 
@@ -51,11 +50,11 @@ class InputSetter(
         }
 
         // Calculate fee
-        val emptySignature = ByteArray(transactionSizeCalculator.signatureLength)
-        val emptyPublicKey = ByteArray(transactionSizeCalculator.pubKeyLength)
-
         var transactionSize = transactionSizeCalculator.transactionSize(listOf(unspentOutput.output.scriptType), listOf(mutableTransaction.recipientAddress.scriptType), 0)
         unspentOutput.output.signatureScriptFunction?.let { signatureScriptFunction ->
+            val emptySignature = ByteArray(transactionSizeCalculator.signatureLength)
+            val emptyPublicKey = ByteArray(transactionSizeCalculator.pubKeyLength)
+
             transactionSize += signatureScriptFunction(listOf(emptySignature, emptyPublicKey)).size
         }
 
