@@ -125,14 +125,15 @@ class BitcoinCoreBuilder {
         val storage = checkNotNull(this.storage)
         val initialSyncApi = checkNotNull(this.initialSyncApi)
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
-        val transactionInfoConverter = this.transactionInfoConverter
-                ?: TransactionInfoConverter(BaseTransactionInfoConverter())
+        val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter()
 
         val addressConverter = AddressConverterChain()
         val restoreKeyConverterChain = RestoreKeyConverterChain()
-        val pluginManager = PluginManager(addressConverter, storage, BlockMedianTimeHelper(storage))
 
+        val pluginManager = PluginManager(addressConverter, storage, BlockMedianTimeHelper(storage))
         plugins.forEach { pluginManager.addPlugin(it) }
+
+        transactionInfoConverter.baseConverter = BaseTransactionInfoConverter(pluginManager)
 
         val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold, pluginManager)
 

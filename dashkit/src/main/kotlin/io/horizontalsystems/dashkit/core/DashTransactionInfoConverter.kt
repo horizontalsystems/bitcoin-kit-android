@@ -6,13 +6,11 @@ import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 
-class DashTransactionInfoConverter(
-        private val baseTransactionInfoConverter: BaseTransactionInfoConverter,
-        private val instantTransactionManager: InstantTransactionManager
-) : ITransactionInfoConverter {
+class DashTransactionInfoConverter(private val instantTransactionManager: InstantTransactionManager) : ITransactionInfoConverter {
+    override lateinit var baseConverter: BaseTransactionInfoConverter
 
     override fun transactionInfo(transactionForInfo: FullTransactionInfo): DashTransactionInfo {
-        val txInfo = baseTransactionInfoConverter.transactionInfo(transactionForInfo)
+        val txInfo = baseConverter.transactionInfo(transactionForInfo)
         return DashTransactionInfo(
                 txInfo.transactionHash,
                 txInfo.transactionIndex,

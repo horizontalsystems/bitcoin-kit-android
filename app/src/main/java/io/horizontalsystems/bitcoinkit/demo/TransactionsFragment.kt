@@ -74,9 +74,6 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
     fun bind(transactionInfo: TransactionInfo, index: Int) {
         containerView.setBackgroundColor(if (index % 2 == 0) Color.parseColor("#dddddd") else Color.TRANSPARENT)
 
-        val timeInMillis = transactionInfo.timestamp.times(1000)
-
-        val date = DateFormat.getInstance().format(Date(timeInMillis))
         val amount = NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)
         val fee = transactionInfo.fee?.let {
             NumberFormatHelper.cryptoAmountFormat.format(it / 100_000_000.0)
@@ -95,7 +92,8 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                 "\nTx index: ${transactionInfo.transactionIndex}" +
                 "\nBlock: ${transactionInfo.blockHeight}" +
                 "\nTimestamp: ${transactionInfo.timestamp}" +
-                "\nDate: $date"
+                "\nDate: ${formatDate(transactionInfo.timestamp)}"
+
         summary.text = text
         summary.setOnClickListener {
             println(transactionInfo)
@@ -104,12 +102,25 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
     }
 
     private fun mapAddresses(list: List<TransactionAddress>): String {
-        return list.joinToString("\n ") {
-            if (it.mine) {
-                "${it.address} (mine)"
-            } else {
-                it.address
+        return list.joinToString("") {
+            var line = "\n- ${it.address}"
+
+            if (it.mine) line += " (mine)"
+
+            it.pluginData?.let { pluginData ->
+                pluginData["hodler"]?.let { hodlerData ->
+                    val lockedUntil = formatDate(hodlerData["locked_until"].toString().toLong())
+
+                    line += "\n  * Locked Until: $lockedUntil"
+                    line += "\n  * Address: ${hodlerData["address"]}"
+                }
             }
+
+            line
         }
+    }
+
+    private fun formatDate(timestamp: Long): String {
+        return DateFormat.getInstance().format(Date(timestamp * 1000))
     }
 }
