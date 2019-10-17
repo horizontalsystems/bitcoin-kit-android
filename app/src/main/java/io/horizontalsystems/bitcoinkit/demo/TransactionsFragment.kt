@@ -15,6 +15,7 @@ import android.widget.TextView
 import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
+import io.horizontalsystems.hodler.HodlerPlugin
 import java.text.DateFormat
 import java.util.*
 
@@ -109,9 +110,9 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
 
             it.pluginData?.let { pluginData ->
                 pluginData["hodler"]?.let { hodlerData ->
-                    val lockedUntil = formatDate(hodlerData["locked_until"].toString().toLong())
+                    val lockTimeInterval = hodlerData["lockTimeInterval"] as HodlerPlugin.LockTimeInterval
 
-                    line += "\n  * Locked Until: $lockedUntil"
+                    line += "\n  * Locked Interval: ${lockTimeInterval.name}"
                     line += "\n  * Address: ${hodlerData["address"]}"
                 }
             }

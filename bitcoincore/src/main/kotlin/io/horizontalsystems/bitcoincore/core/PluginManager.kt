@@ -16,6 +16,14 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
         }
     }
 
+    fun processInputs(mutableTransaction: MutableTransaction) {
+        for (inputToSign in mutableTransaction.inputsToSign) {
+            val plugin = plugins[inputToSign.previousOutput.pluginId] ?: continue
+
+            inputToSign.input.sequence = plugin.getInputSequence(inputToSign.previousOutput)
+        }
+    }
+
     fun addPlugin(plugin: IPlugin) {
         plugins[plugin.id] = plugin
     }
@@ -38,23 +46,17 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
     fun isSpendable(output: TransactionOutput): Boolean {
         val plugin = plugins[output.pluginId] ?: return true
 
-        val blockMedianTime = blockMedianTimeHelper.medianTimePast ?: return false
-
-        return plugin.isSpendable(output, blockMedianTime)
-    }
-
-    fun getTransactionLockTime(transaction: MutableTransaction): Long? {
-        val lockTimes = transaction.inputsToSign.mapNotNull { inputToSign ->
-            plugins[inputToSign.previousOutput.pluginId]?.getTransactionLockTime(inputToSign.previousOutput)
-        }
-
-        return lockTimes.max()
+        return plugin.isSpendable(output, blockMedianTimeHelper)
     }
 
     fun parsePluginData(output: TransactionOutput): Map<String, Map<String, Any>>? {
         val plugin = plugins[output.pluginId] ?: return null
 
-        return mapOf("hodler" to plugin.parsePluginData(output))
+        return try {
+            mapOf("hodler" to plugin.parsePluginData(output))
+        } catch (e: Exception) {
+            null
+        }
     }
 
 }
@@ -64,8 +66,8 @@ interface IPlugin {
 
     fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>, addressConverter: IAddressConverter)
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
-    fun isSpendable(output: TransactionOutput, blockMedianTime: Long): Boolean
-    fun getTransactionLockTime(output: TransactionOutput): Long
+    fun isSpendable(output: TransactionOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
+    fun getInputSequence(output: TransactionOutput): Long
     fun parsePluginData(output: TransactionOutput): Map<String, Any>
 }
 

@@ -196,6 +196,10 @@ public class Utils {
         return new byte[]{(byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value};
     }
 
+    public static int byteArrayToUInt16LE(byte[] data) {
+        return (data[0] & 0xff) | ((data[1] & 0xff) << 8);
+    }
+
     public static int intFromBytes(byte b1, byte b2, byte b3, byte b4) {
         return b1 << 24 | (b2 & 255) << 16 | (b3 & 255) << 8 | b4 & 255;
     }

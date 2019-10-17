@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
+import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.TransactionInput
@@ -14,7 +15,8 @@ class InputSetter(
         private val publicKeyManager: PublicKeyManager,
         private val addressConverter: IAddressConverter,
         private val changeScriptType: Int,
-        private val transactionSizeCalculator: TransactionSizeCalculator
+        private val transactionSizeCalculator: TransactionSizeCalculator,
+        private val pluginManager: PluginManager
 ) {
     fun setInputs(mutableTransaction: MutableTransaction, feeRate: Int, senderPay: Boolean) {
         val value = mutableTransaction.recipientValue
@@ -42,6 +44,8 @@ class InputSetter(
             mutableTransaction.changeAddress = changeAddress
             mutableTransaction.changeValue = unspentOutputInfo.totalValue - sentValue
         }
+
+        pluginManager.processInputs(mutableTransaction)
     }
 
     fun setInputs(mutableTransaction: MutableTransaction, unspentOutput: UnspentOutput, feeRate: Int) {
