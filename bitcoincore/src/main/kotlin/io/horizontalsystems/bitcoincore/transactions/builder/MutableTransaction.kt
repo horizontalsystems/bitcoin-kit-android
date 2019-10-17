@@ -11,7 +11,7 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 class MutableTransaction(isOutgoing: Boolean = true) {
 
     val inputsToSign = mutableListOf<InputToSign>()
-    val transaction = Transaction(1, 0)
+    val transaction = Transaction(2, 0)
 
     lateinit var recipientAddress: Address
     var recipientValue = 0L
