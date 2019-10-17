@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
+import io.horizontalsystems.hodler.HodlerPlugin
 
 class SendReceiveFragment : Fragment() {
 
@@ -86,6 +87,28 @@ class SendReceiveFragment : Fragment() {
             viewModel.feePriority = feePriority
             updateFee()
         }
+
+        val spinner: Spinner = view.findViewById(R.id.lockTimePeriodValue)
+        class SpinnerValue(val interval: HodlerPlugin.LockTimeInterval? = null) {
+            override fun toString(): String {
+                return interval?.name ?: "OFF"
+            }
+        }
+
+        val intervals = arrayOf(SpinnerValue()) + HodlerPlugin.LockTimeInterval.values().map { SpinnerValue(it) }
+        val adapter = ArrayAdapter(view.context, android.R.layout.simple_spinner_dropdown_item, intervals)
+        spinner.adapter = adapter
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+
+            }
+
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                viewModel.timeLockInterval = (parent?.getItemAtPosition(position) as SpinnerValue).interval
+                updateFee()
+            }
+        }
+
     }
 
     private fun send() {

@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.BitcoinKit
+import io.horizontalsystems.hodler.HodlerPlugin
 import io.reactivex.disposables.CompositeDisposable
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
@@ -16,6 +17,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         STARTED, STOPPED
     }
 
+    var timeLockInterval: HodlerPlugin.LockTimeInterval? = null
     val transactions = MutableLiveData<List<TransactionInfo>>()
     val balance = MutableLiveData<BalanceInfo>()
     val lastBlock = MutableLiveData<BlockInfo>()
@@ -82,12 +84,20 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun send(address: String, amount: Long) {
         val feeRate = feeRateFromPriority(feePriority)
-        bitcoinKit.send(address, amount, feeRate = feeRate)
+        bitcoinKit.send(address, amount, feeRate = feeRate, extraData = getPluginData())
     }
 
     fun fee(value: Long, address: String? = null): Long {
         val feeRate = feeRateFromPriority(feePriority)
-        return bitcoinKit.fee(value, address, feeRate = feeRate)
+        return bitcoinKit.fee(value, address, feeRate = feeRate, pluginData = getPluginData())
+    }
+
+    private fun getPluginData(): MutableMap<String, Map<String, Any>> {
+        val pluginData = mutableMapOf<String, Map<String, Any>>()
+        timeLockInterval?.let {
+            pluginData["hodler"] = mapOf("lockTimeInterval" to it)
+        }
+        return pluginData
     }
 
     fun showDebugInfo() {
