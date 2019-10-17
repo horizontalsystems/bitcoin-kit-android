@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
-import io.horizontalsystems.bitcoincore.models.FeePriority
 
 class SendReceiveFragment : Fragment() {
 
@@ -75,30 +74,15 @@ class SendReceiveFragment : Fragment() {
 
         sendAmount.addTextChangedListener(textChangeListener)
 
-        val customFeePriority = view.findViewById<EditText>(R.id.customFeePriority)
-        customFeePriority.addTextChangedListener(object: TextWatcher {
-            override fun afterTextChanged(s: Editable) {
-                val feePriority = s.toString().toIntOrNull()
-                feePriority?.let {
-                    viewModel.feePriority = FeePriority.Custom(it)
-                    updateFee()
-                }
-            }
-
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
-        })
 
         val radioGroup = view.findViewById<RadioGroup>(R.id.radioGroup)
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
             val feePriority = when (checkedId) {
-                R.id.radioLowest ->  FeePriority.Lowest
                 R.id.radioLow ->  FeePriority.Low
                 R.id.radioMedium ->  FeePriority.Medium
                 R.id.radioHigh ->  FeePriority.High
-                else ->  FeePriority.Highest
+                else -> throw Exception("Undefined priority")
             }
-            customFeePriority.setText("")
             viewModel.feePriority = feePriority
             updateFee()
         }
@@ -137,10 +121,7 @@ class SendReceiveFragment : Fragment() {
             return
         }
         try {
-            txFeeValue.text = viewModel.fee(
-                    value = sendAmount.text.toString().toLong(),
-                    address = sendAddress.text.toString()
-            ).toString()
+            txFeeValue.text = viewModel.fee(sendAmount.text.toString().toLong(), sendAddress.text.toString()).toString()
         } catch (e: Exception) {
             Toast.makeText(context, e.message, Toast.LENGTH_LONG).show()
         }

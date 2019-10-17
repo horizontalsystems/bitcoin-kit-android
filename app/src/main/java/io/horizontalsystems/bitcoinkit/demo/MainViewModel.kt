@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
-import io.horizontalsystems.bitcoincore.models.FeePriority
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.reactivex.disposables.CompositeDisposable
@@ -122,16 +121,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     private fun feeRateFromPriority(feePriority: FeePriority): Int {
-        val lowPriority = 20
-        val mediumPriority = 42
-        val highPriority = 81
         return when (feePriority) {
-            FeePriority.Lowest -> lowPriority
-            FeePriority.Low -> (lowPriority + mediumPriority) / 2
-            FeePriority.Medium -> mediumPriority
-            FeePriority.High -> (mediumPriority + highPriority) / 2
-            FeePriority.Highest -> highPriority
-            is FeePriority.Custom -> feePriority.feeRate.toInt()
+            FeePriority.Low -> 5
+            FeePriority.Medium -> 10
+            FeePriority.High -> 15
         }
     }
 }
