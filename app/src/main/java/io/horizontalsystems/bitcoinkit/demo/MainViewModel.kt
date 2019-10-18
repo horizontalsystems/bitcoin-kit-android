@@ -4,6 +4,7 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
+import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -17,14 +18,12 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         STARTED, STOPPED
     }
 
-    var timeLockInterval: HodlerPlugin.LockTimeInterval? = null
     val transactions = MutableLiveData<List<TransactionInfo>>()
     val balance = MutableLiveData<BalanceInfo>()
     val lastBlock = MutableLiveData<BlockInfo>()
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
     lateinit var networkName: String
-    var feePriority: FeePriority = FeePriority.Medium
     private val disposables = CompositeDisposable()
 
     private var started = false
@@ -78,27 +77,6 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         init()
     }
 
-    fun receiveAddress(): String {
-        return bitcoinKit.receiveAddress()
-    }
-
-    fun send(address: String, amount: Long) {
-        val feeRate = feeRateFromPriority(feePriority)
-        bitcoinKit.send(address, amount, feeRate = feeRate, extraData = getPluginData())
-    }
-
-    fun fee(value: Long, address: String? = null): Long {
-        val feeRate = feeRateFromPriority(feePriority)
-        return bitcoinKit.fee(value, address, feeRate = feeRate, pluginData = getPluginData())
-    }
-
-    private fun getPluginData(): MutableMap<String, Map<String, Any>> {
-        val pluginData = mutableMapOf<String, Map<String, Any>>()
-        timeLockInterval?.let {
-            pluginData["hodler"] = mapOf("lockTimeInterval" to it)
-        }
-        return pluginData
-    }
 
     fun showDebugInfo() {
         bitcoinKit.showDebugInfo()
@@ -130,11 +108,95 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         this.state.postValue(state)
     }
 
-    private fun feeRateFromPriority(feePriority: FeePriority): Int {
-        return when (feePriority) {
-            FeePriority.Low -> 5
-            FeePriority.Medium -> 10
-            FeePriority.High -> 15
+    val receiveAddressLiveData = MutableLiveData<String>()
+    val feeLiveData = MutableLiveData<Long>()
+    val errorLiveData = MutableLiveData<String>()
+    val addressLiveData = MutableLiveData<String>()
+    val amountLiveData = MutableLiveData<Long>()
+
+    var amount: Long? = null
+        set(value) {
+            field = value
+            updateFee()
         }
+
+    var address: String? = null
+        set(value) {
+            field = value
+            updateFee()
+        }
+
+    var feePriority: FeePriority = FeePriority.Medium
+        set(value) {
+            field = value
+            updateFee()
+        }
+
+    var timeLockInterval: HodlerPlugin.LockTimeInterval? = null
+        set(value) {
+            field = value
+            updateFee()
+        }
+
+    fun onReceiveClick() {
+        receiveAddressLiveData.value = bitcoinKit.receiveAddress()
+    }
+
+    fun onSendClick() {
+        if (address.isNullOrBlank()) {
+            errorLiveData.value = "Send address cannot be blank"
+        } else if (amount == null) {
+            errorLiveData.value = "Send amount cannot be blank"
+        } else {
+            try {
+                bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, extraData = getPluginData())
+
+                amountLiveData.value = null
+                feeLiveData.value = null
+                addressLiveData.value = null
+                errorLiveData.value = "Transaction sent"
+            } catch (e: Exception) {
+                errorLiveData.value = when (e) {
+                    is UnspentOutputSelectorError.InsufficientUnspentOutputs,
+                    is UnspentOutputSelectorError.EmptyUnspentOutputs -> "Insufficient balance"
+                    else -> e.message ?: "Failed to send transaction (${e.javaClass.name})"
+                }
+            }
+        }
+    }
+
+    fun onMaxClick() {
+        val spendableBalance = bitcoinKit.balance.spendable
+        val fee = try {
+            fee(spendableBalance, address)
+        } catch (e: UnspentOutputSelectorError.InsufficientUnspentOutputs) {
+            e.fee
+        } catch (e: Exception) {
+            0L
+        }
+
+        amountLiveData.value = spendableBalance - fee
+    }
+
+    private fun updateFee() {
+        try {
+            feeLiveData.value = amount?.let {
+                fee(it, address)
+            }
+        } catch (e: Exception) {
+            errorLiveData.value = e.message ?: e.javaClass.simpleName
+        }
+    }
+
+    private fun fee(value: Long, address: String? = null): Long {
+        return bitcoinKit.fee(value, address, feeRate = feePriority.feeRate, pluginData = getPluginData())
+    }
+
+    private fun getPluginData(): MutableMap<String, Map<String, Any>> {
+        val pluginData = mutableMapOf<String, Map<String, Any>>()
+        timeLockInterval?.let {
+            pluginData["hodler"] = mapOf("lockTimeInterval" to it)
+        }
+        return pluginData
     }
 }
