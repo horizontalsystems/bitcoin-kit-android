@@ -1,13 +1,15 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
+import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
+import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
-class PluginManager(private val addressConverter: IAddressConverter, val storage: IStorage, val blockMedianTimeHelper: BlockMedianTimeHelper) {
+class PluginManager(private val addressConverter: IAddressConverter, val storage: IStorage, val blockMedianTimeHelper: BlockMedianTimeHelper) : IRestoreKeyConverter {
     private val plugins = mutableMapOf<Int, IPlugin>()
 
     fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>) {
@@ -59,6 +61,13 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
         }
     }
 
+    override fun keysForApiRestore(publicKey: PublicKey): List<String> {
+        return plugins.map { it.value.keysForApiRestore(publicKey, addressConverter) }.flatten().distinct()
+    }
+
+    override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
+        return listOf()
+    }
 }
 
 interface IPlugin {
@@ -69,6 +78,7 @@ interface IPlugin {
     fun isSpendable(output: TransactionOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
     fun getInputSequence(output: TransactionOutput): Long
     fun parsePluginData(output: TransactionOutput): Map<String, Any>
+    fun keysForApiRestore(publicKey: PublicKey, addressConverter: IAddressConverter): List<String>
 }
 
 class InvalidPluginDataException : Exception()
