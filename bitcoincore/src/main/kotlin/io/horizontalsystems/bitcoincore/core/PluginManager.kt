@@ -41,7 +41,11 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
             val pluginId = nullDataChunksIterator.next()
             val plugin = plugins[pluginId.opcode] ?: break
 
-            plugin.processTransactionWithNullData(transaction, nullDataChunksIterator, storage, addressConverter)
+            try {
+                plugin.processTransactionWithNullData(transaction, nullDataChunksIterator, storage, addressConverter)
+            } catch (e: Exception) {
+
+            }
         }
     }
 
