@@ -3,6 +3,7 @@ package io.horizontalsystems.hodler
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.core.IPlugin
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
@@ -96,12 +97,21 @@ class HodlerPlugin : IPlugin {
         return mapOf("lockTimeInterval" to hodlerData.lockTimeInterval, "address" to hodlerData.addressString)
     }
 
+    override fun keysForApiRestore(publicKey: PublicKey, addressConverter: IAddressConverter): List<String> {
+        return LockTimeInterval.values().map { lockTimeInterval ->
+            val redeemScript = redeemScript(lockTimeInterval, publicKey.publicKeyHash)
+            val redeemScriptHash = Utils.sha256Hash160(redeemScript)
+
+            addressConverter.convert(redeemScriptHash, ScriptType.P2SH).string
+        }
+    }
+
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {
         val sequenceData = Utils.intToByteArray(sequence(lockTimeInterval)).reversedArray().copyOfRange(0, 3)
         return OpCodes.push(sequenceData) + byteArrayOf(OP_CHECKSEQUENCEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
     }
 
-    private fun sequence(lockTimeInterval: LockTimeInterval) : Int {
+    private fun sequence(lockTimeInterval: LockTimeInterval): Int {
         return (relativeLockTimeLockMask or lockTimeInterval.value)
     }
 
