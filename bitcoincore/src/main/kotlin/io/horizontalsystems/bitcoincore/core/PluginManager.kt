@@ -85,5 +85,3 @@ interface IPlugin {
     fun parsePluginData(output: TransactionOutput): Map<String, Any>
     fun keysForApiRestore(publicKey: PublicKey, addressConverter: IAddressConverter): List<String>
 }
-
-class InvalidPluginDataException : Exception()
