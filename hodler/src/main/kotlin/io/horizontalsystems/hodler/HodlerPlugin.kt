@@ -37,9 +37,9 @@ class HodlerPlugin : IPlugin {
 
     override val id = HodlerPlugin.id
 
-    override fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter) {
+    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter) {
 //        val lockTimeInterval = LockTimeInterval.hour
-        val lockTimeInterval = extraData[id]?.get("lockTimeInterval") as? LockTimeInterval ?: return
+        val lockTimeInterval = pluginData[id]?.get("lockTimeInterval") as? LockTimeInterval ?: return
 
         if (mutableTransaction.recipientAddress.scriptType != ScriptType.P2PKH) {
             throw Exception("Locking transaction is available only for PKH addresses")
@@ -56,7 +56,7 @@ class HodlerPlugin : IPlugin {
         val periodIn2Bytes = Utils.intToByteArray(lockTimeInterval.value).reversedArray().copyOfRange(0, 2)
 
         mutableTransaction.recipientAddress = newAddress
-        mutableTransaction.addExtraData(id, OpCodes.push(periodIn2Bytes) + OpCodes.push(pubkeyHash))
+        mutableTransaction.addPluginData(id, OpCodes.push(periodIn2Bytes) + OpCodes.push(pubkeyHash))
     }
 
     override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter) {

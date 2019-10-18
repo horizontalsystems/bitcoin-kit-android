@@ -10,10 +10,10 @@ class TransactionBuilder(
         private val lockTimeSetter: LockTimeSetter
 ) {
 
-    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<Byte, Map<String, Any>>): FullTransaction {
+    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, pluginData: Map<Byte, Map<String, Any>>): FullTransaction {
         val mutableTransaction = MutableTransaction()
 
-        outputSetter.setOutputs(mutableTransaction, toAddress, value, extraData)
+        outputSetter.setOutputs(mutableTransaction, toAddress, value, pluginData)
         inputSetter.setInputs(mutableTransaction, feeRate, senderPay)
         lockTimeSetter.setLockTime(mutableTransaction)
         signer.sign(mutableTransaction)

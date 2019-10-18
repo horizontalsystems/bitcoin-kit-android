@@ -396,8 +396,8 @@ class BitcoinCore(
         return transactionFeeCalculator.fee(value, feeRate, senderPay, address, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, extraData: Map<Byte, Map<String, Any>>): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay, extraData)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, Map<String, Any>>): FullTransaction {
+        return transactionCreator.create(address, value, feeRate, senderPay, pluginData)
     }
 
     fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {

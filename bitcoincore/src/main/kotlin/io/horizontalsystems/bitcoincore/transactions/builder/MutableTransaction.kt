@@ -19,7 +19,7 @@ class MutableTransaction(isOutgoing: Boolean = true) {
     var changeAddress: Address? = null
     var changeValue = 0L
 
-    private val extraData = mutableMapOf<Byte, ByteArray>()
+    private val pluginData = mutableMapOf<Byte, ByteArray>()
 
     val outputs: List<TransactionOutput>
         get() {
@@ -35,9 +35,9 @@ class MutableTransaction(isOutgoing: Boolean = true) {
                 list.add(TransactionOutput(changeValue, index++, it.lockingScript, it.scriptType, it.string, it.hash))
             }
 
-            if (extraData.isNotEmpty()) {
+            if (pluginData.isNotEmpty()) {
                 var data = byteArrayOf(OP_RETURN.toByte())
-                extraData.forEach {
+                pluginData.forEach {
                     data += byteArrayOf(it.key) + it.value
                 }
 
@@ -54,8 +54,8 @@ class MutableTransaction(isOutgoing: Boolean = true) {
     }
 
     fun getPluginDataOutputSize(): Int {
-        return if (extraData.isNotEmpty()) {
-            1 + extraData.map { 1 + it.value.size }.sum()
+        return if (pluginData.isNotEmpty()) {
+            1 + pluginData.map { 1 + it.value.size }.sum()
         } else {
             0
         }
@@ -65,8 +65,8 @@ class MutableTransaction(isOutgoing: Boolean = true) {
         inputsToSign.add(inputToSign)
     }
 
-    fun addExtraData(id: Byte, data: ByteArray) {
-        extraData[id] = data
+    fun addPluginData(id: Byte, data: ByteArray) {
+        pluginData[id] = data
     }
 
     fun build(): FullTransaction {
