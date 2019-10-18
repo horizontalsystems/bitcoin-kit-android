@@ -42,8 +42,8 @@ class HodlerPlugin : IPlugin {
 //        val lockTimeInterval = LockTimeInterval.hour
         val lockTimeInterval = pluginData[id]?.get("lockTimeInterval") as? LockTimeInterval ?: return
 
-        if (mutableTransaction.recipientAddress.scriptType != ScriptType.P2PKH) {
-            throw Exception("Locking transaction is available only for PKH addresses")
+        check(mutableTransaction.recipientAddress.scriptType != ScriptType.P2PKH) {
+            "Locking transaction is available only for PKH addresses"
         }
 
         val pubkeyHash = mutableTransaction.recipientAddress.hash
@@ -61,12 +61,10 @@ class HodlerPlugin : IPlugin {
     }
 
     override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter) {
-        val lockTimeIntervalData = nullDataChunks.next().data
-                ?: throw Exception("invalidHodlerData")
-        val pubkeyHash = nullDataChunks.next().data ?: throw Exception("invalidHodlerData")
+        val lockTimeIntervalData = checkNotNull(nullDataChunks.next().data)
+        val pubkeyHash = checkNotNull(nullDataChunks.next().data)
 
-        val lockTimeInterval = lockTimeIntervalFrom(lockTimeIntervalData)
-                ?: throw Exception("invalidHodlerData")
+        val lockTimeInterval = checkNotNull(lockTimeIntervalFrom(lockTimeIntervalData))
 
         val redeemScript = redeemScript(lockTimeInterval, pubkeyHash)
         val redeemScriptHash = Utils.sha256Hash160(redeemScript)
@@ -127,7 +125,7 @@ class HodlerPlugin : IPlugin {
     }
 
     private fun lockTimeIntervalFrom(output: TransactionOutput): LockTimeInterval {
-        val pluginData = checkNotNull(output.pluginData) { "invalidHodlerData" }
+        val pluginData = checkNotNull(output.pluginData)
 
         return HodlerData.parse(pluginData).lockTimeInterval
     }

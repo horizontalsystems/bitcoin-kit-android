@@ -1,7 +1,5 @@
 package io.horizontalsystems.hodler
 
-import io.horizontalsystems.bitcoincore.core.InvalidPluginDataException
-
 class HodlerData(val lockTimeInterval: HodlerPlugin.LockTimeInterval, val addressString: String) {
 
     override fun toString(): String {
@@ -10,9 +8,9 @@ class HodlerData(val lockTimeInterval: HodlerPlugin.LockTimeInterval, val addres
 
     companion object {
         fun parse(serialized: String?): HodlerData {
-            val (lockTimeIntervalStr, addressString) = serialized?.split("|") ?: throw InvalidPluginDataException()
+            val (lockTimeIntervalStr, addressString) = checkNotNull(serialized?.split("|"))
 
-            val lockTimeInterval = HodlerPlugin.LockTimeInterval.fromValue(lockTimeIntervalStr.toInt()) ?: throw InvalidPluginDataException()
+            val lockTimeInterval = checkNotNull(HodlerPlugin.LockTimeInterval.fromValue(lockTimeIntervalStr.toInt()))
 
             return HodlerData(lockTimeInterval, addressString)
         }
