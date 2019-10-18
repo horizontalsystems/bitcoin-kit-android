@@ -12,7 +12,7 @@ class TransactionCreator(
         private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
+    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<Byte, Map<String, Any>>): FullTransaction {
         return create {
             builder.buildTransaction(toAddress, value, feeRate, senderPay, extraData)
         }

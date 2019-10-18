@@ -14,7 +14,7 @@ class TransactionFeeCalculator(
         private val changeScriptType: Int
 ) {
 
-    fun fee(value: Long, feeRate: Int, senderPay: Boolean, toAddress: String?, pluginData: Map<String, Map<String, Any>>): Long {
+    fun fee(value: Long, feeRate: Int, senderPay: Boolean, toAddress: String?, pluginData: Map<Byte, Map<String, Any>>): Long {
         val mutableTransaction = MutableTransaction()
 
         outputSetter.setOutputs(mutableTransaction, toAddress ?: sampleAddress(), value, pluginData)

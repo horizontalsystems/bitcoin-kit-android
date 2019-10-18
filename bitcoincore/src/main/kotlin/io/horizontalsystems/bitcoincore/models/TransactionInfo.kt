@@ -14,7 +14,7 @@ open class TransactionInfo(
 data class TransactionAddress(
         val address: String,
         val mine: Boolean,
-        val pluginData: Map<String, Map<String, Any>>?
+        val pluginData: Map<Byte, Map<String, Any>>?
 )
 
 data class BlockInfo(

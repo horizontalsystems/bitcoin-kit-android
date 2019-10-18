@@ -109,7 +109,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
             if (it.mine) line += " (mine)"
 
             it.pluginData?.let { pluginData ->
-                pluginData["hodler"]?.let { hodlerData ->
+                pluginData[HodlerPlugin.id]?.let { hodlerData ->
                     val lockTimeInterval = hodlerData["lockTimeInterval"] as HodlerPlugin.LockTimeInterval
 
                     line += "\n  * Locked Interval: ${lockTimeInterval.name}"

@@ -192,10 +192,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         return bitcoinKit.fee(value, address, feeRate = feePriority.feeRate, pluginData = getPluginData())
     }
 
-    private fun getPluginData(): MutableMap<String, Map<String, Any>> {
-        val pluginData = mutableMapOf<String, Map<String, Any>>()
+    private fun getPluginData(): MutableMap<Byte, Map<String, Any>> {
+        val pluginData = mutableMapOf<Byte, Map<String, Any>>()
         timeLockInterval?.let {
-            pluginData["hodler"] = mapOf("lockTimeInterval" to it)
+            pluginData[HodlerPlugin.id] = mapOf("lockTimeInterval" to it)
         }
         return pluginData
     }

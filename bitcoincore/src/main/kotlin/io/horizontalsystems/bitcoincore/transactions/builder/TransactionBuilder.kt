@@ -10,7 +10,7 @@ class TransactionBuilder(
         private val lockTimeSetter: LockTimeSetter
 ) {
 
-    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<String, Map<String, Any>>): FullTransaction {
+    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, extraData: Map<Byte, Map<String, Any>>): FullTransaction {
         val mutableTransaction = MutableTransaction()
 
         outputSetter.setOutputs(mutableTransaction, toAddress, value, extraData)
