@@ -19,11 +19,4 @@ class BlockMedianTimeHelper(private val storage: IStorage) {
         }
     }
 
-    // Returns (an approximate medianTimePast of a block in which given transaction is included) PLUS ~1 hour.
-    // This is not an accurate medianTimePast, it always returns a timestamp nearly 7 blocks ahead.
-    // But this is quite enough in our case since we're setting relative time-locks for at least 1 month
-    fun medianTimePast(transactionHash: ByteArray): Long? {
-        return storage.getTransaction(transactionHash)?.timestamp
-    }
-
 }
