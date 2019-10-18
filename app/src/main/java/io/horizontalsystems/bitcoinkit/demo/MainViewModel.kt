@@ -149,7 +149,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             errorLiveData.value = "Send amount cannot be blank"
         } else {
             try {
-                bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, extraData = getPluginData())
+                bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, pluginData = getPluginData())
 
                 amountLiveData.value = null
                 feeLiveData.value = null

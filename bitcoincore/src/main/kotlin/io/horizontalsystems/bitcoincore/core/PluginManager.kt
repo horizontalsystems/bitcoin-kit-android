@@ -12,9 +12,9 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 class PluginManager(private val addressConverter: IAddressConverter, val storage: IStorage, private val blockMedianTimeHelper: BlockMedianTimeHelper) : IRestoreKeyConverter {
     private val plugins = mutableMapOf<Byte, IPlugin>()
 
-    fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<Byte, Map<String, Any>>) {
+    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>) {
         plugins.forEach {
-            it.value.processOutputs(mutableTransaction, extraData, addressConverter)
+            it.value.processOutputs(mutableTransaction, pluginData, addressConverter)
         }
     }
 
@@ -77,7 +77,7 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
 interface IPlugin {
     val id: Byte
 
-    fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter)
+    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter)
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
     fun isSpendable(output: TransactionOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
     fun getInputSequence(output: TransactionOutput): Long
