@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 class UnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int = 6, val pluginManager: PluginManager) : IUnspentOutputProvider {
     override fun getSpendableUtxo(): List<UnspentOutput> {
         return getConfirmedUtxo().filter {
-            pluginManager.isSpendable(it.output)
+            pluginManager.isSpendable(it)
         }
     }
 
@@ -42,7 +42,7 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
 
     private fun getUnspendableUtxo(): List<UnspentOutput> {
         return getConfirmedUtxo().filter {
-            !pluginManager.isSpendable(it.output)
+            !pluginManager.isSpendable(it)
         }
     }
 }

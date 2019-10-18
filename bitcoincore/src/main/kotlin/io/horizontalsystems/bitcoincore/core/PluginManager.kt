@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
@@ -49,10 +50,10 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
         }
     }
 
-    fun isSpendable(output: TransactionOutput): Boolean {
-        val plugin = plugins[output.pluginId] ?: return true
+    fun isSpendable(unspentOutput: UnspentOutput): Boolean {
+        val plugin = plugins[unspentOutput.output.pluginId] ?: return true
 
-        return plugin.isSpendable(output, blockMedianTimeHelper)
+        return plugin.isSpendable(unspentOutput, blockMedianTimeHelper)
     }
 
     fun parsePluginData(output: TransactionOutput): Map<Byte, Map<String, Any>>? {
@@ -79,7 +80,7 @@ interface IPlugin {
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter)
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
-    fun isSpendable(output: TransactionOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
+    fun isSpendable(unspentOutput: UnspentOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
     fun getInputSequence(output: TransactionOutput): Long
     fun parsePluginData(output: TransactionOutput): Map<String, Any>
     fun keysForApiRestore(publicKey: PublicKey, addressConverter: IAddressConverter): List<String>

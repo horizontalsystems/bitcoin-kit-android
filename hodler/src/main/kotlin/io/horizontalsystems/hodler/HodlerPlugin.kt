@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.*
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
@@ -86,9 +87,9 @@ class HodlerPlugin : IPlugin {
         }
     }
 
-    override fun isSpendable(output: TransactionOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean {
+    override fun isSpendable(unspentOutput: UnspentOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean {
         val lastBlockMedianTimePast = blockMedianTimeHelper.medianTimePast ?: return false
-        return inputLockTime(output, blockMedianTimeHelper) < lastBlockMedianTimePast
+        return inputLockTime(unspentOutput) < lastBlockMedianTimePast
     }
 
     override fun getInputSequence(output: TransactionOutput): Long {
@@ -131,12 +132,13 @@ class HodlerPlugin : IPlugin {
         return HodlerData.parse(pluginData).lockTimeInterval
     }
 
-    private fun inputLockTime(output: TransactionOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Long {
-        val previousOutputMedianTime = checkNotNull(blockMedianTimeHelper.medianTimePast(output.transactionHash)) {
-            "HodlerPluginError.invalidHodlerData"
-        }
+    private fun inputLockTime(unspentOutput: UnspentOutput): Long {
+        // Use (an approximate medianTimePast of a block in which given transaction is included) PLUS ~1 hour.
+        // This is not an accurate medianTimePast, it is always a timestamp nearly 7 blocks ahead.
+        // But this is quite enough in our case since we're setting relative time-locks for at least 1 month
+        val previousOutputMedianTime = unspentOutput.transaction.timestamp
 
-        val lockTimeInterval = lockTimeIntervalFrom(output)
+        val lockTimeInterval = lockTimeIntervalFrom(unspentOutput.output)
 
         return previousOutputMedianTime + lockTimeInterval.value * sequenceTimeSecondsGranularity
     }
