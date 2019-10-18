@@ -19,7 +19,7 @@ class MutableTransaction(isOutgoing: Boolean = true) {
     var changeAddress: Address? = null
     var changeValue = 0L
 
-    private val extraData = mutableMapOf<Int, ByteArray>()
+    private val extraData = mutableMapOf<Byte, ByteArray>()
 
     val outputs: List<TransactionOutput>
         get() {
@@ -38,7 +38,7 @@ class MutableTransaction(isOutgoing: Boolean = true) {
             if (extraData.isNotEmpty()) {
                 var data = byteArrayOf(OP_RETURN.toByte())
                 extraData.forEach {
-                    data += byteArrayOf(it.key.toByte()) + it.value
+                    data += byteArrayOf(it.key) + it.value
                 }
 
                 list.add(TransactionOutput(0, index++, data, ScriptType.NULL_DATA))
@@ -65,7 +65,7 @@ class MutableTransaction(isOutgoing: Boolean = true) {
         inputsToSign.add(inputToSign)
     }
 
-    fun addExtraData(id: Int, data: ByteArray) {
+    fun addExtraData(id: Byte, data: ByteArray) {
         extraData[id] = data
     }
 

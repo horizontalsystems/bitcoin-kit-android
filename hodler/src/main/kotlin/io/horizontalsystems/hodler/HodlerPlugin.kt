@@ -13,6 +13,10 @@ import io.horizontalsystems.bitcoincore.utils.Utils
 
 class HodlerPlugin : IPlugin {
 
+    companion object {
+        const val id = OP_1.toByte()
+    }
+
     enum class LockTimeInterval(val value: Int) {
         hour(7),
         month(5063),     //  30 * 24 * 60 * 60 / 512
@@ -31,11 +35,11 @@ class HodlerPlugin : IPlugin {
     private val sequenceTimeSecondsGranularity = 512
     private val relativeLockTimeLockMask = 0x400000 // (1 << 22)
 
-    override val id = OP_1
+    override val id = HodlerPlugin.id
 
-    override fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<String, Map<String, Any>>, addressConverter: IAddressConverter) {
+    override fun processOutputs(mutableTransaction: MutableTransaction, extraData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter) {
 //        val lockTimeInterval = LockTimeInterval.hour
-        val lockTimeInterval = extraData["hodler"]?.get("lockTimeInterval") as? LockTimeInterval ?: return
+        val lockTimeInterval = extraData[id]?.get("lockTimeInterval") as? LockTimeInterval ?: return
 
         if (mutableTransaction.recipientAddress.scriptType != ScriptType.P2PKH) {
             throw Exception("Locking transaction is available only for PKH addresses")

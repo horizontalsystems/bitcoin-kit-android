@@ -46,7 +46,7 @@ class TransactionOutput {
     var keyHash: ByteArray? = null
     var address: String? = null
 
-    var pluginId: Int? = null
+    var pluginId: Byte? = null
     var pluginData: String? = null
     @Ignore var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
 
