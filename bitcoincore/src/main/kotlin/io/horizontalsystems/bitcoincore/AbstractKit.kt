@@ -5,7 +5,6 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 abstract class AbstractKit {
 
@@ -73,7 +72,11 @@ abstract class AbstractKit {
         bitcoinCore.showDebugInfo()
     }
 
-    fun getPublicKeyByPath(path: String) : PublicKey {
+    fun statusInfo(): Map<String, Any> {
+        return bitcoinCore.statusInfo()
+    }
+
+    fun getPublicKeyByPath(path: String): PublicKey {
         return bitcoinCore.getPublicKeyByPath(path)
     }
 

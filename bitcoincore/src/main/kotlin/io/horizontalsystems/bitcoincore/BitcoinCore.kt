@@ -27,7 +27,9 @@ import io.horizontalsystems.bitcoincore.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
+import java.util.*
 import java.util.concurrent.Executor
+import kotlin.collections.LinkedHashMap
 
 class BitcoinCoreBuilder {
 
@@ -194,7 +196,8 @@ class BitcoinCoreBuilder {
                 paymentAddressParser,
                 syncManager,
                 blockValidatorChain,
-                bip)
+                bip,
+                peerManager)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -278,7 +281,8 @@ class BitcoinCore(
         private val paymentAddressParser: PaymentAddressParser,
         private val syncManager: SyncManager,
         private val blockValidatorChain: BlockValidatorChain,
-        private val bip: Bip)
+        private val bip: Bip,
+        private var peerManager: PeerManager)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -441,6 +445,28 @@ class BitcoinCore(
                 println(e.message)
             }
         }
+    }
+
+    fun statusInfo(): Map<String, Any> {
+        val statusInfo = LinkedHashMap<String, Any>()
+
+        statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it) } ?: "N/A"
+        statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
+
+        val peers = LinkedHashMap<String, Any>()
+        peerManager.connected().forEachIndexed { index, peer ->
+
+            val peerStatus = LinkedHashMap<String, Any>()
+            peerStatus["Status"] = if (peer.synced) "Synced" else "Not Synced"
+            peerStatus["Host"] = peer.host
+            peerStatus["Best Block"] = peer.announcedLastBlockHeight
+
+            peers["Peer ${index + 1}"] = peerStatus
+        }
+
+        statusInfo.putAll(peers)
+
+        return statusInfo
     }
 
     //
