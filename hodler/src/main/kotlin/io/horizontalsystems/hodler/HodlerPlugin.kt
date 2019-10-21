@@ -38,9 +38,9 @@ class HodlerPlugin : IPlugin {
 
     override val id = HodlerPlugin.id
 
-    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter) {
+    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>, addressConverter: IAddressConverter) {
 //        val lockTimeInterval = LockTimeInterval.hour
-        val lockTimeInterval = pluginData[id]?.get("lockTimeInterval") as? LockTimeInterval ?: return
+        val lockTimeInterval = pluginData["lockTimeInterval"] as? LockTimeInterval ?: return
 
         check(mutableTransaction.recipientAddress.scriptType != ScriptType.P2PKH) {
             "Locking transaction is available only for PKH addresses"

@@ -14,8 +14,8 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
     private val plugins = mutableMapOf<Byte, IPlugin>()
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>) {
-        plugins.forEach {
-            it.value.processOutputs(mutableTransaction, pluginData, addressConverter)
+        pluginData.forEach {
+            plugins[it.key]?.processOutputs(mutableTransaction, it.value, addressConverter)
         }
     }
 
@@ -78,7 +78,7 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
 interface IPlugin {
     val id: Byte
 
-    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>, addressConverter: IAddressConverter)
+    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>, addressConverter: IAddressConverter)
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
     fun isSpendable(unspentOutput: UnspentOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
     fun getInputSequence(output: TransactionOutput): Long
