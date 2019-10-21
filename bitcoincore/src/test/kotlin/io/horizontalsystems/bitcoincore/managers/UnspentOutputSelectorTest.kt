@@ -51,11 +51,11 @@ object UnspentOutputSelectorTest : Spek({
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
                 whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
                 whenever(txSizeCalculator.outputSize(any())).thenReturn(2)
-                whenever(txSizeCalculator.transactionSize(any(), any())).thenReturn(100)
+                whenever(txSizeCalculator.transactionSize(any(), any(), any())).thenReturn(100)
             }
 
             it("select_receiverPay") {
-                val selectedOutput = unspentOutputSelector.select(value = 7000, feeRate = 1, senderPay = true)
+                val selectedOutput = unspentOutputSelector.select(value = 7000, feeRate = 1, senderPay = true, pluginDataOutputSize = 0)
 
                 Assert.assertEquals(listOf(unspentOutputs[0], unspentOutputs[1], unspentOutputs[2], unspentOutputs[3]), selectedOutput.outputs)
                 Assert.assertEquals(15000, selectedOutput.totalValue)
@@ -65,7 +65,7 @@ object UnspentOutputSelectorTest : Spek({
 
             it("select_receiverPayNoChangeOutput") {
                 val expectedFee = (100 + 10 + 2).toLong()  // fee for tx + fee for change input + fee for change output
-                val selectedOutputs = unspentOutputSelector.select(value = 15000L - expectedFee, feeRate = 1, senderPay = true)
+                val selectedOutputs = unspentOutputSelector.select(value = 15000L - expectedFee, feeRate = 1, senderPay = true, pluginDataOutputSize = 0)
 
                 Assert.assertEquals(listOf(unspentOutputs[0], unspentOutputs[1], unspentOutputs[2], unspentOutputs[3]), selectedOutputs.outputs)
                 Assert.assertEquals(15000, selectedOutputs.totalValue)
@@ -75,7 +75,7 @@ object UnspentOutputSelectorTest : Spek({
 
             it("testNotEnoughErrorReceiverPay") {
                 assertThrows<UnspentOutputSelectorError.InsufficientUnspentOutputs> {
-                    unspentOutputSelector.select(value = 3_100_100, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = false)
+                    unspentOutputSelector.select(value = 3_100_100, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = false, pluginDataOutputSize = 0)
                 }
             }
 
@@ -83,7 +83,7 @@ object UnspentOutputSelectorTest : Spek({
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf())
 
                 assertThrows<UnspentOutputSelectorError.EmptyUnspentOutputs> {
-                    unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = true)
+                    unspentOutputSelector.select(value = 3_090_000, feeRate = 600, outputType = ScriptType.P2PKH, senderPay = true, pluginDataOutputSize = 0)
                 }
             }
 
@@ -105,12 +105,12 @@ object UnspentOutputSelectorTest : Spek({
 
             beforeEach {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
-                whenever(calculator.transactionSize(any(), any())).thenReturn(123123)
+                whenever(calculator.transactionSize(any(), any(), any())).thenReturn(123123)
             }
 
             it("selects selects consecutive 4 outputs") {
-                Assertions.assertArrayEquals(arrayOf(utxo1, utxo2, utxo3, utxo4), selector.select(1000, feeRate, senderPay = true).outputs.toTypedArray())
-                Assertions.assertArrayEquals(arrayOf(utxo2, utxo3, utxo4, utxo5), selector.select(1100, feeRate, senderPay = true).outputs.toTypedArray())
+                Assertions.assertArrayEquals(arrayOf(utxo1, utxo2, utxo3, utxo4), selector.select(1000, feeRate, senderPay = true, pluginDataOutputSize = 0).outputs.toTypedArray())
+                Assertions.assertArrayEquals(arrayOf(utxo2, utxo3, utxo4, utxo5), selector.select(1100, feeRate, senderPay = true, pluginDataOutputSize = 0).outputs.toTypedArray())
             }
         }
     }

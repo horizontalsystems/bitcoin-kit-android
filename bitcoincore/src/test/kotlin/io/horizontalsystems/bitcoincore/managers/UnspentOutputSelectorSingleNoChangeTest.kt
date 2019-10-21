@@ -45,14 +45,14 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
             whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
             whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
             whenever(txSizeCalculator.outputSize(any())).thenReturn(2)
-            whenever(txSizeCalculator.transactionSize(any(), any())).thenReturn(100)
+            whenever(txSizeCalculator.transactionSize(any(), any(), any())).thenReturn(100)
 
         }
 
         it("select_ExactlyValueReceiverPay") {
             fun check(value: Long, feeRate: Int, fee: Long, senderPay: Boolean, output: TransactionOutput) {
                 try {
-                    val selectedOutputs = unspentOutputSelector.select(value = value, feeRate = feeRate, senderPay = senderPay)
+                    val selectedOutputs = unspentOutputSelector.select(value = value, feeRate = feeRate, senderPay = senderPay, pluginDataOutputSize = 0)
 
                     Assert.assertArrayEquals(arrayOf(output), selectedOutputs.outputs.map { it.output }.toTypedArray())
                     Assert.assertEquals(output.value, selectedOutputs.totalValue)
