@@ -1,9 +1,11 @@
 package io.horizontalsystems.bitcoincore.transactions
 
 import com.nhaarman.mockitokotlin2.any
+import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.*
@@ -18,6 +20,7 @@ import org.spekframework.spek2.style.specification.describe
 object TransactionExtractorTest : Spek({
     val storage = Mockito.mock(IStorage::class.java)
     val addressConverter = Mockito.mock(IAddressConverter::class.java)
+    val pluginManager = mock<PluginManager>()
 
     lateinit var transactionOutput: TransactionOutput
     lateinit var transactionInput: TransactionInput
@@ -29,7 +32,7 @@ object TransactionExtractorTest : Spek({
         transactionInput = TransactionInput(byteArrayOf(), 0)
         fullTransaction = FullTransaction(Transaction(), listOf(transactionInput), listOf(transactionOutput))
 
-        extractor = TransactionExtractor(addressConverter, storage)
+        extractor = TransactionExtractor(addressConverter, storage, pluginManager)
     }
 
     describe("#extract") {

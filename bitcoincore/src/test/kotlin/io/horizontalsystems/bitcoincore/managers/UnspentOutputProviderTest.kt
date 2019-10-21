@@ -1,8 +1,10 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.Block
@@ -19,6 +21,7 @@ import org.spekframework.spek2.style.specification.describe
 
 object UnspentOutputProviderTest : Spek({
     val storage = mock(IStorage::class.java)
+    val pluginManager = mock<PluginManager>()
 
     val output = TransactionOutput(value = 1, index = 0, script = byteArrayOf(), type = ScriptType.P2PKH, keyHash = "000010000".hexToByteArray())
     val pubKey = Fixtures.publicKey
@@ -40,7 +43,7 @@ object UnspentOutputProviderTest : Spek({
 
     val transaction by memoized { Transaction() }
     val provider by memoized {
-        UnspentOutputProvider(storage = storage, confirmationsThreshold = confirmationsThreshold)
+        UnspentOutputProvider(storage = storage, confirmationsThreshold = confirmationsThreshold, pluginManager = pluginManager)
     }
 
     beforeEachTest {
@@ -54,6 +57,7 @@ object UnspentOutputProviderTest : Spek({
                 unspentOutput = UnspentOutput(output, pubKey, transaction, null)
 
                 whenever(storage.getUnspentOutputs()).thenReturn(listOf(unspentOutput))
+                whenever(pluginManager.isSpendable(unspentOutput)).thenReturn(true)
             }
 
             it("returns unspentOutput") {
@@ -71,6 +75,7 @@ object UnspentOutputProviderTest : Spek({
                     unspentOutput = UnspentOutput(output, pubKey, transaction, null)
 
                     whenever(storage.getUnspentOutputs()).thenReturn(listOf(unspentOutput))
+                    whenever(pluginManager.isSpendable(unspentOutput)).thenReturn(true)
                 }
 
                 it("doesn't return unspentOutput") {
@@ -88,6 +93,7 @@ object UnspentOutputProviderTest : Spek({
                     unspentOutput = UnspentOutput(output, pubKey, transaction, block)
 
                     whenever(storage.getUnspentOutputs()).thenReturn(listOf(unspentOutput))
+                    whenever(pluginManager.isSpendable(unspentOutput)).thenReturn(true)
                 }
 
                 context("when block has enough confirmations") {
@@ -121,8 +127,13 @@ object UnspentOutputProviderTest : Spek({
             )
 
             whenever(storage.getUnspentOutputs()).thenReturn(unspentOutputs)
+            whenever(pluginManager.isSpendable(unspentOutputs[0])).thenReturn(true)
+            whenever(pluginManager.isSpendable(unspentOutputs[1])).thenReturn(true)
 
-            assertEquals(unspentOutputs[0].output.value + unspentOutputs[1].output.value, provider.getBalance())
+            val balance = provider.getBalance()
+
+            assertEquals(unspentOutputs[0].output.value + unspentOutputs[1].output.value, balance.spendable)
+            assertEquals(0, balance.unspendable)
         }
     }
 
