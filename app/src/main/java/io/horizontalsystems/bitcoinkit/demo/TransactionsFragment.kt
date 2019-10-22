@@ -16,6 +16,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.hodler.HodlerPlugin
+import io.horizontalsystems.hodler.LockTimeInterval
 import java.text.DateFormat
 import java.util.*
 
@@ -110,7 +111,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
 
             it.pluginData?.let { pluginData ->
                 pluginData[HodlerPlugin.id]?.let { hodlerData ->
-                    val lockTimeInterval = hodlerData["lockTimeInterval"] as HodlerPlugin.LockTimeInterval
+                    val lockTimeInterval = hodlerData["lockTimeInterval"] as LockTimeInterval
 
                     line += "\n  * Locked Interval: ${lockTimeInterval.name}"
                     line += "\n  * Address: ${hodlerData["address"]}"

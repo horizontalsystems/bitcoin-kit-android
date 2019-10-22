@@ -13,7 +13,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
-import io.horizontalsystems.hodler.HodlerPlugin
+import io.horizontalsystems.hodler.LockTimeInterval
 import kotlinx.android.synthetic.main.fragment_send_receive.*
 
 class SendReceiveFragment : Fragment() {
@@ -103,14 +103,14 @@ class SendReceiveFragment : Fragment() {
     }
 }
 
-class LockTimeIntervalOption(val interval: HodlerPlugin.LockTimeInterval? = null) {
+class LockTimeIntervalOption(val interval: LockTimeInterval? = null) {
     override fun toString(): String {
         return interval?.name ?: "OFF"
     }
 
     companion object {
         fun getIntervals(): Array<LockTimeIntervalOption> {
-            return arrayOf(LockTimeIntervalOption()) + HodlerPlugin.LockTimeInterval.values().map { LockTimeIntervalOption(it) }
+            return arrayOf(LockTimeIntervalOption()) + LockTimeInterval.values().map { LockTimeIntervalOption(it) }
         }
     }
 }

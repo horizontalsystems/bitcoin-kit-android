@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.hodler.HodlerPlugin
+import io.horizontalsystems.hodler.LockTimeInterval
 import io.reactivex.disposables.CompositeDisposable
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
@@ -132,7 +133,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             updateFee()
         }
 
-    var timeLockInterval: HodlerPlugin.LockTimeInterval? = null
+    var timeLockInterval: LockTimeInterval? = null
         set(value) {
             field = value
             updateFee()

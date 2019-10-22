@@ -39,7 +39,7 @@ class HodlerPluginTest {
 
     @Test
     fun processOutputs_scriptTypeNotP2PKH() {
-        val pluginData = mapOf<String, Any>("lockTimeInterval" to HodlerPlugin.LockTimeInterval.hour)
+        val pluginData = mapOf<String, Any>("lockTimeInterval" to LockTimeInterval.hour)
 
         whenever(mutableTransaction.recipientAddress).thenReturn(recipientAddress)
         whenever(recipientAddress.scriptType).thenReturn(ScriptType.P2SH)
@@ -54,7 +54,7 @@ class HodlerPluginTest {
 
     @Test
     fun processOutputs_success() {
-        val pluginData = mapOf<String, Any>("lockTimeInterval" to HodlerPlugin.LockTimeInterval.hour)
+        val pluginData = mapOf<String, Any>("lockTimeInterval" to LockTimeInterval.hour)
 
         val shAddress = mock<Address>()
 
@@ -164,7 +164,7 @@ class HodlerPluginTest {
 
         val parsePluginData = hodlerPlugin.parsePluginData(output)
 
-        Assert.assertEquals(HodlerPlugin.LockTimeInterval.hour, parsePluginData["lockTimeInterval"])
+        Assert.assertEquals(LockTimeInterval.hour, parsePluginData["lockTimeInterval"])
         Assert.assertEquals("originalAddress", parsePluginData["address"])
     }
 

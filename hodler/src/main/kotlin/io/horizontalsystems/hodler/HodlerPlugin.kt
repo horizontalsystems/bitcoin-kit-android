@@ -13,44 +13,13 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 
 class HodlerPlugin : IPlugin {
-
     companion object {
         const val id = OP_1.toByte()
     }
 
-    enum class LockTimeInterval(val value: Int) {
-        hour(7),
-        month(5063),     //  30 * 24 * 60 * 60 / 512
-        halfYear(30881), // 183 * 24 * 60 * 60 / 512
-        year(61593);     // 365 * 24 * 60 * 60 / 512
-
-        fun to2BytesLE(): ByteArray {
-            // need to write to extra data output as 2 bytes
-            return Utils.intToByteArray(value).reversedArray().copyOfRange(0, 2)
-        }
-
-        companion object {
-            fun fromValue(value: Int): LockTimeInterval? {
-                return values().find {
-                    it.value == value
-                }
-            }
-
-            fun from2BytesLE(bytes: ByteArray): LockTimeInterval? {
-                if (bytes.size != 2) return null
-
-                return fromValue(Utils.byteArrayToUInt16LE(bytes))
-            }
-        }
-    }
-
-    private val sequenceTimeSecondsGranularity = 512
-    private val relativeLockTimeLockMask = 0x400000 // (1 << 22)
-
     override val id = HodlerPlugin.id
 
     override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>, addressConverter: IAddressConverter) {
-//        val lockTimeInterval = LockTimeInterval.hour
         val lockTimeInterval = checkNotNull(pluginData["lockTimeInterval"] as? LockTimeInterval)
 
         check(mutableTransaction.recipientAddress.scriptType == ScriptType.P2PKH) {
@@ -62,7 +31,7 @@ class HodlerPlugin : IPlugin {
         val newAddress = addressConverter.convert(redeemScriptHash, ScriptType.P2SH)
 
         mutableTransaction.recipientAddress = newAddress
-        mutableTransaction.addPluginData(id, OpCodes.push(lockTimeInterval.to2BytesLE()) + OpCodes.push(pubkeyHash))
+        mutableTransaction.addPluginData(id, OpCodes.push(lockTimeInterval.valueAs2BytesLE) + OpCodes.push(pubkeyHash))
     }
 
     override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter) {
@@ -96,7 +65,7 @@ class HodlerPlugin : IPlugin {
     }
 
     override fun getInputSequence(output: TransactionOutput): Long {
-        return sequence(lockTimeIntervalFrom(output)).toLong()
+        return lockTimeIntervalFrom(output).sequenceNumber.toLong()
     }
 
     override fun parsePluginData(output: TransactionOutput): Map<String, Any> {
@@ -115,12 +84,7 @@ class HodlerPlugin : IPlugin {
     }
 
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {
-        val sequenceData = Utils.intToByteArray(sequence(lockTimeInterval)).reversedArray().copyOfRange(0, 3)
-        return OpCodes.push(sequenceData) + byteArrayOf(OP_CHECKSEQUENCEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
-    }
-
-    private fun sequence(lockTimeInterval: LockTimeInterval): Int {
-        return (relativeLockTimeLockMask or lockTimeInterval.value)
+        return OpCodes.push(lockTimeInterval.sequenceNumberAs3BytesLE) + byteArrayOf(OP_CHECKSEQUENCEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
     }
 
     private fun lockTimeIntervalFrom(output: TransactionOutput): LockTimeInterval {
@@ -137,6 +101,6 @@ class HodlerPlugin : IPlugin {
 
         val lockTimeInterval = lockTimeIntervalFrom(unspentOutput.output)
 
-        return previousOutputMedianTime + lockTimeInterval.value * sequenceTimeSecondsGranularity
+        return previousOutputMedianTime + lockTimeInterval.valueInSeconds
     }
 }
