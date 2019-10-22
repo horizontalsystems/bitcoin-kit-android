@@ -15,14 +15,15 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>) {
         pluginData.forEach {
-            plugins[it.key]?.processOutputs(mutableTransaction, it.value, addressConverter)
+            val plugin = checkNotNull(plugins[it.key])
+            plugin.processOutputs(mutableTransaction, it.value, addressConverter)
         }
     }
 
     fun processInputs(mutableTransaction: MutableTransaction) {
         for (inputToSign in mutableTransaction.inputsToSign) {
-            val plugin = plugins[inputToSign.previousOutput.pluginId] ?: continue
-
+            val pluginId = inputToSign.previousOutput.pluginId ?: continue
+            val plugin = checkNotNull(plugins[pluginId])
             inputToSign.input.sequence = plugin.getInputSequence(inputToSign.previousOutput)
         }
     }
@@ -50,9 +51,15 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
         }
     }
 
+    /**
+     * Tell if UTXO is spendable using the corresponding plugin
+     *
+     * @return true if pluginId is null, false if no plugin found for pluginId,
+     * otherwise delegate it to corresponding plugin
+     */
     fun isSpendable(unspentOutput: UnspentOutput): Boolean {
-        val plugin = plugins[unspentOutput.output.pluginId] ?: return true
-
+        val pluginId = unspentOutput.output.pluginId ?: return true
+        val plugin = plugins[pluginId] ?: return false
         return plugin.isSpendable(unspentOutput, blockMedianTimeHelper)
     }
 
