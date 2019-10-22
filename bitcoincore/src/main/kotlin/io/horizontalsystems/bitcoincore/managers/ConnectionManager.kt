@@ -13,7 +13,7 @@ class ConnectionManager(context: Context) {
         fun onConnectionChange(isConnected: Boolean)
     }
 
-    private val executorService = Executors.newCachedThreadPool()
+    private val executorService = Executors.newSingleThreadExecutor()
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     var listener: Listener? = null
