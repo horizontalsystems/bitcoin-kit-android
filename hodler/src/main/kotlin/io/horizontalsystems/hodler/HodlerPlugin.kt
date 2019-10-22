@@ -73,10 +73,15 @@ class HodlerPlugin(
         return lockTimeIntervalFrom(output).sequenceNumber.toLong()
     }
 
-    override fun parsePluginData(output: TransactionOutput): Map<String, Any> {
+    override fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<String, Any> {
         val hodlerData = HodlerData.parse(output.pluginData)
 
-        return mapOf("lockTimeInterval" to hodlerData.lockTimeInterval, "address" to hodlerData.addressString)
+        // When checking if utxo is spendable we use the best block median time.
+        // The median time is 6 blocks earlier which is approximately equal to 1 hour.
+        // Here we add 1 hour to show the time when this UTXO will be spendable
+        val lockedUntilApprox = hodlerData.lockTimeInterval.valueInSeconds + txTimestamp + 3600
+
+        return mapOf("lockTimeInterval" to hodlerData.lockTimeInterval, "address" to hodlerData.addressString, "lockedUntilApprox" to lockedUntilApprox)
     }
 
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {

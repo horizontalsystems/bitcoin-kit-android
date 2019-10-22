@@ -113,7 +113,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                 pluginData[HodlerPlugin.id]?.let { hodlerData ->
                     val lockTimeInterval = hodlerData["lockTimeInterval"] as LockTimeInterval
 
-                    line += "\n  * Locked Interval: ${lockTimeInterval.name}"
+                    line += "\n  * Locked: ${lockTimeInterval.name}, approx until ${formatDate(hodlerData["lockedUntilApprox"] as Long)}"
                     line += "\n  * Address: ${hodlerData["address"]}"
                 }
             }

@@ -61,11 +61,11 @@ class PluginManager : IRestoreKeyConverter {
         return plugin.isSpendable(unspentOutput)
     }
 
-    fun parsePluginData(output: TransactionOutput): Map<Byte, Map<String, Any>>? {
+    fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<Byte, Map<String, Any>>? {
         val plugin = plugins[output.pluginId] ?: return null
 
         return try {
-            mapOf(plugin.id to plugin.parsePluginData(output))
+            mapOf(plugin.id to plugin.parsePluginData(output, txTimestamp))
         } catch (e: Exception) {
             null
         }
@@ -87,6 +87,6 @@ interface IPlugin {
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>)
     fun isSpendable(unspentOutput: UnspentOutput): Boolean
     fun getInputSequence(output: TransactionOutput): Long
-    fun parsePluginData(output: TransactionOutput): Map<String, Any>
+    fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<String, Any>
     fun keysForApiRestore(publicKey: PublicKey): List<String>
 }
