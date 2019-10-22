@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore.core
 
-import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
@@ -8,15 +7,14 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
-import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
-class PluginManager(private val addressConverter: IAddressConverter, val storage: IStorage, private val blockMedianTimeHelper: BlockMedianTimeHelper) : IRestoreKeyConverter {
+class PluginManager : IRestoreKeyConverter {
     private val plugins = mutableMapOf<Byte, IPlugin>()
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>) {
         pluginData.forEach {
             val plugin = checkNotNull(plugins[it.key])
-            plugin.processOutputs(mutableTransaction, it.value, addressConverter)
+            plugin.processOutputs(mutableTransaction, it.value)
         }
     }
 
@@ -44,7 +42,7 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
             val plugin = plugins[pluginId.opcode.toByte()] ?: break
 
             try {
-                plugin.processTransactionWithNullData(transaction, nullDataChunksIterator, storage, addressConverter)
+                plugin.processTransactionWithNullData(transaction, nullDataChunksIterator)
             } catch (e: Exception) {
 
             }
@@ -60,7 +58,7 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
     fun isSpendable(unspentOutput: UnspentOutput): Boolean {
         val pluginId = unspentOutput.output.pluginId ?: return true
         val plugin = plugins[pluginId] ?: return false
-        return plugin.isSpendable(unspentOutput, blockMedianTimeHelper)
+        return plugin.isSpendable(unspentOutput)
     }
 
     fun parsePluginData(output: TransactionOutput): Map<Byte, Map<String, Any>>? {
@@ -74,7 +72,7 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
     }
 
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {
-        return plugins.map { it.value.keysForApiRestore(publicKey, addressConverter) }.flatten().distinct()
+        return plugins.map { it.value.keysForApiRestore(publicKey) }.flatten().distinct()
     }
 
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
@@ -85,10 +83,10 @@ class PluginManager(private val addressConverter: IAddressConverter, val storage
 interface IPlugin {
     val id: Byte
 
-    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>, addressConverter: IAddressConverter)
-    fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter)
-    fun isSpendable(unspentOutput: UnspentOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean
+    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>)
+    fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>)
+    fun isSpendable(unspentOutput: UnspentOutput): Boolean
     fun getInputSequence(output: TransactionOutput): Long
     fun parsePluginData(output: TransactionOutput): Map<String, Any>
-    fun keysForApiRestore(publicKey: PublicKey, addressConverter: IAddressConverter): List<String>
+    fun keysForApiRestore(publicKey: PublicKey): List<String>
 }

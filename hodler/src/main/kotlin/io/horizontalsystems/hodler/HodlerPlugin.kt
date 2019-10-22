@@ -12,14 +12,19 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.*
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 
-class HodlerPlugin : IPlugin {
+class HodlerPlugin(
+        private val addressConverter: IAddressConverter,
+        private val storage: IStorage,
+        private val blockMedianTimeHelper: BlockMedianTimeHelper
+) : IPlugin {
+
     companion object {
         const val id = OP_1.toByte()
     }
 
     override val id = HodlerPlugin.id
 
-    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>, addressConverter: IAddressConverter) {
+    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>) {
         val lockTimeInterval = checkNotNull(pluginData["lockTimeInterval"] as? LockTimeInterval)
 
         check(mutableTransaction.recipientAddress.scriptType == ScriptType.P2PKH) {
@@ -34,7 +39,7 @@ class HodlerPlugin : IPlugin {
         mutableTransaction.addPluginData(id, OpCodes.push(lockTimeInterval.valueAs2BytesLE) + OpCodes.push(pubkeyHash))
     }
 
-    override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>, storage: IStorage, addressConverter: IAddressConverter) {
+    override fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>) {
         val lockTimeIntervalData = checkNotNull(nullDataChunks.next().data)
         val pubkeyHash = checkNotNull(nullDataChunks.next().data)
 
@@ -59,7 +64,7 @@ class HodlerPlugin : IPlugin {
         }
     }
 
-    override fun isSpendable(unspentOutput: UnspentOutput, blockMedianTimeHelper: BlockMedianTimeHelper): Boolean {
+    override fun isSpendable(unspentOutput: UnspentOutput): Boolean {
         val lastBlockMedianTimePast = blockMedianTimeHelper.medianTimePast ?: return false
         return inputLockTime(unspentOutput) < lastBlockMedianTimePast
     }
@@ -74,7 +79,7 @@ class HodlerPlugin : IPlugin {
         return mapOf("lockTimeInterval" to hodlerData.lockTimeInterval, "address" to hodlerData.addressString)
     }
 
-    override fun keysForApiRestore(publicKey: PublicKey, addressConverter: IAddressConverter): List<String> {
+    override fun keysForApiRestore(publicKey: PublicKey): List<String> {
         return LockTimeInterval.values().map { lockTimeInterval ->
             val redeemScript = redeemScript(lockTimeInterval, publicKey.publicKeyHash)
             val redeemScriptHash = Utils.sha256Hash160(redeemScript)
