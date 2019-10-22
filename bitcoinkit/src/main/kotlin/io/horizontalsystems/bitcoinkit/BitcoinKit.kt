@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
@@ -79,7 +80,9 @@ class BitcoinKit : AbstractKit {
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
         val initialSyncApi = BCoinApi(initialSyncUrl)
 
-        bitcoinCore = BitcoinCoreBuilder()
+        val coreBuilder = BitcoinCoreBuilder()
+
+        bitcoinCore = coreBuilder
                 .setContext(context)
                 .setSeed(seed)
                 .setNetwork(network)
@@ -90,7 +93,7 @@ class BitcoinKit : AbstractKit {
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
-                .addPlugin(HodlerPlugin())
+                .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
                 .build()
 
         //  extending bitcoinCore

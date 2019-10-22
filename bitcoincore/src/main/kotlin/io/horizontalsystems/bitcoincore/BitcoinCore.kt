@@ -28,6 +28,8 @@ import kotlin.collections.LinkedHashMap
 
 class BitcoinCoreBuilder {
 
+    val addressConverter = AddressConverterChain()
+
     // required parameters
     private var context: Context? = null
     private var seed: ByteArray? = null
@@ -127,10 +129,9 @@ class BitcoinCoreBuilder {
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
         val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter()
 
-        val addressConverter = AddressConverterChain()
         val restoreKeyConverterChain = RestoreKeyConverterChain()
 
-        val pluginManager = PluginManager(addressConverter, storage, BlockMedianTimeHelper(storage))
+        val pluginManager = PluginManager()
         plugins.forEach { pluginManager.addPlugin(it) }
 
         restoreKeyConverterChain.add(pluginManager)

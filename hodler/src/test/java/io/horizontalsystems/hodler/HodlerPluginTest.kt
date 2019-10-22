@@ -18,22 +18,37 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import org.junit.Assert
+import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
 
 class HodlerPluginTest {
 
-    val hodlerPlugin = HodlerPlugin()
-    val mutableTransaction = mock<MutableTransaction>()
-    val addressConverter = mock<IAddressConverter>()
-    val recipientAddress = mock<Address>()
+    private lateinit var addressConverter: IAddressConverter
+    private lateinit var storage: IStorage
+    private lateinit var blockMedianTimeHelper: BlockMedianTimeHelper
+    private lateinit var hodlerPlugin: HodlerPlugin
+
+    private lateinit var mutableTransaction: MutableTransaction
+    private lateinit var recipientAddress: Address
+
+    @Before
+    fun setup() {
+        addressConverter = mock()
+        storage = mock()
+        blockMedianTimeHelper = mock()
+        hodlerPlugin = HodlerPlugin(addressConverter, storage, blockMedianTimeHelper)
+
+        mutableTransaction = mock()
+        recipientAddress = mock()
+    }
 
     @Test
     fun processOutputs_requiredDataNotSet() {
         val pluginData = mapOf<String, Any>()
 
         assertThrows<IllegalStateException> {
-            hodlerPlugin.processOutputs(mutableTransaction, pluginData, addressConverter)
+            hodlerPlugin.processOutputs(mutableTransaction, pluginData)
         }
     }
 
@@ -45,7 +60,7 @@ class HodlerPluginTest {
         whenever(recipientAddress.scriptType).thenReturn(ScriptType.P2SH)
 
         assertThrows<IllegalStateException> {
-            hodlerPlugin.processOutputs(mutableTransaction, pluginData, addressConverter)
+            hodlerPlugin.processOutputs(mutableTransaction, pluginData)
         }
     }
 
@@ -63,7 +78,7 @@ class HodlerPluginTest {
         whenever(recipientAddress.hash).thenReturn(pubkeyHash)
         whenever(addressConverter.convert(redeemScriptHash, ScriptType.P2SH)).thenReturn(shAddress)
 
-        hodlerPlugin.processOutputs(mutableTransaction, pluginData, addressConverter)
+        hodlerPlugin.processOutputs(mutableTransaction, pluginData)
 
         verify(addressConverter).convert(redeemScriptHash, ScriptType.P2SH)
         verify(mutableTransaction).recipientAddress = shAddress
@@ -74,12 +89,11 @@ class HodlerPluginTest {
     val chunkLockTimeInterval = mock<Script.Chunk>()
     val chunkPubkeyHash = mock<Script.Chunk>()
     val nullDataChunks = listOf(chunkLockTimeInterval, chunkPubkeyHash).iterator()
-    val storage = mock<IStorage>()
 
     @Test
     fun processTransactionWithNullData_noRequiredData() {
         assertThrows<IllegalStateException> {
-            hodlerPlugin.processTransactionWithNullData(fullTransaction, nullDataChunks, storage, addressConverter)
+            hodlerPlugin.processTransactionWithNullData(fullTransaction, nullDataChunks)
         }
     }
 
@@ -102,7 +116,7 @@ class HodlerPluginTest {
         whenever(publicKey.path).thenReturn("publicKey.path")
         whenever(fullTransaction.header).thenReturn(transaction)
 
-        hodlerPlugin.processTransactionWithNullData(fullTransaction, nullDataChunks, storage, addressConverter)
+        hodlerPlugin.processTransactionWithNullData(fullTransaction, nullDataChunks)
 
         verify(addressConverter).convert(pubkeyHash, ScriptType.P2PKH)
         verify(recipientOutput).pluginId = HodlerPlugin.id
@@ -115,11 +129,9 @@ class HodlerPluginTest {
 
     @Test
     fun isSpendable_nullLastBlockMedianTimePast() {
-        val blockMedianTimeHelper = mock<BlockMedianTimeHelper>()
-
         whenever(blockMedianTimeHelper.medianTimePast).thenReturn(null)
 
-        Assert.assertFalse(hodlerPlugin.isSpendable(mock(), blockMedianTimeHelper))
+        Assert.assertFalse(hodlerPlugin.isSpendable(mock()))
     }
 
     @Test
@@ -131,7 +143,6 @@ class HodlerPluginTest {
     private fun assertIsSpendable(lockedAtTimestamp: Long, lastBlockMedianTimestamp: Long, isSpendable: Boolean) {
         val unspentOutput = mock<UnspentOutput>()
         val transactionOutput = mock<TransactionOutput>()
-        val blockMedianTimeHelper = mock<BlockMedianTimeHelper>()
         val transaction = mock<Transaction>()
 
         whenever(blockMedianTimeHelper.medianTimePast).thenReturn(lastBlockMedianTimestamp)
@@ -140,7 +151,7 @@ class HodlerPluginTest {
         whenever(unspentOutput.output).thenReturn(transactionOutput)
         whenever(transactionOutput.pluginData).thenReturn("7|originalAddress")
 
-        Assert.assertEquals(isSpendable, hodlerPlugin.isSpendable(unspentOutput, blockMedianTimeHelper))
+        Assert.assertEquals(isSpendable, hodlerPlugin.isSpendable(unspentOutput))
     }
 
     @Test
@@ -184,7 +195,7 @@ class HodlerPluginTest {
         whenever(addressConverter.convert("932db9d114e7809dfb09104488dce27c50e588fc".hexToByteArray(), ScriptType.P2SH)).thenReturn(addresses[2])
         whenever(addressConverter.convert("77bcc35ca78676af60334c96879b96d8599a2e9c".hexToByteArray(), ScriptType.P2SH)).thenReturn(addresses[3])
 
-        val result = hodlerPlugin.keysForApiRestore(publicKey, addressConverter)
+        val result = hodlerPlugin.keysForApiRestore(publicKey)
 
         Assert.assertArrayEquals(arrayOf("address0", "address1", "address2", "address3"), result.toTypedArray())
     }
