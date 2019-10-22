@@ -173,10 +173,11 @@ class HodlerPluginTest {
         val output = mock<TransactionOutput>()
         whenever(output.pluginData).thenReturn(pluginData)
 
-        val parsePluginData = hodlerPlugin.parsePluginData(output)
+        val parsePluginData = hodlerPlugin.parsePluginData(output, 1000)
 
         Assert.assertEquals(LockTimeInterval.hour, parsePluginData["lockTimeInterval"])
         Assert.assertEquals("originalAddress", parsePluginData["address"])
+        Assert.assertEquals(7 * 512 + 1000 + 3600L, parsePluginData["lockedUntilApprox"])
     }
 
     @Test

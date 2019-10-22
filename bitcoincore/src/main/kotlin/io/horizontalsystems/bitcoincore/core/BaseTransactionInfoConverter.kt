@@ -41,7 +41,7 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             }
 
             output.address?.let { address ->
-                toAddresses.add(TransactionAddress(address, mine, pluginManager.parsePluginData(output)))
+                toAddresses.add(TransactionAddress(address, mine, pluginManager.parsePluginData(output, transaction.timestamp)))
             }
         }
 
