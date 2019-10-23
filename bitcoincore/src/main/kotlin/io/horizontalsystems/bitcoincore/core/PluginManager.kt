@@ -11,7 +11,7 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 class PluginManager : IRestoreKeyConverter {
     private val plugins = mutableMapOf<Byte, IPlugin>()
 
-    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, Map<String, Any>>) {
+    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, IPluginData>) {
         pluginData.forEach {
             val plugin = checkNotNull(plugins[it.key])
             plugin.processOutputs(mutableTransaction, it.value)
@@ -61,7 +61,7 @@ class PluginManager : IRestoreKeyConverter {
         return plugin.isSpendable(unspentOutput)
     }
 
-    fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<Byte, Map<String, Any>>? {
+    fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<Byte, IPluginOutputData>? {
         val plugin = plugins[output.pluginId] ?: return null
 
         return try {
@@ -83,10 +83,13 @@ class PluginManager : IRestoreKeyConverter {
 interface IPlugin {
     val id: Byte
 
-    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>)
+    fun processOutputs(mutableTransaction: MutableTransaction, pluginData: IPluginData)
     fun processTransactionWithNullData(transaction: FullTransaction, nullDataChunks: Iterator<Script.Chunk>)
     fun isSpendable(unspentOutput: UnspentOutput): Boolean
     fun getInputSequence(output: TransactionOutput): Long
-    fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<String, Any>
+    fun parsePluginData(output: TransactionOutput, txTimestamp: Long): IPluginOutputData
     fun keysForApiRestore(publicKey: PublicKey): List<String>
 }
+
+interface IPluginData
+interface IPluginOutputData

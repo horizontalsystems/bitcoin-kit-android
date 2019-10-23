@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
@@ -12,7 +13,7 @@ class TransactionCreator(
         private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, pluginData: Map<Byte, Map<String, Any>>): FullTransaction {
+    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, pluginData: Map<Byte, IPluginData>): FullTransaction {
         return create {
             builder.buildTransaction(toAddress, value, feeRate, senderPay, pluginData)
         }

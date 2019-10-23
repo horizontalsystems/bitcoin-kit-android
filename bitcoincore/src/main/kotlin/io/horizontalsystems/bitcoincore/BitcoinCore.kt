@@ -393,11 +393,11 @@ class BitcoinCore(
         return dataProvider.transactions(fromHash, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, Map<String, Any>>): Long {
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
         return transactionFeeCalculator.fee(value, feeRate, senderPay, address, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, Map<String, Any>>): FullTransaction {
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): FullTransaction {
         return transactionCreator.create(address, value, feeRate, senderPay, pluginData)
     }
 

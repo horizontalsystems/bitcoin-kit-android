@@ -5,6 +5,7 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
+import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.models.Address
@@ -44,8 +45,8 @@ class HodlerPluginTest {
     }
 
     @Test
-    fun processOutputs_requiredDataNotSet() {
-        val pluginData = mapOf<String, Any>()
+    fun processOutputs_dataIsNotHodlerData() {
+        val pluginData = mock<IPluginData>()
 
         assertThrows<IllegalStateException> {
             hodlerPlugin.processOutputs(mutableTransaction, pluginData)
@@ -54,7 +55,7 @@ class HodlerPluginTest {
 
     @Test
     fun processOutputs_scriptTypeNotP2PKH() {
-        val pluginData = mapOf<String, Any>("lockTimeInterval" to LockTimeInterval.hour)
+        val pluginData = HodlerData(LockTimeInterval.hour)
 
         whenever(mutableTransaction.recipientAddress).thenReturn(recipientAddress)
         whenever(recipientAddress.scriptType).thenReturn(ScriptType.P2SH)
@@ -69,7 +70,7 @@ class HodlerPluginTest {
 
     @Test
     fun processOutputs_success() {
-        val pluginData = mapOf<String, Any>("lockTimeInterval" to LockTimeInterval.hour)
+        val pluginData = HodlerData(LockTimeInterval.hour)
 
         val shAddress = mock<Address>()
 
@@ -175,9 +176,10 @@ class HodlerPluginTest {
 
         val parsePluginData = hodlerPlugin.parsePluginData(output, 1000)
 
-        Assert.assertEquals(LockTimeInterval.hour, parsePluginData["lockTimeInterval"])
-        Assert.assertEquals("originalAddress", parsePluginData["address"])
-        Assert.assertEquals(7 * 512 + 1000 + 3600L, parsePluginData["lockedUntilApprox"])
+        check(parsePluginData is HodlerOutputData)
+        Assert.assertEquals(LockTimeInterval.hour, parsePluginData.lockTimeInterval)
+        Assert.assertEquals("originalAddress", parsePluginData.addressString)
+        Assert.assertEquals(7 * 512 + 1000 + 3600L, parsePluginData.approxUnlockTime)
     }
 
     @Test
