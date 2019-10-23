@@ -4,11 +4,13 @@ import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
+import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.BitcoinKit
+import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
 import io.reactivex.disposables.CompositeDisposable
@@ -193,10 +195,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         return bitcoinKit.fee(value, address, feeRate = feePriority.feeRate, pluginData = getPluginData())
     }
 
-    private fun getPluginData(): MutableMap<Byte, Map<String, Any>> {
-        val pluginData = mutableMapOf<Byte, Map<String, Any>>()
+    private fun getPluginData(): MutableMap<Byte, IPluginData> {
+        val pluginData = mutableMapOf<Byte, IPluginData>()
         timeLockInterval?.let {
-            pluginData[HodlerPlugin.id] = mapOf("lockTimeInterval" to it)
+            pluginData[HodlerPlugin.id] = HodlerData(it)
         }
         return pluginData
     }

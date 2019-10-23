@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.models
 
+import io.horizontalsystems.bitcoincore.core.IPluginOutputData
+
 open class TransactionInfo(
         val transactionHash: String,
         val transactionIndex: Int,
@@ -14,7 +16,7 @@ open class TransactionInfo(
 data class TransactionAddress(
         val address: String,
         val mine: Boolean,
-        val pluginData: Map<Byte, Map<String, Any>>?
+        val pluginData: Map<Byte, IPluginOutputData>?
 )
 
 data class BlockInfo(

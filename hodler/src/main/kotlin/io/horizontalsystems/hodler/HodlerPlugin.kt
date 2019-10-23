@@ -2,6 +2,8 @@ package io.horizontalsystems.hodler
 
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.core.IPlugin
+import io.horizontalsystems.bitcoincore.core.IPluginData
+import io.horizontalsystems.bitcoincore.core.IPluginOutputData
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
@@ -24,8 +26,8 @@ class HodlerPlugin(
 
     override val id = HodlerPlugin.id
 
-    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<String, Any>) {
-        val lockTimeInterval = checkNotNull(pluginData["lockTimeInterval"] as? LockTimeInterval)
+    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: IPluginData) {
+        val lockTimeInterval = checkNotNull((pluginData as? HodlerData)?.lockTimeInterval)
 
         check(mutableTransaction.recipientAddress.scriptType == ScriptType.P2PKH) {
             "Locking transaction is available only for PKH addresses"
@@ -54,7 +56,7 @@ class HodlerPlugin(
             val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).string
 
             output.pluginId = id
-            output.pluginData = HodlerData(lockTimeInterval, addressString).toString()
+            output.pluginData = HodlerOutputData(lockTimeInterval, addressString).serialize()
 
             storage.getPublicKeyByKeyOrKeyHash(pubkeyHash)?.let { pubkey ->
                 output.redeemScript = redeemScript
@@ -73,15 +75,15 @@ class HodlerPlugin(
         return lockTimeIntervalFrom(output).sequenceNumber.toLong()
     }
 
-    override fun parsePluginData(output: TransactionOutput, txTimestamp: Long): Map<String, Any> {
-        val hodlerData = HodlerData.parse(output.pluginData)
+    override fun parsePluginData(output: TransactionOutput, txTimestamp: Long): IPluginOutputData {
+        val hodlerData = HodlerOutputData.parse(output.pluginData)
 
         // When checking if utxo is spendable we use the best block median time.
         // The median time is 6 blocks earlier which is approximately equal to 1 hour.
         // Here we add 1 hour to show the time when this UTXO will be spendable
-        val lockedUntilApprox = hodlerData.lockTimeInterval.valueInSeconds + txTimestamp + 3600
+        hodlerData.approxUnlockTime = hodlerData.lockTimeInterval.valueInSeconds + txTimestamp + 3600
 
-        return mapOf("lockTimeInterval" to hodlerData.lockTimeInterval, "address" to hodlerData.addressString, "lockedUntilApprox" to lockedUntilApprox)
+        return hodlerData
     }
 
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {
@@ -100,7 +102,7 @@ class HodlerPlugin(
     private fun lockTimeIntervalFrom(output: TransactionOutput): LockTimeInterval {
         val pluginData = checkNotNull(output.pluginData)
 
-        return HodlerData.parse(pluginData).lockTimeInterval
+        return HodlerOutputData.parse(pluginData).lockTimeInterval
     }
 
     private fun inputLockTime(unspentOutput: UnspentOutput): Long {

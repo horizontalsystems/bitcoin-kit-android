@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.transactions.builder.InputSetter
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
@@ -14,7 +15,7 @@ class TransactionFeeCalculator(
         private val changeScriptType: Int
 ) {
 
-    fun fee(value: Long, feeRate: Int, senderPay: Boolean, toAddress: String?, pluginData: Map<Byte, Map<String, Any>>): Long {
+    fun fee(value: Long, feeRate: Int, senderPay: Boolean, toAddress: String?, pluginData: Map<Byte, IPluginData>): Long {
         val mutableTransaction = MutableTransaction()
 
         outputSetter.setOutputs(mutableTransaction, toAddress ?: sampleAddress(), value, pluginData)

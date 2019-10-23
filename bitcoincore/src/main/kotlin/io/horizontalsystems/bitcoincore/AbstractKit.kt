@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore
 
+import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.network.Network
@@ -32,11 +33,11 @@ abstract class AbstractKit {
         bitcoinCore.refresh()
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, Map<String, Any>> = mapOf()): Long {
+    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData> = mapOf()): Long {
         return bitcoinCore.fee(value, address, senderPay, feeRate, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, Map<String, Any>> = mapOf()): FullTransaction {
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData> = mapOf()): FullTransaction {
         return bitcoinCore.send(address, value, senderPay, feeRate, pluginData)
     }
 
