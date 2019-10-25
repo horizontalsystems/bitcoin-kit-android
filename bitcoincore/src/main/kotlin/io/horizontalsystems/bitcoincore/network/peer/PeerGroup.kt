@@ -1,5 +1,8 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
+import io.horizontalsystems.bitcoincore.core.IConnectionManager
+import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
+import io.horizontalsystems.bitcoincore.core.IPeerAddressManagerListener
 import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
@@ -9,15 +12,15 @@ import java.util.concurrent.Executors
 import java.util.logging.Logger
 
 class PeerGroup(
-        private val hostManager: PeerAddressManager,
+        private val hostManager: IPeerAddressManager,
         private val network: Network,
         private val peerManager: PeerManager,
         peerSize: Int,
         private val networkMessageParser: NetworkMessageParser,
         private val networkMessageSerializer: NetworkMessageSerializer,
-        private val connectionManager: ConnectionManager,
+        private val connectionManager: IConnectionManager,
         private val localDownloadedBestBlockHeight: Int)
-    : Peer.Listener, PeerAddressManager.Listener {
+    : Peer.Listener, IPeerAddressManagerListener {
 
     interface Listener {
         fun onStart() = Unit
