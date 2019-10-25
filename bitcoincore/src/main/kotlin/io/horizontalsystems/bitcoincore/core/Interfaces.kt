@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.managers.TransactionItem
 import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.storage.*
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
@@ -112,4 +113,27 @@ interface ITransactionInfoConverter {
 
 interface IInitialSyncApi {
     fun getTransactions(addresses: List<String>): List<TransactionItem>
+}
+
+interface IPeerAddressManager {
+    val listener: IPeerAddressManagerListener?
+    val hasFreshIps: Boolean
+    fun getIp(): String?
+    fun addIps(ips: List<String>)
+    fun markFailed(ip: String)
+    fun markSuccess(ip: String)
+    fun markConnected(peer: Peer)
+}
+
+interface IPeerAddressManagerListener {
+    fun onAddAddress()
+}
+
+interface IConnectionManager {
+    val listener: IConnectionManagerListener?
+    val isConnected: Boolean
+}
+
+interface IConnectionManagerListener {
+    fun onConnectionChange(isConnected: Boolean)
 }

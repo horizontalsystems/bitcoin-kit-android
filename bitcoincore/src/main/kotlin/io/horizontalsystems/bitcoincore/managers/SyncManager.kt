@@ -1,9 +1,10 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 
 class SyncManager(private val peerGroup: PeerGroup, private val initialSyncer: InitialSyncer)
-    : InitialSyncer.Listener, ConnectionManager.Listener {
+    : InitialSyncer.Listener, IConnectionManagerListener {
 
     fun start() {
         initialSyncer.sync()

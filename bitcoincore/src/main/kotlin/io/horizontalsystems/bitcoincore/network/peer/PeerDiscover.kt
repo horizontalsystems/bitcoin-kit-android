@@ -1,12 +1,13 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
+import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.logging.Logger
 
-class PeerDiscover(private val peerAddressManager: PeerAddressManager) {
+class PeerDiscover(private val peerAddressManager: IPeerAddressManager) {
 
     private val logger = Logger.getLogger("PeerDiscover")
 

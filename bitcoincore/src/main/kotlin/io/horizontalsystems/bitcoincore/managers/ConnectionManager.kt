@@ -5,19 +5,17 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import io.horizontalsystems.bitcoincore.core.IConnectionManager
+import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
 import java.util.concurrent.Executors
 
-class ConnectionManager(context: Context) {
-
-    interface Listener {
-        fun onConnectionChange(isConnected: Boolean)
-    }
+class ConnectionManager(context: Context) : IConnectionManager {
 
     private val executorService = Executors.newSingleThreadExecutor()
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
-    var listener: Listener? = null
-    var isConnected = networkIsConnected()
+    override var listener: IConnectionManagerListener? = null
+    override var isConnected = networkIsConnected()
 
     init {
         context.registerReceiver(object : BroadcastReceiver() {
