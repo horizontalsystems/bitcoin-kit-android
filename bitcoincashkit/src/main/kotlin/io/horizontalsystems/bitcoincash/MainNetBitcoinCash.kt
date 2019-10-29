@@ -20,6 +20,7 @@ class MainNetBitcoinCash : Network() {
     override var coinType: Int = 0
 
     override val maxBlockSize = 32 * 1024 * 1024
+    override val dustRelayTxFee = 1000 // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/master/src/policy/policy.h#L78
     override val sigHashForked = true
     override val sigHashValue = Sighash.FORKID or Sighash.ALL
 

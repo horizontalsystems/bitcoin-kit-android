@@ -3,7 +3,7 @@ package io.horizontalsystems.bitcoincore.transactions
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class TransactionSizeCalculator {
-    val signatureLength = 74 + 1      // signature length + pushByte
+    val signatureLength = 72 + 1      // signature length + pushByte
     val pubKeyLength = 33 + 1         // pubKey length + pushByte
     private val p2wpkhShLength = 22 + 1       // 0014<20-byte-script-hash> + pushByte
 
@@ -54,7 +54,7 @@ class TransactionSizeCalculator {
         return 8 + 1 + size            // spentValue + scriptLength + script
     }
 
-    private fun witnessSize(type: Int): Int {  // in vbytes
+    fun witnessSize(type: Int): Int {  // in vbytes
         if (isWitness(type)) {
             return witnessData
         }
@@ -70,7 +70,7 @@ class TransactionSizeCalculator {
         return lockingScriptSizes[scriptType] ?: 0
     }
 
-    private fun isWitness(type: Int): Boolean {
+    fun isWitness(type: Int): Boolean {
         return type in arrayOf(ScriptType.P2WPKH, ScriptType.P2WSH, ScriptType.P2WPKHSH)
     }
 }
