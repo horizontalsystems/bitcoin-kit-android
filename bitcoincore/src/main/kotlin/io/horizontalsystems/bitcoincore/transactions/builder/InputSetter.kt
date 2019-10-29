@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
+import io.horizontalsystems.bitcoincore.DustCalculator
 import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
@@ -16,33 +17,35 @@ class InputSetter(
         private val addressConverter: IAddressConverter,
         private val changeScriptType: Int,
         private val transactionSizeCalculator: TransactionSizeCalculator,
-        private val pluginManager: PluginManager
+        private val pluginManager: PluginManager,
+        private val dustCalculator: DustCalculator
 ) {
     fun setInputs(mutableTransaction: MutableTransaction, feeRate: Int, senderPay: Boolean) {
         val value = mutableTransaction.recipientValue
-
-        val pluginDataOutputSize = mutableTransaction.getPluginDataOutputSize()
-        val unspentOutputInfo = unspentOutputSelector.select(value, feeRate, mutableTransaction.recipientAddress.scriptType, changeScriptType, senderPay, pluginDataOutputSize)
+        val dust = dustCalculator.dust(changeScriptType)
+        val unspentOutputInfo = unspentOutputSelector.select(
+                value,
+                feeRate,
+                mutableTransaction.recipientAddress.scriptType,
+                changeScriptType,
+                senderPay, dust,
+                mutableTransaction.getPluginDataOutputSize()
+        )
 
         val unspentOutputs = unspentOutputInfo.outputs
         for (unspentOutput in unspentOutputs) {
             mutableTransaction.addInput(inputToSign(unspentOutput))
         }
 
-        //  calculate fee and add change output if needed
-        val fee = unspentOutputInfo.fee
+        mutableTransaction.recipientValue = unspentOutputInfo.recipientValue
 
-        val receivedValue = if (senderPay) value else value - fee
-        mutableTransaction.recipientValue = receivedValue
-
-        if (unspentOutputInfo.addChangeOutput) {
+        // Add change output if needed
+        unspentOutputInfo.changeValue?.let { changeValue ->
             val changePubKey = publicKeyManager.changePublicKey()
             val changeAddress = addressConverter.convert(changePubKey, changeScriptType)
 
-            val sentValue = if (senderPay) value + fee else value
-
             mutableTransaction.changeAddress = changeAddress
-            mutableTransaction.changeValue = unspentOutputInfo.totalValue - sentValue
+            mutableTransaction.changeValue = changeValue
         }
 
         pluginManager.processInputs(mutableTransaction)

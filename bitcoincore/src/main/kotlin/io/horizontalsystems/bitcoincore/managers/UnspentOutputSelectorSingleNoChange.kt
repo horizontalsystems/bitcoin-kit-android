@@ -4,30 +4,33 @@ import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 
 class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider) : IUnspentOutputSelector {
 
-    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
+    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
+        if (value <= dust) {
+            throw SendValueErrors.Dust
+        }
+
         val unspentOutputs = unspentOutputProvider.getSpendableUtxo()
 
         if (unspentOutputs.isEmpty()) {
-            throw UnspentOutputSelectorError.EmptyUnspentOutputs
+            throw SendValueErrors.EmptyOutputs
         }
-
-        val dust = (calculator.inputSize(changeType) + calculator.outputSize(changeType)) * feeRate
 
         //  try to find 1 unspent output with exactly matching value
         for (unspentOutput in unspentOutputs) {
             val output = unspentOutput.output
             val fee = calculator.transactionSize(listOf(output.scriptType), listOf(outputType), pluginDataOutputSize) * feeRate
-            val totalFee = if (senderPay) fee else 0
 
-            if (value + totalFee <= output.value && value + totalFee + dust > output.value) {
-                return SelectedUnspentOutputInfo(
-                        outputs = listOf(unspentOutput),
-                        totalValue = output.value,
-                        fee = if (senderPay) output.value - value else fee,
-                        addChangeOutput = false)
+            val recipientValue = if (senderPay) value else value - fee
+            val sentValue = if (senderPay) value + fee else value
+
+            if (sentValue <= output.value &&            // output.value is enough
+                    recipientValue >= dust &&           // receivedValue won't be dust
+                    output.value - sentValue < dust) {  // no need to add change output
+
+                return SelectedUnspentOutputInfo(listOf(unspentOutput), recipientValue, null)
             }
         }
 
-        throw UnspentOutputSelectorError.InsufficientUnspentOutputs(0)
+        throw SendValueErrors.InsufficientUnspentOutputs(0)
     }
 }

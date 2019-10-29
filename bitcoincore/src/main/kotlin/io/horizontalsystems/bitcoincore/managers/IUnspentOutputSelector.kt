@@ -4,31 +4,30 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IUnspentOutputSelector {
-    fun select(value: Long, feeRate: Int, outputType: Int = ScriptType.P2PKH, changeType: Int = ScriptType.P2PKH, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo
+    fun select(value: Long, feeRate: Int, outputType: Int = ScriptType.P2PKH, changeType: Int = ScriptType.P2PKH, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo
 }
 
 data class SelectedUnspentOutputInfo(
         val outputs: List<UnspentOutput>,
-        val totalValue: Long,
-        val fee: Long,
-        val addChangeOutput: Boolean
-)
+        val recipientValue: Long,
+        val changeValue: Long?)
 
-sealed class UnspentOutputSelectorError : Exception() {
-    object EmptyUnspentOutputs : UnspentOutputSelectorError()
-    class InsufficientUnspentOutputs(val fee: Long) : UnspentOutputSelectorError()
+sealed class SendValueErrors : Exception() {
+    object Dust : SendValueErrors()
+    object EmptyOutputs : SendValueErrors()
+    class InsufficientUnspentOutputs(val fee: Long) : SendValueErrors()
 }
 
 class UnspentOutputSelectorChain : IUnspentOutputSelector {
     private val concreteSelectors = mutableListOf<IUnspentOutputSelector>()
 
-    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
-        var lastError: UnspentOutputSelectorError? = null
+    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
+        var lastError: SendValueErrors? = null
 
         for (selector in concreteSelectors) {
             try {
-                return selector.select(value, feeRate, outputType, changeType, senderPay, pluginDataOutputSize)
-            } catch (e: UnspentOutputSelectorError) {
+                return selector.select(value, feeRate, outputType, changeType, senderPay, dust, pluginDataOutputSize)
+            } catch (e: SendValueErrors) {
                 lastError = e
             }
         }

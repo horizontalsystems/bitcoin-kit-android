@@ -20,6 +20,7 @@ class MainNetDash : Network() {
     override var coinType: Int = 5
 
     override val maxBlockSize = 1_000_000
+    override val dustRelayTxFee = 1000 // https://github.com/dashpay/dash/blob/master/src/policy/policy.h#L36
 
     override var dnsSeeds = listOf(
             "dnsseed.dash.org",

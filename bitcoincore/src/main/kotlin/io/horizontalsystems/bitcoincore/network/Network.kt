@@ -15,6 +15,7 @@ abstract class Network {
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
     abstract val maxBlockSize: Int
+    abstract val dustRelayTxFee: Int
 
     abstract var port: Int
     abstract var magic: Long

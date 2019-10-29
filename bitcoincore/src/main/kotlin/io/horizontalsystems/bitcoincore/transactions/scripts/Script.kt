@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.utils.Utils
 import java.io.ByteArrayInputStream
 
+// TODO: make it enum
 object ScriptType {
     const val P2PKH = 1     // pay to pubkey hash (aka pay to address)
     const val P2PK = 2      // pay to pubkey
