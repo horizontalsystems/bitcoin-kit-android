@@ -402,7 +402,7 @@ class BitcoinCore(
         return transactionCreator.create(address, value, feeRate, senderPay, pluginData)
     }
 
-    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
         return transactionCreator.create(address.string, value, feeRate, senderPay, mapOf())
     }

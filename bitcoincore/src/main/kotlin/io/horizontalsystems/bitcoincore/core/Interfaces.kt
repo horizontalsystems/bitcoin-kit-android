@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IStorage {
 
@@ -81,7 +82,7 @@ interface IStorage {
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
     fun getMyOutputs(): List<TransactionOutput>
-    fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<Int>): List<TransactionOutput>
+    fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<ScriptType>): List<TransactionOutput>
 
     // Transaction Input
 

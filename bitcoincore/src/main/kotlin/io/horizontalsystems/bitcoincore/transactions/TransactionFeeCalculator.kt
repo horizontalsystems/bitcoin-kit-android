@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.transactions.builder.InputSetter
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.OutputSetter
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 
 class TransactionFeeCalculator(
@@ -12,7 +13,7 @@ class TransactionFeeCalculator(
         private val inputSetter: InputSetter,
         private val addressConverter: AddressConverterChain,
         private val publicKeyManager: PublicKeyManager,
-        private val changeScriptType: Int
+        private val changeScriptType: ScriptType
 ) {
 
     fun fee(value: Long, feeRate: Int, senderPay: Boolean, toAddress: String?, pluginData: Map<Byte, IPluginData>): Long {

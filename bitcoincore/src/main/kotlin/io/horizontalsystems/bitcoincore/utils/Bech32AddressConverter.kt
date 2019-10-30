@@ -25,7 +25,7 @@ class SegwitAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(
         return SegWitAddress(string, program, AddressType.WITNESS, 0)
     }
 
-    override fun convert(bytes: ByteArray, scriptType: Int): SegWitAddress {
+    override fun convert(bytes: ByteArray, scriptType: ScriptType): SegWitAddress {
         val addressType = when (scriptType) {
             ScriptType.P2WPKH -> AddressType.WITNESS
             ScriptType.P2WSH -> AddressType.WITNESS
@@ -45,7 +45,7 @@ class SegwitAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(
         return SegWitAddress(addressString, keyHash, addressType, version)
     }
 
-    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+    override fun convert(publicKey: PublicKey, scriptType: ScriptType): Address {
         val keyHash = OpCodes.scriptWPKH(publicKey.publicKeyHash)
         return convert(keyHash, scriptType)
     }
@@ -117,7 +117,7 @@ class CashAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(ad
         return CashAddress(correctedAddress, Arrays.copyOfRange(data, 1, data.size), addressType)
     }
 
-    override fun convert(bytes: ByteArray, scriptType: Int): CashAddress {
+    override fun convert(bytes: ByteArray, scriptType: ScriptType): CashAddress {
         val addressType = when (scriptType) {
             ScriptType.P2PKH,
             ScriptType.P2PK -> AddressType.P2PKH
@@ -153,7 +153,7 @@ class CashAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(ad
         return CashAddress(addressString, bytes, addressType)
     }
 
-    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+    override fun convert(publicKey: PublicKey, scriptType: ScriptType): Address {
         return convert(publicKey.publicKeyHash, scriptType)
     }
 }

@@ -28,7 +28,7 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
 
     }
 
-    override fun convert(bytes: ByteArray, scriptType: Int): Address {
+    override fun convert(bytes: ByteArray, scriptType: ScriptType): Address {
         val addressType: AddressType
         val addressVersion: Int
 
@@ -56,7 +56,7 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
         return LegacyAddress(addressString, bytes, addressType)
     }
 
-    override fun convert(publicKey: PublicKey, scriptType: Int): Address {
+    override fun convert(publicKey: PublicKey, scriptType: ScriptType): Address {
         var keyhash = publicKey.publicKeyHash
 
         if (scriptType == ScriptType.P2WPKHSH) {

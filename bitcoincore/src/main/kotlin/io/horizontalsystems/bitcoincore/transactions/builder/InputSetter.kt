@@ -15,7 +15,7 @@ class InputSetter(
         private val unspentOutputSelector: IUnspentOutputSelector,
         private val publicKeyManager: PublicKeyManager,
         private val addressConverter: IAddressConverter,
-        private val changeScriptType: Int,
+        private val changeScriptType: ScriptType,
         private val transactionSizeCalculator: TransactionSizeCalculator,
         private val pluginManager: PluginManager,
         private val dustCalculator: DustCalculator

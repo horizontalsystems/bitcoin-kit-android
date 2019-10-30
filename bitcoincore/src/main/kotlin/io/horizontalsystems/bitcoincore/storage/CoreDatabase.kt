@@ -4,6 +4,7 @@ import android.arch.persistence.db.SupportSQLiteDatabase
 import android.arch.persistence.room.Database
 import android.arch.persistence.room.Room
 import android.arch.persistence.room.RoomDatabase
+import android.arch.persistence.room.TypeConverters
 import android.arch.persistence.room.migration.Migration
 import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
@@ -19,7 +20,7 @@ import io.horizontalsystems.bitcoincore.models.*
     TransactionOutput::class,
     PublicKey::class
 ])
-
+@TypeConverters(ScriptTypeConverter::class)
 abstract class CoreDatabase : RoomDatabase() {
 
     abstract val blockchainState: BlockchainStateDao

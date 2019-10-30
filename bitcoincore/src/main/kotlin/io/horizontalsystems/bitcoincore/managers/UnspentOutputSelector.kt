@@ -2,10 +2,11 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider, private val outputsLimit: Int? = null) : IUnspentOutputSelector {
 
-    override fun select(value: Long, feeRate: Int, outputType: Int, changeType: Int, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
+    override fun select(value: Long, feeRate: Int, outputType: ScriptType, changeType: ScriptType, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
         if (value <= dust) {
             throw SendValueErrors.Dust
         }
@@ -19,7 +20,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
         //  select outputs with least value until we get needed value
         val sortedOutputs = unspentOutputs.sortedBy { it.output.value }
         val selectedOutputs = mutableListOf<UnspentOutput>()
-        val selectedOutputTypes = mutableListOf<Int>()
+        val selectedOutputTypes = mutableListOf<ScriptType>()
         var totalValue = 0L
         var recipientValue = 0L
         var sentValue = 0L

@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 abstract class AbstractKit {
 
@@ -41,7 +42,7 @@ abstract class AbstractKit {
         return bitcoinCore.send(address, value, senderPay, feeRate, pluginData)
     }
 
-    fun send(hash: ByteArray, scriptType: Int, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
         return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate)
     }
 
