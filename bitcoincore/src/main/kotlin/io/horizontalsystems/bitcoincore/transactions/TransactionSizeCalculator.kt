@@ -38,9 +38,9 @@ class TransactionSizeCalculator {
     }
 
     fun transactionSize(inputs: List<ScriptType>, outputs: List<ScriptType>, pluginDataOutputSize: Int): Long {
-        val txWeight = if (inputs.any { isWitness(it) }) witnessTx else legacyTx
+        val txWeight = if (inputs.any { it.isWitness }) witnessTx else legacyTx
 
-        val inputWeight = inputs.map { inputSize(it) * 4 + if (isWitness(it)) witnessSize(it) else 0 }.sum()
+        val inputWeight = inputs.map { inputSize(it) * 4 + if (it.isWitness) witnessSize(it) else 0 }.sum()
         var outputWeight = outputs.map { outputSize(it) }.sum() * 4 // to vbytes
 
         if (pluginDataOutputSize > 0) {
@@ -55,11 +55,11 @@ class TransactionSizeCalculator {
     }
 
     fun witnessSize(type: ScriptType): Int {  // in vbytes
-        if (isWitness(type)) {
-            return witnessData
+        return when {
+            type.isWitness -> witnessData
+            else -> legacyWitnessData
         }
 
-        return legacyWitnessData
     }
 
     private fun toBytes(fee: Int): Int {
@@ -70,7 +70,4 @@ class TransactionSizeCalculator {
         return lockingScriptSizes[scriptType] ?: 0
     }
 
-    fun isWitness(type: ScriptType): Boolean {
-        return type in arrayOf(ScriptType.P2WPKH, ScriptType.P2WSH, ScriptType.P2WPKHSH)
-    }
 }

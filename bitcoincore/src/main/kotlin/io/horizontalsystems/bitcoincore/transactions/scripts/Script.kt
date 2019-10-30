@@ -19,6 +19,9 @@ enum class ScriptType(val value: Int) {
             return values().find { it.value == value }
         }
     }
+
+    val isWitness: Boolean
+        get() = this in arrayOf(P2WPKH, P2WSH, P2WPKHSH)
 }
 
 class Script(bytes: ByteArray) {
