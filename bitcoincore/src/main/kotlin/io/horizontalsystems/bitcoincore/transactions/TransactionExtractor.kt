@@ -16,7 +16,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
         var nullDataOutput : TransactionOutput? = null
         for (output in transaction.outputs) {
             val payload: ByteArray
-            val scriptType: Int
+            val scriptType: ScriptType
 
             val lockingScript = output.lockingScript
 
@@ -64,7 +64,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             }
 
             val payload: ByteArray
-            val scriptType: Int
+            val scriptType: ScriptType
             val sigScript = input.sigScript
 
             //  P2SH script {push-sig}{signature}{push-redeem}{script}

@@ -12,22 +12,18 @@ enum class Bip {
     BIP49,
     BIP84;
 
-    val scriptType: Int
-        get() {
-            return when (this) {
-                BIP44 -> ScriptType.P2PKH
-                BIP49 -> ScriptType.P2WPKHSH
-                BIP84 -> ScriptType.P2WPKH
-            }
+    val scriptType: ScriptType
+        get() = when (this) {
+            BIP44 -> ScriptType.P2PKH
+            BIP49 -> ScriptType.P2WPKHSH
+            BIP84 -> ScriptType.P2WPKH
         }
 
     val purpose: HDWallet.Purpose
-        get() {
-            return when (this) {
-                BIP44 -> HDWallet.Purpose.BIP44
-                BIP49 -> HDWallet.Purpose.BIP49
-                BIP84 -> HDWallet.Purpose.BIP84
-            }
+        get() = when (this) {
+            BIP44 -> HDWallet.Purpose.BIP44
+            BIP49 -> HDWallet.Purpose.BIP49
+            BIP84 -> HDWallet.Purpose.BIP84
         }
 
     fun restoreKeyConverter(addressConverter: AddressConverterChain) = when (this) {

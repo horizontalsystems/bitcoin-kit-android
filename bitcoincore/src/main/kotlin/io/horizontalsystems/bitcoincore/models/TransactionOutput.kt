@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.models
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.ForeignKey
 import android.arch.persistence.room.Ignore
+import android.arch.persistence.room.TypeConverter
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 /**
@@ -42,7 +43,7 @@ class TransactionOutput {
 
     var transactionHash = byteArrayOf()
     var publicKeyPath: String? = null
-    var scriptType: Int = ScriptType.UNKNOWN
+    var scriptType: ScriptType = ScriptType.UNKNOWN
     var keyHash: ByteArray? = null
     var address: String? = null
 
@@ -51,7 +52,7 @@ class TransactionOutput {
     @Ignore var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
 
     constructor()
-    constructor(value: Long, index: Int, script: ByteArray, type: Int = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
+    constructor(value: Long, index: Int, script: ByteArray, type: ScriptType = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
         this.value = value
         this.lockingScript = script
         this.index = index
@@ -59,5 +60,18 @@ class TransactionOutput {
         this.address = address
         this.keyHash = keyHash
         this.publicKeyPath = publicKey?.path
+    }
+}
+
+class ScriptTypeConverter {
+    @TypeConverter
+    fun fromInt(value: Int?): ScriptType? {
+        return value?.let { ScriptType.fromValue(it) }
+    }
+
+
+    @TypeConverter
+    fun scriptTypeToInt(scriptType: ScriptType?): Int? {
+        return scriptType?.value
     }
 }

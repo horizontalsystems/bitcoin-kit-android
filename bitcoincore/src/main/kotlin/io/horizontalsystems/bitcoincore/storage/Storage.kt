@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.storage
 import android.arch.persistence.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 open class Storage(protected open val store: CoreDatabase) : IStorage {
 
@@ -283,8 +284,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.output.getMyOutputs()
     }
 
-    override fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<Int>): List<TransactionOutput> {
-        return store.output.getOutputsForBloomFilter(blockHeight, irregularScriptTypes)
+    override fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<ScriptType>): List<TransactionOutput> {
+        return store.output.getOutputsForBloomFilter(blockHeight, irregularScriptTypes.map { it.value })
     }
 
     // TransactionInput

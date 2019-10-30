@@ -15,7 +15,7 @@ abstract class Address {
     lateinit var hash: ByteArray
     lateinit var string: String
 
-    val scriptType: Int
+    val scriptType: ScriptType
         get() = when (type) {
             AddressType.P2PKH -> ScriptType.P2PKH
             AddressType.P2SH -> ScriptType.P2SH
