@@ -169,16 +169,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun onMaxClick() {
-        val spendableBalance = bitcoinKit.balance.spendable
-        val fee = try {
-            fee(spendableBalance, address)
-        } catch (e: UnspentOutputSelectorError.InsufficientUnspentOutputs) {
-            e.fee
-        } catch (e: Exception) {
-            0L
-        }
-
-        amountLiveData.value = spendableBalance - fee
+        amountLiveData.value = bitcoinKit.maximumSpendableValue(address, feePriority.feeRate, getPluginData())
     }
 
     private fun updateFee() {

@@ -15,7 +15,8 @@ data class SelectedUnspentOutputInfo(
 sealed class SendValueErrors : Exception() {
     object Dust : SendValueErrors()
     object EmptyOutputs : SendValueErrors()
-    class InsufficientUnspentOutputs(val fee: Long) : SendValueErrors()
+    object InsufficientUnspentOutputs : SendValueErrors()
+    object NoSingleOutput : SendValueErrors()
 }
 
 class UnspentOutputSelectorChain : IUnspentOutputSelector {

@@ -212,7 +212,8 @@ class BitcoinCoreBuilder {
                 syncManager,
                 blockValidatorChain,
                 bip,
-                peerManager)
+                peerManager,
+                dustCalculator)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -297,7 +298,8 @@ class BitcoinCore(
         private val syncManager: SyncManager,
         private val blockValidatorChain: BlockValidatorChain,
         private val bip: Bip,
-        private var peerManager: PeerManager)
+        private var peerManager: PeerManager,
+        private val dustCalculator: DustCalculator)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -518,6 +520,20 @@ class BitcoinCore(
 
     fun watchTransaction(filter: TransactionFilter, listener: WatchedTransactionManager.Listener) {
         watchedTransactionManager.add(filter, listener)
+    }
+
+    fun maximumSpendableValue(address: String?, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
+        return balance.spendable - transactionFeeCalculator.fee(balance.spendable, feeRate, false, address, pluginData)
+    }
+
+    fun minimumSpendableValue(address: String?): Int {
+        // by default script type is P2PKH, since it is most used
+        val scriptType = when {
+            address != null -> addressConverter.convert(address).scriptType
+            else -> ScriptType.P2PKH
+        }
+
+        return dustCalculator.dust(scriptType)
     }
 
     sealed class KitState {

@@ -85,4 +85,12 @@ abstract class AbstractKit {
     fun watchTransaction(filter: TransactionFilter, listener: WatchedTransactionManager.Listener) {
         bitcoinCore.watchTransaction(filter, listener)
     }
+
+    fun maximumSpendableValue(address: String?, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
+        return bitcoinCore.maximumSpendableValue(address, feeRate, pluginData)
+    }
+
+    fun minimumSpendableValue(address: String?): Int {
+        return bitcoinCore.minimumSpendableValue(address)
+    }
 }
