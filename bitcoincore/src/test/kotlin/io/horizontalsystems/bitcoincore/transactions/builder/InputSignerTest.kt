@@ -70,6 +70,7 @@ object InputSignerTest : Spek({
 
             whenever(transactionOutput.lockingScript).thenReturn(lockingScript)
             whenever(transactionOutput.transactionHash).thenReturn(byteArrayOf(1, 2, 3))
+            whenever(transactionOutput.scriptType).thenReturn(ScriptType.P2PKH)
 
             whenever(inputToSign.previousOutput).thenReturn(transactionOutput)
             whenever(inputToSign.input).thenReturn(transactionInput)
