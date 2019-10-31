@@ -16,7 +16,7 @@ object CashAddressConverterTest : Spek({
 
     val hrp = "bitcoincash"
 
-    fun hashToAddress(hash: String, hrp: String, string: String, type: Int) {
+    fun hashToAddress(hash: String, hrp: String, string: String, type: ScriptType) {
         converter = CashAddressConverter(hrp)
         address = converter.convert(hash.hexToByteArray(), type)
 
