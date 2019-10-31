@@ -32,6 +32,6 @@ class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSiz
             }
         }
 
-        throw SendValueErrors.InsufficientUnspentOutputs(0)
+        throw SendValueErrors.NoSingleOutput
     }
 }
