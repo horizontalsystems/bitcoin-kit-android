@@ -66,10 +66,7 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
 
     fun gapShifts(): Boolean {
         val publicKeys = storage.getPublicKeys()
-        val lastAccount = publicKeys
-                .sortedBy { it.account }
-                .firstOrNull()?.account
-                ?: return false
+        val lastAccount = publicKeys.map { it.account }.max() ?: return false
 
         for (i in 0..lastAccount) {
             if (gapKeysCount(publicKeys.filter { it.account == i && it.external }) < hdWallet.gapLimit) {
