@@ -40,6 +40,14 @@ class TransactionWithBlock(
         @Embedded val transaction: Transaction,
         @Embedded val block: Block?)
 
+class PublicKeyWithUsedState(
+        @Embedded val publicKey: PublicKey,
+        val usedCount: Int) {
+
+    val used: Boolean
+        get() = usedCount > 0
+}
+
 class PreviousOutput(val publicKeyPath: String?, val value: Long)
 
 class InputWithPreviousOutput(

@@ -2,10 +2,7 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.managers.TransactionItem
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoincore.storage.FullTransaction
-import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
-import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
-import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.*
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IStorage {
@@ -95,6 +92,9 @@ interface IStorage {
     fun getPublicKeyByKeyOrKeyHash(keyHash: ByteArray): PublicKey?
 
     fun getPublicKeys(): List<PublicKey>
+    fun getPublicKeysUsed(): List<PublicKey>
+    fun getPublicKeysUnused(): List<PublicKey>
+    fun getPublicKeysWithUsedState(): List<PublicKeyWithUsedState>
     fun savePublicKeys(keys: List<PublicKey>)
 
     //  SentTransaction
