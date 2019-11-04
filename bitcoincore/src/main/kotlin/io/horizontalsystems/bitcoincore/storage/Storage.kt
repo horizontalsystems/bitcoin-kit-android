@@ -312,6 +312,18 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.publicKey.getAll()
     }
 
+    override fun getPublicKeysUsed(): List<PublicKey> {
+        return store.publicKey.getAllUsed()
+    }
+
+    override fun getPublicKeysUnused(): List<PublicKey> {
+        return store.publicKey.getAllUnused()
+    }
+
+    override fun getPublicKeysWithUsedState(): List<PublicKeyWithUsedState> {
+        return store.publicKey.getAllWithUsedState()
+    }
+
     override fun savePublicKeys(keys: List<PublicKey>) {
         store.publicKey.insertOrIgnore(keys)
     }

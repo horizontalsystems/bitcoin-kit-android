@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.managers
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.publicKey
 import io.horizontalsystems.bitcoincore.models.PublicKey
+import io.horizontalsystems.bitcoincore.storage.PublicKeyWithUsedState
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWallet, private val restoreKeyConverter: RestoreKeyConverterChain)
@@ -39,10 +40,7 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     }
 
     fun fillGap() {
-        val lastUsedAccount = storage.getPublicKeys()
-                .sortedBy { it.account }
-                .lastOrNull { it.used(storage) }
-                ?.account
+        val lastUsedAccount = storage.getPublicKeysUsed().map { it.account }.max()
 
         val requiredAccountsCount = if (lastUsedAccount != null) {
             lastUsedAccount + 1 + 1 //  One because account starts from 0, One because we must have n+1 accounts
@@ -65,15 +63,15 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     }
 
     fun gapShifts(): Boolean {
-        val publicKeys = storage.getPublicKeys()
-        val lastAccount = publicKeys.map { it.account }.max() ?: return false
+        val publicKeys = storage.getPublicKeysWithUsedState()
+        val lastAccount = publicKeys.map { it.publicKey.account }.max() ?: return false
 
         for (i in 0..lastAccount) {
-            if (gapKeysCount(publicKeys.filter { it.account == i && it.external }) < hdWallet.gapLimit) {
+            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && it.publicKey.external }) < hdWallet.gapLimit) {
                 return true
             }
 
-            if (gapKeysCount(publicKeys.filter { it.account == i && !it.external }) < hdWallet.gapLimit) {
+            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && !it.publicKey.external }) < hdWallet.gapLimit) {
                 return true
             }
         }
@@ -82,13 +80,12 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     }
 
     private fun fillGap(account: Int, external: Boolean) {
-        val publicKeys = storage.getPublicKeys().filter { it.account == account && it.external == external }
+        val publicKeys = storage.getPublicKeysWithUsedState().filter { it.publicKey.account == account && it.publicKey.external == external }
         val keysCount = gapKeysCount(publicKeys)
         val keys = mutableListOf<PublicKey>()
 
         if (keysCount < hdWallet.gapLimit) {
-            val allKeys = publicKeys.sortedBy { it.index }
-            val lastIndex = allKeys.lastOrNull()?.index ?: -1
+            val lastIndex = publicKeys.maxBy { it.publicKey.index }?.publicKey?.index ?: -1
 
             for (i in 1..hdWallet.gapLimit - keysCount) {
                 val publicKey = hdWallet.publicKey(account, lastIndex + i, external)
@@ -99,19 +96,19 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
         addKeys(keys)
     }
 
-    private fun gapKeysCount(publicKeys: List<PublicKey>): Int {
-        val lastUsedKey = publicKeys.filter { it.used(storage) }.sortedBy { it.index }.lastOrNull()
+    private fun gapKeysCount(publicKeys: List<PublicKeyWithUsedState>): Int {
+        val lastUsedKey = publicKeys.filter { it.used }.sortedBy { it.publicKey.index }.lastOrNull()
 
         return when (lastUsedKey) {
             null -> publicKeys.size
-            else -> publicKeys.filter { it.index > lastUsedKey.index }.size
+            else -> publicKeys.filter { it.publicKey.index > lastUsedKey.publicKey.index }.size
         }
     }
 
     @Throws
     private fun getPublicKey(external: Boolean): PublicKey {
-        return storage.getPublicKeys()
-                .filter { it.account == 0 && it.external == external && !it.used(storage) }
+        return storage.getPublicKeysUnused()
+                .filter { it.account == 0 && it.external == external }
                 .sortedWith(compareBy { it.index })
                 .firstOrNull() ?: throw Error.NoUnusedPublicKey
     }
