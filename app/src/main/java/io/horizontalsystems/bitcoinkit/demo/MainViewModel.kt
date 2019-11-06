@@ -5,7 +5,7 @@ import android.arch.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IPluginData
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorError
+import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -160,8 +160,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                 errorLiveData.value = "Transaction sent"
             } catch (e: Exception) {
                 errorLiveData.value = when (e) {
-                    is UnspentOutputSelectorError.InsufficientUnspentOutputs,
-                    is UnspentOutputSelectorError.EmptyUnspentOutputs -> "Insufficient balance"
+                    is SendValueErrors.InsufficientUnspentOutputs,
+                    is SendValueErrors.EmptyOutputs -> "Insufficient balance"
                     else -> e.message ?: "Failed to send transaction (${e.javaClass.name})"
                 }
             }
