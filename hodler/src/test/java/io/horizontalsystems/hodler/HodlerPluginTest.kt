@@ -65,6 +65,19 @@ class HodlerPluginTest {
         }
     }
 
+    @Test
+    fun processOutputs_lockingMoreThanLimit() {
+        val pluginData = HodlerData(LockTimeInterval.hour)
+
+        whenever(mutableTransaction.recipientAddress).thenReturn(recipientAddress)
+        whenever(recipientAddress.scriptType).thenReturn(ScriptType.P2PKH)
+        whenever(mutableTransaction.recipientValue).thenReturn(50_000_001)
+
+        assertThrows<IllegalStateException> {
+            hodlerPlugin.processOutputs(mutableTransaction, pluginData)
+        }
+    }
+
     val pubkeyHash = "8c005bb22d520f6a108b108242efcbe5c19315f5".hexToByteArray()
     val redeemScriptHash = "281df2e2e47141575bd98686a4f0452bcc4c7147".hexToByteArray()
 

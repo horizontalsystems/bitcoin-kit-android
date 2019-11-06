@@ -22,6 +22,7 @@ class HodlerPlugin(
 
     companion object {
         const val id = OP_1.toByte()
+        private const val limit = 50_000_000L
     }
 
     override val id = HodlerPlugin.id
@@ -31,6 +32,10 @@ class HodlerPlugin(
 
         check(mutableTransaction.recipientAddress.scriptType == ScriptType.P2PKH) {
             "Locking transaction is available only for PKH addresses"
+        }
+
+        check(mutableTransaction.recipientValue <= limit) {
+            "The maximum amount allowed for locking is $limit"
         }
 
         val pubkeyHash = mutableTransaction.recipientAddress.hash
@@ -97,7 +102,7 @@ class HodlerPlugin(
 
     // The maximum lock amount is 0.5 bitcoins
     override fun maximumSpendLimit(): Long? {
-        return 50_000_000
+        return limit
     }
 
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {
