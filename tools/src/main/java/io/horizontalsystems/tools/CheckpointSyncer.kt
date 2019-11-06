@@ -1,10 +1,9 @@
-package checkpoint
+package io.horizontalsystems.tools
 
-import android.util.Log
 import io.horizontalsystems.bitcoincore.core.DoubleSha256Hasher
 import io.horizontalsystems.bitcoincore.core.IConnectionManager
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
-import io.horizontalsystems.bitcoincore.models.BlockHash
+import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
@@ -14,36 +13,51 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.network.peer.task.GetBlockHeadersTask
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
+import io.horizontalsystems.dashkit.MainNetDash
+import io.horizontalsystems.dashkit.X11Hasher
 import java.util.*
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
+import kotlin.system.exitProcess
+
+fun main() {
+    val network = MainNetDash()
+    val peerSize = 3
+
+    CheckpointSyncer(network, peerSize, 24).start()
+    Thread.sleep(5000)
+}
 
 class CheckpointSyncer(
         private val network: Network,
-        private val peerSize: Int)
+        private val peerSize: Int,
+        private val checkpointSize: Int)
     : PeerGroup.Listener, IPeerTaskHandler {
 
     private val syncedPeers = CopyOnWriteArrayList<Peer>()
     private val peerManager = PeerManager()
-    private val checkpointBlock = network.lastCheckpointBlock
 
     @Volatile
     private var syncPeer: Peer? = null
     private val peersQueue = Executors.newSingleThreadExecutor()
 
-    private val checkpoints = mutableListOf(BlockHash(checkpointBlock.headerHash, checkpointBlock.height))
-    private val blockHashes = LinkedList<BlockHash>().also {
+    private val checkpointBlock = network.lastCheckpointBlock
+    private val checkpoints = mutableListOf(checkpointBlock)
+    private val blocks = LinkedList<Block>().also {
         it.add(checkpoints.last())
     }
 
     fun start() {
-        val localDownloadedBestBlockHeight = 0
+        val blockHeaderHasher = when (network) {
+            is MainNetDash -> X11Hasher()
+            else -> DoubleSha256Hasher()
+        }
 
         val networkMessageParser = NetworkMessageParser(network.magic).apply {
             add(VersionMessageParser())
             add(VerAckMessageParser())
             add(InvMessageParser())
-            add(HeadersMessageParser(DoubleSha256Hasher()))
+            add(HeadersMessageParser(blockHeaderHasher))
         }
 
         val networkMessageSerializer = NetworkMessageSerializer(network.magic).apply {
@@ -60,7 +74,7 @@ class CheckpointSyncer(
         }
 
         val peerHostManager = PeerAddressManager(network)
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, localDownloadedBestBlockHeight).also {
+        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, 0).also {
             peerHostManager.listener = it
         }
 
@@ -72,7 +86,6 @@ class CheckpointSyncer(
     //  PeerGroup Listener
 
     override fun onPeerConnect(peer: Peer) {
-        Log.e("AAA", "onPeerConnect ${peer.host}")
         assignNextSyncPeer()
     }
 
@@ -86,43 +99,43 @@ class CheckpointSyncer(
     }
 
     override fun onPeerReady(peer: Peer) {
-        Log.e("AAA", "onPeerReady ${peer.host}")
+        if (peer == syncPeer) {
+            downloadBlockchain()
+        }
     }
 
     //  IPeerTaskHandler
 
     override fun handleCompletedTask(peer: Peer, task: PeerTask): Boolean {
-        return when (task) {
-            is GetBlockHeadersTask -> {
-                validateHeaders(peer, task.blockHeaders)
-                true
-            }
-            else -> false
+        if (task is GetBlockHeadersTask) {
+            validateHeaders(peer, task.blockHeaders)
+            return true
         }
+
+        return false
     }
 
     private fun validateHeaders(peer: Peer, headers: Array<BlockHeader>) {
-        var block = blockHashes.last()
+        var prevBlock = blocks.last()
+
         for (header in headers) {
-            if (!block.headerHash.contentEquals(header.previousBlockHeaderHash)) {
+            if (!prevBlock.headerHash.contentEquals(header.previousBlockHeaderHash)) {
                 syncPeer = null
                 assignNextSyncPeer()
                 break
             }
 
-            val blockHash = BlockHash(header.hash, block.height + 1)
-            if (blockHash.height % 2016 == 0) {
-                checkpoints.add(blockHash)
+            val newBlock = Block(header, prevBlock.height + 1)
+            if (newBlock.height % checkpointSize == 0) {
+                checkpoints.add(newBlock)
             }
 
-            blockHashes.add(blockHash)
-            block = blockHash
+            blocks.add(newBlock)
+            prevBlock = newBlock
         }
 
         if (headers.size < 2000) {
             peer.synced = true
-            peer.blockHashesSynced = true
-            return
         }
 
         downloadBlockchain()
@@ -130,12 +143,14 @@ class CheckpointSyncer(
 
     private fun assignNextSyncPeer() {
         peersQueue.execute {
+            if (peerManager.connected().none { !it.synced }) {
+                exitProcess(0)
+            }
+
             if (syncPeer == null) {
                 val notSyncedPeers = peerManager.sorted().filter { !it.synced }
                 notSyncedPeers.firstOrNull { it.ready }?.let { nonSyncedPeer ->
                     syncPeer = nonSyncedPeer
-
-                    Log.e("AAA", "Start syncing peer ${nonSyncedPeer.host}")
 
                     downloadBlockchain()
                 }
@@ -149,16 +164,20 @@ class CheckpointSyncer(
             return
         }
 
-        peer.addTask(GetBlockHeadersTask(getBlockLocatorHashes()))
+        if (peer.synced) {
+            syncedPeers.add(peer)
+            syncPeer = null
+            assignNextSyncPeer()
+        } else {
+            peer.addTask(GetBlockHeadersTask(getBlockLocatorHashes()))
+        }
     }
 
-    //  PeerTaskHandler
-
     private fun getBlockLocatorHashes(): List<ByteArray> {
-        return if (blockHashes.isEmpty()) {
+        return if (blocks.isEmpty()) {
             listOf(checkpoints.last().headerHash)
         } else {
-            listOf(blockHashes.last().headerHash)
+            listOf(blocks.last().headerHash)
         }
     }
 }
