@@ -213,7 +213,8 @@ class BitcoinCoreBuilder {
                 blockValidatorChain,
                 bip,
                 peerManager,
-                dustCalculator)
+                dustCalculator,
+                pluginManager)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -299,7 +300,8 @@ class BitcoinCore(
         private val blockValidatorChain: BlockValidatorChain,
         private val bip: Bip,
         private var peerManager: PeerManager,
-        private val dustCalculator: DustCalculator)
+        private val dustCalculator: DustCalculator,
+        private val pluginManager: PluginManager)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -534,6 +536,10 @@ class BitcoinCore(
         }
 
         return dustCalculator.dust(scriptType)
+    }
+
+    fun maximumSpendLimit(pluginData: Map<Byte, IPluginData>): Long? {
+        return pluginManager.maximumSpendLimit(pluginData)
     }
 
     sealed class KitState {

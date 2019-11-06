@@ -95,6 +95,11 @@ class HodlerPlugin(
         }
     }
 
+    // The maximum lock amount is 0.5 bitcoins
+    override fun maximumSpendLimit(): Long? {
+        return 50_000_000
+    }
+
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {
         return OpCodes.push(lockTimeInterval.sequenceNumberAs3BytesLE) + byteArrayOf(OP_CHECKSEQUENCEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
     }

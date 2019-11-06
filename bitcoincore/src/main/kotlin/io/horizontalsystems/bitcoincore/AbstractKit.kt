@@ -93,4 +93,8 @@ abstract class AbstractKit {
     fun minimumSpendableValue(address: String?): Int {
         return bitcoinCore.minimumSpendableValue(address)
     }
+
+    fun maximumSpendLimit(pluginData: Map<Byte, IPluginData>): Long? {
+        return bitcoinCore.maximumSpendLimit(pluginData)
+    }
 }
