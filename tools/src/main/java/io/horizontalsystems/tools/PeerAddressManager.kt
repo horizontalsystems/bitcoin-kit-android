@@ -1,4 +1,4 @@
-package checkpoint
+package io.horizontalsystems.tools
 
 import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
 import io.horizontalsystems.bitcoincore.core.IPeerAddressManagerListener
