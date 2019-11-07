@@ -39,12 +39,12 @@ class TestNetDash : Network() {
 
     override val lastCheckpointBlock = Block(BlockHeader(
             version = 536870912,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("000000000e34afe7600a439c89dbbb90908a6bf2bc117dcf30e82c89a83ec280"),
-            merkleRoot = HashUtils.toBytesAsLE("334130f690b9e58bfc61c767c89251913e87dd7a44a1eb30bdd0668d85313527"),
-            timestamp = 1566527727,
-            bits = 0x1c0f2298,
-            nonce = 958408694,
-            hash = HashUtils.toBytesAsLE("000000000d5cbf42cd0da22e4a2dc4aab275a5e8d5a8ab39025b1bd2d588ebfb")
-    ), 160834)
+            previousBlockHeaderHash = HashUtils.toBytesAsLE("000007bec14c122412335571908232996015c0eb49cb475796fac40154853b8f"),
+            merkleRoot = HashUtils.toBytesAsLE("c018ec01fe4187701059d959e443cb7b653672106d727cd1a2e73bc1dc9ef69b"),
+            timestamp = 1573118434,
+            bits = 504216786,
+            nonce = 8013,
+            hash = HashUtils.toBytesAsLE("000008fd74af527d0278b11ebdfed0e729e5cb97009e0cf1d60ae2559bf19b5a")
+    ), 206472)
 
 }
