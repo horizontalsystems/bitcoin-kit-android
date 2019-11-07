@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
+import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -86,6 +87,14 @@ class PluginManager : IRestoreKeyConverter {
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
         return listOf()
     }
+
+    fun validateAddress(address: Address, pluginData: Map<Byte, IPluginData>) {
+        pluginData.forEach {
+            val plugin = checkNotNull(plugins[it.key])
+
+            plugin.validateAddress(address)
+        }
+    }
 }
 
 interface IPlugin {
@@ -98,6 +107,7 @@ interface IPlugin {
     fun parsePluginData(output: TransactionOutput, txTimestamp: Long): IPluginOutputData
     fun keysForApiRestore(publicKey: PublicKey): List<String>
     fun maximumSpendLimit(): Long?
+    fun validateAddress(address: Address)
 }
 
 interface IPluginData
