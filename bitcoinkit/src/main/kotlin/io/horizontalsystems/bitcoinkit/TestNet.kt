@@ -46,6 +46,6 @@ class TestNet : Network() {
             bits = 436469756,
             nonce = 2340000208,
             hash = HashUtils.toBytesAsLE("0000000000000351f0f983f65c5abbf0aeec017937d136ea976255823beca984")
-    ), 1574496)
+    ), 1606752)
 
 }
