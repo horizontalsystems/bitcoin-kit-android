@@ -62,8 +62,8 @@ abstract class AbstractKit {
         return bitcoinCore.changePublicKey()
     }
 
-    fun validateAddress(address: String) {
-        bitcoinCore.validateAddress(address)
+    fun validateAddress(address: String, pluginData: Map<Byte, IPluginData>) {
+        bitcoinCore.validateAddress(address, pluginData)
     }
 
     fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {

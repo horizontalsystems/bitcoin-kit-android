@@ -431,8 +431,8 @@ class BitcoinCore(
         return publicKeyManager.getPublicKeyByPath(path)
     }
 
-    fun validateAddress(address: String) {
-        addressConverter.convert(address)
+    fun validateAddress(address: String, pluginData: Map<Byte, IPluginData> = mapOf()) {
+        pluginManager.validateAddress(addressConverter.convert(address), pluginData)
     }
 
     fun parsePaymentAddress(paymentAddress: String): BitcoinPaymentData {

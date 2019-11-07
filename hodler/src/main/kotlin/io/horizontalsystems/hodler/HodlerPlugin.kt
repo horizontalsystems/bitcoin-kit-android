@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.core.IPlugin
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.core.IPluginOutputData
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
@@ -105,6 +106,12 @@ class HodlerPlugin(
         return limit
     }
 
+    override fun validateAddress(address: Address) {
+        if (address.scriptType != ScriptType.P2PKH) {
+            throw UnsupportedAddressType()
+        }
+    }
+
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {
         return OpCodes.push(lockTimeInterval.sequenceNumberAs3BytesLE) + byteArrayOf(OP_CHECKSEQUENCEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
     }
@@ -125,4 +132,6 @@ class HodlerPlugin(
 
         return previousOutputMedianTime + lockTimeInterval.valueInSeconds
     }
+
+    class UnsupportedAddressType : Exception()
 }
