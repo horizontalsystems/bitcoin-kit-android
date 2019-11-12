@@ -1,10 +1,15 @@
 package io.horizontalsystems.bitcoincore.network
 
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.bitcoincore.utils.HashUtils
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import java.io.Reader
 
-/** Network-specific parameters */
 abstract class Network {
 
     open val protocolVersion = 70014
@@ -31,4 +36,36 @@ abstract class Network {
     abstract val lastCheckpointBlock: Block
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
+
+    protected fun readLastCheckpoint(): Block {
+        try {
+            val stream = javaClass.classLoader?.getResourceAsStream("${javaClass.simpleName}.checkpoint")
+            val inputStreamReader: Reader = InputStreamReader(stream)
+            val reader = BufferedReader(inputStreamReader)
+            val checkpoint = reader.readLine()
+
+            BitcoinInput(checkpoint.hexToByteArray()).use { input ->
+                val version = input.readInt()
+                val prevHash = input.readBytes(32)
+                val merkleHash = input.readBytes(32)
+                val timestamp = input.readUnsignedInt()
+                val bits = input.readUnsignedInt()
+                val nonce = input.readUnsignedInt()
+                val height = input.readInt()
+                val hash = input.readBytes(32)
+
+                return Block(BlockHeader(
+                        version = version,
+                        previousBlockHeaderHash = prevHash,
+                        merkleRoot = merkleHash,
+                        timestamp = timestamp,
+                        bits = bits,
+                        nonce = nonce,
+                        hash = hash
+                ), height)
+            }
+        } catch (ex: Exception) {
+            return bip44CheckpointBlock
+        }
+    }
 }

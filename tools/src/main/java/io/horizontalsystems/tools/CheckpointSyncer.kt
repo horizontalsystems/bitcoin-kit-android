@@ -189,37 +189,6 @@ class CheckpointSyncer(
         }
     }
 
-    // Writing to file
-
-//    private fun writeCheckpoints() {
-//        val file = File(checkpointFile)
-//        val outputStream = OutputStreamWriter(FileOutputStream(file), StandardCharsets.US_ASCII)
-//
-//        val buffer = ByteBuffer.allocate(80 + 4) // header + block height
-//        val writer = PrintWriter(outputStream)
-//
-//        val checkpoint = checkpoints.last()
-//        buffer.put(serialize(checkpoint))
-//        buffer.putInt(checkpoint.height)
-//        writer.println(buffer.array().toHexString());
-//        buffer.position(0)
-//
-//        writer.close()
-//    }
-//
-//    private fun serialize(block: Block): ByteArray {
-//        val payload = BitcoinOutput().also {
-//            it.writeInt(block.version)
-//            it.write(block.previousBlockHash)
-//            it.write(block.merkleRoot)
-//            it.writeUnsignedInt(block.timestamp)
-//            it.writeUnsignedInt(block.bits)
-//            it.writeUnsignedInt(block.nonce)
-//        }
-//
-//        return payload.toByteArray()
-//    }
-
     private fun print(message: String) {
         println("${network.javaClass.simpleName}: $message")
     }
