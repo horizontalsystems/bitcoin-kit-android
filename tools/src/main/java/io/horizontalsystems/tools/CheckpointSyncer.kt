@@ -3,6 +3,7 @@ package io.horizontalsystems.tools
 import io.horizontalsystems.bitcoincore.core.DoubleSha256Hasher
 import io.horizontalsystems.bitcoincore.core.IConnectionManager
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
@@ -14,32 +15,31 @@ import io.horizontalsystems.bitcoincore.network.peer.task.GetBlockHeadersTask
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.dashkit.MainNetDash
+import io.horizontalsystems.dashkit.TestNetDash
 import io.horizontalsystems.dashkit.X11Hasher
 import java.util.*
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
-import kotlin.system.exitProcess
-
-fun main() {
-    val network = MainNetDash()
-    val peerSize = 3
-
-    CheckpointSyncer(network, peerSize, 24).start()
-    Thread.sleep(5000)
-}
 
 class CheckpointSyncer(
         private val network: Network,
-        private val peerSize: Int,
-        private val checkpointSize: Int)
+        private val checkpointInterval: Int,
+        private val listener: Listener)
     : PeerGroup.Listener, IPeerTaskHandler {
 
-    private val syncedPeers = CopyOnWriteArrayList<Peer>()
-    private val peerManager = PeerManager()
+    interface Listener {
+        fun onSync(network: Network, checkpoints: List<Block>)
+    }
+
+    var isSynced: Boolean = false
+        private set
 
     @Volatile
     private var syncPeer: Peer? = null
     private val peersQueue = Executors.newSingleThreadExecutor()
+    private val peerManager = PeerManager()
+
+    private val peerSize = 2
+    private val peerGroup: PeerGroup
 
     private val checkpointBlock = network.lastCheckpointBlock
     private val checkpoints = mutableListOf(checkpointBlock)
@@ -47,8 +47,9 @@ class CheckpointSyncer(
         it.add(checkpoints.last())
     }
 
-    fun start() {
+    init {
         val blockHeaderHasher = when (network) {
+            is TestNetDash,
             is MainNetDash -> X11Hasher()
             else -> DoubleSha256Hasher()
         }
@@ -74,12 +75,16 @@ class CheckpointSyncer(
         }
 
         val peerHostManager = PeerAddressManager(network)
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, 0).also {
+        peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, 0).also {
             peerHostManager.listener = it
         }
 
         peerGroup.addPeerGroupListener(this)
         peerGroup.peerTaskHandler = this
+    }
+
+    fun start() {
+        isSynced = false
         peerGroup.start()
     }
 
@@ -90,8 +95,6 @@ class CheckpointSyncer(
     }
 
     override fun onPeerDisconnect(peer: Peer, e: Exception?) {
-        syncedPeers.remove(peer)
-
         if (peer == syncPeer) {
             syncPeer = null
             assignNextSyncPeer()
@@ -126,7 +129,8 @@ class CheckpointSyncer(
             }
 
             val newBlock = Block(header, prevBlock.height + 1)
-            if (newBlock.height % checkpointSize == 0) {
+            if (newBlock.height % checkpointInterval == 0) {
+                print("Checkpoint block ${header.hash.toReversedHex()} at height ${newBlock.height}, time ${header.timestamp}")
                 checkpoints.add(newBlock)
             }
 
@@ -144,7 +148,12 @@ class CheckpointSyncer(
     private fun assignNextSyncPeer() {
         peersQueue.execute {
             if (peerManager.connected().none { !it.synced }) {
-                exitProcess(0)
+                isSynced = true
+                peerGroup.stop()
+                listener.onSync(network, checkpoints)
+                print("Synced")
+
+                return@execute
             }
 
             if (syncPeer == null) {
@@ -165,7 +174,6 @@ class CheckpointSyncer(
         }
 
         if (peer.synced) {
-            syncedPeers.add(peer)
             syncPeer = null
             assignNextSyncPeer()
         } else {
@@ -179,5 +187,40 @@ class CheckpointSyncer(
         } else {
             listOf(blocks.last().headerHash)
         }
+    }
+
+    // Writing to file
+
+//    private fun writeCheckpoints() {
+//        val file = File(checkpointFile)
+//        val outputStream = OutputStreamWriter(FileOutputStream(file), StandardCharsets.US_ASCII)
+//
+//        val buffer = ByteBuffer.allocate(80 + 4) // header + block height
+//        val writer = PrintWriter(outputStream)
+//
+//        val checkpoint = checkpoints.last()
+//        buffer.put(serialize(checkpoint))
+//        buffer.putInt(checkpoint.height)
+//        writer.println(buffer.array().toHexString());
+//        buffer.position(0)
+//
+//        writer.close()
+//    }
+//
+//    private fun serialize(block: Block): ByteArray {
+//        val payload = BitcoinOutput().also {
+//            it.writeInt(block.version)
+//            it.write(block.previousBlockHash)
+//            it.write(block.merkleRoot)
+//            it.writeUnsignedInt(block.timestamp)
+//            it.writeUnsignedInt(block.bits)
+//            it.writeUnsignedInt(block.nonce)
+//        }
+//
+//        return payload.toByteArray()
+//    }
+
+    private fun print(message: String) {
+        println("${network.javaClass.simpleName}: $message")
     }
 }
