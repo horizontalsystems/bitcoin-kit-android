@@ -193,7 +193,8 @@ class BitcoinCoreBuilder {
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)
         val stateManager = StateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
-        val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, kitStateProvider)
+        val errorStorage = ErrorStorage()
+        val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, kitStateProvider, errorStorage)
 
         val syncManager = SyncManager(peerGroup, initialSyncer)
         initialSyncer.listener = syncManager
@@ -214,7 +215,8 @@ class BitcoinCoreBuilder {
                 bip,
                 peerManager,
                 dustCalculator,
-                pluginManager)
+                pluginManager,
+                errorStorage)
 
         dataProvider.listener = bitcoinCore
         kitStateProvider.listener = bitcoinCore
@@ -301,7 +303,8 @@ class BitcoinCore(
         private val bip: Bip,
         private var peerManager: PeerManager,
         private val dustCalculator: DustCalculator,
-        private val pluginManager: PluginManager)
+        private val pluginManager: PluginManager,
+        private val errorStorage: ErrorStorage)
     : KitStateProvider.Listener, DataProvider.Listener {
 
     interface Listener {
@@ -466,6 +469,7 @@ class BitcoinCore(
         val statusInfo = LinkedHashMap<String, Any>()
 
         statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it) } ?: "N/A"
+        statusInfo["Errors"] = errorStorage.errors ?: "no errors"
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
 
         val peers = LinkedHashMap<String, Any>()

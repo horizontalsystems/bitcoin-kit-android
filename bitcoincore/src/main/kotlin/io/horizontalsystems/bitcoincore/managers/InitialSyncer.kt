@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.core.ErrorStorage
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 import io.horizontalsystems.bitcoincore.models.BlockHash
@@ -14,7 +15,8 @@ class InitialSyncer(
         private val blockDiscovery: IBlockDiscovery,
         private val stateManager: StateManager,
         private val publicKeyManager: PublicKeyManager,
-        private val stateListener: ISyncStateListener) {
+        private val stateListener: ISyncStateListener,
+        private val errorStorage: ErrorStorage?) {
 
     interface Listener {
         fun onSyncingFinished()
@@ -90,7 +92,9 @@ class InitialSyncer(
     }
 
     private fun handle(error: Throwable) {
+        errorStorage?.addApiError(error)
         logger.severe("Initial Sync Error: ${error.message}")
+
         isRestoring = false
         stateListener.onSyncStop()
     }
