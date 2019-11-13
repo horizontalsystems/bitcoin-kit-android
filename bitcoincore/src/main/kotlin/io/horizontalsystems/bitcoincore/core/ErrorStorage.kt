@@ -7,6 +7,7 @@ import kotlin.collections.LinkedHashMap
 
 class ErrorStorage {
     private val apiErrors = LinkedHashMap<String, Any>()
+    private val sendErrors = LinkedHashMap<String, Any>()
 
     private val utcDateFormatter: DateFormat
     private val dateFormat: String = "MM/dd, HH:mm:ss"
@@ -19,13 +20,18 @@ class ErrorStorage {
     val errors: Map<String, Any>?
         get() {
             val errors = LinkedHashMap<String, Any>()
-            errors.putAll(apiErrors)
+            errors.putAll(linkedMapOf("API Errors" to apiErrors))
+            errors.putAll(linkedMapOf("Send Errors" to sendErrors))
 
             return if (errors.count() > 0) errors else null
         }
 
     fun addApiError(error: Throwable) {
         apiErrors[currentDateTime] = getStackTraceString(error)
+    }
+
+    fun addSendError(error: Throwable) {
+        sendErrors[currentDateTime] = getStackTraceString(error)
     }
 
     fun printErrors() {

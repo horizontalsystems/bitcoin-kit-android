@@ -406,7 +406,12 @@ class BitcoinCore(
     }
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay, pluginData)
+        try {
+            return transactionCreator.create(address, value, feeRate, senderPay, pluginData)
+        } catch (error: Exception) {
+            errorStorage.addSendError(error)
+            throw error
+        }
     }
 
     fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
