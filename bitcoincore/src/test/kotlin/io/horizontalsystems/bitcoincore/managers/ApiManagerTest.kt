@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import com.eclipsesource.json.JsonObject
 import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.RxTestRule
 import org.junit.Assert.assertEquals
@@ -39,20 +40,21 @@ class ApiManagerTest {
     }
 
     @Test
-    fun getJson() {
+    fun get() {
         val data = "data"
         val resp = "{\"field\":\"$data\"}"
 
         whenever(urlConnection.getInputStream()).thenReturn(resp.byteInputStream())
 
-        val json = apiManager.getJson("/file.json")
-        assertEquals(data, json["field"].asString())
+        val json = apiManager.get("/file.json")
+        assert(json is JsonObject)
+        assertEquals(data, json.asObject()["field"].asString())
     }
 
     @Test(expected = FileNotFoundException::class)
-    fun getJson_Throws() {
+    fun get_Throws() {
         whenever(urlConnection.getInputStream()).thenThrow(FileNotFoundException())
-        apiManager.getJson("/file.json")
+        apiManager.get("/file.json")
     }
 
 }
