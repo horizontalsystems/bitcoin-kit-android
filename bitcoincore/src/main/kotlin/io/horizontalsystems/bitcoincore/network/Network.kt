@@ -33,39 +33,36 @@ abstract class Network {
     abstract var addressScriptVersion: Int
 
     abstract val bip44CheckpointBlock: Block
-    abstract val lastCheckpointBlock: Block
+    open val lastCheckpointBlock: Block = readLastCheckpoint()
+
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
 
-    protected fun readLastCheckpoint(): Block {
-        try {
-            val stream = javaClass.classLoader?.getResourceAsStream("${javaClass.simpleName}.checkpoint")
-            val inputStreamReader: Reader = InputStreamReader(stream)
-            val reader = BufferedReader(inputStreamReader)
-            val checkpoint = reader.readLine()
+    private fun readLastCheckpoint(): Block {
+        val stream = javaClass.classLoader?.getResourceAsStream("${javaClass.simpleName}.checkpoint")
+        val inputStreamReader: Reader = InputStreamReader(stream)
+        val reader = BufferedReader(inputStreamReader)
+        val checkpoint = reader.readLine()
 
-            BitcoinInput(checkpoint.hexToByteArray()).use { input ->
-                val version = input.readInt()
-                val prevHash = input.readBytes(32)
-                val merkleHash = input.readBytes(32)
-                val timestamp = input.readUnsignedInt()
-                val bits = input.readUnsignedInt()
-                val nonce = input.readUnsignedInt()
-                val height = input.readInt()
-                val hash = input.readBytes(32)
+        return BitcoinInput(checkpoint.hexToByteArray()).use { input ->
+            val version = input.readInt()
+            val prevHash = input.readBytes(32)
+            val merkleHash = input.readBytes(32)
+            val timestamp = input.readUnsignedInt()
+            val bits = input.readUnsignedInt()
+            val nonce = input.readUnsignedInt()
+            val height = input.readInt()
+            val hash = input.readBytes(32)
 
-                return Block(BlockHeader(
-                        version = version,
-                        previousBlockHeaderHash = prevHash,
-                        merkleRoot = merkleHash,
-                        timestamp = timestamp,
-                        bits = bits,
-                        nonce = nonce,
-                        hash = hash
-                ), height)
-            }
-        } catch (ex: Exception) {
-            return bip44CheckpointBlock
+            Block(BlockHeader(
+                    version = version,
+                    previousBlockHeaderHash = prevHash,
+                    merkleRoot = merkleHash,
+                    timestamp = timestamp,
+                    bits = bits,
+                    nonce = nonce,
+                    hash = hash
+            ), height)
         }
     }
 }

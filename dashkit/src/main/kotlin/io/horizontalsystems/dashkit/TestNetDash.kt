@@ -37,6 +37,4 @@ class TestNetDash : Network() {
             hash = HashUtils.toBytesAsLE("00000bafbc94add76cb75e2ec92894837288a481e5c005f6563d91623bf8bc2c")
     ), 0)
 
-    override val lastCheckpointBlock = readLastCheckpoint()
-
 }
