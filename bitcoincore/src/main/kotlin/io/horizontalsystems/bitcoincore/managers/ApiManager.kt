@@ -1,9 +1,11 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import com.eclipsesource.json.Json
-import com.eclipsesource.json.JsonArray
-import com.eclipsesource.json.JsonObject
 import com.eclipsesource.json.JsonValue
+import java.io.BufferedOutputStream
+import java.io.BufferedWriter
+import java.io.OutputStreamWriter
+import java.net.HttpURLConnection
 import java.net.URL
 import java.util.logging.Logger
 
@@ -11,21 +13,12 @@ class ApiManager(private val host: String) {
     private val logger = Logger.getLogger("ApiManager")
 
     @Throws
-    fun getJson(file: String): JsonObject {
-        return getJsonValue(file).asObject()
-    }
+    fun get(resource: String): JsonValue {
+        val url = "$host/$resource"
 
-    @Throws(Exception::class)
-    fun getJsonArray(file: String): JsonArray {
-        return getJsonValue(file).asArray()
-    }
+        logger.info("Fetching $url")
 
-    private fun getJsonValue(file: String): JsonValue {
-        val resource = "$host/$file"
-
-        logger.info("Fetching $resource")
-
-        return URL(resource)
+        return URL(url)
                 .openConnection()
                 .apply {
                     connectTimeout = 5000
@@ -35,6 +28,27 @@ class ApiManager(private val host: String) {
                 .use {
                     Json.parse(it.bufferedReader())
                 }
+    }
+
+    @Throws
+    fun post(resource: String, data: String): JsonValue {
+        val path = "$host/$resource"
+
+        logger.info("Fetching $path")
+
+        val url = URL(path)
+        val urlConnection = url.openConnection() as HttpURLConnection
+        urlConnection.requestMethod = "POST"
+        val out = BufferedOutputStream(urlConnection.outputStream)
+        val writer = BufferedWriter(OutputStreamWriter(out, "UTF-8"))
+        writer.write(data)
+        writer.flush()
+        writer.close()
+        out.close()
+
+        return urlConnection.inputStream.use {
+            Json.parse(it.bufferedReader())
+        }
     }
 
 }

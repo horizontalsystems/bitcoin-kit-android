@@ -1,10 +1,8 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import com.nhaarman.mockitokotlin2.never
-import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.verifyNoMoreInteractions
-import com.nhaarman.mockitokotlin2.whenever
+import com.nhaarman.mockitokotlin2.*
 import io.horizontalsystems.bitcoincore.RxTestRule
+import io.horizontalsystems.bitcoincore.core.ErrorStorage
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 import io.horizontalsystems.bitcoincore.models.BlockHash
@@ -25,11 +23,12 @@ object InitialSyncerTest : Spek({
     val publicKeyManager = mock(PublicKeyManager::class.java)
     val stateListener = mock(ISyncStateListener::class.java)
     val listener = mock(SyncManager::class.java)
+    val errorStorage = mock(ErrorStorage::class.java)
 
     beforeEachTest {
         RxTestRule.setup()
 
-        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, stateListener)
+        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, stateListener, errorStorage)
         initialSyncer.listener = listener
     }
 
@@ -86,6 +85,10 @@ object InitialSyncerTest : Spek({
 
                     verify(blockDiscovery, never()).discoverBlockHashes(1, true)
                     verify(blockDiscovery, never()).discoverBlockHashes(1, false)
+                }
+
+                it("adds error to ErrorStorage") {
+                    verify(errorStorage, atLeast(1)).addApiError(any())
                 }
             }
 
