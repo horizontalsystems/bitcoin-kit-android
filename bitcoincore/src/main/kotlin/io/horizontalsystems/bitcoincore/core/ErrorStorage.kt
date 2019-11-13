@@ -17,13 +17,13 @@ class ErrorStorage {
         utcDateFormatter.timeZone = TimeZone.getTimeZone("UTC")
     }
 
-    val errors: Map<String, Any>?
+    val errors: Any
         get() {
             val errors = LinkedHashMap<String, Any>()
-            errors.putAll(linkedMapOf("API Errors" to apiErrors))
-            errors.putAll(linkedMapOf("Send Errors" to sendErrors))
+            errors.putAll(linkedMapOf("API Errors" to if (apiErrors.count() > 0) apiErrors else "no errors"))
+            errors.putAll(linkedMapOf("Send Errors" to if (sendErrors.count() > 0) sendErrors else "no errors"))
 
-            return if (errors.count() > 0) errors else null
+            return if (errors.count() > 0) errors else "no errors"
         }
 
     fun addApiError(error: Throwable) {
