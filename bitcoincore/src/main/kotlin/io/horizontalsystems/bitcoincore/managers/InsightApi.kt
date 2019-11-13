@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
+import io.horizontalsystems.bitcoincore.core.getOrMappingError
 import java.util.logging.Logger
 
 class InsightApi(host: String) : IInitialSyncApi {
@@ -21,23 +22,23 @@ class InsightApi(host: String) : IInitialSyncApi {
         val joinedAddresses = addrs.joinToString(",")
         val json = apiManager.getJson("addrs/$joinedAddresses/txs?from=$from&to=$to")
 
-        val totalItems = json["totalItems"].asInt()
-        val receivedTo = json["to"].asInt()
+        val totalItems = json.getOrMappingError("totalItems").asInt()
+        val receivedTo = json.getOrMappingError("to").asInt()
 
-        val items = json["items"].asArray()
+        val items = json.getOrMappingError("items").asArray()
         for (item in items) {
             val tx = item.asObject()
 
-            val blockHash = tx["blockhash"] ?: continue
-            val blockheight = tx["blockheight"] ?: continue
+            val blockHash = tx.getOrMappingError("blockhash")
+            val blockheight = tx.getOrMappingError("blockheight")
             val outputs = mutableListOf<TransactionOutputItem>()
 
-            for (outputItem in tx["vout"].asArray()) {
+            for (outputItem in tx.getOrMappingError("vout").asArray()) {
                 val outputJson = outputItem.asObject()
 
-                val scriptJson = (outputJson["scriptPubKey"] ?: continue).asObject()
-                val script = (scriptJson["hex"] ?: continue).asString()
-                val addresses = (scriptJson["addresses"] ?: continue).asArray()
+                val scriptJson = outputJson.getOrMappingError("scriptPubKey").asObject()
+                val script = scriptJson.getOrMappingError("hex").asString()
+                val addresses = scriptJson.getOrMappingError("addresses").asArray()
 
                 outputs.add(TransactionOutputItem(script, addresses[0].asString()))
             }

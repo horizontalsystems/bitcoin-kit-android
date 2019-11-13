@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.core
 
+import com.eclipsesource.json.JsonObject
+import com.eclipsesource.json.JsonValue
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -45,4 +47,8 @@ fun List<FullTransaction>.inTopologicalOrder(): List<FullTransaction> {
     }
 
     return ordered
+}
+
+fun JsonObject.getOrMappingError(name: String): JsonValue {
+    return get(name) ?: throw MappingError(name)
 }
