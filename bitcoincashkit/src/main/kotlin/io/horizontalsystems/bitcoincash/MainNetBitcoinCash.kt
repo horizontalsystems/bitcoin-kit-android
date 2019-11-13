@@ -43,6 +43,4 @@ class MainNetBitcoinCash : Network() {
             hash = HashUtils.toBytesAsLE("00000000000000003decdbb5f3811eab3148fbc29d3610528eb3b50d9ee5723f")
     ), 296352)
 
-    override val lastCheckpointBlock = readLastCheckpoint()
-
 }
