@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoincore.managers
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonObject
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
-import io.horizontalsystems.bitcoincore.core.getOrMappingError
 import java.util.logging.Logger
 
 class BCoinApi(private val host: String) : IInitialSyncApi {
@@ -26,19 +25,22 @@ class BCoinApi(private val host: String) : IInitialSyncApi {
         for (txItem in response) {
             val tx = txItem.asObject()
 
-            val blockHash = tx.getOrMappingError("block").asString()
+            val blockHashJson = tx["block"] ?: continue
+            val blockHash = if (blockHashJson.isString) blockHashJson.asString() else continue
 
             val outputs = mutableListOf<TransactionOutputItem>()
-            for (outputItem in tx.getOrMappingError("outputs").asArray()) {
+            for (outputItem in tx["outputs"].asArray()) {
                 val outputJson = outputItem.asObject()
 
-                val script = outputJson.getOrMappingError("script").asString()
-                val address = outputJson.getOrMappingError("address").asString()
+                val scriptJson = outputJson["script"] ?: continue
+                val addressJson = outputJson["address"] ?: continue
 
-                outputs.add(TransactionOutputItem(script, address))
+                if (scriptJson.isString && addressJson.isString) {
+                    outputs.add(TransactionOutputItem(scriptJson.asString(), addressJson.asString()))
+                }
             }
 
-            transactions.add(TransactionItem(blockHash, tx.getOrMappingError("height").asInt(), outputs))
+            transactions.add(TransactionItem(blockHash, tx["height"].asInt(), outputs))
         }
 
         return transactions

@@ -113,6 +113,3 @@ interface ITransactionInfoConverter {
 interface IInitialSyncApi {
     fun getTransactions(addresses: List<String>): List<TransactionItem>
 }
-
-open class ApiError(message: String) : Exception(message)
-class MappingError(name: String) : ApiError("MappingError: could not find element \"$name\"")
