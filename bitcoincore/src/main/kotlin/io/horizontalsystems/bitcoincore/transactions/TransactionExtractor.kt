@@ -173,7 +173,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
     }
 
     private fun isNullData(lockingScript: ByteArray): Boolean {
-        return lockingScript[0] == OP_RETURN.toByte()
+        return lockingScript.isNotEmpty() && lockingScript[0] == OP_RETURN.toByte()
     }
 
     //
