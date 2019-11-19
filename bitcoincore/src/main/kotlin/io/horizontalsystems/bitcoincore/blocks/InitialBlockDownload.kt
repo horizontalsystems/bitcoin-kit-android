@@ -23,7 +23,7 @@ class InitialBlockDownload(
     private val peerSwitchMinimumRatio = 1.5
 
     @Volatile
-    private var syncPeer: Peer? = null
+    var syncPeer: Peer? = null
     private var selectNewPeer = false
     private val peersQueue = Executors.newSingleThreadExecutor()
     private val logger = Logger.getLogger("IBD")

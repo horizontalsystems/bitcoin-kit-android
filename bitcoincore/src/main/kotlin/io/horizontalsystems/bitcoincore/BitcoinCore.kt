@@ -474,6 +474,7 @@ class BitcoinCore(
         val statusInfo = LinkedHashMap<String, Any>()
 
         statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it) } ?: "N/A"
+        statusInfo["Syncing Peer"] = initialBlockDownload.syncPeer?.host ?: "N/A"
         statusInfo["Errors"] = errorStorage.errors
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
 
@@ -484,6 +485,18 @@ class BitcoinCore(
             peerStatus["Status"] = if (peer.synced) "Synced" else "Not Synced"
             peerStatus["Host"] = peer.host
             peerStatus["Best Block"] = peer.announcedLastBlockHeight
+
+            peer.tasks.let { peerTasks ->
+                if (peerTasks.isEmpty()) {
+                    peerStatus["tasks"] = "no tasks"
+                } else {
+                    val tasks = LinkedHashMap<String, Any>()
+                    peerTasks.forEach { task ->
+                        tasks[task.javaClass.simpleName] = "[${task.state}]"
+                    }
+                    peerStatus["tasks"] = tasks
+                }
+            }
 
             peers["Peer ${index + 1}"] = peerStatus
         }

@@ -30,10 +30,10 @@ class Peer(
     var synced = false
     var connected = false
     var connectionTime: Long = 1000
-    private var connectStartTime: Long? = null
+    var tasks = mutableListOf<PeerTask>()
 
+    private var connectStartTime: Long? = null
     private val peerConnection = PeerConnection(host, network, this, executorService, networkMessageParser, networkMessageSerializer)
-    private var tasks = mutableListOf<PeerTask>()
     private val timer = PeerTimer()
 
     val ready: Boolean

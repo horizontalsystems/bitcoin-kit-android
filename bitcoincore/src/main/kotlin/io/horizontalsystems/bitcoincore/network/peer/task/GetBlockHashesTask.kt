@@ -24,6 +24,9 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expect
         allowedIdleTime = Math.max(minAllowedIdleTime, resolvedAllowedIdleTime.toLong())
     }
 
+    override val state: String
+        get() = "expectedHashesMinCount: $expectedHashesMinCount; allowedIdleTime: $allowedIdleTime"
+
     override fun start() {
         requester?.let { it.send(GetBlocksMessage(blockLocatorHashes, it.protocolVersion, ByteArray(32))) }
         resetTimer()

@@ -37,6 +37,9 @@ class GetMerkleBlocksTask(
     private var maxWarningCount = 10
     private var firstResponseReceived = false
 
+    override val state: String
+        get() = "minMerkleBlocksCount: ${minMerkleBlocks.roundToInt()}; minTransactionsCount: ${minTransactions.roundToInt()}; minTransactionsSize: ${minTransactions.roundToInt()}"
+
     override fun start() {
         val items = blockHashes.map { hash ->
             InventoryItem(InventoryItem.MSG_FILTERED_BLOCK, hash.headerHash)
