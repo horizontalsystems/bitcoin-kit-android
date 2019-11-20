@@ -47,6 +47,7 @@ class GetMerkleBlocksTask(
 
         requester?.send(GetDataMessage(items))
         resumeWaiting()
+        resetTimer()
     }
 
     override fun handleTimeout() {

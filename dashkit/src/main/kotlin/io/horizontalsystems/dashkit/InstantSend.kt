@@ -86,7 +86,7 @@ class InstantSend(
     }
 
     private fun handleTransactions(transactions: List<FullTransaction>) {
-        transactionSyncer.handleTransactions(transactions)
+        transactionSyncer.handleRelayed(transactions)
 
         for (transaction in transactions) {
             transactionLockVoteHandler.handle(transaction)

@@ -41,7 +41,7 @@ object TransactionSyncerTest : Spek({
     describe("handleTransactions") {
         context("when empty array is given") {
             it("doesn't do anything") {
-                syncer.handleTransactions(listOf())
+                syncer.handleRelayed(listOf())
 
                 verify(transactionProcessor, never()).processIncoming(any(), any(), any())
                 verify(publicKeyManager, never()).fillGap()
@@ -58,7 +58,7 @@ object TransactionSyncerTest : Spek({
                 }
 
                 it("fills addresses gap and regenerates bloom filter") {
-                    syncer.handleTransactions(transactions)
+                    syncer.handleRelayed(transactions)
 
                     verify(transactionProcessor).processIncoming(eq(transactions), eq(null), eq(true))
                     verify(publicKeyManager).fillGap()
@@ -67,7 +67,7 @@ object TransactionSyncerTest : Spek({
 
             context("when don't need to update bloom filter") {
                 it("doesn't run address fillGap and doesn't regenerate bloom filter") {
-                    syncer.handleTransactions(transactions)
+                    syncer.handleRelayed(transactions)
 
                     verify(transactionProcessor).processIncoming(eq(transactions), eq(null), eq(true))
                     verify(publicKeyManager, never()).fillGap()

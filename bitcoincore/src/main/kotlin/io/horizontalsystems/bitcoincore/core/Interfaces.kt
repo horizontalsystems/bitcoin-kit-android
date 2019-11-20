@@ -103,6 +103,7 @@ interface IStorage {
     fun getSentTransaction(hash: ByteArray): SentTransaction?
     fun addSentTransaction(transaction: SentTransaction)
     fun updateSentTransaction(transaction: SentTransaction)
+    fun deleteSentTransaction(transaction: SentTransaction)
 }
 
 interface ITransactionInfoConverter {

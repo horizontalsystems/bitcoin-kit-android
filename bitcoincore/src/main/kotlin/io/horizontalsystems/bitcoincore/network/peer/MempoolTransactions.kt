@@ -12,7 +12,7 @@ class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskH
     override fun handleCompletedTask(peer: Peer, task: PeerTask): Boolean {
         return when (task) {
             is RequestTransactionsTask -> {
-                transactionSyncer.handleTransactions(task.transactions)
+                transactionSyncer.handleRelayed(task.transactions)
                 removeFromRequestedTransactions(peer.host, task.transactions.map { it.header.hash })
                 true
             }

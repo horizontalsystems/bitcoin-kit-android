@@ -2,6 +2,7 @@ package io.horizontalsystems.dashkit.models
 
 import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.TransactionStatus
 
 class DashTransactionInfo(
         transactionHash: String,
@@ -12,5 +13,6 @@ class DashTransactionInfo(
         fee: Long?,
         blockHeight: Int?,
         timestamp: Long,
-        var instantTx: Boolean = false
-) : TransactionInfo(transactionHash, transactionIndex, from, to, amount, fee, blockHeight, timestamp)
+        var instantTx: Boolean = false,
+        status: TransactionStatus
+) : TransactionInfo(transactionHash, transactionIndex, from, to, amount, fee, blockHeight, timestamp, status)
