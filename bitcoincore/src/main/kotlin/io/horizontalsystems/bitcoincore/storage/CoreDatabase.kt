@@ -9,7 +9,7 @@ import android.arch.persistence.room.migration.Migration
 import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
 
-@Database(version = 7, exportSchema = false, entities = [
+@Database(version = 8, exportSchema = false, entities = [
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -39,12 +39,19 @@ abstract class CoreDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .allowMainThreadQueries()
                     .addMigrations(
+                            add_sendSuccess_to_SentTransaction,
                             update_transaction_output,
                             update_block_timestamp,
                             add_hasTransaction_to_Block,
                             add_connectionTime_to_PeerAddress
                     )
                     .build()
+        }
+
+        private val add_sendSuccess_to_SentTransaction = object : Migration(7, 8) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE SentTransaction ADD COLUMN sendSuccess INTEGER DEFAULT 0 NOT NULL")
+            }
         }
 
         private val update_transaction_output = object : Migration(6, 7) {

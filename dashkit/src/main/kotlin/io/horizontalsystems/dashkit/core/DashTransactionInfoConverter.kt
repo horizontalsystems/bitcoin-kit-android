@@ -20,7 +20,8 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
                 txInfo.fee,
                 txInfo.blockHeight,
                 txInfo.timestamp,
-                instantTransactionManager.isTransactionInstant(transactionForInfo.header.hash)
+                instantTransactionManager.isTransactionInstant(transactionForInfo.header.hash),
+                txInfo.status
         )
     }
 }

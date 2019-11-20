@@ -342,4 +342,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.sentTransaction.insert(transaction)
     }
 
+    override fun deleteSentTransaction(transaction: SentTransaction) {
+        store.sentTransaction.delete(transaction)
+    }
+
 }

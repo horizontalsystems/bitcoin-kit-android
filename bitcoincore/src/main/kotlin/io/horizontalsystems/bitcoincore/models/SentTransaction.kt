@@ -11,6 +11,7 @@ class SentTransaction() {
     var firstSendTime: Long = System.currentTimeMillis()
     var lastSendTime: Long = System.currentTimeMillis()
     var retriesCount: Int = 0
+    var sendSuccess: Boolean = false
 
     constructor(hash: ByteArray) : this() {
         this.hash = hash

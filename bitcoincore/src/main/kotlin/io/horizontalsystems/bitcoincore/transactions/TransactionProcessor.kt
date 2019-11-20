@@ -7,7 +7,6 @@ import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
-import io.horizontalsystems.bitcoincore.managers.IrregularOutputFinder
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -85,6 +84,15 @@ class TransactionProcessor(
         if (needToUpdateBloomFilter) {
             throw BloomFilterManager.BloomFilterExpired
         }
+    }
+
+    fun processInvalid(transactionHash: ByteArray) {
+        val transaction = storage.getTransaction(transactionHash) ?: return
+
+        transaction.status = Transaction.Status.INVALID
+        storage.updateTransaction(transaction)
+
+        dataListener.onTransactionsUpdate(updated = listOf(transaction), inserted = listOf(), block = null)
     }
 
     private fun process(transaction: FullTransaction) {

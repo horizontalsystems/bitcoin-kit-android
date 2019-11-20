@@ -173,7 +173,10 @@ class BitcoinCoreBuilder {
         peerHostManager.listener = peerGroup
 
         val transactionSyncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager)
-        val transactionSender = TransactionSender(transactionSyncer, peerGroup)
+        val transactionSendTimer = TransactionSendTimer(60)
+        val transactionSender = TransactionSender(transactionSyncer, peerGroup, storage, transactionSendTimer).apply {
+            transactionSendTimer.listener = this
+        }
 
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()

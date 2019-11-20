@@ -20,6 +20,7 @@ class RequestTransactionsTask(hashes: List<ByteArray>) : PeerTask() {
         }
 
         requester?.send(GetDataMessage(items))
+        resetTimer()
     }
 
     override fun handleMessage(message: IMessage): Boolean {

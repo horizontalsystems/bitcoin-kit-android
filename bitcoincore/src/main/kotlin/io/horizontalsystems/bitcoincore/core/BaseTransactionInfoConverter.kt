@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.core
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.TransactionStatus
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 
 class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
@@ -63,7 +64,8 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
                 amount = amount,
                 fee = fee,
                 blockHeight = fullTransaction.block?.height,
-                timestamp = transaction.timestamp
+                timestamp = transaction.timestamp,
+                status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW
         )
     }
 
