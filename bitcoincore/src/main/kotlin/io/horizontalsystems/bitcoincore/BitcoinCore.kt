@@ -276,7 +276,7 @@ class BitcoinCoreBuilder {
 
         bitcoinCore.addPeerSyncListener(SendTransactionsOnPeersSynced(transactionSender))
 
-        val mempoolTransactions = MempoolTransactions(transactionSyncer)
+        val mempoolTransactions = MempoolTransactions(transactionSyncer, transactionSender)
         bitcoinCore.addPeerTaskHandler(mempoolTransactions)
         bitcoinCore.addInventoryItemsHandler(mempoolTransactions)
         bitcoinCore.addPeerGroupListener(mempoolTransactions)
