@@ -43,6 +43,14 @@ class TransactionSender(
         peerGroup.checkPeersSynced()
     }
 
+    fun transactionsRelayed(transactions: List<FullTransaction>) {
+        transactions.forEach { transaction ->
+            storage.getSentTransaction(transaction.header.hash)?.let { sentTransaction ->
+                storage.deleteSentTransaction(sentTransaction)
+            }
+        }
+    }
+
     private fun getTransactionsToSend(transactions: List<FullTransaction>): List<FullTransaction> {
         return transactions.filter { transaction ->
             storage.getSentTransaction(transaction.header.hash)?.let { sentTransaction ->

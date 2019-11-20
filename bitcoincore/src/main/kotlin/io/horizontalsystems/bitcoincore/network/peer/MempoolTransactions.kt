@@ -3,9 +3,13 @@ package io.horizontalsystems.bitcoincore.network.peer
 import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.network.peer.task.RequestTransactionsTask
+import io.horizontalsystems.bitcoincore.transactions.TransactionSender
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
 
-class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskHandler, IInventoryItemsHandler, PeerGroup.Listener {
+class MempoolTransactions(
+        private val transactionSyncer: TransactionSyncer,
+        private val transactionSender: TransactionSender
+) : IPeerTaskHandler, IInventoryItemsHandler, PeerGroup.Listener {
 
     private val requestedTransactions = hashMapOf<String, MutableList<ByteArray>>()
 
@@ -14,6 +18,7 @@ class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskH
             is RequestTransactionsTask -> {
                 transactionSyncer.handleRelayed(task.transactions)
                 removeFromRequestedTransactions(peer.host, task.transactions.map { it.header.hash })
+                transactionSender.transactionsRelayed(task.transactions)
                 true
             }
             else -> false
