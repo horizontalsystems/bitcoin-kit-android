@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoincore.network.peer
 import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.network.peer.task.RequestTransactionsTask
-import io.horizontalsystems.bitcoincore.network.peer.task.SendTransactionTask
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
 
 class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskHandler, IInventoryItemsHandler, PeerGroup.Listener {
@@ -15,10 +14,6 @@ class MempoolTransactions(var transactionSyncer: TransactionSyncer) : IPeerTaskH
             is RequestTransactionsTask -> {
                 transactionSyncer.handleTransactions(task.transactions)
                 removeFromRequestedTransactions(peer.host, task.transactions.map { it.header.hash })
-                true
-            }
-            is SendTransactionTask -> {
-                transactionSyncer.handleTransaction(task.transaction)
                 true
             }
             else -> false

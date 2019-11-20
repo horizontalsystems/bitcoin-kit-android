@@ -1,18 +1,22 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
+import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
+import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.network.peer.task.SendTransactionTask
 
-class TransactionSender {
-    var transactionSyncer: TransactionSyncer? = null
-    var peerGroup: PeerGroup? = null
+class TransactionSender(
+        private val transactionSyncer: TransactionSyncer,
+        private val peerGroup: PeerGroup
+) : IPeerTaskHandler {
 
     fun sendPendingTransactions() {
         try {
-            peerGroup?.checkPeersSynced()
+            peerGroup.checkPeersSynced()
 
-            peerGroup?.someReadyPeers()?.forEach { peer ->
-                transactionSyncer?.getPendingTransactions()?.forEach { pendingTransaction ->
+            peerGroup.someReadyPeers().forEach { peer ->
+                transactionSyncer.getPendingTransactions().forEach { pendingTransaction ->
                     peer.addTask(SendTransactionTask(pendingTransaction))
                 }
             }
@@ -25,7 +29,19 @@ class TransactionSender {
     }
 
     fun canSendTransaction() {
-        peerGroup?.checkPeersSynced()
+        peerGroup.checkPeersSynced()
+    }
+
+    // IPeerTaskHandler
+
+    override fun handleCompletedTask(peer: Peer, task: PeerTask): Boolean {
+        return when (task) {
+            is SendTransactionTask -> {
+                transactionSyncer.handleTransaction(task.transaction)
+                true
+            }
+            else -> false
+        }
     }
 
 }
