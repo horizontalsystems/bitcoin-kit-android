@@ -118,6 +118,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                     }
 
                     line += "\n  * Address: ${hodlerData.addressString}"
+                    line += "\n  * Value: ${hodlerData.value}"
                 }
             }
 
