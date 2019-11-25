@@ -89,6 +89,9 @@ class HodlerPlugin(
         // Here we add 1 hour to show the time when this UTXO will be spendable
         hodlerData.approxUnlockTime = hodlerData.lockTimeInterval.valueInSeconds + txTimestamp + 3600
 
+        // Output value needed to show how much amount is locked
+        hodlerData.value = output.value
+
         return hodlerData
     }
 

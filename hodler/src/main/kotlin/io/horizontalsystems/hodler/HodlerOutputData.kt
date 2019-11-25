@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoincore.core.IPluginOutputData
 
 class HodlerOutputData(val lockTimeInterval: LockTimeInterval, val addressString: String) : IPluginOutputData {
     var approxUnlockTime: Long? = null
+    var value: Long? = null
 
     fun serialize(): String {
         return listOf(lockTimeInterval.serialize(), addressString).joinToString("|")
