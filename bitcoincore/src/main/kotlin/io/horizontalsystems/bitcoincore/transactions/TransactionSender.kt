@@ -54,7 +54,7 @@ class TransactionSender(
     private fun getTransactionsToSend(transactions: List<FullTransaction>): List<FullTransaction> {
         return transactions.filter { transaction ->
             storage.getSentTransaction(transaction.header.hash)?.let { sentTransaction ->
-                sentTransaction.retriesCount < maxRetriesCount && sentTransaction.lastSendTime < System.currentTimeMillis() - retriesPeriod
+                sentTransaction.retriesCount < maxRetriesCount && sentTransaction.lastSendTime < (System.currentTimeMillis() - retriesPeriod * 1000)
             } ?: true
         }
     }
@@ -83,6 +83,7 @@ class TransactionSender(
         }
     }
 
+    @Synchronized
     private fun transactionSendSuccess(transaction: FullTransaction) {
         val sentTransaction = storage.getSentTransaction(transaction.header.hash)
 
@@ -94,7 +95,7 @@ class TransactionSender(
         sentTransaction.sendSuccess = true
 
         if (sentTransaction.retriesCount >= maxRetriesCount) {
-            transactionSyncer.handleInvalid(sentTransaction.hash)
+            transactionSyncer.handleInvalid(transaction)
             storage.deleteSentTransaction(sentTransaction)
         } else {
             storage.updateSentTransaction(sentTransaction)

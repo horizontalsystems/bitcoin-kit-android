@@ -175,7 +175,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return transactions.map { tx ->
             FullTransactionInfo(
                     tx.block,
-                    tx.transaction,
+                    if (tx.transaction.status == Transaction.Status.INVALID) InvalidTransaction(tx.transaction, tx.transaction.serializedTxInfo) else tx.transaction,
                     inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
                     outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) }
             )
@@ -184,7 +184,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo> {
         var query = "SELECT transactions.*, Block.*" +
-                " FROM `Transaction` as transactions" +
+                " FROM (SELECT * FROM `Transaction` UNION SELECT * FROM InvalidTransaction) as transactions" +
                 " LEFT JOIN Block ON transactions.blockHash = Block.headerHash"
 
         if (fromTransaction != null) {
@@ -260,6 +260,30 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun isTransactionExists(hash: ByteArray): Boolean {
         return store.transaction.getByHash(hash) != null
+    }
+
+    override fun deleteTransaction(transaction: FullTransaction) {
+        store.runInTransaction {
+            store.transaction.delete(transaction.header)
+
+            transaction.inputs.forEach {
+                store.input.delete(it)
+            }
+
+            transaction.outputs.forEach {
+                store.output.delete(it)
+            }
+        }
+    }
+
+    // InvalidTransaction
+
+    override fun addInvalidTransaction(transaction: InvalidTransaction) {
+        store.invalidTransaction.insert(transaction)
+    }
+
+    override fun deleteAllInvalidTransactions() {
+        store.invalidTransaction.deleteAll()
     }
 
     // TransactionOutput

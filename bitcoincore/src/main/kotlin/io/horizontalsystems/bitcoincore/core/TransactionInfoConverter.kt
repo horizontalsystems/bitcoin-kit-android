@@ -6,7 +6,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 class TransactionInfoConverter : ITransactionInfoConverter {
     override lateinit var baseConverter: BaseTransactionInfoConverter
 
-    override fun transactionInfo(transactionForInfo: FullTransactionInfo): TransactionInfo {
-        return baseConverter.transactionInfo(transactionForInfo)
+    override fun transactionInfo(fullTransactionInfo: FullTransactionInfo): TransactionInfo {
+        return baseConverter.transactionInfo(fullTransactionInfo)
     }
 }

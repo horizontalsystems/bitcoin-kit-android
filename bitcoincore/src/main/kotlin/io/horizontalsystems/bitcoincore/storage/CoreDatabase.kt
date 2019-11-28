@@ -18,7 +18,8 @@ import io.horizontalsystems.bitcoincore.models.*
     Transaction::class,
     TransactionInput::class,
     TransactionOutput::class,
-    PublicKey::class
+    PublicKey::class,
+    InvalidTransaction::class
 ])
 @TypeConverters(ScriptTypeConverter::class)
 abstract class CoreDatabase : RoomDatabase() {
@@ -32,6 +33,7 @@ abstract class CoreDatabase : RoomDatabase() {
     abstract val input: TransactionInputDao
     abstract val output: TransactionOutputDao
     abstract val publicKey: PublicKeyDao
+    abstract val invalidTransaction: InvalidTransactionDao
 
     companion object {
 
