@@ -3,12 +3,14 @@ package io.horizontalsystems.bitcoincore.transactions
 import io.horizontalsystems.bitcoincore.WatchedTransactionManager
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.core.ITransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.models.InvalidTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
@@ -18,7 +20,8 @@ class TransactionProcessor(
         private val outputsCache: OutputsCache,
         private val publicKeyManager: PublicKeyManager,
         private val irregularOutputFinder: IIrregularOutputFinder,
-        private val dataListener: IBlockchainDataListener) {
+        private val dataListener: IBlockchainDataListener,
+        private val txInfoConverter: ITransactionInfoConverter) {
 
     var listener: WatchedTransactionManager? = null
 
@@ -86,11 +89,16 @@ class TransactionProcessor(
         }
     }
 
-    fun processInvalid(transactionHash: ByteArray) {
-        val transaction = storage.getTransaction(transactionHash) ?: return
+    fun processInvalid(fullTransaction: FullTransaction) {
+        val fullTxInfo = storage.getFullTransactionInfo(fullTransaction.header.hash) ?: return
+        fullTxInfo.header.status = Transaction.Status.INVALID
+        val txInfo = txInfoConverter.transactionInfo(fullTxInfo)
+        val serializedTxInfo = txInfo.serialize()
+        val transaction = InvalidTransaction(fullTransaction.header, serializedTxInfo)
 
-        transaction.status = Transaction.Status.INVALID
-        storage.updateTransaction(transaction)
+        storage.addInvalidTransaction(transaction)
+
+        storage.deleteTransaction(fullTransaction)
 
         dataListener.onTransactionsUpdate(updated = listOf(transaction), inserted = listOf(), block = null)
     }

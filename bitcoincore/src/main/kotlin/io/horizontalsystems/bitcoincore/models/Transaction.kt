@@ -27,7 +27,7 @@ import java.util.*
                 deferred = true)
         ])
 
-class Transaction {
+open class Transaction {
 
     var hash: ByteArray = byteArrayOf()
     var blockHash: ByteArray? = null
@@ -40,6 +40,7 @@ class Transaction {
     var isOutgoing = false
     var segwit = false
     var status: Int = Status.RELAYED
+    var serializedTxInfo: String = ""
 
     constructor()
     constructor(version: Int = 0, lockTime: Long = 0) : this() {

@@ -73,6 +73,13 @@ interface IStorage {
     fun isRelayedTransactionExists(hash: ByteArray): Boolean
     fun isTransactionExists(hash: ByteArray): Boolean
 
+    fun deleteTransaction(transaction: FullTransaction)
+
+    // InvalidTransaction
+
+    fun addInvalidTransaction(transaction: InvalidTransaction)
+    fun deleteAllInvalidTransactions()
+
     //  Transaction Output
 
     fun getUnspentOutputs(): List<UnspentOutput>
@@ -109,7 +116,7 @@ interface IStorage {
 interface ITransactionInfoConverter {
     var baseConverter: BaseTransactionInfoConverter
 
-    fun transactionInfo(transactionForInfo: FullTransactionInfo): TransactionInfo
+    fun transactionInfo(fullTransactionInfo: FullTransactionInfo): TransactionInfo
 }
 
 interface IInitialSyncApi {

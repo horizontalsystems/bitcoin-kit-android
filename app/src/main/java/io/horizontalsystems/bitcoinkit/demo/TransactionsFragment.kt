@@ -82,6 +82,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
         } ?: ""
 
         var text = "#$index"
+        text += "\nStatus: ${transactionInfo.status.name}"
         if (transactionInfo is DashTransactionInfo) {
             text += "\nInstant: ${transactionInfo.instantTx.toString().toUpperCase()}"
         }
@@ -109,8 +110,9 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
 
             if (it.mine) line += " (mine)"
 
-            it.pluginData?.let { pluginData ->
-                (pluginData[HodlerPlugin.id] as? HodlerOutputData)?.let { hodlerData ->
+            if (it.pluginId == HodlerPlugin.id && it.pluginData != null) {
+
+                (it.pluginData as? HodlerOutputData)?.let { hodlerData ->
                     val lockTimeInterval = hodlerData.lockTimeInterval
 
                     hodlerData.approxUnlockTime?.let { lockedUntilApprox ->
@@ -118,7 +120,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                     }
 
                     line += "\n  * Address: ${hodlerData.addressString}"
-                    line += "\n  * Value: ${hodlerData.value}"
+                    line += "\n  * Value: ${hodlerData.lockedValue}"
                 }
             }
 

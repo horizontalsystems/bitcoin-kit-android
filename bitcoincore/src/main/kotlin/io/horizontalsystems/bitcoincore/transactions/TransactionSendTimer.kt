@@ -4,7 +4,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
-class TransactionSendTimer(private val period: Int) {
+class TransactionSendTimer(private val period: Long) {
 
     interface Listener {
         fun onTimePassed()
@@ -14,12 +14,11 @@ class TransactionSendTimer(private val period: Int) {
 
     private var executor = Executors.newSingleThreadScheduledExecutor()
     private var task: ScheduledFuture<*>? = null
-    private val delay = 0L
 
     @Synchronized
     fun startIfNotRunning() {
         if (task == null) {
-            task = executor.scheduleAtFixedRate({ listener?.onTimePassed() }, delay, period.toLong(), TimeUnit.SECONDS)
+            task = executor.scheduleAtFixedRate({ listener?.onTimePassed() }, period, period, TimeUnit.SECONDS)
         }
     }
 

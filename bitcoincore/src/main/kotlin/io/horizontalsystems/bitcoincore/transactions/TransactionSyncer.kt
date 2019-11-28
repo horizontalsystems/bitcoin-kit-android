@@ -34,8 +34,8 @@ class TransactionSyncer(
         return !storage.isRelayedTransactionExists(hash)
     }
 
-    fun handleInvalid(transactionHash: ByteArray) {
-        transactionProcessor.processInvalid(transactionHash)
+    fun handleInvalid(fullTransaction: FullTransaction) {
+        transactionProcessor.processInvalid(fullTransaction)
     }
 
 }

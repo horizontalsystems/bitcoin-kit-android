@@ -62,7 +62,7 @@ class HodlerPlugin(
             val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).string
 
             output.pluginId = id
-            output.pluginData = HodlerOutputData(lockTimeInterval, addressString).serialize()
+            output.pluginData = HodlerOutputData(lockTimeInterval, addressString, output.value).serialize()
 
             storage.getPublicKeyByKeyOrKeyHash(pubkeyHash)?.let { pubkey ->
                 output.redeemScript = redeemScript
@@ -88,9 +88,6 @@ class HodlerPlugin(
         // The median time is 6 blocks earlier which is approximately equal to 1 hour.
         // Here we add 1 hour to show the time when this UTXO will be spendable
         hodlerData.approxUnlockTime = hodlerData.lockTimeInterval.valueInSeconds + txTimestamp + 3600
-
-        // Output value needed to show how much amount is locked
-        hodlerData.value = output.value
 
         return hodlerData
     }
