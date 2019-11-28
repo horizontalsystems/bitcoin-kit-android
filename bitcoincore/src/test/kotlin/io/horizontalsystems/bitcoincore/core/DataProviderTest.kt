@@ -22,38 +22,39 @@ object DataProviderTest : Spek({
 
     describe("with `fromHash`") {
         val fromHash = "1234"
+        val fromTimestamp = 1234567L
         val limit = 1
 
         it("gets transaction with given hash") {
-            dataProvider.transactions(fromHash).test().assertOf {
-                verify(storage).getTransaction(fromHash.toReversedByteArray())
+            dataProvider.transactions(fromHash, fromTimestamp).test().assertOf {
+                verify(storage).getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)
             }
         }
 
-        context("when transactions exist with given hash") {
+        context("when transactions exist with given hash and timestamp") {
             val fromTransaction = mock<Transaction>()
 
             beforeEach {
-                whenever(storage.getTransaction(fromHash.toReversedByteArray())).thenReturn(fromTransaction)
+                whenever(storage.getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)).thenReturn(fromTransaction)
             }
 
             it("starts loading transactions from that transaction") {
-                dataProvider.transactions(fromHash, limit).test().assertOf {
-                    verify(storage).getTransaction(fromHash.toReversedByteArray())
+                dataProvider.transactions(fromHash, fromTimestamp, limit).test().assertOf {
+                    verify(storage).getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)
 
                     verify(storage).getFullTransactionInfo(fromTransaction, limit)
                 }
             }
         }
 
-        context("when transactions does not exist with given hash") {
+        context("when transactions does not exist with given hash and timestamp") {
             beforeEach {
-                whenever(storage.getTransaction(fromHash.toReversedByteArray())).thenReturn(null)
+                whenever(storage.getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)).thenReturn(null)
             }
 
-            it("do not fetch transactions with `fromHash`") {
-                dataProvider.transactions(fromHash, limit).test().assertOf {
-                    verify(storage).getTransaction(fromHash.toReversedByteArray())
+            it("do not fetch transactions with `fromHash` and `fromTimestamp`") {
+                dataProvider.transactions(fromHash, fromTimestamp, limit).test().assertOf {
+                    verify(storage).getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)
                     verify(storage, never()).getFullTransactionInfo(null, limit)
                 }
             }
