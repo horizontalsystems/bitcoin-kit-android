@@ -13,6 +13,7 @@ import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.InvalidTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 
 class TransactionProcessor(
         private val storage: IStorage,
@@ -89,18 +90,36 @@ class TransactionProcessor(
         }
     }
 
-    fun processInvalid(fullTransaction: FullTransaction) {
-        val fullTxInfo = storage.getFullTransactionInfo(fullTransaction.header.hash) ?: return
-        fullTxInfo.header.status = Transaction.Status.INVALID
-        val txInfo = txInfoConverter.transactionInfo(fullTxInfo)
-        val serializedTxInfo = txInfo.serialize()
-        val transaction = InvalidTransaction(fullTransaction.header, serializedTxInfo)
+    fun processInvalid(txHash: ByteArray) {
+        val invalidTransactionsFullInfo = getDescendantTransactionsFullInfo(txHash)
 
-        storage.addInvalidTransaction(transaction)
+        if (invalidTransactionsFullInfo.isEmpty())
+            return
 
-        storage.deleteTransaction(fullTransaction)
+        val invalidTransactions = invalidTransactionsFullInfo.map { fullTxInfo ->
+            fullTxInfo.header.status = Transaction.Status.INVALID
+            val txInfo = txInfoConverter.transactionInfo(fullTxInfo)
+            val serializedTxInfo = txInfo.serialize()
+            InvalidTransaction(fullTxInfo.header, serializedTxInfo)
+        }
 
-        dataListener.onTransactionsUpdate(updated = listOf(transaction), inserted = listOf(), block = null)
+        storage.moveTransactionToInvalidTransactions(invalidTransactions)
+
+        dataListener.onTransactionsUpdate(updated = invalidTransactionsFullInfo.map { it.header }, inserted = listOf(), block = null)
+    }
+
+    private fun getDescendantTransactionsFullInfo(txHash: ByteArray): List<FullTransactionInfo> {
+        val fullTransactionInfo = storage.getFullTransactionInfo(txHash) ?: return listOf()
+        val list = mutableListOf(fullTransactionInfo)
+
+        val inputs = storage.getTransactionInputsByPrevOutputTxHash(fullTransactionInfo.header.hash)
+
+        inputs.forEach { input ->
+            val descendantTxs = getDescendantTransactionsFullInfo(input.transactionHash)
+            list.addAll(descendantTxs)
+        }
+
+        return list
     }
 
     private fun process(transaction: FullTransaction) {

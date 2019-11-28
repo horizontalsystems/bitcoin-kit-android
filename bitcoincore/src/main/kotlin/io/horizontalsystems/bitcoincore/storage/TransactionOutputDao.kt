@@ -17,6 +17,9 @@ interface TransactionOutputDao {
     @Delete
     fun deleteAll(outputs: List<TransactionOutput>)
 
+    @Query("DELETE FROM TransactionOutput WHERE transactionHash = :txHash")
+    fun deleteByTxHash(txHash: ByteArray)
+
     @Query("""
         SELECT TransactionOutput.*, PublicKey.*, `Transaction`.*, Block.*
         FROM TransactionOutput
