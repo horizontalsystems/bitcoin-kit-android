@@ -96,8 +96,9 @@ class TransactionProcessor(
         if (invalidTransactionsFullInfo.isEmpty())
             return
 
+        invalidTransactionsFullInfo.forEach { it.header.status = Transaction.Status.INVALID }
+
         val invalidTransactions = invalidTransactionsFullInfo.map { fullTxInfo ->
-            fullTxInfo.header.status = Transaction.Status.INVALID
             val txInfo = txInfoConverter.transactionInfo(fullTxInfo)
             val serializedTxInfo = txInfo.serialize()
             InvalidTransaction(fullTxInfo.header, serializedTxInfo)
