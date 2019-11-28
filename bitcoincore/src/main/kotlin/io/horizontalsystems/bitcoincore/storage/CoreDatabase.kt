@@ -41,7 +41,7 @@ abstract class CoreDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .allowMainThreadQueries()
                     .addMigrations(
-                            add_sendSuccess_to_SentTransaction,
+                            add_table_InvalidTransaction,
                             update_transaction_output,
                             update_block_timestamp,
                             add_hasTransaction_to_Block,
@@ -50,9 +50,11 @@ abstract class CoreDatabase : RoomDatabase() {
                     .build()
         }
 
-        private val add_sendSuccess_to_SentTransaction = object : Migration(7, 8) {
+        private val add_table_InvalidTransaction = object : Migration(7, 8) {
             override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("CREATE TABLE IF NOT EXISTS `InvalidTransaction` (`hash` BLOB NOT NULL, `blockHash` BLOB, `version` INTEGER NOT NULL, `lockTime` INTEGER NOT NULL, `timestamp` INTEGER NOT NULL, `order` INTEGER NOT NULL, `isMine` INTEGER NOT NULL, `isOutgoing` INTEGER NOT NULL, `segwit` INTEGER NOT NULL, `status` INTEGER NOT NULL, `serializedTxInfo` TEXT NOT NULL, PRIMARY KEY(`hash`))")
                 database.execSQL("ALTER TABLE SentTransaction ADD COLUMN sendSuccess INTEGER DEFAULT 0 NOT NULL")
+                database.execSQL("ALTER TABLE `Transaction` ADD COLUMN serializedTxInfo TEXT DEFAULT '' NOT NULL")
             }
         }
 
