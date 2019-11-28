@@ -77,19 +77,18 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         balanceSubjectDisposable.dispose()
     }
 
-    fun transactions(fromHash: String? = null, limit: Int? = null): Single<List<TransactionInfo>> =
+    fun transactions(fromHash: String? = null, fromTimestamp: Long? = null, limit: Int? = null): Single<List<TransactionInfo>> =
             Single.create { emitter ->
                 var results = listOf<FullTransactionInfo>()
-                if (fromHash != null) {
-                    storage.getTransaction(fromHash.toReversedByteArray())?.let {
+                if (fromHash != null && fromTimestamp != null) {
+                    storage.getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)?.let {
                         results = storage.getFullTransactionInfo(it, limit)
                     }
-                }
-                else {
+                } else {
                     results = storage.getFullTransactionInfo(null, limit)
                 }
 
-                emitter.onSuccess(results.map { transactionInfoConverter.transactionInfo(it)})
+                emitter.onSuccess(results.map { transactionInfoConverter.transactionInfo(it) })
             }
 
     private fun blockInfo(block: Block) = BlockInfo(
