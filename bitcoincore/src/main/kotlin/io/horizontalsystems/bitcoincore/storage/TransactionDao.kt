@@ -36,6 +36,9 @@ interface TransactionDao {
     @Delete
     fun delete(transaction: Transaction)
 
+    @Query("DELETE FROM `Transaction` WHERE hash=:hash")
+    fun deleteByHash(hash: ByteArray)
+
     @Delete
     fun deleteAll(transactions: List<Transaction>)
 

@@ -262,24 +262,20 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getByHash(hash) != null
     }
 
-    override fun deleteTransaction(transaction: FullTransaction) {
-        store.runInTransaction {
-            store.transaction.delete(transaction.header)
-
-            transaction.inputs.forEach {
-                store.input.delete(it)
-            }
-
-            transaction.outputs.forEach {
-                store.output.delete(it)
-            }
-        }
-    }
-
     // InvalidTransaction
 
-    override fun addInvalidTransaction(transaction: InvalidTransaction) {
-        store.invalidTransaction.insert(transaction)
+    override fun moveTransactionToInvalidTransactions(invalidTransactions: List<InvalidTransaction>) {
+        store.runInTransaction {
+            invalidTransactions.forEach { invalidTransaction ->
+                store.invalidTransaction.insert(invalidTransaction)
+
+                store.input.deleteByTxHash(invalidTransaction.hash)
+
+                store.output.deleteByTxHash(invalidTransaction.hash)
+
+                store.transaction.deleteByHash(invalidTransaction.hash)
+            }
+        }
     }
 
     override fun deleteAllInvalidTransactions() {
@@ -320,6 +316,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getTransactionInputs(txHash: ByteArray): List<TransactionInput> {
         return store.input.getTransactionInputs(txHash)
+    }
+
+    override fun getTransactionInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput> {
+        return store.input.getInputsByPrevOutputTxHash(txHash)
     }
 
     // PublicKey
