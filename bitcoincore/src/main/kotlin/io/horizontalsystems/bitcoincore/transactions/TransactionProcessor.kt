@@ -106,7 +106,7 @@ class TransactionProcessor(
 
         storage.moveTransactionToInvalidTransactions(invalidTransactions)
 
-        dataListener.onTransactionsUpdate(updated = invalidTransactionsFullInfo.map { it.header }, inserted = listOf(), block = null)
+        dataListener.onTransactionsUpdate(updated = invalidTransactions, inserted = listOf(), block = null)
     }
 
     private fun getDescendantTransactionsFullInfo(txHash: ByteArray): List<FullTransactionInfo> {

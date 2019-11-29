@@ -184,7 +184,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo> {
         var query = "SELECT transactions.*, Block.*" +
-                " FROM (SELECT * FROM `Transaction` UNION SELECT * FROM InvalidTransaction) as transactions" +
+                " FROM (SELECT * FROM `Transaction` UNION ALL SELECT * FROM InvalidTransaction) as transactions" +
                 " LEFT JOIN Block ON transactions.blockHash = Block.headerHash"
 
         if (fromTransaction != null) {
