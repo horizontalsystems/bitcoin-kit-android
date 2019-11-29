@@ -6,6 +6,7 @@ import com.eclipsesource.json.JsonObject
 import io.horizontalsystems.bitcoincore.core.IPluginOutputData
 
 open class TransactionInfo {
+    var uid: String = ""
     var transactionHash: String = ""
     var transactionIndex: Int = 0
     var from: List<TransactionAddress> = listOf()
@@ -16,7 +17,8 @@ open class TransactionInfo {
     var timestamp: Long = 0
     var status: TransactionStatus = TransactionStatus.NEW
 
-    constructor(transactionHash: String,
+    constructor(uid: String,
+                transactionHash: String,
                 transactionIndex: Int,
                 from: List<TransactionAddress>,
                 to: List<TransactionAddress>,
@@ -25,6 +27,7 @@ open class TransactionInfo {
                 blockHeight: Int?,
                 timestamp: Long,
                 status: TransactionStatus) {
+        this.uid = uid
         this.transactionHash = transactionHash
         this.transactionIndex = transactionIndex
         this.from = from
@@ -39,6 +42,7 @@ open class TransactionInfo {
     @Throws
     constructor(serialized: String) {
         val jsonObject = Json.parse(serialized).asObject()
+        uid = jsonObject.getString("uid", "")
         transactionHash = jsonObject.getString("transactionHash", "")
         transactionIndex = jsonObject.getInt("transactionIndex", 0)
         this.from = parseTransactionAddresses(jsonObject.get("from").asArray())
@@ -88,6 +92,7 @@ open class TransactionInfo {
     protected open fun asJsonObject(): JsonObject {
         val jsonObject = JsonObject()
 
+        jsonObject.add("uid", uid)
         jsonObject.add("transactionHash", transactionHash)
         jsonObject.add("transactionIndex", transactionIndex)
         jsonObject.add("from", transactionAddressesToJson(from))

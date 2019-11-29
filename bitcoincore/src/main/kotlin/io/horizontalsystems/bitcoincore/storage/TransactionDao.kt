@@ -18,8 +18,8 @@ interface TransactionDao {
     @Query("select * from `Transaction` where hash = :hash")
     fun getByHash(hash: ByteArray): Transaction?
 
-    @Query("select * from (SELECT * FROM `Transaction` UNION ALL SELECT * FROM InvalidTransaction) where hash = :hash and timestamp = :timestamp")
-    fun getValidOrInvalidByHashAndTimestamp(hash: ByteArray, timestamp: Long): Transaction?
+    @Query("select * from (SELECT * FROM `Transaction` UNION ALL SELECT * FROM InvalidTransaction) where uid = :uid")
+    fun getValidOrInvalidByUid(uid: String): Transaction?
 
     @Query("select * from `Transaction` where blockHash = :blockHash")
     fun getBlockTransactions(blockHash: ByteArray): List<Transaction>

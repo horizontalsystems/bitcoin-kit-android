@@ -218,8 +218,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getByHash(hash)
     }
 
-    override fun getValidOrInvalidTransaction(hash: ByteArray, timestamp: Long): Transaction? {
-        return store.transaction.getValidOrInvalidByHashAndTimestamp(hash, timestamp)
+    override fun getValidOrInvalidTransaction(uid: String): Transaction? {
+        return store.transaction.getValidOrInvalidByUid(uid)
     }
 
     override fun getTransactionOfOutput(output: TransactionOutput): Transaction? {

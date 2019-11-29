@@ -10,7 +10,8 @@ class DashTransactionInfo : TransactionInfo {
 
     var instantTx: Boolean = false
 
-    constructor(transactionHash: String,
+    constructor(uid: String,
+                transactionHash: String,
                 transactionIndex: Int,
                 from: List<TransactionAddress>,
                 to: List<TransactionAddress>,
@@ -20,7 +21,7 @@ class DashTransactionInfo : TransactionInfo {
                 timestamp: Long,
                 status: TransactionStatus,
                 instantTx: Boolean
-    ) : super(transactionHash, transactionIndex, from, to, amount, fee, blockHeight, timestamp, status) {
+    ) : super(uid, transactionHash, transactionIndex, from, to, amount, fee, blockHeight, timestamp, status) {
         this.instantTx = instantTx
     }
 

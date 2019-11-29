@@ -25,6 +25,7 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
         val txInfo = baseConverter.transactionInfo(fullTransactionInfo)
 
         return DashTransactionInfo(
+                txInfo.uid,
                 txInfo.transactionHash,
                 txInfo.transactionIndex,
                 txInfo.from,
@@ -43,6 +44,7 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
             DashTransactionInfo(transaction.serializedTxInfo)
         } catch (ex: Exception) {
             DashTransactionInfo(
+                    uid = transaction.uid,
                     transactionHash = transaction.hash.toHexString(),
                     transactionIndex = transaction.order,
                     timestamp = transaction.timestamp,

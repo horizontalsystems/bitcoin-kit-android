@@ -399,8 +399,8 @@ class BitcoinCore(
         start()
     }
 
-    fun transactions(fromHash: String? = null, fromTimestamp: Long? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return dataProvider.transactions(fromHash, fromTimestamp, limit)
+    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return dataProvider.transactions(fromUid, limit)
     }
 
     fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
