@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
-import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.*
@@ -77,11 +76,11 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         balanceSubjectDisposable.dispose()
     }
 
-    fun transactions(fromHash: String? = null, fromTimestamp: Long? = null, limit: Int? = null): Single<List<TransactionInfo>> =
+    fun transactions(fromUid: String?, limit: Int? = null): Single<List<TransactionInfo>> =
             Single.create { emitter ->
                 var results = listOf<FullTransactionInfo>()
-                if (fromHash != null && fromTimestamp != null) {
-                    storage.getValidOrInvalidTransaction(fromHash.toReversedByteArray(), fromTimestamp)?.let {
+                if (fromUid != null) {
+                    storage.getValidOrInvalidTransaction(fromUid)?.let {
                         results = storage.getFullTransactionInfo(it, limit)
                     }
                 } else {

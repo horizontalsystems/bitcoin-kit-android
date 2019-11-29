@@ -61,6 +61,7 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
         }
 
         return TransactionInfo(
+                uid = transaction.uid,
                 transactionHash = transaction.hash.toReversedHex(),
                 transactionIndex = transaction.order,
                 from = fromAddresses,
@@ -78,6 +79,7 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             TransactionInfo(transaction.serializedTxInfo)
         } catch (ex: Exception) {
             TransactionInfo(
+                    uid = transaction.uid,
                     transactionHash = transaction.hash.toReversedHex(),
                     transactionIndex = transaction.order,
                     timestamp = transaction.timestamp,

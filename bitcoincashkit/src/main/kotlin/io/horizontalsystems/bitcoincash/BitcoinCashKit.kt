@@ -110,8 +110,8 @@ class BitcoinCashKit : AbstractKit {
         bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
     }
 
-    fun transactions(fromHash: String? = null, fromTimestamp: Long? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return bitcoinCore.transactions(fromHash, fromTimestamp, limit)
+    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return bitcoinCore.transactions(fromUid, limit)
     }
 
     companion object {

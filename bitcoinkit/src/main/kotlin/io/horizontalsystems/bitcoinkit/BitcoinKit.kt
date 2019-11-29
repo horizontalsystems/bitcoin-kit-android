@@ -127,8 +127,8 @@ class BitcoinKit : AbstractKit {
         }
     }
 
-    fun transactions(fromHash: String? = null, fromTimestamp: Long? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return bitcoinCore.transactions(fromHash, fromTimestamp, limit)
+    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return bitcoinCore.transactions(fromUid, limit)
     }
 
     companion object {

@@ -29,6 +29,8 @@ import java.util.*
 
 open class Transaction {
 
+    var uid: String = UUID.randomUUID().toString()
+
     var hash: ByteArray = byteArrayOf()
     var blockHash: ByteArray? = null
 

@@ -8,6 +8,7 @@ class InvalidTransaction : Transaction {
     constructor()
 
     constructor(transaction: Transaction, serializedTxInfo: String) {
+        uid = transaction.uid
         hash = transaction.hash
         blockHash = transaction.blockHash
         version = transaction.version
