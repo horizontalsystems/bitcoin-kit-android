@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincash.blocks.validators.EDAValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.ForkValidator
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
@@ -46,7 +47,7 @@ class BitcoinCashKit : AbstractKit {
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
-            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
     ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
@@ -56,10 +57,10 @@ class BitcoinCashKit : AbstractKit {
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
-            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
     ) {
-        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId))
+        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val storage = Storage(database)
         val initialSyncUrl: String
 
@@ -122,10 +123,10 @@ class BitcoinCashKit : AbstractKit {
         var heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
 
-        private fun getDatabaseName(networkType: NetworkType, walletId: String): String = "BitcoinCash-${networkType.name}-$walletId"
+        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode): String = "BitcoinCash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
-        fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId)))
+        fun clear(context: Context, networkType: NetworkType, walletId: String, syncMode: SyncMode) {
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
         }
     }
 
