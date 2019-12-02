@@ -47,6 +47,7 @@ abstract class CoreDatabase : RoomDatabase() {
                             add_hasTransaction_to_Block,
                             add_connectionTime_to_PeerAddress
                     )
+                    .fallbackToDestructiveMigration()
                     .build()
         }
 

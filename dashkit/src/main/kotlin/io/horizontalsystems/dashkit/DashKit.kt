@@ -4,6 +4,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
@@ -70,7 +71,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
-            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
     ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
@@ -80,11 +81,11 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
             peerSize: Int = 10,
-            syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api(),
+            syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
     ) {
-        val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId))
-        val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId))
+        val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId, syncMode))
+        val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val initialSyncUrl: String
 
         val coreStorage = Storage(coreDatabase)
@@ -231,15 +232,15 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         const val targetTimespan = 3600L          // 1 hour for 24 blocks
         const val heightInterval = targetTimespan / targetSpacing
 
-        private fun getDatabaseNameCore(networkType: NetworkType, walletId: String) =
-                "${getDatabaseName(networkType, walletId)}-core"
+        private fun getDatabaseNameCore(networkType: NetworkType, walletId: String, syncMode: SyncMode) =
+                "${getDatabaseName(networkType, walletId, syncMode)}-core"
 
-        private fun getDatabaseName(networkType: NetworkType, walletId: String) =
-                "Dash-${networkType.name}-$walletId"
+        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode) =
+                "Dash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
-        fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseNameCore(networkType, walletId)))
-            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId)))
+        fun clear(context: Context, networkType: NetworkType, walletId: String, syncMode: SyncMode) {
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseNameCore(networkType, walletId, syncMode)))
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
         }
     }
 }

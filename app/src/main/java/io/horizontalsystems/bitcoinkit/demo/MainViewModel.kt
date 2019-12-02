@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.ViewModel
+import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IPluginData
@@ -39,6 +40,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     private val walletId = "MyWallet"
     private val networkType = BitcoinKit.NetworkType.MainNet
+    private val syncMode = BitcoinCore.SyncMode.Api()
+    private val bip = Bip.BIP44
 
     init {
         init()
@@ -47,7 +50,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private fun init() {
          val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
 
-        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, bip = Bip.BIP44)
+        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, syncMode = syncMode, bip = bip)
 
         bitcoinKit.listener = this
 
@@ -75,7 +78,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun clear() {
         bitcoinKit.stop()
-        BitcoinKit.clear(App.instance, networkType, walletId)
+        BitcoinKit.clear(App.instance, networkType, walletId, syncMode, bip)
 
         init()
     }
