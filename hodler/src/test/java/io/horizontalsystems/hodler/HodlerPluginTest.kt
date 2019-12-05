@@ -137,7 +137,7 @@ class HodlerPluginTest {
         verify(recipientOutput).pluginData = "7|originalAddress"
         verify(storage).getPublicKeyByKeyOrKeyHash(pubkeyHash)
         verify(recipientOutput).redeemScript = redeemScript
-        verify(recipientOutput).publicKeyPath = "publicKey.path"
+        verify(recipientOutput).setPublicKey(publicKey)
         verify(transaction).isMine = true
     }
 

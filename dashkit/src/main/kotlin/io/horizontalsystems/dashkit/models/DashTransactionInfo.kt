@@ -2,8 +2,9 @@ package io.horizontalsystems.dashkit.models
 
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonObject
-import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.TransactionInputInfo
+import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
 import io.horizontalsystems.bitcoincore.models.TransactionStatus
 
 class DashTransactionInfo : TransactionInfo {
@@ -13,15 +14,14 @@ class DashTransactionInfo : TransactionInfo {
     constructor(uid: String,
                 transactionHash: String,
                 transactionIndex: Int,
-                from: List<TransactionAddress>,
-                to: List<TransactionAddress>,
-                amount: Long,
+                inputs: List<TransactionInputInfo>,
+                outputs: List<TransactionOutputInfo>,
                 fee: Long?,
                 blockHeight: Int?,
                 timestamp: Long,
                 status: TransactionStatus,
                 instantTx: Boolean
-    ) : super(uid, transactionHash, transactionIndex, from, to, amount, fee, blockHeight, timestamp, status) {
+    ) : super(uid, transactionHash, transactionIndex, inputs, outputs, fee, blockHeight, timestamp, status) {
         this.instantTx = instantTx
     }
 

@@ -62,11 +62,11 @@ class HodlerPlugin(
             val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).string
 
             output.pluginId = id
-            output.pluginData = HodlerOutputData(lockTimeInterval, addressString, output.value).serialize()
+            output.pluginData = HodlerOutputData(lockTimeInterval, addressString).serialize()
 
             storage.getPublicKeyByKeyOrKeyHash(pubkeyHash)?.let { pubkey ->
                 output.redeemScript = redeemScript
-                output.publicKeyPath = pubkey.path
+                output.setPublicKey(pubkey)
                 transaction.header.isMine = true
             }
         }

@@ -12,8 +12,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import io.horizontalsystems.bitcoincore.models.TransactionAddress
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.TransactionInputInfo
+import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.hodler.HodlerOutputData
 import io.horizontalsystems.hodler.HodlerPlugin
@@ -76,10 +77,11 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
     fun bind(transactionInfo: TransactionInfo, index: Int) {
         containerView.setBackgroundColor(if (index % 2 == 0) Color.parseColor("#dddddd") else Color.TRANSPARENT)
 
-        val amount = NumberFormatHelper.cryptoAmountFormat.format(transactionInfo.amount / 100_000_000.0)
+        val txAmount = calculateAmount(transactionInfo)
+        val amount = NumberFormatHelper.cryptoAmountFormat.format(txAmount / 100_000_000.0)
         val fee = transactionInfo.fee?.let {
             NumberFormatHelper.cryptoAmountFormat.format(it / 100_000_000.0)
-        } ?: ""
+        } ?: "n/a"
 
         var text = "#$index"
         text += "\nStatus: ${transactionInfo.status.name}"
@@ -87,8 +89,8 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
             text += "\nInstant: ${transactionInfo.instantTx.toString().toUpperCase()}"
         }
 
-        text += "\nFrom: ${mapAddresses(transactionInfo.from)}" +
-                "\nTo: ${mapAddresses(transactionInfo.to)}" +
+        text += "\nInputs: ${mapInputs(transactionInfo.inputs)}" +
+                "\nOutputs: ${mapOutputs(transactionInfo.outputs)}" +
                 "\nAmount: $amount" +
                 "\nFee: $fee" +
                 "\nTx hash: ${transactionInfo.transactionHash}" +
@@ -104,27 +106,56 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
         }
     }
 
-    private fun mapAddresses(list: List<TransactionAddress>): String {
-        return list.joinToString("") {
-            var line = "\n- ${it.address}"
+    private fun calculateAmount(transactionInfo: TransactionInfo): Long {
+        var myInputsTotalValue = 0L
 
-            if (it.mine) line += " (mine)"
+        transactionInfo.inputs.forEach { input ->
+            if (input.mine) {
+                myInputsTotalValue += input.value ?: 0
+            }
+        }
+
+        var myOutputsTotalValue = 0L
+
+        transactionInfo.outputs.forEach {
+            myOutputsTotalValue += if (it.mine && it.address != null) it.value else 0
+        }
+
+        return myOutputsTotalValue - myInputsTotalValue + (transactionInfo.fee ?: 0)
+    }
+
+    private fun mapOutputs(list: List<TransactionOutputInfo>): String {
+        return list.joinToString("") {
+            val sb = StringBuilder()
+            sb.append("\n- address: ${it.address}")
+            sb.append("\n  value: ${it.value}")
+            sb.append("\n  mine: ${it.mine}")
+            sb.append("\n  change: ${it.changeOutput}")
 
             if (it.pluginId == HodlerPlugin.id && it.pluginData != null) {
-
                 (it.pluginData as? HodlerOutputData)?.let { hodlerData ->
                     val lockTimeInterval = hodlerData.lockTimeInterval
 
                     hodlerData.approxUnlockTime?.let { lockedUntilApprox ->
-                        line += "\n  * Locked: ${lockTimeInterval.name}, approx until ${formatDate(lockedUntilApprox)}"
+                        sb.append("\n  * Locked: ${lockTimeInterval.name}, approx until ${formatDate(lockedUntilApprox)}")
                     }
 
-                    line += "\n  * Address: ${hodlerData.addressString}"
-                    line += "\n  * Value: ${hodlerData.lockedValue}"
+                    sb.append("\n  * Address: ${hodlerData.addressString}")
+                    sb.append("\n  * Value: ${it.value}")
                 }
             }
+            sb.toString()
+        }
+    }
 
-            line
+    private fun mapInputs(list: List<TransactionInputInfo>): String {
+        return list.joinToString("") {
+            val sb = StringBuilder()
+            sb.append("\n- address: ${it.address}")
+            sb.append("\n  value: ${it.value}")
+            sb.append("\n  mine: ${it.mine}")
+
+            sb.toString()
         }
     }
 

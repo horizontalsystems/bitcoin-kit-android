@@ -15,63 +15,56 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             }
         }
 
-        var totalMineInput = 0L
-        var totalMineOutput = 0L
-        val fromAddresses = mutableListOf<TransactionAddress>()
-        val toAddresses = mutableListOf<TransactionAddress>()
-
-        var hasOnlyMyInputs = true
+        val inputsInfo = mutableListOf<TransactionInputInfo>()
+        val outputsInfo = mutableListOf<TransactionOutputInfo>()
+        var inputsTotalValue = 0L
+        var outputsTotalValue = 0L
+        var allInputsHaveValue = true
 
         fullTransaction.inputs.forEach { input ->
             var mine = false
+            var value: Long? = null
 
-            if (input.previousOutput?.publicKeyPath != null) {
-                totalMineInput += input.previousOutput.value
-                mine = true
+            if (input.previousOutput != null) {
+                value = input.previousOutput.value
+                if (input.previousOutput.publicKeyPath != null) {
+                    mine = true
+                }
             } else {
-                hasOnlyMyInputs = false
+                allInputsHaveValue = false
             }
 
-            input.input.address?.let { address ->
-                fromAddresses.add(TransactionAddress(address, mine, null))
-            }
+            inputsTotalValue += value ?: 0
+
+            inputsInfo.add(TransactionInputInfo(mine, value, input.input.address))
         }
 
         fullTransaction.outputs.forEach { output ->
-            var mine = false
+            outputsTotalValue += output.value
 
-            if (output.publicKeyPath != null) {
-                totalMineOutput += output.value
-                mine = true
-            }
+            val outputInfo = TransactionOutputInfo(mine = output.publicKeyPath != null,
+                    changeOutput = output.changeOutput,
+                    value = output.value,
+                    address = output.address,
+                    pluginId = output.pluginId,
+                    pluginDataString = output.pluginData,
+                    pluginData = pluginManager.parsePluginData(output, transaction.timestamp))
 
-            output.address?.let { address ->
-                toAddresses.add(TransactionAddress(address, mine, output.pluginId, pluginManager.parsePluginData(output, transaction.timestamp), output.pluginData))
-            }
+            outputsInfo.add(outputInfo)
         }
 
-        var fee: Long? = null
-        var amount = totalMineOutput - totalMineInput
-
-        if (hasOnlyMyInputs) {
-            val outputsSum = fullTransaction.outputs.sumByDouble { it.value.toDouble() }.toLong()
-
-            fee = totalMineInput - outputsSum
-            amount += fee
-        }
+        val fee = if (allInputsHaveValue) inputsTotalValue - outputsTotalValue else null
 
         return TransactionInfo(
                 uid = transaction.uid,
                 transactionHash = transaction.hash.toReversedHex(),
                 transactionIndex = transaction.order,
-                from = fromAddresses,
-                to = toAddresses,
-                amount = amount,
+                inputs = inputsInfo,
+                outputs = outputsInfo,
                 fee = fee,
                 blockHeight = fullTransaction.block?.height,
                 timestamp = transaction.timestamp,
-                status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW
-        )
+                status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW)
     }
 
     private fun getInvalidTransactionInfo(transaction: InvalidTransaction): TransactionInfo {
@@ -84,12 +77,10 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
                     transactionIndex = transaction.order,
                     timestamp = transaction.timestamp,
                     status = TransactionStatus.INVALID,
-                    from = listOf(),
-                    to = listOf(),
-                    amount = 0,
-                    fee = 0,
-                    blockHeight = null
-            )
+                    inputs = listOf(),
+                    outputs = listOf(),
+                    fee = null,
+                    blockHeight = null)
         }
     }
 
