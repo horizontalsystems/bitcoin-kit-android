@@ -238,9 +238,16 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode) =
                 "Dash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
-        fun clear(context: Context, networkType: NetworkType, walletId: String, syncMode: SyncMode) {
-            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseNameCore(networkType, walletId, syncMode)))
-            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
+        fun clear(context: Context, networkType: NetworkType, walletId: String) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
+                try {
+                    SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseNameCore(networkType, walletId, syncMode)))
+                    SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
+                } catch (ex: Exception) {
+                    continue
+                }
+            }
         }
     }
+
 }
