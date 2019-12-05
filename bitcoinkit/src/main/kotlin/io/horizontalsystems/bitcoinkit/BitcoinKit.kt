@@ -136,8 +136,15 @@ class BitcoinKit : AbstractKit {
 
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip): String = "Bitcoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${bip.name}"
 
-        fun clear(context: Context, networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip) {
-            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, bip)))
+        fun clear(context: Context, networkType: NetworkType, walletId: String) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
+                for (bip in Bip.values())
+                    try {
+                        SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, bip)))
+                    } catch (ex: Exception) {
+                        continue
+                    }
+            }
         }
     }
 

@@ -78,7 +78,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun clear() {
         bitcoinKit.stop()
-        BitcoinKit.clear(App.instance, networkType, walletId, syncMode, bip)
+        BitcoinKit.clear(App.instance, networkType, walletId)
 
         init()
     }
