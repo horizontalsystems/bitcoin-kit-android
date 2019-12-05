@@ -3,21 +3,20 @@ package io.horizontalsystems.hodler
 import io.horizontalsystems.bitcoincore.core.IPluginOutputData
 
 class HodlerOutputData(val lockTimeInterval: LockTimeInterval,
-                       val addressString: String,
-                       val lockedValue: Long) : IPluginOutputData {
+                       val addressString: String) : IPluginOutputData {
 
     var approxUnlockTime: Long? = null
 
     fun serialize(): String {
-        return listOf(lockTimeInterval.serialize(), addressString, lockedValue).joinToString("|")
+        return listOf(lockTimeInterval.serialize(), addressString).joinToString("|")
     }
 
     companion object {
         fun parse(serialized: String?): HodlerOutputData {
-            val (lockTimeIntervalStr, addressString, valueStr) = checkNotNull(serialized?.split("|"))
+            val (lockTimeIntervalStr, addressString) = checkNotNull(serialized?.split("|"))
 
             val lockTimeInterval = checkNotNull(LockTimeInterval.deserialize(lockTimeIntervalStr))
-            return HodlerOutputData(lockTimeInterval, addressString, valueStr.toLong())
+            return HodlerOutputData(lockTimeInterval, addressString)
         }
     }
 }

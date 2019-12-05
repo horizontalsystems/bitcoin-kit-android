@@ -43,13 +43,15 @@ class TransactionOutput {
 
     var transactionHash = byteArrayOf()
     var publicKeyPath: String? = null
+    var changeOutput: Boolean = false
     var scriptType: ScriptType = ScriptType.UNKNOWN
     var keyHash: ByteArray? = null
     var address: String? = null
 
     var pluginId: Byte? = null
     var pluginData: String? = null
-    @Ignore var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
+    @Ignore
+    var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
 
     constructor()
     constructor(value: Long, index: Int, script: ByteArray, type: ScriptType = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
@@ -59,7 +61,12 @@ class TransactionOutput {
         this.scriptType = type
         this.address = address
         this.keyHash = keyHash
-        this.publicKeyPath = publicKey?.path
+        publicKey?.let { setPublicKey(it) }
+    }
+
+    fun setPublicKey(publicKey: PublicKey) {
+        this.publicKeyPath = publicKey.path
+        this.changeOutput = !publicKey.external
     }
 }
 

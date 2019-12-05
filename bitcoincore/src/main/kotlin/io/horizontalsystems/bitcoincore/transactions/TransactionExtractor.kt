@@ -44,7 +44,7 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             // Set public key if exist
             getPublicKey(output)?.let {
                 transaction.header.isMine = true
-                output.publicKeyPath = it.path
+                output.setPublicKey(it)
             }
         }
 
