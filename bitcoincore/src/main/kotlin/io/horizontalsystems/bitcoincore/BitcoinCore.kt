@@ -475,7 +475,7 @@ class BitcoinCore(
     fun statusInfo(): Map<String, Any> {
         val statusInfo = LinkedHashMap<String, Any>()
 
-        statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it) } ?: "N/A"
+        statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it * 1000) } ?: "N/A"
         statusInfo["Syncing Peer"] = initialBlockDownload.syncPeer?.host ?: "N/A"
         statusInfo["Errors"] = errorStorage.errors
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
