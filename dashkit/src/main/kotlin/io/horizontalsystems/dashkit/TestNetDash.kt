@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.utils.HashUtils
 class TestNetDash : Network() {
 
     override val protocolVersion = 70214
+    override val noBloomVersion = 70201
 
     override var port: Int = 19999
 
