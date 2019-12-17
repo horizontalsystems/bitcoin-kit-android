@@ -35,8 +35,14 @@ class VersionMessage(val protocolVersion: Int, val services: Long, val timestamp
         return (services and network.serviceFullNode) == network.serviceFullNode
     }
 
+    // see https://github.com/bitcoin/bips/blob/master/bip-0111.mediawiki
     fun supportsBloomFilter(network: Network): Boolean {
-        return protocolVersion >= network.bloomFilter
+        return when {
+            protocolVersion >= network.noBloomVersion -> {
+                services and network.serviceBloomFilter == network.serviceBloomFilter
+            }
+            else -> protocolVersion >= network.bloomFilterVersion
+        }
     }
 
     override fun toString(): String {

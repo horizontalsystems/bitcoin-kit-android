@@ -14,9 +14,11 @@ abstract class Network {
 
     open val protocolVersion = 70014
     open val syncableFromApi = true
-    val bloomFilter = 70000
+    val bloomFilterVersion = 70000
+    open val noBloomVersion = 70011
     val networkServices = 0L
     val serviceFullNode = 1L
+    val serviceBloomFilter = 4L
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
     abstract val maxBlockSize: Int
