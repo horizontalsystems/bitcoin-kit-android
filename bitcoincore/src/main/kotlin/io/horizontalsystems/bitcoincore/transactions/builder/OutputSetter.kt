@@ -6,11 +6,11 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 
 class OutputSetter(private val addressConverter: IAddressConverter, private val pluginManager: PluginManager) {
 
-    fun setOutputs(mutableTransaction: MutableTransaction, addressStr: String, value: Long, pluginData: Map<Byte, IPluginData>) {
+    fun setOutputs(mutableTransaction: MutableTransaction, addressStr: String, value: Long, pluginData: Map<Byte, IPluginData>, skipChecking: Boolean = false) {
         mutableTransaction.recipientAddress = addressConverter.convert(addressStr)
         mutableTransaction.recipientValue = value
 
-        pluginManager.processOutputs(mutableTransaction, pluginData)
+        pluginManager.processOutputs(mutableTransaction, pluginData, skipChecking)
     }
 
 }

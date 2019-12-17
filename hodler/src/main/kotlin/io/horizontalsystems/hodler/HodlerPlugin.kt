@@ -28,15 +28,17 @@ class HodlerPlugin(
 
     override val id = HodlerPlugin.id
 
-    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: IPluginData) {
+    override fun processOutputs(mutableTransaction: MutableTransaction, pluginData: IPluginData, skipChecking: Boolean) {
         val lockTimeInterval = checkNotNull((pluginData as? HodlerData)?.lockTimeInterval)
 
-        check(mutableTransaction.recipientAddress.scriptType == ScriptType.P2PKH) {
-            "Locking transaction is available only for PKH addresses"
-        }
+        if (!skipChecking) {
+            check(mutableTransaction.recipientAddress.scriptType == ScriptType.P2PKH) {
+                "Locking transaction is available only for PKH addresses"
+            }
 
-        check(mutableTransaction.recipientValue <= limit) {
-            "The maximum amount allowed for locking is $limit"
+            check(mutableTransaction.recipientValue <= limit) {
+                "The maximum amount allowed for locking is $limit"
+            }
         }
 
         val pubkeyHash = mutableTransaction.recipientAddress.hash
