@@ -14,11 +14,13 @@ import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
+import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
+import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.Mnemonic
@@ -66,7 +68,7 @@ class BitcoinCashKit : AbstractKit {
 
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://blockdozer.com/api"
+                initialSyncUrl = "https://bch.coin.space/api"
                 MainNetBitcoinCash()
             }
             NetworkType.TestNet -> {
@@ -93,6 +95,8 @@ class BitcoinCashKit : AbstractKit {
         //  extending bitcoinCore
 
         val bech32 = CashAddressConverter(network.addressSegwitHrp)
+        val base58 = Base58AddressConverter(network.addressVersion ,network.addressScriptVersion)
+
         bitcoinCore.prependAddressConverter(bech32)
 
         if (networkType == NetworkType.MainNet) {
@@ -108,7 +112,9 @@ class BitcoinCashKit : AbstractKit {
             bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height, BlockMedianTimeHelper(storage)))
         }
 
-        bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
+        bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
+        //bitcoinCore.add(restoreKeyConverter: Bip44RestoreKeyConverter(addressConverter: base58))
+
     }
 
     fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {

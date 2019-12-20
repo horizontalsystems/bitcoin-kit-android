@@ -26,9 +26,4 @@ enum class Bip {
             BIP84 -> HDWallet.Purpose.BIP84
         }
 
-    fun restoreKeyConverter(addressConverter: AddressConverterChain) = when (this) {
-        BIP44 -> Bip44RestoreKeyConverter(addressConverter)
-        BIP49 -> Bip49RestoreKeyConverter(addressConverter)
-        BIP84 -> Bip84RestoreKeyConverter(addressConverter)
-    }
 }

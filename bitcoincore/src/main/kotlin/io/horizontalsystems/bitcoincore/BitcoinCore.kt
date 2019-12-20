@@ -334,8 +334,8 @@ class BitcoinCore(
         return this
     }
 
-    fun addRestoreKeyConverterForBip(bip: Bip) {
-        restoreKeyConverterChain.add(bip.restoreKeyConverter(addressConverter))
+    fun addRestoreKeyConverter(keyConverter: IRestoreKeyConverter) {
+        restoreKeyConverterChain.add(keyConverter)
     }
 
     fun addMessageParser(messageParser: IMessageParser): BitcoinCore {

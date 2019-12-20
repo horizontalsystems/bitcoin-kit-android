@@ -8,10 +8,7 @@ import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
-import io.horizontalsystems.bitcoincore.managers.InsightApi
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
-import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
+import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -19,6 +16,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
+import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.MerkleBranch
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.dashkit.core.DashTransactionInfoConverter
@@ -155,8 +153,8 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.addPeerSyncListener(masternodeSyncer)
         bitcoinCore.addPeerGroupListener(masternodeSyncer)
 
-        bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
-
+        val base58AddressConverter = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
+        bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58AddressConverter))
 
         val singleHasher = SingleSha256Hasher()
         val bls = BLS()
