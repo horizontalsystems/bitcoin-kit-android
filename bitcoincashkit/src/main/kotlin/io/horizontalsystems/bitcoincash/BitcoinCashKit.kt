@@ -12,7 +12,6 @@ import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
-import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.InsightApi
@@ -113,8 +112,6 @@ class BitcoinCashKit : AbstractKit {
         }
 
         bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
-        //bitcoinCore.add(restoreKeyConverter: Bip44RestoreKeyConverter(addressConverter: base58))
-
     }
 
     fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
