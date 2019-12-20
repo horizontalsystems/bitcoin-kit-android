@@ -20,7 +20,6 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
         //  select outputs with least value until we get needed value
         val sortedOutputs = unspentOutputs.sortedBy { it.output.value }
         val selectedOutputs = mutableListOf<UnspentOutput>()
-        val selectedOutputTypes = mutableListOf<ScriptType>()
         var totalValue = 0L
         var recipientValue = 0L
         var sentValue = 0L
@@ -28,19 +27,17 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
 
         for (unspentOutput in sortedOutputs) {
             selectedOutputs.add(unspentOutput)
-            selectedOutputTypes.add(unspentOutput.output.scriptType)
             totalValue += unspentOutput.output.value
 
             outputsLimit?.let {
                 if (selectedOutputs.size > it) {
                     val outputToExclude = selectedOutputs.first()
                     selectedOutputs.removeAt(0)
-                    selectedOutputTypes.removeAt(0)
                     totalValue -= outputToExclude.output.value
                 }
             }
 
-            fee = calculator.transactionSize(selectedOutputTypes, listOf(outputType), pluginDataOutputSize) * feeRate
+            fee = calculator.transactionSize(selectedOutputs.map { it.output }, listOf(outputType), pluginDataOutputSize) * feeRate
 
             recipientValue = if (senderPay) value else value - fee
             sentValue = if (senderPay) value + fee else value
@@ -61,7 +58,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
             throw SendValueErrors.InsufficientUnspentOutputs
         }
 
-        val changeOutputHavingTransactionFee = calculator.transactionSize(selectedOutputTypes, listOf(outputType, changeType), pluginDataOutputSize) * feeRate
+        val changeOutputHavingTransactionFee = calculator.transactionSize(selectedOutputs.map { it.output }, listOf(outputType, changeType), pluginDataOutputSize) * feeRate
         val withChangeRecipientValue = if (senderPay) value else value - changeOutputHavingTransactionFee
         val withChangeSentValue = if (senderPay) value + changeOutputHavingTransactionFee else value
         // if selected UTXOs total value >= recipientValue(toOutput value) + fee(for transaction with change output) + dust(minimum changeOutput value)

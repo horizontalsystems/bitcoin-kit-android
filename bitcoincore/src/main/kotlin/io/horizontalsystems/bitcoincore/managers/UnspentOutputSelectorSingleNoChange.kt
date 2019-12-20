@@ -19,7 +19,7 @@ class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSiz
         //  try to find 1 unspent output with exactly matching value
         for (unspentOutput in unspentOutputs) {
             val output = unspentOutput.output
-            val fee = calculator.transactionSize(listOf(output.scriptType), listOf(outputType), pluginDataOutputSize) * feeRate
+            val fee = calculator.transactionSize(listOf(output), listOf(outputType), pluginDataOutputSize) * feeRate
 
             val recipientValue = if (senderPay) value else value - fee
             val sentValue = if (senderPay) value + fee else value

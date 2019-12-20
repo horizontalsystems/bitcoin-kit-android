@@ -57,14 +57,7 @@ class InputSetter(
         }
 
         // Calculate fee
-        var transactionSize = transactionSizeCalculator.transactionSize(listOf(unspentOutput.output.scriptType), listOf(mutableTransaction.recipientAddress.scriptType), 0)
-        unspentOutput.output.signatureScriptFunction?.let { signatureScriptFunction ->
-            val emptySignature = ByteArray(transactionSizeCalculator.signatureLength)
-            val emptyPublicKey = ByteArray(transactionSizeCalculator.pubKeyLength)
-
-            transactionSize += signatureScriptFunction(listOf(emptySignature, emptyPublicKey)).size
-        }
-
+        val transactionSize = transactionSizeCalculator.transactionSize(listOf(unspentOutput.output), listOf(mutableTransaction.recipientAddress.scriptType), 0)
         val fee = transactionSize * feeRate
 
         if (unspentOutput.output.value < fee) {

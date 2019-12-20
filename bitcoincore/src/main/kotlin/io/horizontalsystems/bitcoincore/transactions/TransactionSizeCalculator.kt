@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
+import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class TransactionSizeCalculator {
@@ -37,11 +39,41 @@ class TransactionSizeCalculator {
         return 32 + 4 + 1 + sigLength + 4 // PreviousOutputHex + OutputIndex + sigLength + sigScript + sequence
     }
 
-    fun transactionSize(inputs: List<ScriptType>, outputs: List<ScriptType>, pluginDataOutputSize: Int): Long {
-        val txIsWitness = inputs.any { it.isWitness }
+    /**
+     * Calculate size only for those inputs, which we can sign later in TransactionSigner.
+     * Any other inputs will fail to sign later, so no need to calculate size here.
+     */
+    private fun inputSize(output: TransactionOutput): Int {
+        val scriptSigLength = when (output.scriptType) {
+            ScriptType.P2PK -> signatureLength
+            ScriptType.P2PKH -> signatureLength + pubKeyLength
+            ScriptType.P2WPKHSH -> p2wpkhShLength
+            ScriptType.P2SH -> {
+                output.redeemScript?.let { redeemScript ->
+                    val signatureScriptFunction = output.signatureScriptFunction
+                    if (signatureScriptFunction != null) {
+                        // non-standard P2SH signature script
+                        val emptySignature = ByteArray(signatureLength)
+                        val emptyPublicKey = ByteArray(pubKeyLength)
+
+                        signatureScriptFunction(listOf(emptySignature, emptyPublicKey)).size
+                    } else {
+                        // standard (signature, publicKey, redeemScript) signature script
+                        signatureLength + pubKeyLength + OpCodes.push(redeemScript).size
+                    }
+                } ?: 0
+            }
+            else -> 0
+        }
+
+        return 32 + 4 + 1 + scriptSigLength + 4 // PreviousOutputHex + InputIndex + sigLength + scriptSig + sequence
+    }
+
+    fun transactionSize(previousOutputs: List<TransactionOutput>, outputs: List<ScriptType>, pluginDataOutputSize: Int): Long {
+        val txIsWitness = previousOutputs.any { it.scriptType.isWitness }
         val txWeight = if (txIsWitness) witnessTx else legacyTx
 
-        val inputWeight = inputs.map { inputSize(it) * 4 + if (txIsWitness) witnessSize(it) else 0 }.sum()
+        val inputWeight = previousOutputs.map { inputSize(it) * 4 + if (txIsWitness) witnessSize(it.scriptType) else 0 }.sum()
         var outputWeight = outputs.map { outputSize(it) }.sum() * 4 // to vbytes
 
         if (pluginDataOutputSize > 0) {
@@ -57,7 +89,7 @@ class TransactionSizeCalculator {
 
     fun witnessSize(type: ScriptType): Int {  // in vbytes
         return when {
-            type.isWitness -> witnessData
+            type.isWitness -> witnessData  // We assume that only P2WPKH or P2WPKH(SH) outputs can be here
             else -> legacyWitnessData
         }
 
