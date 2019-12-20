@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BalanceInfo

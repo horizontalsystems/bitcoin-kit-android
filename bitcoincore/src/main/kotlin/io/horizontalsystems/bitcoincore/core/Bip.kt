@@ -1,10 +1,6 @@
 package io.horizontalsystems.bitcoincore.core
 
-import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.Bip49RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.Bip84RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 enum class Bip {
