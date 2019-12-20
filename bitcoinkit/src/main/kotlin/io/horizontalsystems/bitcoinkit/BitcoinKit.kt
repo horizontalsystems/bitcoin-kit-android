@@ -11,12 +11,12 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoincore.core.Bip
-import io.horizontalsystems.bitcoincore.managers.BCoinApi
-import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
+import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
+import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
@@ -99,8 +99,10 @@ class BitcoinKit : AbstractKit {
 
         //  extending bitcoinCore
 
-        val bech32 = SegwitAddressConverter(network.addressSegwitHrp)
-        bitcoinCore.prependAddressConverter(bech32)
+        val bech32AddressConverter = SegwitAddressConverter(network.addressSegwitHrp)
+        val base58AddressConverter = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
+
+        bitcoinCore.prependAddressConverter(bech32AddressConverter)
 
         val blockHelper = BlockValidatorHelper(storage)
 
@@ -115,15 +117,15 @@ class BitcoinKit : AbstractKit {
 
         when (bip) {
             Bip.BIP44 -> {
-                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP44)
-                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP49)
-                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP84)
+                bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58AddressConverter))
+                bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
+                bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
             Bip.BIP49 -> {
-                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP49)
+                bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
             }
             Bip.BIP84 -> {
-                bitcoinCore.addRestoreKeyConverterForBip(Bip.BIP84)
+                bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
         }
     }
