@@ -31,4 +31,7 @@ interface TransactionInputDao {
     @Query("SELECT * FROM TransactionInput WHERE previousOutputTxHash = :txHash")
     fun getInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput>
 
+    @Query("SELECT * FROM TransactionInput where TransactionInput.previousOutputTxHash = :prevOutputTxHash and TransactionInput.previousOutputIndex = :prevOutputIndex")
+    fun getInput(prevOutputTxHash: ByteArray, prevOutputIndex: Long): TransactionInput?
+
 }

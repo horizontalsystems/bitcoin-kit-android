@@ -73,6 +73,7 @@ interface IStorage {
     fun getNewTransaction(hash: ByteArray): Transaction?
     fun isRelayedTransactionExists(hash: ByteArray): Boolean
     fun isTransactionExists(hash: ByteArray): Boolean
+    fun getConflictingTransactions(transaction: FullTransaction): List<Transaction>
 
     // InvalidTransaction
 

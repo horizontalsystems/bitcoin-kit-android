@@ -6,9 +6,7 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ITransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
-import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
+import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.InvalidTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -22,7 +20,8 @@ class TransactionProcessor(
         private val publicKeyManager: PublicKeyManager,
         private val irregularOutputFinder: IIrregularOutputFinder,
         private val dataListener: IBlockchainDataListener,
-        private val txInfoConverter: ITransactionInfoConverter) {
+        private val txInfoConverter: ITransactionInfoConverter,
+        private val transactionMediator: TransactionMediator) {
 
     var listener: WatchedTransactionManager? = null
 
@@ -58,6 +57,11 @@ class TransactionProcessor(
                         continue
                     }
                     relay(transactionInDB, index, block)
+
+                    if (transactionInDB.blockHash != null) {
+                        transactionInDB.conflictingTxHash = null
+                    }
+
                     storage.updateTransaction(transactionInDB)
 
                     updated.add(transactionInDB)
@@ -71,8 +75,20 @@ class TransactionProcessor(
                 if (transaction.header.isMine) {
                     relay(transaction.header, index, block)
 
-                    storage.addTransaction(transaction)
-                    inserted.add(transaction.header)
+                    val conflictingTransactions = storage.getConflictingTransactions(transaction)
+
+                    when (transactionMediator.resolveConflicts(transaction, conflictingTransactions)) {
+                        ConflictResolution.IGNORE -> {
+                            conflictingTransactions.forEach { storage.updateTransaction(it) }
+                            updated.addAll(conflictingTransactions)
+                        }
+                        ConflictResolution.ACCEPT -> {
+                            conflictingTransactions.forEach { processInvalid(it.hash) }
+                            storage.addTransaction(transaction)
+                            inserted.add(transaction.header)
+                        }
+                    }
+
 
                     if (!skipCheckBloomFilter) {
                         needToUpdateBloomFilter = needToUpdateBloomFilter || publicKeyManager.gapShifts() || irregularOutputFinder.hasIrregularOutput(transaction.outputs)
