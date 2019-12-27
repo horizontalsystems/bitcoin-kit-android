@@ -151,7 +151,9 @@ class BitcoinCoreBuilder {
         val irregularOutputFinder = IrregularOutputFinder(storage)
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager)
-        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter)
+        val transactionMediator = TransactionMediator()
+
+        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
 
         val kitStateProvider = KitStateProvider()
 

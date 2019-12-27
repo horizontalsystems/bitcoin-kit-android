@@ -34,6 +34,7 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
                 txInfo.blockHeight,
                 txInfo.timestamp,
                 txInfo.status,
+                txInfo.conflictingTxHash,
                 instantTransactionManager.isTransactionInstant(fullTransactionInfo.header.hash)
         )
     }
@@ -52,6 +53,7 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
                     outputs = listOf(),
                     fee = null,
                     blockHeight = null,
+                    conflictingTxHash = null,
                     instantTx = false
             )
         }

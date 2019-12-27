@@ -15,6 +15,7 @@ open class TransactionInfo {
     var blockHeight: Int? = null
     var timestamp: Long = 0
     var status: TransactionStatus = TransactionStatus.NEW
+    var conflictingTxHash: String? = null
 
     constructor(uid: String,
                 transactionHash: String,
@@ -24,7 +25,8 @@ open class TransactionInfo {
                 fee: Long?,
                 blockHeight: Int?,
                 timestamp: Long,
-                status: TransactionStatus) {
+                status: TransactionStatus,
+                conflictingTxHash: String? = null) {
         this.uid = uid
         this.transactionHash = transactionHash
         this.transactionIndex = transactionIndex
@@ -34,6 +36,7 @@ open class TransactionInfo {
         this.blockHeight = blockHeight
         this.timestamp = timestamp
         this.status = status
+        this.conflictingTxHash = conflictingTxHash
     }
 
     @Throws
@@ -49,6 +52,7 @@ open class TransactionInfo {
         timestamp = jsonObject.get("timestamp").asLong()
         status = TransactionStatus.getByCode(jsonObject.get("status").asInt())
                 ?: TransactionStatus.INVALID
+        conflictingTxHash = jsonObject.get("conflictingTxHash")?.asString()
     }
 
     private fun parseInputs(jsonArray: JsonArray): List<TransactionInputInfo> {
@@ -125,6 +129,7 @@ open class TransactionInfo {
         blockHeight?.let { jsonObject.add("blockHeight", it) }
         jsonObject.add("timestamp", timestamp)
         jsonObject.add("status", status.code)
+        conflictingTxHash?.let { jsonObject.add("conflictingTxHash", it) }
 
         return jsonObject
     }

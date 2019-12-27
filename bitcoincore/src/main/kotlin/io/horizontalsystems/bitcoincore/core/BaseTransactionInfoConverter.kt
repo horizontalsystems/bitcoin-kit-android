@@ -64,7 +64,8 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
                 fee = fee,
                 blockHeight = fullTransaction.block?.height,
                 timestamp = transaction.timestamp,
-                status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW)
+                status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW,
+                conflictingTxHash = transaction.conflictingTxHash?.toReversedHex())
     }
 
     private fun getInvalidTransactionInfo(transaction: InvalidTransaction): TransactionInfo {

@@ -97,7 +97,8 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
                 "\nTx index: ${transactionInfo.transactionIndex}" +
                 "\nBlock: ${transactionInfo.blockHeight}" +
                 "\nTimestamp: ${transactionInfo.timestamp}" +
-                "\nDate: ${formatDate(transactionInfo.timestamp)}"
+                "\nDate: ${formatDate(transactionInfo.timestamp)}" +
+                "\nConflicting tx hash: ${transactionInfo.conflictingTxHash}"
 
         summary.text = text
         summary.setOnClickListener {

@@ -20,8 +20,9 @@ class DashTransactionInfo : TransactionInfo {
                 blockHeight: Int?,
                 timestamp: Long,
                 status: TransactionStatus,
+                conflictingTxHash: String?,
                 instantTx: Boolean
-    ) : super(uid, transactionHash, transactionIndex, inputs, outputs, fee, blockHeight, timestamp, status) {
+    ) : super(uid, transactionHash, transactionIndex, inputs, outputs, fee, blockHeight, timestamp, status, conflictingTxHash) {
         this.instantTx = instantTx
     }
 
