@@ -55,6 +55,7 @@ abstract class CoreDatabase : RoomDatabase() {
         private val add_conflictingTxHash_to_Transaction = object : Migration(8, 9) {
             override fun migrate(database: SupportSQLiteDatabase) {
                 database.execSQL("ALTER TABLE `Transaction` ADD COLUMN `conflictingTxHash` BLOB")
+                database.execSQL("ALTER TABLE `InvalidTransaction` ADD COLUMN `conflictingTxHash` BLOB")
             }
         }
 
