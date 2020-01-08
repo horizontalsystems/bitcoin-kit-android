@@ -9,7 +9,9 @@ import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoincore.utils.Bip69
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
+import java.util.*
 
 class InputSetter(
         private val unspentOutputSelector: IUnspentOutputSelector,
@@ -33,6 +35,9 @@ class InputSetter(
         )
 
         val unspentOutputs = unspentOutputInfo.outputs
+
+        Collections.sort(unspentOutputs, Bip69.inputComparator)
+
         for (unspentOutput in unspentOutputs) {
             mutableTransaction.addInput(inputToSign(unspentOutput))
         }

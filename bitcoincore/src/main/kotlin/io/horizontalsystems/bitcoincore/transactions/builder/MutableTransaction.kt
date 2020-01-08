@@ -7,6 +7,8 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.OP_RETURN
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoincore.utils.Bip69
+import java.util.*
 
 class MutableTransaction(isOutgoing: Boolean = true) {
 
@@ -43,6 +45,8 @@ class MutableTransaction(isOutgoing: Boolean = true) {
 
                 list.add(TransactionOutput(0, index++, data, ScriptType.NULL_DATA))
             }
+
+            Collections.sort(list, Bip69.outputComparator)
 
             return list
         }
