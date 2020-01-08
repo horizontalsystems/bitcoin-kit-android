@@ -40,6 +40,9 @@ interface TransactionDao {
     @Query("SELECT hash FROM `Transaction` WHERE blockHash IS NULL AND isOutgoing = 0 AND isMine = 1")
     fun getIncomingPendingTxHashes(): List<ByteArray>
 
+    @Query("SELECT COUNT(*) FROM `Transaction` WHERE blockHash IS NULL AND isOutgoing = 0 AND isMine = 1")
+    fun getIncomingPendingTxCount(): Int
+
     @Query("SELECT * FROM InvalidTransaction WHERE hash = :hash")
     fun getInvalidTransaction(hash: ByteArray): InvalidTransaction?
 

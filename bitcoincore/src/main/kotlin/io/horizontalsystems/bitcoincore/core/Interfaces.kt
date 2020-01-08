@@ -75,6 +75,7 @@ interface IStorage {
     fun isTransactionExists(hash: ByteArray): Boolean
     fun getConflictingTransactions(transaction: FullTransaction): List<Transaction>
     fun getIncomingPendingTxHashes(): List<ByteArray>
+    fun incomingPendingTransactionsExist(): Boolean
 
     // InvalidTransaction
 

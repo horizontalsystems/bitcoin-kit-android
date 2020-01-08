@@ -278,6 +278,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getIncomingPendingTxHashes()
     }
 
+    override fun incomingPendingTransactionsExist(): Boolean {
+        return store.transaction.getIncomingPendingTxCount() > 0
+    }
+
     // InvalidTransaction
 
     override fun getInvalidTransaction(hash: ByteArray): InvalidTransaction? {

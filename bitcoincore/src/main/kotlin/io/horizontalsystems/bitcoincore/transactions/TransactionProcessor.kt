@@ -52,7 +52,7 @@ class TransactionProcessor(
         val inserted = mutableListOf<Transaction>()
         val updated = mutableListOf<Transaction>()
 
-        val pendingExists = storage.getIncomingPendingTxHashes().isNotEmpty() || block == null
+        val pendingExists = block == null || storage.incomingPendingTransactionsExist()
 
         // when the same transaction came in merkle block and from another peer's mempool we need to process it serial
         synchronized(this) {
