@@ -76,7 +76,6 @@ class TransactionProcessor(
 
                     if (transactionInDB.blockHash != null) {
                         transactionInDB.conflictingTxHash = null
-                        needToUpdateBloomFilter = needToUpdateBloomFilter || !transaction.header.isOutgoing
                     }
 
                     storage.updateTransaction(transactionInDB)
