@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ITransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.Block
@@ -12,6 +13,8 @@ import io.horizontalsystems.bitcoincore.models.InvalidTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
+import java.util.*
+import kotlin.collections.HashSet
 
 class TransactionProcessor(
         private val storage: IStorage,
@@ -22,6 +25,8 @@ class TransactionProcessor(
         private val dataListener: IBlockchainDataListener,
         private val txInfoConverter: ITransactionInfoConverter,
         private val transactionMediator: TransactionMediator) {
+
+    private val processedNotMineTransactions = HashSet<NotMineTransaction>()
 
     var listener: WatchedTransactionManager? = null
 
@@ -50,6 +55,15 @@ class TransactionProcessor(
         // when the same transaction came in merkle block and from another peer's mempool we need to process it serial
         synchronized(this) {
             for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
+                val notMineTransaction = NotMineTransaction(transaction.header.hash, block != null)
+                if (processedNotMineTransactions.contains(notMineTransaction)) {
+                    continue
+                }
+
+                if (storage.getInvalidTransaction(transaction.header.hash) != null) {
+                    continue
+                }
+
                 val transactionInDB = storage.getTransaction(transaction.header.hash)
                 if (transactionInDB != null) {
 
@@ -83,7 +97,7 @@ class TransactionProcessor(
                             updated.addAll(conflictingTransactions)
                         }
                         ConflictResolution.ACCEPT -> {
-                            conflictingTransactions.forEach { processInvalid(it.hash) }
+                            conflictingTransactions.forEach { processInvalid(it.hash, transaction.header.hash) }
                             storage.addTransaction(transaction)
                             inserted.add(transaction.header)
                         }
@@ -91,8 +105,47 @@ class TransactionProcessor(
 
 
                     if (!skipCheckBloomFilter) {
-                        needToUpdateBloomFilter = needToUpdateBloomFilter || publicKeyManager.gapShifts() || irregularOutputFinder.hasIrregularOutput(transaction.outputs)
+                        needToUpdateBloomFilter = needToUpdateBloomFilter ||
+                                !transaction.header.isOutgoing || // need update outpoints for incoming tx to check double spend txs
+                                publicKeyManager.gapShifts() ||
+                                irregularOutputFinder.hasIrregularOutput(transaction.outputs)
                     }
+                } else {
+
+                    processedNotMineTransactions.add(notMineTransaction)
+
+                    val incomingPendingTxHashes = storage.getIncomingPendingTxHashes()
+
+                    if (incomingPendingTxHashes.isEmpty()) {
+                        continue
+                    }
+
+                    val conflictingTxHashes = storage.getTransactionInputs(incomingPendingTxHashes)
+                            .filter { input ->
+                                transaction.inputs.any {
+                                    it.previousOutputTxHash.contentEquals(input.previousOutputTxHash) && it.previousOutputIndex == input.previousOutputIndex
+                                }
+                            }
+                            .map { it.transactionHash }.distinctBy { it.toHexString() }
+
+                    // handle if transaction has conflicting inputs, otherwise it's false-positive tx
+                    if (conflictingTxHashes.isEmpty()) {
+                        continue
+                    }
+
+                    conflictingTxHashes
+                            .mapNotNull { storage.getTransaction(it) } // get transactions for each input
+                            .filter { it.blockHash == null } // exclude all transactions in blocks
+                            .forEach { tx ->
+                                if (block == null) { // if coming other tx is pending only update conflict status
+                                    tx.conflictingTxHash = transaction.header.hash
+                                    storage.updateTransaction(tx)
+                                    updated.add(tx)
+                                } else { // if coming other tx in block invalidate our tx
+                                    processInvalid(tx.hash, transaction.header.hash)
+                                    needToUpdateBloomFilter = true
+                                }
+                            }
                 }
             }
         }
@@ -106,13 +159,16 @@ class TransactionProcessor(
         }
     }
 
-    fun processInvalid(txHash: ByteArray) {
+    fun processInvalid(txHash: ByteArray, conflictingTxHash: ByteArray? = null) {
         val invalidTransactionsFullInfo = getDescendantTransactionsFullInfo(txHash)
 
         if (invalidTransactionsFullInfo.isEmpty())
             return
 
-        invalidTransactionsFullInfo.forEach { it.header.status = Transaction.Status.INVALID }
+        invalidTransactionsFullInfo.forEach {
+            it.header.conflictingTxHash = conflictingTxHash
+            it.header.status = Transaction.Status.INVALID
+        }
 
         val invalidTransactions = invalidTransactionsFullInfo.map { fullTxInfo ->
             val txInfo = txInfoConverter.transactionInfo(fullTxInfo)
@@ -163,6 +219,16 @@ class TransactionProcessor(
         if (block != null && !block.hasTransactions) {
             block.hasTransactions = true
             storage.updateBlock(block)
+        }
+    }
+
+    private class NotMineTransaction(val hash: ByteArray, val inBlock: Boolean) {
+        override fun equals(other: Any?): Boolean {
+            return other is NotMineTransaction && hash.contentEquals(other.hash) && inBlock == other.inBlock
+        }
+
+        override fun hashCode(): Int {
+            return Objects.hash(hash.contentHashCode(), inBlock)
         }
     }
 

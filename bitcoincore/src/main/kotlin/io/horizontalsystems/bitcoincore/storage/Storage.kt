@@ -274,7 +274,15 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         }.filter { !it.hash.contentEquals(transaction.header.hash) }
     }
 
+    override fun getIncomingPendingTxHashes(): List<ByteArray> {
+        return store.transaction.getIncomingPendingTxHashes()
+    }
+
     // InvalidTransaction
+
+    override fun getInvalidTransaction(hash: ByteArray): InvalidTransaction? {
+        return store.transaction.getInvalidTransaction(hash)
+    }
 
     override fun moveTransactionToInvalidTransactions(invalidTransactions: List<InvalidTransaction>) {
         store.runInTransaction {
@@ -328,6 +336,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getTransactionInputs(txHash: ByteArray): List<TransactionInput> {
         return store.input.getTransactionInputs(txHash)
+    }
+
+    override fun getTransactionInputs(txHashes: List<ByteArray>): List<TransactionInput> {
+        return store.input.getTransactionInputs(txHashes)
     }
 
     override fun getTransactionInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput> {
