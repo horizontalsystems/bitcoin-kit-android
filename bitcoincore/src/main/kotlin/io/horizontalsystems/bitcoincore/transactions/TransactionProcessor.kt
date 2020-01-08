@@ -52,6 +52,8 @@ class TransactionProcessor(
         val inserted = mutableListOf<Transaction>()
         val updated = mutableListOf<Transaction>()
 
+        val pendingExists = storage.getIncomingPendingTxHashes().isNotEmpty() || block == null
+
         // when the same transaction came in merkle block and from another peer's mempool we need to process it serial
         synchronized(this) {
             for ((index, transaction) in transactions.inTopologicalOrder().withIndex()) {
@@ -74,6 +76,7 @@ class TransactionProcessor(
 
                     if (transactionInDB.blockHash != null) {
                         transactionInDB.conflictingTxHash = null
+                        needToUpdateBloomFilter = needToUpdateBloomFilter || !transaction.header.isOutgoing
                     }
 
                     storage.updateTransaction(transactionInDB)
@@ -105,12 +108,13 @@ class TransactionProcessor(
 
 
                     if (!skipCheckBloomFilter) {
+                        val checkDoubleSpend = !transaction.header.isOutgoing && block == null
                         needToUpdateBloomFilter = needToUpdateBloomFilter ||
-                                !transaction.header.isOutgoing || // need update outpoints for incoming tx to check double spend txs
+                                checkDoubleSpend ||
                                 publicKeyManager.gapShifts() ||
                                 irregularOutputFinder.hasIrregularOutput(transaction.outputs)
                     }
-                } else {
+                } else if (pendingExists) {
 
                     processedNotMineTransactions.add(notMineTransaction)
 
