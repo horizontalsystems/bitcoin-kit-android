@@ -147,6 +147,7 @@ class BitcoinCoreBuilder {
         val hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
 
         val publicKeyManager = PublicKeyManager.create(storage, hdWallet, restoreKeyConverterChain)
+        val pendingOutpointsProvider = PendingOutpointsProvider(storage)
 
         val irregularOutputFinder = IrregularOutputFinder(storage)
         val transactionOutputsCache = OutputsCache.create(storage)
@@ -226,6 +227,7 @@ class BitcoinCoreBuilder {
         val watchedTransactionManager = WatchedTransactionManager()
         bloomFilterManager.addBloomFilterProvider(watchedTransactionManager)
         bloomFilterManager.addBloomFilterProvider(publicKeyManager)
+        bloomFilterManager.addBloomFilterProvider(pendingOutpointsProvider)
         bloomFilterManager.addBloomFilterProvider(irregularOutputFinder)
 
         bitcoinCore.watchedTransactionManager = watchedTransactionManager

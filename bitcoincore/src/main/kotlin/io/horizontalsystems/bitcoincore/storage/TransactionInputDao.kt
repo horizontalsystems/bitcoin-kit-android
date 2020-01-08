@@ -20,6 +20,9 @@ interface TransactionInputDao {
     @Query("select * from TransactionInput where transactionHash = :hash")
     fun getTransactionInputs(hash: ByteArray): List<TransactionInput>
 
+    @Query("select * from TransactionInput where transactionHash IN (:hashes)")
+    fun getTransactionInputs(hashes: List<ByteArray>): List<TransactionInput>
+
     @Query("""
         SELECT inputs.*, outputs.publicKeyPath, outputs.value
          FROM TransactionInput as inputs

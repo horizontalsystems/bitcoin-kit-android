@@ -74,9 +74,11 @@ interface IStorage {
     fun isRelayedTransactionExists(hash: ByteArray): Boolean
     fun isTransactionExists(hash: ByteArray): Boolean
     fun getConflictingTransactions(transaction: FullTransaction): List<Transaction>
+    fun getIncomingPendingTxHashes(): List<ByteArray>
 
     // InvalidTransaction
 
+    fun getInvalidTransaction(hash: ByteArray): InvalidTransaction?
     fun moveTransactionToInvalidTransactions(invalidTransactions: List<InvalidTransaction>)
     fun deleteAllInvalidTransactions()
 
@@ -93,6 +95,7 @@ interface IStorage {
 
     fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
     fun getTransactionInputs(txHash: ByteArray): List<TransactionInput>
+    fun getTransactionInputs(txHashes: List<ByteArray>): List<TransactionInput>
     fun getTransactionInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput>
 
     // PublicKey
