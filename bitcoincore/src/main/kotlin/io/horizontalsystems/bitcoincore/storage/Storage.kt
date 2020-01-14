@@ -2,6 +2,8 @@ package io.horizontalsystems.bitcoincore.storage
 
 import android.arch.persistence.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
@@ -267,11 +269,22 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
     }
 
     override fun getConflictingTransactions(transaction: FullTransaction): List<Transaction> {
-        return transaction.inputs.mapNotNull { input ->
+        val txHashes = HashSet<String>()
+        transaction.inputs.forEach { input ->
             store.input.getInput(input.previousOutputTxHash, input.previousOutputIndex)?.transactionHash?.let { txHash ->
-                store.transaction.getByHash(txHash)
+                txHashes.add(txHash.toHexString())
             }
-        }.filter { !it.hash.contentEquals(transaction.header.hash) }
+        }
+
+        txHashes.remove(transaction.header.hash.toHexString())
+
+        return if (txHashes.isNotEmpty()) {
+            txHashes.mapNotNull {
+                store.transaction.getByHash(it.hexToByteArray())
+            }
+        } else {
+            listOf()
+        }
     }
 
     override fun getIncomingPendingTxHashes(): List<ByteArray> {
