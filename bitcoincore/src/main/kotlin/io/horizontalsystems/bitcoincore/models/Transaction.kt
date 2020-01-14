@@ -36,7 +36,7 @@ open class Transaction {
 
     var version: Int = 0
     var lockTime: Long = 0
-    var timestamp: Long = 0
+    var timestamp: Long = Date().time / 1000
     var order: Int = 0 // topological order
     var isMine = false
     var isOutgoing = false
@@ -49,7 +49,6 @@ open class Transaction {
     constructor(version: Int = 0, lockTime: Long = 0) : this() {
         this.version = version
         this.lockTime = lockTime
-        this.timestamp = Date().time / 1000
     }
 
     object Status {
