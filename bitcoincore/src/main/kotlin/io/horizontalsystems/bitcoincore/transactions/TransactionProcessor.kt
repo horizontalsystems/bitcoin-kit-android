@@ -168,9 +168,11 @@ class TransactionProcessor(
         if (invalidTransactionsFullInfo.isEmpty())
             return
 
-        invalidTransactionsFullInfo.forEach {
-            it.header.conflictingTxHash = conflictingTxHash
-            it.header.status = Transaction.Status.INVALID
+        invalidTransactionsFullInfo.forEach { fullTxInfo ->
+            conflictingTxHash?.let { conflictingTxHash ->
+                fullTxInfo.header.conflictingTxHash = conflictingTxHash
+            }
+            fullTxInfo.header.status = Transaction.Status.INVALID
         }
 
         val invalidTransactions = invalidTransactionsFullInfo.map { fullTxInfo ->
