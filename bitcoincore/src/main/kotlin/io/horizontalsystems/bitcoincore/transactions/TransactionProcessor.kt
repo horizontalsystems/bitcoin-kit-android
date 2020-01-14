@@ -69,7 +69,7 @@ class TransactionProcessor(
                 val transactionInDB = storage.getTransaction(transaction.header.hash)
                 if (transactionInDB != null) {
 
-                    if (transactionInDB.blockHash != null && block == null) {
+                    if (transactionInDB.blockHash != null || (block == null && transactionInDB.status == Transaction.Status.RELAYED)) {  // if transaction already in block or transaction comes again from memPool we no need to update it
                         continue
                     }
                     relay(transactionInDB, index, block)
@@ -217,7 +217,10 @@ class TransactionProcessor(
         transaction.status = Transaction.Status.RELAYED
         transaction.order = order
         transaction.blockHash = block?.headerHash
-        transaction.timestamp = block?.timestamp ?: (System.currentTimeMillis() / 1000)
+
+        if (block != null) {
+            transaction.timestamp = block.timestamp
+        }
 
         if (block != null && !block.hasTransactions) {
             block.hasTransactions = true
