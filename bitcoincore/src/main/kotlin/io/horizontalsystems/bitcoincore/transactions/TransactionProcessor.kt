@@ -92,14 +92,15 @@ class TransactionProcessor(
                     relay(transaction.header, index, block)
 
                     val conflictingTransactions = storage.getConflictingTransactions(transaction)
+                    val updatedTransactions = mutableListOf<Transaction>()
 
-                    when (transactionMediator.resolveConflicts(transaction, conflictingTransactions)) {
+                    when (transactionMediator.resolveConflicts(transaction, conflictingTransactions, updatedTransactions)) {
                         ConflictResolution.IGNORE -> {
-                            conflictingTransactions.forEach { storage.updateTransaction(it) }
-                            updated.addAll(conflictingTransactions)
+                            updatedTransactions.forEach { storage.updateTransaction(it) }
+                            updated.addAll(updatedTransactions)
                         }
                         ConflictResolution.ACCEPT -> {
-                            conflictingTransactions.forEach { processInvalid(it.hash, transaction.header.hash) }
+                            updatedTransactions.forEach { processInvalid(it.hash, transaction.header.hash) }
                             storage.addTransaction(transaction)
                             inserted.add(transaction.header)
                         }

@@ -24,30 +24,32 @@ class TransactionMediator {
      * Also just return ConflictResolution.ACCEPT when there is no conflicting transactions.
      * @param receivedTransaction transaction that is received from network
      * @param conflictingTransactions transactions that spend one of receivedTransaction's inputs
+     * @param updateTransactions it is "out" parameter, transactions that need to be updated
      * @return conflict resolution type {@link ConflictResolution}
      * @see ConflictResolution
      */
-    fun resolveConflicts(receivedTransaction: FullTransaction, conflictingTransactions: List<Transaction>): ConflictResolution {
+    fun resolveConflicts(receivedTransaction: FullTransaction, conflictingTransactions: List<Transaction>, updateTransactions: MutableList<Transaction>): ConflictResolution {
         if (conflictingTransactions.isEmpty())
             return ConflictResolution.ACCEPT
 
         if (receivedTransaction.header.blockHash != null) {
+            updateTransactions.addAll(conflictingTransactions)
             return ConflictResolution.ACCEPT
         }
 
-        if (conflictingTransactions.any { it.blockHash != null }) {
-            updateConflictingTxHash(conflictingTransactions, null)
-        } else {
-            updateConflictingTxHash(conflictingTransactions, receivedTransaction.header.hash)
+        val conflictingTxHash = if (conflictingTransactions.any { it.blockHash != null })
+            null
+        else
+            receivedTransaction.header.hash
+
+        conflictingTransactions.forEach {
+            if (it.conflictingTxHash == null && conflictingTxHash != null) {
+                it.conflictingTxHash = conflictingTxHash
+                updateTransactions.add(it)
+            }
         }
 
         return ConflictResolution.IGNORE
-    }
-
-    private fun updateConflictingTxHash(conflictingTransactions: List<Transaction>, hash: ByteArray?) {
-        conflictingTransactions.forEach {
-            it.conflictingTxHash = hash
-        }
     }
 
 }
