@@ -17,7 +17,7 @@ interface TransactionInputDao {
     @Query("DELETE FROM TransactionInput WHERE transactionHash = :txHash")
     fun deleteByTxHash(txHash: ByteArray)
 
-    @Query("select * from TransactionInput where transactionHash = :hash")
+    @Query("select * from TransactionInput where transactionHash = :hash order by rowId")
     fun getTransactionInputs(hash: ByteArray): List<TransactionInput>
 
     @Query("select * from TransactionInput where transactionHash IN (:hashes)")
