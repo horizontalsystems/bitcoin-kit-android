@@ -1,8 +1,7 @@
 package io.horizontalsystems.bitcoincore.utils
 
 import io.horizontalsystems.bitcoincore.extensions.toHexString
-import java.net.InetAddress
-import java.net.UnknownHostException
+import java.net.*
 
 object NetworkUtils {
 
@@ -29,5 +28,19 @@ object NetworkUtils {
         }
 
         throw RuntimeException("Bad IP: " + ip.toHexString())
+    }
+
+    fun createSocket(): Socket {
+
+        val socksProxyHost = System.getProperty("socksProxyHost")
+        val socksProxyPort = System.getProperty("socksProxyPort")?.toIntOrNull()
+
+        if (socksProxyHost != null && socksProxyPort != null) {
+            val socketAddress = InetSocketAddress.createUnresolved(socksProxyHost, socksProxyPort)
+            val proxy = Proxy(Proxy.Type.SOCKS, socketAddress)
+            return Socket(proxy)
+        } else {
+            return Socket()
+        }
     }
 }
