@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
+import io.horizontalsystems.bitcoincore.utils.NetworkUtils
 import java.io.IOException
 import java.io.OutputStream
 import java.net.*
@@ -27,8 +28,9 @@ class PeerConnection(
         fun onMessage(message: IMessage)
     }
 
+    private val socket = NetworkUtils.createSocket()
+
     private val logger = Logger.getLogger("Peer[$host]")
-    private val socket = Socket()
     private var outputStream: OutputStream? = null
     private var disconnectError: Exception? = null
 
