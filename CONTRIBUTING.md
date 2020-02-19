@@ -4,7 +4,7 @@ Support for coin is implemented as a separate module that depends on the module 
 
 ### Structure of module
 
-The module depends on the bitcoincore. This dependency can be added via JitPack repository. 
+The module depends on the `bitcoincore`. This dependency can be added via JitPack repository. 
 
 In the main `build.gradle` add the JitPack repository:
 
