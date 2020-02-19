@@ -237,6 +237,10 @@ All features of the library are used in example project. It can be referred as a
 ## Dependencies
 * [HDWalletKit](https://github.com/horizontalsystems/hd-wallet-kit-android) - HD Wallet related features, mnemonic phrase 
 
+## Contributing
+
+[Contributing](CONTRIBUTING.md)
+
 ## License
 
 The `BitcoinKit` is open source and available under the terms of the [MIT License](https://github.com/horizontalsystems/bitcoin-kit-android/blob/master/LICENSE)
