@@ -1,6 +1,6 @@
 ## Implementing support for a new coin for external developers
 
-Support for coin is implemented as a separate module that depends on the module bitcoincore. This repository contains modules for supporting coins like `Bitcoin`, `BitcoinCash` and `Dash`. Support for a new coin should be implemented in the owners repository.
+Support for coin is implemented as a separate module that depends on the module `bitcoincore`. This repository contains modules for supporting coins like `Bitcoin`, `BitcoinCash` and `Dash`. Support for a new coin should be implemented in the owners repository.
 
 ### Structure of module
 
@@ -31,4 +31,4 @@ Customizing can be done in 2 places:
 
 There are multiple places that can be customized. See the modules [`bitcoinkit`](bitcoinkit), [`bitcoincashkit`](bitcoincashkit) and [`dashkit`](dashkit) for reference. If you need a new extension point please [add an issue](https://github.com/horizontalsystems/bitcoin-kit-android/issues/new).
 
-When the module is ready publish it using for example JitPack. When it is published let us know about this module. We will add it to our list of 3rd party coin implementations.
+When the module is released let us know about it. We will review it and decide whether to add it to Unstoppable wallet app.
