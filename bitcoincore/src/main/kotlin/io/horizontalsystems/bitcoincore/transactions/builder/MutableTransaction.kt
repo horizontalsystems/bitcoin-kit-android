@@ -27,14 +27,12 @@ class MutableTransaction(isOutgoing: Boolean = true) {
         get() {
             val list = mutableListOf<TransactionOutput>()
 
-            var index = 0
-
             recipientAddress.let {
-                list.add(TransactionOutput(recipientValue, index++, it.lockingScript, it.scriptType, it.string, it.hash))
+                list.add(TransactionOutput(recipientValue, 0, it.lockingScript, it.scriptType, it.string, it.hash))
             }
 
             changeAddress?.let {
-                list.add(TransactionOutput(changeValue, index++, it.lockingScript, it.scriptType, it.string, it.hash))
+                list.add(TransactionOutput(changeValue, 0, it.lockingScript, it.scriptType, it.string, it.hash))
             }
 
             if (pluginData.isNotEmpty()) {
@@ -43,10 +41,14 @@ class MutableTransaction(isOutgoing: Boolean = true) {
                     data += byteArrayOf(it.key) + it.value
                 }
 
-                list.add(TransactionOutput(0, index++, data, ScriptType.NULL_DATA))
+                list.add(TransactionOutput(0, 0, data, ScriptType.NULL_DATA))
             }
 
             Collections.sort(list, Bip69.outputComparator)
+
+            list.forEachIndexed { index, transactionOutput ->
+                transactionOutput.index = index
+            }
 
             return list
         }
