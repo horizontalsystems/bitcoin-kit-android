@@ -67,7 +67,7 @@ class BitcoinCashKit : AbstractKit {
 
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://bch.coin.space/api"
+                initialSyncUrl = "https://cashexplorer.bitcoin.com/api"
                 MainNetBitcoinCash()
             }
             NetworkType.TestNet -> {

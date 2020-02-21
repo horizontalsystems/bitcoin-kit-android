@@ -2,12 +2,16 @@ package io.horizontalsystems.bitcoincore.managers
 
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonValue
+import io.horizontalsystems.bitcoincore.utils.NetworkUtils
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.BufferedOutputStream
 import java.io.BufferedWriter
 import java.io.IOException
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.TimeUnit
 import java.util.logging.Logger
 
 class ApiManager(private val host: String) {
@@ -60,4 +64,37 @@ class ApiManager(private val host: String) {
         }
     }
 
+    fun doOkHttpGet(safeCall: Boolean, uri: String): JsonValue {
+
+        val url = "$host/$uri"
+
+        try {
+            val httpClient: OkHttpClient
+
+            if (!safeCall)
+                httpClient = NetworkUtils.getUnsafeOkHttpClient()
+            else {
+                httpClient = OkHttpClient.Builder()
+                        .apply {
+                            connectTimeout(5000, TimeUnit.MILLISECONDS)
+                            readTimeout(60000, TimeUnit.MILLISECONDS)
+                        }.build()
+            }
+
+            httpClient.newCall(Request.Builder().url(url).build())
+                    .execute()
+                    .use { response ->
+
+                        if (response.isSuccessful) {
+                            response.body?.let {
+                                return Json.parse(it.string())
+                            }
+                        }
+
+                        throw IOException("Unexpected Error:$response")
+                    }
+        } catch (e: Exception) {
+            throw Exception("${e.javaClass.simpleName}: $host, ${e.localizedMessage}")
+        }
+    }
 }
