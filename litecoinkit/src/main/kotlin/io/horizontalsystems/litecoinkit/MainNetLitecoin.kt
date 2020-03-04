@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
-class MainNet : Network() {
+class MainNetLitecoin : Network() {
     override val protocolVersion: Int = 70015
     override var port: Int = 9333
 
@@ -23,8 +23,8 @@ class MainNet : Network() {
     override val syncableFromApi = false
 
     override var dnsSeeds = listOf(
-            "dnsseed.litecoinpool.org",
-            "seed-a.litecoin.loshan.co.uk",
+//            "dnsseed.litecoinpool.org",
+//            "seed-a.litecoin.loshan.co.uk",
             "dnsseed.thrasher.io",
             "dnsseed.koin-project.com",
             "dnsseed.litecointools.com"
