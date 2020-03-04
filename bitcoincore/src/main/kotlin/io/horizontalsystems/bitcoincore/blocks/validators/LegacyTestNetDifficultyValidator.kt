@@ -8,7 +8,7 @@ class LegacyTestNetDifficultyValidator(
         private val heightInterval: Long,
         private val targetSpacing: Int,
         private val maxTargetBits: Long)
-    : IBlockValidator {
+    : IBlockChainedValidator {
 
     private val diffDate = 1329264000 // February 16th 2012
 

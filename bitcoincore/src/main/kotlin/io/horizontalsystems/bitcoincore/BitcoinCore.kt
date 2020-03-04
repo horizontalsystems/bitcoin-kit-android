@@ -2,9 +2,7 @@ package io.horizontalsystems.bitcoincore
 
 import android.content.Context
 import io.horizontalsystems.bitcoincore.blocks.*
-import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
-import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.core.*
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.*
@@ -39,14 +37,14 @@ class BitcoinCoreBuilder {
     private var storage: IStorage? = null
     private var initialSyncApi: IInitialSyncApi? = null
     private var bip: Bip = Bip.BIP44
+    private var blockHeaderHasher: IHasher? = null
+    private var transactionInfoConverter: ITransactionInfoConverter? = null
+    private var blockValidator: IBlockValidator? = null
 
     // parameters with default values
     private var confirmationsThreshold = 6
     private var syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api()
     private var peerSize = 10
-    private var blockHeaderHasher: IHasher? = null
-    private var transactionInfoConverter: ITransactionInfoConverter? = null
-
     private val plugins = mutableListOf<IPlugin>()
 
     fun setContext(context: Context): BitcoinCoreBuilder {
@@ -114,6 +112,11 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setBlockValidator(blockValidator: IBlockValidator): BitcoinCoreBuilder {
+        this.blockValidator = blockValidator
+        return this
+    }
+
     fun addPlugin(plugin: IPlugin): BitcoinCoreBuilder {
         plugins.add(plugin)
         return this
@@ -166,8 +169,7 @@ class BitcoinCoreBuilder {
         val networkMessageParser = NetworkMessageParser(network.magic)
         val networkMessageSerializer = NetworkMessageSerializer(network.magic)
 
-        val blockValidatorChain = BlockValidatorChain(ProofOfWorkValidator())
-        val blockchain = Blockchain(storage, blockValidatorChain, dataProvider)
+        val blockchain = Blockchain(storage, blockValidator, dataProvider)
         val checkpointBlock = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
 
         val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateProvider, checkpointBlock)
@@ -214,7 +216,6 @@ class BitcoinCoreBuilder {
                 transactionFeeCalculator,
                 paymentAddressParser,
                 syncManager,
-                blockValidatorChain,
                 bip,
                 peerManager,
                 dustCalculator,
@@ -305,7 +306,6 @@ class BitcoinCore(
         private val transactionFeeCalculator: TransactionFeeCalculator,
         private val paymentAddressParser: PaymentAddressParser,
         private val syncManager: SyncManager,
-        private val blockValidatorChain: BlockValidatorChain,
         private val bip: Bip,
         private var peerManager: PeerManager,
         private val dustCalculator: DustCalculator,
@@ -370,10 +370,6 @@ class BitcoinCore(
 
     fun prependAddressConverter(converter: IAddressConverter) {
         addressConverter.prependConverter(converter)
-    }
-
-    fun addBlockValidator(validator: IBlockValidator) {
-        blockValidatorChain.add(validator)
     }
 
     // END: Extending

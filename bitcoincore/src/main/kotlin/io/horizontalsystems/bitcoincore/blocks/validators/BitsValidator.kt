@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoincore.blocks.validators
 
 import io.horizontalsystems.bitcoincore.models.Block
 
-class BitsValidator : IBlockValidator {
+class BitsValidator : IBlockChainedValidator {
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return true

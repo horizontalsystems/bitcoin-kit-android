@@ -7,7 +7,11 @@ import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 
-class Blockchain(private val storage: IStorage, private val blockValidator: IBlockValidator, private val dataListener: IBlockchainDataListener) {
+class Blockchain(
+        private val storage: IStorage,
+        private val blockValidator: IBlockValidator?,
+        private val dataListener: IBlockchainDataListener
+) {
 
     fun connect(merkleBlock: MerkleBlock): Block {
         val blockInDB = storage.getBlock(merkleBlock.blockHash)
@@ -16,12 +20,10 @@ class Blockchain(private val storage: IStorage, private val blockValidator: IBlo
         }
 
         val parentBlock = storage.getBlock(merkleBlock.header.previousBlockHeaderHash)
-        if (parentBlock == null) {
-            throw BlockValidatorException.NoPreviousBlock()
-        }
+                ?: throw BlockValidatorException.NoPreviousBlock()
 
         val block = Block(merkleBlock.header, parentBlock)
-        blockValidator.validate(block, parentBlock)
+        blockValidator?.validate(block, parentBlock)
 
         block.stale = true
 

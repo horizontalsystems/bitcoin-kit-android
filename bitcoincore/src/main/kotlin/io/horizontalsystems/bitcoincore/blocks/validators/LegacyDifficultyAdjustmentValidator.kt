@@ -11,7 +11,7 @@ class LegacyDifficultyAdjustmentValidator(
         private val heightInterval: Long,
         private val targetTimespan: Long,
         private val maxTargetBits: Long)
-    : IBlockValidator {
+    : IBlockChainedValidator {
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return block.height % heightInterval == 0L

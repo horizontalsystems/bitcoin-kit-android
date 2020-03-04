@@ -11,7 +11,10 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.InsightApi
@@ -79,6 +82,22 @@ class BitcoinCashKit : AbstractKit {
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
         val initialSyncApi = InsightApi(initialSyncUrl)
 
+        val blockValidatorSet = BlockValidatorSet()
+        blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
+
+        val blockValidatorChain = BlockValidatorChain()
+        if (networkType == NetworkType.MainNet) {
+            val blockHelper = BitcoinCashBlockValidatorHelper(storage)
+
+            val daaValidator = DAAValidator(targetSpacing, blockHelper)
+            blockValidatorChain.add(ForkValidator(svForkHeight, abcForkBlockHash, daaValidator))
+            blockValidatorChain.add(daaValidator)
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
+            blockValidatorChain.add(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height, BlockMedianTimeHelper(storage)))
+        }
+
+        blockValidatorSet.addBlockValidator(blockValidatorChain)
+
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
                 .setSeed(seed)
@@ -89,27 +108,15 @@ class BitcoinCashKit : AbstractKit {
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
+                .setBlockValidator(blockValidatorSet)
                 .build()
 
         //  extending bitcoinCore
 
         val bech32 = CashAddressConverter(network.addressSegwitHrp)
-        val base58 = Base58AddressConverter(network.addressVersion ,network.addressScriptVersion)
+        val base58 = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
 
         bitcoinCore.prependAddressConverter(bech32)
-
-        if (networkType == NetworkType.MainNet) {
-            val blockHelper = BitcoinCashBlockValidatorHelper(storage)
-
-            val svForkHeight = 556767
-            val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
-
-            val daaValidator = DAAValidator(targetSpacing, blockHelper)
-            bitcoinCore.addBlockValidator(ForkValidator(svForkHeight, abcForkBlockHash, daaValidator))
-            bitcoinCore.addBlockValidator(daaValidator)
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
-            bitcoinCore.addBlockValidator(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height, BlockMedianTimeHelper(storage)))
-        }
 
         bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
     }
@@ -120,10 +127,11 @@ class BitcoinCashKit : AbstractKit {
 
     companion object {
         val maxTargetBits: Long = 0x1d00ffff                // Maximum difficulty
-
         val targetSpacing = 10 * 60                         // 10 minutes per block.
         val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
         var heightInterval = targetTimespan / targetSpacing // 2016 blocks
+        val svForkHeight = 556767
+        val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
 
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode): String = "BitcoinCash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
