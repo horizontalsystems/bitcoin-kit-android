@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
-class TestNet : Network() {
+class TestNetLitecoin : Network() {
     override val protocolVersion: Int = 70015
     override var port: Int = 19335
 

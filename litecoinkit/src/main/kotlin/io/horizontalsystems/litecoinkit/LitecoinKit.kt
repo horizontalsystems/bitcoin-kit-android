@@ -70,11 +70,11 @@ class LitecoinKit : AbstractKit {
         network = when (networkType) {
             NetworkType.MainNet -> {
                 initialSyncUrl = "https://ltc.horizontalsystems.xyz/apg"
-                MainNet()
+                MainNetLitecoin()
             }
             NetworkType.TestNet -> {
                 initialSyncUrl = "http://ltc-testnet.horizontalsystems.xyz/apg"
-                TestNet()
+                TestNetLitecoin()
             }
         }
 
