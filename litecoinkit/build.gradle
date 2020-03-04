@@ -46,6 +46,8 @@ dependencies {
     implementation "android.arch.persistence.room:rxjava2:1.1.1"
     kapt "android.arch.persistence.room:compiler:1.1.1"
 
+    implementation "com.lambdaworks:scrypt:1.4.0"
+
     api project(':bitcoincore')
     api project(':hodler')
 

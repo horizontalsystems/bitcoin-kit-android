@@ -21,6 +21,7 @@ import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.horizontalsystems.litecoinkit.validators.ProofOfWorkValidator
 import io.reactivex.Single
 
 class LitecoinKit : AbstractKit {
@@ -82,7 +83,9 @@ class LitecoinKit : AbstractKit {
 
         // TODO need to implement block validators and set them
         val blockValidatorSet = BlockValidatorSet()
-//        blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
+
+        val proofOfWorkValidator = ProofOfWorkValidator(ScryptHasher())
+        blockValidatorSet.addBlockValidator(proofOfWorkValidator)
 
         val blockValidatorChain = BlockValidatorChain()
 
