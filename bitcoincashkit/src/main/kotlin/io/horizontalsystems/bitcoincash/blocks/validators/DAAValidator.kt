@@ -2,11 +2,14 @@ package io.horizontalsystems.bitcoincash.blocks.validators
 
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockChainedValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 
-class DAAValidator(private val targetSpacing: Int, private val blockValidatorHelper: BitcoinCashBlockValidatorHelper) : IBlockValidator {
+class DAAValidator(
+        private val targetSpacing: Int,
+        private val blockValidatorHelper: BitcoinCashBlockValidatorHelper
+) : IBlockChainedValidator {
     private val largestHash = 1.toBigInteger() shl 256
     private val consensusDaaForkHeight = 504030 // 2017 November 3, 14:06 GMT
 

@@ -5,7 +5,7 @@ import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.Block
 import java.math.BigInteger
 
-class ProofOfWorkValidator : IBlockValidator {
+class ProofOfWorkValidator : IBlockChainedValidator {
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return true

@@ -1,11 +1,16 @@
 package io.horizontalsystems.dashkit.validators
 
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockChainedValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 
-class DarkGravityWaveTestnetValidator(private val targetSpacing: Int, private val targetTimespan: Long, private val maxTargetBits: Long, private val powDGWHeight: Int) : IBlockValidator {
+class DarkGravityWaveTestnetValidator(
+        private val targetSpacing: Int,
+        private val targetTimespan: Long,
+        private val maxTargetBits: Long,
+        private val powDGWHeight: Int
+) : IBlockChainedValidator {
 
     override fun validate(block: Block, previousBlock: Block) {
         if (block.timestamp > previousBlock.timestamp + 2 * targetTimespan) { // more than 2 cycles

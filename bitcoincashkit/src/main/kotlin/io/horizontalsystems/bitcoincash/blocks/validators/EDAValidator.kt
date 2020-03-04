@@ -3,12 +3,17 @@ package io.horizontalsystems.bitcoincash.blocks.validators
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockChainedValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.models.Block
 
 // Emergency Difficulty Adjustment
-class EDAValidator(private val maxTargetBits: Long, private val blockValidatorHelper: BitcoinCashBlockValidatorHelper, val firstCheckpointHeight: Int, private val blockMedianTimeHelper: BlockMedianTimeHelper) : IBlockValidator {
+class EDAValidator(
+        private val maxTargetBits: Long,
+        private val blockValidatorHelper: BitcoinCashBlockValidatorHelper,
+        val firstCheckpointHeight: Int,
+        private val blockMedianTimeHelper: BlockMedianTimeHelper
+) : IBlockChainedValidator {
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return true

@@ -6,6 +6,9 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
+import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
@@ -105,6 +108,22 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
         dashTransactionInfoConverter = DashTransactionInfoConverter(instantTransactionManager)
 
+        val blockHelper = BlockValidatorHelper(coreStorage)
+
+        val blockValidatorSet = BlockValidatorSet()
+        blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
+
+        val blockValidatorChain = BlockValidatorChain()
+
+        if (network is MainNetDash) {
+            blockValidatorChain.add(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.lastCheckpointBlock.height, 68589))
+        } else {
+            blockValidatorChain.add(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits, 4002))
+            blockValidatorChain.add(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.lastCheckpointBlock.height, 4002))
+        }
+
+        blockValidatorSet.addBlockValidator(blockValidatorChain)
+
         bitcoinCore = BitcoinCoreBuilder()
                 .setContext(context)
                 .setSeed(seed)
@@ -117,20 +136,14 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setBlockHeaderHasher(X11Hasher())
                 .setInitialSyncApi(initialSyncApi)
                 .setTransactionInfoConverter(dashTransactionInfoConverter)
+                .setBlockValidator(blockValidatorSet)
                 .build()
 
         bitcoinCore.listener = this
 
         //  extending bitcoinCore
 
-        val blockHelper = BlockValidatorHelper(coreStorage)
 
-        if (network is MainNetDash) {
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.lastCheckpointBlock.height, 68589))
-        } else {
-            bitcoinCore.addBlockValidator(DarkGravityWaveTestnetValidator(targetSpacing, targetTimespan, maxTargetBits, 4002))
-            bitcoinCore.addBlockValidator(DarkGravityWaveValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits, network.lastCheckpointBlock.height, 4002))
-        }
 
         bitcoinCore.addMessageParser(MasternodeListDiffMessageParser())
                 .addMessageParser(TransactionLockMessageParser())

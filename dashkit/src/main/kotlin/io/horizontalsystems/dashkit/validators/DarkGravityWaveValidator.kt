@@ -1,7 +1,7 @@
 package io.horizontalsystems.dashkit.validators
 
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
-import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockChainedValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
@@ -15,7 +15,7 @@ class DarkGravityWaveValidator(
         private val maxTargetBits: Long,
         private val firstCheckpoint: Int,
         private val powDGWHeight: Int
-) : IBlockValidator {
+) : IBlockChainedValidator {
 
     override fun validate(block: Block, previousBlock: Block) {
         check(previousBlock.height >= firstCheckpoint + heightInterval) {

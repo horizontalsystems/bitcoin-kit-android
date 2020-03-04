@@ -7,9 +7,7 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
-import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
-import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
-import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
+import io.horizontalsystems.bitcoincore.blocks.validators.*
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -81,6 +79,24 @@ class BitcoinKit : AbstractKit {
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
         val initialSyncApi = BCoinApi(initialSyncUrl)
 
+        val blockHelper = BlockValidatorHelper(storage)
+
+        val blockValidatorSet = BlockValidatorSet()
+        blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
+
+        val blockValidatorChain = BlockValidatorChain()
+
+        if (networkType == NetworkType.MainNet) {
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
+            blockValidatorChain.add(BitsValidator())
+        } else if (networkType == NetworkType.TestNet) {
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
+            blockValidatorChain.add(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
+            blockValidatorChain.add(BitsValidator())
+        }
+
+        blockValidatorSet.addBlockValidator(blockValidatorChain)
+
         val coreBuilder = BitcoinCoreBuilder()
 
         bitcoinCore = coreBuilder
@@ -94,6 +110,7 @@ class BitcoinKit : AbstractKit {
                 .setConfirmationThreshold(confirmationsThreshold)
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
+                .setBlockValidator(blockValidatorSet)
                 .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
                 .build()
 
@@ -103,17 +120,6 @@ class BitcoinKit : AbstractKit {
         val base58AddressConverter = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
 
         bitcoinCore.prependAddressConverter(bech32AddressConverter)
-
-        val blockHelper = BlockValidatorHelper(storage)
-
-        if (networkType == NetworkType.MainNet) {
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
-            bitcoinCore.addBlockValidator(BitsValidator())
-        } else if (networkType == NetworkType.TestNet) {
-            bitcoinCore.addBlockValidator(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
-            bitcoinCore.addBlockValidator(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
-            bitcoinCore.addBlockValidator(BitsValidator())
-        }
 
         when (bip) {
             Bip.BIP44 -> {
