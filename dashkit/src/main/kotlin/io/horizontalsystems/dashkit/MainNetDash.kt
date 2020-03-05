@@ -1,9 +1,6 @@
 package io.horizontalsystems.dashkit
 
-import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 class MainNetDash : Network() {
 
@@ -28,15 +25,4 @@ class MainNetDash : Network() {
             "dnsseed.dashdot.io",
             "dnsseed.masternode.io"
     )
-
-    override val bip44CheckpointBlock = Block(BlockHeader(
-            version = 1,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000"),
-            merkleRoot = HashUtils.toBytesAsLE("4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b"),
-            timestamp = 1231006505,
-            bits = 486604799,
-            nonce = 2083236893,
-            hash = HashUtils.toBytesAsLE("00000ffd590b1485b3caadc19b22e6379c733355108f107a430458cdf3407ab6")
-    ), 0)
-
 }
