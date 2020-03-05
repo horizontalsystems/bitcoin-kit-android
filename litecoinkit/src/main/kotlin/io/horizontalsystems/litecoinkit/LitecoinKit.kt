@@ -6,13 +6,12 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
+import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoincore.core.Bip
-import io.horizontalsystems.bitcoincore.managers.BCoinApi
-import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.Bip49RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.Bip84RestoreKeyConverter
+import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -21,6 +20,7 @@ import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.horizontalsystems.litecoinkit.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.litecoinkit.validators.ProofOfWorkValidator
 import io.reactivex.Single
 
@@ -81,7 +81,6 @@ class LitecoinKit : AbstractKit {
         val paymentAddressParser = PaymentAddressParser("litecoin", removeScheme = true)
         val initialSyncApi = BCoinApi(initialSyncUrl)
 
-        // TODO need to implement block validators and set them
         val blockValidatorSet = BlockValidatorSet()
 
         val proofOfWorkValidator = ProofOfWorkValidator(ScryptHasher())
@@ -89,16 +88,16 @@ class LitecoinKit : AbstractKit {
 
         val blockValidatorChain = BlockValidatorChain()
 
-//        val blockHelper = BlockValidatorHelper(storage)
+        val blockHelper = BlockValidatorHelper(storage)
 
-//        if (networkType == NetworkType.MainNet) {
-//            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
-//            blockValidatorChain.add(BitsValidator())
-//        } else if (networkType == NetworkType.TestNet) {
-//            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
-//            blockValidatorChain.add(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
-//            blockValidatorChain.add(BitsValidator())
-//        }
+        if (networkType == NetworkType.MainNet) {
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
+            blockValidatorChain.add(BitsValidator())
+        } else if (networkType == NetworkType.TestNet) {
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
+            blockValidatorChain.add(LegacyTestNetDifficultyValidator(storage, heightInterval, targetSpacing, maxTargetBits))
+            blockValidatorChain.add(BitsValidator())
+        }
 
         blockValidatorSet.addBlockValidator(blockValidatorChain)
 
@@ -145,6 +144,11 @@ class LitecoinKit : AbstractKit {
     }
 
     companion object {
+
+        const val maxTargetBits: Long = 0x1e0fffff      // Maximum difficulty
+        const val targetSpacing = 150                   // 2.5 minutes per block.
+        const val targetTimespan: Long = 302400         // 3.5 days per difficulty cycle, on average.
+        const val heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip): String = "Litecoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${bip.name}"
 

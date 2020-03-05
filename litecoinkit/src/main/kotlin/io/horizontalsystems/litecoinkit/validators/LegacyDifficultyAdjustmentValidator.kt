@@ -1,5 +1,7 @@
-package io.horizontalsystems.bitcoincore.blocks.validators
+package io.horizontalsystems.litecoinkit.validators
 
+import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorException
+import io.horizontalsystems.bitcoincore.blocks.validators.IBlockChainedValidator
 import io.horizontalsystems.bitcoincore.crypto.CompactBits
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
@@ -18,12 +20,12 @@ class LegacyDifficultyAdjustmentValidator(
     }
 
     override fun validate(block: Block, previousBlock: Block) {
-        val lastCheckPointBlock = checkNotNull(validatorHelper.getPrevious(block, heightInterval.toInt())) {
+        val beforeLastCheckPointBlock = checkNotNull(validatorHelper.getPrevious(block, heightInterval.toInt() + 1)) {
             BlockValidatorException.NoCheckpointBlock()
         }
 
         //  Limit the adjustment step
-        var timespan = previousBlock.timestamp - lastCheckPointBlock.timestamp
+        var timespan = previousBlock.timestamp - beforeLastCheckPointBlock.timestamp
         if (timespan < targetTimespan / 4)
             timespan = targetTimespan / 4
         if (timespan > targetTimespan * 4)
@@ -40,4 +42,5 @@ class LegacyDifficultyAdjustmentValidator(
             throw BlockValidatorException.NotDifficultyTransitionEqualBits()
         }
     }
+
 }
