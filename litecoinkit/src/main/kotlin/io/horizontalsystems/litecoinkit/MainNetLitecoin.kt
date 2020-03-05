@@ -23,11 +23,11 @@ class MainNetLitecoin : Network() {
     override val syncableFromApi = false
 
     override var dnsSeeds = listOf(
-//            "dnsseed.litecoinpool.org",
-//            "seed-a.litecoin.loshan.co.uk",
             "dnsseed.thrasher.io",
             "dnsseed.koin-project.com",
-            "dnsseed.litecointools.com"
+            "dnsseed.litecointools.com",
+            "dnsseed.litecoinpool.org",
+            "seed-a.litecoin.loshan.co.uk"
     )
 
 
