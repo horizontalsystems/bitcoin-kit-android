@@ -29,20 +29,20 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
 
     private val syncers = mutableListOf<CheckpointSyncer>().also {
         // Bitcoin
-        it.add(CheckpointSyncer(MainNet(), 2016, this))
-        it.add(CheckpointSyncer(TestNet(), 2016, this))
+        it.add(CheckpointSyncer(MainNet(), 2016, 1, this))
+        it.add(CheckpointSyncer(TestNet(), 2016, 1, this))
 
         // Bitcoin Cash
-        it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, this))
-        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, this))
+        it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, 148, this))
+        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 148, this))
 
         // Dash
-        it.add(CheckpointSyncer(MainNetDash(), 24, this))
-        it.add(CheckpointSyncer(TestNetDash(), 24, this))
+        it.add(CheckpointSyncer(MainNetDash(), 24, 24, this))
+        it.add(CheckpointSyncer(TestNetDash(), 24, 24, this))
 
         // Litecoin
-        it.add(CheckpointSyncer(MainNetLitecoin(), 2016, this))
-        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, this))
+        it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 1, this))
+        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 1, this))
     }
 
     init {
@@ -70,9 +70,12 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         val buffer = ByteBuffer.allocate(80 + 4 + 32) // header + block height + block hash
         val writer = PrintWriter(outputStream)
 
-        val checkpoint = checkpoints.last()
-        buffer.put(serialize(checkpoint))
-        writer.println(buffer.array().toHexString())
+        checkpoints.forEach {
+            buffer.put(serialize(it))
+            writer.println(buffer.array().toHexString())
+            buffer.clear()
+        }
+
         writer.close()
     }
 

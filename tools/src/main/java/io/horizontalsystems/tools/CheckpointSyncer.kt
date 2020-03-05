@@ -23,6 +23,7 @@ import java.util.concurrent.Executors
 class CheckpointSyncer(
         private val network: Network,
         private val checkpointInterval: Int,
+        private val checkpointsToKeep: Int,
         private val listener: Listener)
     : PeerGroup.Listener, IPeerTaskHandler {
 
@@ -121,6 +122,12 @@ class CheckpointSyncer(
     private fun validateHeaders(peer: Peer, headers: Array<BlockHeader>) {
         var prevBlock = blocks.last()
 
+        if (headers.size < 2000) {
+            peer.synced = true
+            downloadBlockchain()
+            return
+        }
+
         for (header in headers) {
             if (!prevBlock.headerHash.contentEquals(header.previousBlockHeaderHash)) {
                 syncPeer = null
@@ -138,10 +145,6 @@ class CheckpointSyncer(
             prevBlock = newBlock
         }
 
-        if (headers.size < 2000) {
-            peer.synced = true
-        }
-
         downloadBlockchain()
     }
 
@@ -150,8 +153,19 @@ class CheckpointSyncer(
             if (peerManager.connected().none { !it.synced }) {
                 isSynced = true
                 peerGroup.stop()
-                listener.onSync(network, checkpoints)
                 print("Synced")
+
+                val checkpoint = checkpoints.last()
+
+                if (checkpointsToKeep == 1) {
+                    listener.onSync(network, listOf(checkpoint))
+                    return@execute
+                }
+
+                if (checkpoint.height <= blocks.last.height && blocks.size >= checkpointsToKeep) {
+                    val filter = blocks.filter { it.height <= checkpoint.height }
+                    listener.onSync(network, filter.takeLast(checkpointsToKeep).reversed())
+                }
 
                 return@execute
             }
