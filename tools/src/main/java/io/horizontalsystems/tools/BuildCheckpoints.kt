@@ -33,16 +33,16 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         it.add(CheckpointSyncer(TestNet(), 2016, 1, this))
 
         // Bitcoin Cash
-        it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, 148, this))
-        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 148, this))
+        it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, 147, this))
+        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 147, this))
 
         // Dash
         it.add(CheckpointSyncer(MainNetDash(), 24, 24, this))
         it.add(CheckpointSyncer(TestNetDash(), 24, 24, this))
 
         // Litecoin
-        it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 1, this))
-        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 1, this))
+        it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
+        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
     }
 
     init {
