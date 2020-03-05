@@ -12,7 +12,17 @@ import java.math.BigInteger
 class ProofOfWorkValidator(private val scryptHasher: ScryptHasher) : IBlockChainedValidator {
 
     override fun validate(block: Block, previousBlock: Block) {
-        val blockHeaderData = BitcoinOutput()
+        val blockHeaderData = getSerializedBlockHeader(block)
+
+        val powHash = scryptHasher.hash(blockHeaderData).toHexString()
+
+        check(BigInteger(powHash, 16) < CompactBits.decode(block.bits)) {
+            throw BlockValidatorException.InvalidProofOfWork()
+        }
+    }
+
+    private fun getSerializedBlockHeader(block: Block): ByteArray {
+        return BitcoinOutput()
                 .writeInt(block.version)
                 .write(block.previousBlockHash)
                 .write(block.merkleRoot)
@@ -20,12 +30,6 @@ class ProofOfWorkValidator(private val scryptHasher: ScryptHasher) : IBlockChain
                 .writeUnsignedInt(block.bits)
                 .writeUnsignedInt(block.nonce)
                 .toByteArray()
-
-        val powHash = scryptHasher.hash(blockHeaderData).toHexString()
-
-        check(BigInteger(powHash, 16) < CompactBits.decode(block.bits)) {
-            throw BlockValidatorException.InvalidProofOfWork()
-        }
     }
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
