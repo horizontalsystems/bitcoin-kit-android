@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoincore.blocks.validators
 
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.whenever
-import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
@@ -19,7 +18,7 @@ object LegacyDifficultyAdjustmentValidatorTest : Spek({
     val blockHelper = BlockValidatorHelper(storage)
 
     val validator by memoized {
-        LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits)
+        LegacyDifficultyAdjustmentValidator(blockHelper, 2016, 14 * 24 * 60 * 60, 0x1d00ffff)
     }
 
     describe("#isBlockValidatable") {

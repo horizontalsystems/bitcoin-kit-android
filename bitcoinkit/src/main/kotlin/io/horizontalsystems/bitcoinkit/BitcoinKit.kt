@@ -87,11 +87,11 @@ class BitcoinKit : AbstractKit {
         val blockValidatorChain = BlockValidatorChain()
 
         if (networkType == NetworkType.MainNet) {
-            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
             blockValidatorChain.add(BitsValidator())
         } else if (networkType == NetworkType.TestNet) {
-            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, BitcoinCore.heightInterval, BitcoinCore.targetTimespan, BitcoinCore.maxTargetBits))
-            blockValidatorChain.add(LegacyTestNetDifficultyValidator(storage, BitcoinCore.heightInterval, BitcoinCore.targetSpacing, BitcoinCore.maxTargetBits))
+            blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
+            blockValidatorChain.add(LegacyTestNetDifficultyValidator(storage, heightInterval, targetSpacing, maxTargetBits))
             blockValidatorChain.add(BitsValidator())
         }
 
@@ -141,6 +141,10 @@ class BitcoinKit : AbstractKit {
     }
 
     companion object {
+        const val maxTargetBits: Long = 0x1d00ffff                // Maximum difficulty
+        const val targetSpacing = 10 * 60                         // 10 minutes per block.
+        const val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
+        const val heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip): String = "Bitcoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${bip.name}"
 
