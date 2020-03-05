@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoincash
 
-import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
-import io.horizontalsystems.bitcoincore.utils.HashUtils
 import kotlin.experimental.or
 
 class MainNetBitcoinCash : Network() {
@@ -32,15 +29,4 @@ class MainNetBitcoinCash : Network() {
             "seed.deadalnix.me",                    // Amaury SÉCHET
             "seeder.criptolayer.net"                // criptolayer.net
     )
-
-    override val bip44CheckpointBlock = Block(BlockHeader(
-            version = 2,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000006bcf448b771c8f4db4e2ca653474e3b29504ec08422b3fba"),
-            merkleRoot = HashUtils.toBytesAsLE("4ea18e999a57fc55fb390558dbb88a7b9c55c71c7de4cec160c045802ee587d2"),
-            timestamp = 1397755646,
-            bits = 419470732,
-            nonce = 2160181286,
-            hash = HashUtils.toBytesAsLE("00000000000000003decdbb5f3811eab3148fbc29d3610528eb3b50d9ee5723f")
-    ), 296352)
-
 }

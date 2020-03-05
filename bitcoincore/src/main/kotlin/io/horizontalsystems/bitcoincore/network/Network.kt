@@ -34,14 +34,14 @@ abstract class Network {
     abstract var addressSegwitHrp: String
     abstract var addressScriptVersion: Int
 
-    abstract val bip44CheckpointBlock: Block
+    open val bip44CheckpointBlock: Block = readLastCheckpoint("-bip44")
     open val lastCheckpointBlock: Block = readLastCheckpoint()
 
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
 
-    private fun readLastCheckpoint(): Block {
-        val stream = javaClass.classLoader?.getResourceAsStream("${javaClass.simpleName}.checkpoint")
+    private fun readLastCheckpoint(fileSuffix: String = javaClass.simpleName): Block {
+        val stream = javaClass.classLoader?.getResourceAsStream("${javaClass.simpleName}${fileSuffix}.checkpoint")
         val inputStreamReader: Reader = InputStreamReader(stream)
         val reader = BufferedReader(inputStreamReader)
         val checkpoint = reader.readLine()

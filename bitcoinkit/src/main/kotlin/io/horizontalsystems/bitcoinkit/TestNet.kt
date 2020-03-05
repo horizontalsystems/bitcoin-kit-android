@@ -1,9 +1,6 @@
 package io.horizontalsystems.bitcoinkit
 
-import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 class TestNet : Network() {
 
@@ -27,15 +24,4 @@ class TestNet : Network() {
             "testnet-seed.bitcoin.schildbach.de",    // Andreas Schildbach
             "bitcoin-testnet.bloqseeds.net"          // Bloq
     )
-
-    override val bip44CheckpointBlock = Block(BlockHeader(
-            version = 2,
-            previousBlockHeaderHash = HashUtils.toBytesAsLE("0000000003dc49f7472f960eedb4fb2d1ccc8b0530ca6c75ed2bba9718b6f297"),
-            merkleRoot = HashUtils.toBytesAsLE("a60fdbc889976c573450e9f78f1c330e374968a54f294e427180da1e9a07806b"),
-            timestamp = 1393645018,
-            bits = 0x1c0180ab,
-            nonce = 634051227,
-            hash = HashUtils.toBytesAsLE("000000000000bbde3a83bd29bc5cacd73f039f345318e7a4088914342c9d259a")
-    ), 199584)
-
 }
