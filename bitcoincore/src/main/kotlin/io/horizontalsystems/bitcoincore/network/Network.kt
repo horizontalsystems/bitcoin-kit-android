@@ -1,14 +1,8 @@
 package io.horizontalsystems.bitcoincore.network
 
-import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
-import io.horizontalsystems.bitcoincore.models.Block
-import io.horizontalsystems.bitcoincore.storage.BlockHeader
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.bitcoincore.utils.HashUtils
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import java.io.Reader
 
 abstract class Network {
 
@@ -34,37 +28,9 @@ abstract class Network {
     abstract var addressSegwitHrp: String
     abstract var addressScriptVersion: Int
 
-    open val bip44CheckpointBlock: Block = readLastCheckpoint("-bip44")
-    open val lastCheckpointBlock: Block = readLastCheckpoint()
+    open val bip44Checkpoint = Checkpoint("${javaClass.simpleName}-bip44.checkpoint")
+    open val lastCheckpoint = Checkpoint("${javaClass.simpleName}.checkpoint")
 
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
-
-    private fun readLastCheckpoint(fileSuffix: String = javaClass.simpleName): Block {
-        val stream = javaClass.classLoader?.getResourceAsStream("${javaClass.simpleName}${fileSuffix}.checkpoint")
-        val inputStreamReader: Reader = InputStreamReader(stream)
-        val reader = BufferedReader(inputStreamReader)
-        val checkpoint = reader.readLine()
-
-        return BitcoinInput(checkpoint.hexToByteArray()).use { input ->
-            val version = input.readInt()
-            val prevHash = input.readBytes(32)
-            val merkleHash = input.readBytes(32)
-            val timestamp = input.readUnsignedInt()
-            val bits = input.readUnsignedInt()
-            val nonce = input.readUnsignedInt()
-            val height = input.readInt()
-            val hash = input.readBytes(32)
-
-            Block(BlockHeader(
-                    version = version,
-                    previousBlockHeaderHash = prevHash,
-                    merkleRoot = merkleHash,
-                    timestamp = timestamp,
-                    bits = bits,
-                    nonce = nonce,
-                    hash = hash
-            ), height)
-        }
-    }
 }

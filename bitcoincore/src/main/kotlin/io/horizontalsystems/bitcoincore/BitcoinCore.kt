@@ -170,9 +170,9 @@ class BitcoinCoreBuilder {
         val networkMessageSerializer = NetworkMessageSerializer(network.magic)
 
         val blockchain = Blockchain(storage, blockValidator, dataProvider)
-        val checkpointBlock = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
+        val checkpoint = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
 
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateProvider, checkpointBlock)
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateProvider, checkpoint)
         val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
@@ -196,7 +196,7 @@ class BitcoinCoreBuilder {
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
-        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, network.lastCheckpointBlock.height)
+        val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, checkpoint.block.height)
         val stateManager = StateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
         val errorStorage = ErrorStorage()
         val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, kitStateProvider, errorStorage)

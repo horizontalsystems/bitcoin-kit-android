@@ -50,7 +50,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.blockHash.allBlockHashes()
     }
 
-    override fun getBlockHashHeaderHashes(except: ByteArray): List<ByteArray> {
+    override fun getBlockHashHeaderHashes(except: List<ByteArray>): List<ByteArray> {
         return store.blockHash.allBlockHashes(except)
     }
 

@@ -19,10 +19,6 @@ class DAAValidator(
 
     override fun validate(block: Block, previousBlock: Block) {
         val chunk = blockValidatorHelper.getPreviousChunk(previousBlock.height, 147)
-        if (chunk.size < 147) {
-            return
-        }
-
         validateDAA(block, chunk)
     }
 
