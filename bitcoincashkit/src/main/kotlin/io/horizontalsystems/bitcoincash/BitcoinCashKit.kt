@@ -93,7 +93,7 @@ class BitcoinCashKit : AbstractKit {
             blockValidatorChain.add(ForkValidator(svForkHeight, abcForkBlockHash, daaValidator))
             blockValidatorChain.add(daaValidator)
             blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
-            blockValidatorChain.add(EDAValidator(maxTargetBits, blockHelper, network.bip44CheckpointBlock.height, BlockMedianTimeHelper(storage)))
+            blockValidatorChain.add(EDAValidator(maxTargetBits, blockHelper, BlockMedianTimeHelper(storage)))
         }
 
         blockValidatorSet.addBlockValidator(blockValidatorChain)

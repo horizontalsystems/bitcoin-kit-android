@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.BlockHash
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.transactions.TransactionProcessor
@@ -31,15 +32,19 @@ object BlockSyncerTest : Spek({
 
     val state = mock(BlockSyncer.State::class.java)
     val checkpointBlock = mock(Block::class.java)
+    val checkpoint = mock(Checkpoint::class.java)
 
     beforeEachTest {
+        whenever(network.lastCheckpoint).thenReturn(checkpoint)
+        whenever(checkpoint.block).thenReturn(checkpointBlock)
+        whenever(checkpoint.additionalBlocks).thenReturn(listOf())
+
         whenever(checkpointBlock.height).thenReturn(1)
-        whenever(network.lastCheckpointBlock).thenReturn(checkpointBlock)
 
         whenever(storage.blocksCount()).thenReturn(1)
         whenever(storage.lastBlock()).thenReturn(null)
 
-        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpointBlock, state)
+        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpoint, state)
     }
 
     afterEachTest {
@@ -56,7 +61,7 @@ object BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(1)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpointBlock, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpoint, state)
             }
 
             it("does not saves block to storage") {
@@ -73,7 +78,7 @@ object BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(0)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpointBlock, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpoint, state)
             }
 
             it("triggers #onInitialBestBlockHeightUpdate event on listener") {
@@ -160,7 +165,7 @@ object BlockSyncerTest : Spek({
 
         beforeEach {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
-            whenever(storage.getBlockHashHeaderHashes(checkpointBlock.headerHash)).thenReturn(blocksHashes)
+            whenever(storage.getBlockHashHeaderHashes(listOf(checkpointBlock.headerHash))).thenReturn(blocksHashes)
 
             blockSyncer.prepareForDownload()
         }
@@ -171,7 +176,7 @@ object BlockSyncerTest : Spek({
         }
 
         it("clears partial blocks") {
-            verify(storage).getBlockHashHeaderHashes(checkpointBlock.headerHash)
+            verify(storage).getBlockHashHeaderHashes(listOf(checkpointBlock.headerHash))
             verify(storage).getBlocks(blocksHashes)
             verify(blockchain).deleteBlocks(any())
         }
@@ -226,7 +231,7 @@ object BlockSyncerTest : Spek({
 
         beforeEach {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
-            whenever(storage.getBlockHashHeaderHashes(checkpointBlock.headerHash)).thenReturn(blocksHashes)
+            whenever(storage.getBlockHashHeaderHashes(listOf(checkpointBlock.headerHash))).thenReturn(blocksHashes)
 
             blockSyncer.downloadFailed()
         }
@@ -237,7 +242,7 @@ object BlockSyncerTest : Spek({
         }
 
         it("clears partial blocks") {
-            verify(storage).getBlockHashHeaderHashes(checkpointBlock.headerHash)
+            verify(storage).getBlockHashHeaderHashes(listOf(checkpointBlock.headerHash))
             verify(storage).getBlocks(blocksHashes)
             verify(blockchain).deleteBlocks(any())
         }
@@ -455,22 +460,30 @@ object BlockSyncerTest : Spek({
     }
 
     describe("#getCheckpointBlock") {
+        val bip44Checkpoint = mock<Checkpoint>()
         val bip44CheckpointBlock = mock<Block>()
+        val lastCheckpoint = mock<Checkpoint>()
         val lastCheckpointBlock = mock<Block>()
         val lastBlockInDB = mock<Block>()
 
         beforeEach {
-            whenever(network.bip44CheckpointBlock).thenReturn(bip44CheckpointBlock)
-            whenever(network.lastCheckpointBlock).thenReturn(lastCheckpointBlock)
+            whenever(network.bip44Checkpoint).thenReturn(bip44Checkpoint)
+            whenever(bip44Checkpoint.block).thenReturn(bip44CheckpointBlock)
+            whenever(bip44Checkpoint.additionalBlocks).thenReturn(listOf())
+
+            whenever(network.lastCheckpoint).thenReturn(lastCheckpoint)
+            whenever(lastCheckpoint.block).thenReturn(lastCheckpointBlock)
+            whenever(lastCheckpoint.additionalBlocks).thenReturn(listOf())
+
             whenever(storage.lastBlock()).thenReturn(lastBlockInDB)
         }
 
         context("when sync mode is Full") {
             val syncMode = BitcoinCore.SyncMode.Full()
 
-            it("equals to bip44CheckpointBlock") {
-                val actual = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
-                assertEquals(bip44CheckpointBlock, actual)
+            it("equals to bip44Checkpoint") {
+                val actual = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
+                assertEquals(bip44Checkpoint, actual)
             }
         }
 
@@ -483,9 +496,9 @@ object BlockSyncerTest : Spek({
                     whenever(lastCheckpointBlock.height).thenReturn(200)
                 }
 
-                it("equals to bip44CheckpointBlock") {
-                    val actual = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
-                    assertEquals(bip44CheckpointBlock, actual)
+                it("equals to bip44Checkpoint") {
+                    val actual = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
+                    assertEquals(bip44Checkpoint, actual)
                 }
             }
 
@@ -496,9 +509,9 @@ object BlockSyncerTest : Spek({
                     whenever(lastCheckpointBlock.height).thenReturn(100)
                 }
 
-                it("equals to lastCheckpointBlock") {
-                    val actual = BlockSyncer.getCheckpointBlock(syncMode, network, storage)
-                    assertEquals(lastCheckpointBlock, actual)
+                it("equals to lastCheckpoint") {
+                    val actual = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
+                    assertEquals(lastCheckpoint, actual)
                 }
             }
         }
@@ -509,7 +522,7 @@ object BlockSyncerTest : Spek({
             }
 
             it("saves checkpoint block to DB") {
-                BlockSyncer.getCheckpointBlock(BitcoinCore.SyncMode.Full(), network, storage)
+                BlockSyncer.resolveCheckpoint(BitcoinCore.SyncMode.Full(), network, storage)
 
                 verify(storage).saveBlock(bip44CheckpointBlock)
             }

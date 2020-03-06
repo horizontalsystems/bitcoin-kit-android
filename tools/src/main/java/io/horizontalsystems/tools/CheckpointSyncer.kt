@@ -42,10 +42,10 @@ class CheckpointSyncer(
     private val peerSize = 2
     private val peerGroup: PeerGroup
 
-    private val checkpointBlock = network.lastCheckpointBlock
-    private val checkpoints = mutableListOf(checkpointBlock)
+    private val lastCheckpointBlock = network.lastCheckpoint.block
+    private val checkpoints = mutableListOf(lastCheckpointBlock)
     private val blocks = LinkedList<Block>().also {
-        it.add(checkpoints.last())
+        it.add(lastCheckpointBlock)
     }
 
     init {

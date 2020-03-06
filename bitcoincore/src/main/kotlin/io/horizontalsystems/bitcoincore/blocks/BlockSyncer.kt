@@ -3,10 +3,10 @@ package io.horizontalsystems.bitcoincore.blocks
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ISyncStateListener
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
-import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.BlockHash
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.transactions.TransactionProcessor
@@ -17,7 +17,7 @@ class BlockSyncer(
         private val transactionProcessor: TransactionProcessor,
         private val publicKeyManager: PublicKeyManager,
         private val listener: ISyncStateListener,
-        private val checkpointBlock: Block,
+        private val checkpoint: Checkpoint,
         private val state: State = State()) {
 
     private val sqliteMaxVariableNumber = 999
@@ -78,14 +78,14 @@ class BlockSyncer(
         }
 
         if (result.isEmpty()) {
-            storage.getBlocks(heightGreaterThan = checkpointBlock.height, sortedBy = "height", limit = 10).forEach {
+            storage.getBlocks(heightGreaterThan = checkpoint.block.height, sortedBy = "height", limit = 10).forEach {
                 result.add(it.headerHash)
             }
         }
 
         val lastBlock = storage.getBlock(peerLastBlockHeight)
         if (lastBlock == null) {
-            result.add(checkpointBlock.headerHash)
+            result.add(checkpoint.block.headerHash)
         } else if (!result.contains(lastBlock.headerHash)) {
             result.add(lastBlock.headerHash)
         }
@@ -130,7 +130,8 @@ class BlockSyncer(
     }
 
     private fun clearPartialBlocks() {
-        val toDelete = storage.getBlockHashHeaderHashes(except = checkpointBlock.headerHash)
+        val excludedHashes = listOf(checkpoint.block.headerHash) + checkpoint.additionalBlocks.map { it.headerHash }
+        val toDelete = storage.getBlockHashHeaderHashes(except = excludedHashes)
 
         toDelete.chunked(sqliteMaxVariableNumber).forEach {
             val blocksToDelete = storage.getBlocks(hashes = it)
@@ -150,25 +151,31 @@ class BlockSyncer(
     class State(var iterationHasPartialBlocks: Boolean = false)
 
     companion object {
-        fun getCheckpointBlock(syncMode: BitcoinCore.SyncMode, network: Network, storage: IStorage): Block {
+        fun resolveCheckpoint(syncMode: BitcoinCore.SyncMode, network: Network, storage: IStorage): Checkpoint {
             val lastBlock = storage.lastBlock()
 
-            val checkpointBlock = if (syncMode is BitcoinCore.SyncMode.Full) {
-                network.bip44CheckpointBlock
-            } else if (lastBlock != null && lastBlock.height < network.lastCheckpointBlock.height) {
-                // during app updating there may be case when the last block in DB is earlier than new checkpoint block
-                // in this case we set the very first checkpoint block for bip44,
-                // since it surely will be earlier than the last block in DB
-                network.bip44CheckpointBlock
+            val checkpoint = if (syncMode is BitcoinCore.SyncMode.Full) {
+                network.bip44Checkpoint
             } else {
-                network.lastCheckpointBlock
+                val lastCheckpoint = network.lastCheckpoint
+                if (lastBlock != null && lastBlock.height < lastCheckpoint.block.height) {
+                    // during app updating there may be case when the last block in DB is earlier than new checkpoint block
+                    // in this case we set the very first checkpoint block for bip44,
+                    // since it surely will be earlier than the last block in DB
+                    network.bip44Checkpoint
+                } else {
+                    lastCheckpoint
+                }
             }
 
             if (lastBlock == null) {
-                storage.saveBlock(checkpointBlock)
+                storage.saveBlock(checkpoint.block)
+                checkpoint.additionalBlocks.forEach { block ->
+                    storage.saveBlock(block)
+                }
             }
 
-            return checkpointBlock
+            return checkpoint
         }
     }
 

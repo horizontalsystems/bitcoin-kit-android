@@ -11,7 +11,6 @@ import io.horizontalsystems.bitcoincore.models.Block
 class EDAValidator(
         private val maxTargetBits: Long,
         private val blockValidatorHelper: BitcoinCashBlockValidatorHelper,
-        val firstCheckpointHeight: Int,
         private val blockMedianTimeHelper: BlockMedianTimeHelper
 ) : IBlockChainedValidator {
 
@@ -20,9 +19,6 @@ class EDAValidator(
     }
 
     override fun validate(block: Block, previousBlock: Block) {
-        // we must trust first 6 blocks from checkpoint, because can't calculate it's bits
-        if (previousBlock.height < firstCheckpointHeight + 6) return
-
         if (previousBlock.bits == maxTargetBits) {
             if (block.bits != maxTargetBits) {
                 throw BlockValidatorException.NotEqualBits()

@@ -14,8 +14,8 @@ interface BlockHashDao {
     @Query("SELECT headerHash FROM BlockHash")
     fun allBlockHashes(): List<ByteArray>
 
-    @Query("SELECT headerHash FROM BlockHash WHERE headerHash != :excludedHash")
-    fun allBlockHashes(excludedHash: ByteArray): List<ByteArray>
+    @Query("SELECT headerHash FROM BlockHash WHERE headerHash NOT IN(:excludedHash)")
+    fun allBlockHashes(excludedHash: List<ByteArray>): List<ByteArray>
 
     @Query("SELECT * FROM BlockHash ORDER BY sequence ASC, height ASC LIMIT :limit")
     fun getBlockHashesSortedSequenceHeight(limit: Int): List<BlockHash>
