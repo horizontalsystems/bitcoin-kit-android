@@ -35,7 +35,7 @@ interface BlockDao {
     @Query("SELECT * FROM Block WHERE height > :heightGreaterThan ORDER BY height DESC LIMIT :limit")
     fun getBlocks(heightGreaterThan: Int, limit: Int): List<Block>
 
-    @Query("SELECT * FROM Block WHERE height <= :fromHeight AND height > :toHeight ORDER BY height ASC")
+    @Query("SELECT * FROM Block WHERE height >= :fromHeight AND height <= :toHeight ORDER BY height ASC")
     fun getBlocksChunk(fromHeight: Int, toHeight: Int): List<Block>
 
     @Query("SELECT * FROM Block WHERE headerHash = :hash limit 1")

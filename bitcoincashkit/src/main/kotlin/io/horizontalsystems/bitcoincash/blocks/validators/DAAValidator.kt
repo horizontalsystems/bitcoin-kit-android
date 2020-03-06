@@ -18,7 +18,7 @@ class DAAValidator(
     }
 
     override fun validate(block: Block, previousBlock: Block) {
-        val chunk = blockValidatorHelper.getPreviousChunk(previousBlock.height, 147)
+        val chunk = blockValidatorHelper.getPreviousChunk(previousBlock.height, 146)
         validateDAA(block, chunk)
     }
 
