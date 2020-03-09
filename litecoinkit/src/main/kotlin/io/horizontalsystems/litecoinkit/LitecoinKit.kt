@@ -66,14 +66,13 @@ class LitecoinKit : AbstractKit {
         val storage = Storage(database)
         var initialSyncUrl = ""
 
-        // TODO need to update initialSyncUrl with actual api url
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://ltc.horizontalsystems.xyz/apg"
+                initialSyncUrl = "http://ltc.horizontalsystems.xyz/api"
                 MainNetLitecoin()
             }
             NetworkType.TestNet -> {
-                initialSyncUrl = "http://ltc-testnet.horizontalsystems.xyz/apg"
+                initialSyncUrl = ""
                 TestNetLitecoin()
             }
         }
@@ -127,8 +126,6 @@ class LitecoinKit : AbstractKit {
         when (bip) {
             Bip.BIP44 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58AddressConverter))
-                bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
-                bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
             Bip.BIP49 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
