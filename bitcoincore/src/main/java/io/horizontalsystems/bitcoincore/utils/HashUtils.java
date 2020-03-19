@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.utils;
 
 import org.spongycastle.crypto.Digest;
 import org.spongycastle.crypto.digests.SHA256Digest;
+import org.spongycastle.crypto.generators.SCrypt;
 import org.spongycastle.util.Arrays;
 
 public class HashUtils {
@@ -25,6 +26,23 @@ public class HashUtils {
     public static byte[] doubleSha256(byte[] input) {
         byte[] round1 = sha256(input);
         return sha256(round1);
+    }
+
+    /**
+     * Generate a key using the scrypt key derivation function.
+     *
+     * @param P     the bytes of the pass phrase.
+     * @param S     the salt to use for this invocation.
+     * @param N     CPU/Memory cost parameter. Must be larger than 1, a power of 2 and less than
+     *              <code>2^(128 * r / 8)</code>.
+     * @param r     the block size, must be >= 1.
+     * @param p     Parallelization parameter. Must be a positive integer less than or equal to
+     *              <code>Integer.MAX_VALUE / (128 * r * 8)</code>.
+     * @param dkLen the length of the key to generate.
+     * @return the generated key.
+     */
+    public static byte[] scrypt(byte[] P, byte[] S, int N, int r, int p, int dkLen) {
+        return SCrypt.generate(P, S, N, r, p, dkLen);
     }
 
     /**
