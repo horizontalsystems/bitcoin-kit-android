@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.PublicKey
+import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
@@ -38,16 +39,16 @@ abstract class AbstractKit {
         return bitcoinCore.fee(value, address, senderPay, feeRate, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData> = mapOf()): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate, pluginData)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData> = mapOf()): FullTransaction {
+        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, pluginData)
     }
 
-    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate)
+    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType)
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int): FullTransaction {
-        return bitcoinCore.redeem(unspentOutput, address, feeRate)
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+        return bitcoinCore.redeem(unspentOutput, address, feeRate, sortType)
     }
 
     fun receiveAddress(): String {

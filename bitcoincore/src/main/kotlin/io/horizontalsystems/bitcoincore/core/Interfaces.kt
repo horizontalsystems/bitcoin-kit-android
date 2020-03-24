@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoincore.managers.TransactionItem
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.storage.*
+import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IStorage {
@@ -149,4 +150,17 @@ interface IConnectionManager {
 
 interface IConnectionManagerListener {
     fun onConnectionChange(isConnected: Boolean)
+}
+
+interface IRecipientSetter {
+    fun setRecipient(mutableTransaction: MutableTransaction, toAddress: String, value: Long, pluginData: Map<Byte, IPluginData>, skipChecking: Boolean)
+}
+
+interface ITransactionDataSorterFactory {
+    fun sorter(type: TransactionDataSortType): ITransactionDataSorter
+}
+
+interface ITransactionDataSorter {
+    fun sortOutputs(outputs: List<TransactionOutput>): List<TransactionOutput>
+    fun sortUnspents(unspents: List<UnspentOutput>): List<UnspentOutput>
 }
