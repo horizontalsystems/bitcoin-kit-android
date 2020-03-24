@@ -183,16 +183,18 @@ class BitcoinCoreBuilder {
             transactionSendTimer.listener = this
         }
 
+        val transactionDataSorterFactory = TransactionDataSorterFactory()
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
         val inputSigner = InputSigner(hdWallet, network)
-        val outputSetter = OutputSetter(addressConverter, pluginManager)
+        val outputSetter = OutputSetter(transactionDataSorterFactory)
         val dustCalculator = DustCalculator(network.dustRelayTxFee, transactionSizeCalculator)
-        val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, bip.scriptType, transactionSizeCalculator, pluginManager, dustCalculator)
+        val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, bip.scriptType, transactionSizeCalculator, pluginManager, dustCalculator, transactionDataSorterFactory)
         val signer = TransactionSigner(inputSigner)
         val lockTimeSetter = LockTimeSetter(storage)
-        val transactionBuilder = TransactionBuilder(outputSetter, inputSetter, signer, lockTimeSetter)
-        val transactionFeeCalculator = TransactionFeeCalculator(outputSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
+        val recipientSetter = RecipientSetter(addressConverter, pluginManager)
+        val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
+        val transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
@@ -407,22 +409,22 @@ class BitcoinCore(
         return transactionFeeCalculator.fee(value, feeRate, senderPay, address, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): FullTransaction {
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
         try {
-            return transactionCreator.create(address, value, feeRate, senderPay, pluginData)
+            return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData)
         } catch (error: Exception) {
             errorStorage.addSendError(error)
             throw error
         }
     }
 
-    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int): FullTransaction {
+    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay, mapOf())
+        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf())
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int): FullTransaction {
-        return transactionCreator.create(unspentOutput, address, feeRate)
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+        return transactionCreator.create(unspentOutput, address, feeRate, sortType)
     }
 
     fun receiveAddress(): String {

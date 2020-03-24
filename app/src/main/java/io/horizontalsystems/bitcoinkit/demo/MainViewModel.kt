@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.hodler.HodlerData
@@ -155,7 +156,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             errorLiveData.value = "Send amount cannot be blank"
         } else {
             try {
-                bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, pluginData = getPluginData())
+                bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData())
 
                 amountLiveData.value = null
                 feeLiveData.value = null
