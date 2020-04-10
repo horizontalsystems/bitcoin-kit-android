@@ -70,7 +70,7 @@ class BitcoinKit : AbstractKit {
                 MainNet()
             }
             NetworkType.TestNet -> {
-                initialSyncUrl = "http://btc-testnet.horizontalsystems.xyz/apg"
+                initialSyncUrl = "https://btc-testnet.horizontalsystems.xyz/api"
                 TestNet()
             }
             NetworkType.RegTest -> RegTest()
