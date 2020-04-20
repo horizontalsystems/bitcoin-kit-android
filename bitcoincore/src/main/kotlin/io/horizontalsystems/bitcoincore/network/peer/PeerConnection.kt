@@ -19,7 +19,7 @@ class PeerConnection(
         private val sendingExecutor: ExecutorService,
         private val networkMessageParser: NetworkMessageParser,
         private val networkMessageSerializer: NetworkMessageSerializer)
-    : Thread() {
+    : Runnable {
 
     interface Listener {
         fun socketConnected(address: InetAddress)
@@ -37,11 +37,6 @@ class PeerConnection(
     @Volatile
     private var isRunning = false
 
-    // initialize:
-    init {
-        isDaemon = true
-    }
-
     override fun run() {
         isRunning = true
         // connect:
@@ -51,6 +46,7 @@ class PeerConnection(
 
             outputStream = socket.getOutputStream()
             val inStream = socket.getInputStream()
+            val inputStream = BitcoinInput(inStream)
 
             logger.info("Socket $host connected.")
 
@@ -59,11 +55,10 @@ class PeerConnection(
             while (isRunning) {
                 listener.onTimePeriodPassed()
 
-                sleep(1000)
+                Thread.sleep(1000)
 
                 // try receive message:
                 while (isRunning && inStream.available() > 0) {
-                    val inputStream = BitcoinInput(inStream)
                     val parsedMsg = networkMessageParser.parseMessage(inputStream)
                     logger.info("<= $parsedMsg")
                     listener.onMessage(parsedMsg)
@@ -95,12 +90,6 @@ class PeerConnection(
         disconnectError = error
         outputStream = null
         isRunning = false
-
-        try {
-            join(1000)
-        } catch (e: Exception) {
-            logger.severe(e.message)
-        }
     }
 
     @Synchronized
