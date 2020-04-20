@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.models
 
-import android.arch.persistence.room.Entity
+import androidx.room.Entity
 
 @Entity
 class InvalidTransaction : Transaction {

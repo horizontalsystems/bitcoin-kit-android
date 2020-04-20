@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoincore.models
 
-import android.arch.persistence.room.ColumnInfo
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.Index
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.utils.Utils

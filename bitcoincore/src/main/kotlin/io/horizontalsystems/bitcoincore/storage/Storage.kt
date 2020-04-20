@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.storage
 
-import android.arch.persistence.db.SimpleSQLiteQuery
+import androidx.sqlite.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString

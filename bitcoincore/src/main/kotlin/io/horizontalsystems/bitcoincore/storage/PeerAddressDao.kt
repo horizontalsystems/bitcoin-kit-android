@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.storage
 
-import android.arch.persistence.room.*
+import androidx.room.*
 import io.horizontalsystems.bitcoincore.models.PeerAddress
 
 @Dao

@@ -1,6 +1,6 @@
 package io.horizontalsystems.dashkit.storage
 
-import android.arch.persistence.room.*
+import androidx.room.*
 import android.content.Context
 import io.horizontalsystems.dashkit.models.*
 

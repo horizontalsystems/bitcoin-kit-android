@@ -1,7 +1,7 @@
 package io.horizontalsystems.dashkit.models
 
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.PrimaryKey
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.utils.HashUtils

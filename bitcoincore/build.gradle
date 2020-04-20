@@ -3,15 +3,22 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName "0.4.1"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    kapt {
+        arguments {
+            arg("room.schemaLocation", "$projectDir/schemas".toString())
+            arg("room.incremental", true)
+        }
     }
 
     buildTypes {
@@ -36,16 +43,17 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-    implementation 'com.android.support:support-annotations:28.0.0'
+    implementation 'androidx.annotation:annotation:1.1.0'
 
     // RxJava
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.2'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.2.0'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5'
 
     // Room
-    implementation "android.arch.persistence.room:runtime:1.1.1"
-    implementation "android.arch.persistence.room:rxjava2:1.1.1"
-    kapt "android.arch.persistence.room:compiler:1.1.1"
+    implementation 'androidx.room:room-runtime:2.2.5'
+    kapt 'androidx.room:room-compiler:2.0.0' // TODO when updating error occurs, need to look into it
+
+    implementation 'androidx.room:room-rxjava2:2.2.5'
 
     // For cryptocurrency
     implementation 'com.madgag.spongycastle:core:1.58.0.0'
@@ -54,25 +62,25 @@ dependencies {
     implementation 'com.eclipsesource.minimal-json:minimal-json:0.9.5'
 
     // OkHTTPClient3
-    implementation 'com.squareup.okhttp3:okhttp:4.0.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.5.0'
 
     // HDWallet Kit
     api 'com.github.horizontalsystems:hd-wallet-kit-android:68903dc'
 
     // Test helpers
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.1'
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
-    testImplementation "org.powermock:powermock-api-mockito2:2.0.2"
-    testImplementation "org.powermock:powermock-module-junit4:2.0.2"
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.6.1'
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
+    testImplementation "org.powermock:powermock-api-mockito2:2.0.7"
+    testImplementation "org.powermock:powermock-module-junit4:2.0.7"
 
     // Spek
-    testImplementation "org.spekframework.spek2:spek-dsl-jvm:2.0.6"
-    testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:2.0.6"
+    testImplementation "org.spekframework.spek2:spek-dsl-jvm:2.0.9"
+    testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:2.0.9"
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     testImplementation "com.linkedin.dexmaker:dexmaker-mockito-inline:2.19.1"
-    testImplementation "com.android.support.test:runner:1.0.2"
+    testImplementation 'androidx.test.ext:junit:1.1.1'
 }
 
 repositories {

@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.models
 
-import android.arch.persistence.room.Entity
-import android.arch.persistence.room.ForeignKey
+import androidx.room.Entity
+import androidx.room.ForeignKey
 import java.util.*
 
 /**

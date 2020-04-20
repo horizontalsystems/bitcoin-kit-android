@@ -3,14 +3,14 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 27
+    compileSdkVersion 29
     defaultConfig {
         applicationId "io.horizontalsystems.bitcoinkit.demo"
         minSdkVersion 23
-        targetSdkVersion 27
+        targetSdkVersion 29
         versionCode 1
         versionName "0.3.0"
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
         release {
@@ -31,27 +31,25 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'com.android.support:appcompat-v7:27.1.1'
-    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-    implementation 'com.android.support:design:27.1.1'
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.1.0'
 
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.2'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.0.2'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
 
     // ViewModel and LiveData
-    implementation "android.arch.lifecycle:extensions:1.1.1"
-    annotationProcessor "android.arch.lifecycle:compiler:1.1.1"
+    implementation 'androidx.lifecycle:lifecycle-extensions:2.2.0'
 
     // For debug
     implementation 'com.facebook.stetho:stetho:1.5.1'
 
     //LeakCanary
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:1.6.2'
-    releaseImplementation 'com.squareup.leakcanary:leakcanary-android-no-op:1.6.2'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.2'
 
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     implementation project(':bitcoinkit')
     implementation project(':dashkit')
