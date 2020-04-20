@@ -48,18 +48,7 @@ object TransactionSerializer {
 
         transaction.lockTime = input.readUnsignedInt()
 
-        val fullTransaction = FullTransaction(transaction, inputs, outputs)
-
-        fullTransaction.header.hash = HashUtils.doubleSha256(serialize(fullTransaction, withWitness = false))
-        fullTransaction.inputs.forEach {
-            it.transactionHash = fullTransaction.header.hash
-        }
-
-        fullTransaction.outputs.forEach {
-            it.transactionHash = fullTransaction.header.hash
-        }
-
-        return fullTransaction
+        return FullTransaction(transaction, inputs, outputs)
     }
 
     fun serialize(transaction: FullTransaction, withWitness: Boolean = true): ByteArray {
