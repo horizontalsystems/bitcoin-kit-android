@@ -2,8 +2,6 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.app.Application
 import com.facebook.stetho.Stetho
-import com.squareup.leakcanary.LeakCanary
-import io.horizontalsystems.bitcoinkit.BitcoinKit
 
 class App : Application() {
 
@@ -11,15 +9,7 @@ class App : Application() {
         super.onCreate()
 
         // Enable debug bridge
-        Stetho.initializeWithDefaults(this);
-
-        if (LeakCanary.isInAnalyzerProcess(this)) {
-            // This process is dedicated to LeakCanary for heap analysis.
-            // You should not init your app in this process.
-            return
-        }
-
-        LeakCanary.install(this)
+        Stetho.initializeWithDefaults(this)
 
         instance = this
     }

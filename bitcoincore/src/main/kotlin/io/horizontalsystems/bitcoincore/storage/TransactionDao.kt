@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.storage
 
-import android.arch.persistence.db.SupportSQLiteQuery
-import android.arch.persistence.room.*
+import androidx.sqlite.db.SupportSQLiteQuery
+import androidx.room.*
 import io.horizontalsystems.bitcoincore.models.InvalidTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
 

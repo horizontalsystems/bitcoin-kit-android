@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.storage
 
-import android.arch.persistence.room.TypeConverter
+import androidx.room.TypeConverter
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 

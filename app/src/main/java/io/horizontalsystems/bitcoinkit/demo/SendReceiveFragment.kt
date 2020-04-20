@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoinkit.demo
 
-import android.arch.lifecycle.Observer
-import android.arch.lifecycle.ViewModelProviders
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
-import android.support.v4.app.Fragment
+import androidx.fragment.app.Fragment
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.Gravity
@@ -29,23 +29,23 @@ class SendReceiveFragment : Fragment() {
         activity?.let { activity ->
             viewModel = ViewModelProviders.of(activity).get(MainViewModel::class.java)
 
-            viewModel.receiveAddressLiveData.observe(this, Observer {
+            viewModel.receiveAddressLiveData.observe(viewLifecycleOwner, Observer {
                 receiveAddressText.text = it
             })
 
-            viewModel.amountLiveData.observe(this, Observer {
+            viewModel.amountLiveData.observe(viewLifecycleOwner, Observer {
                 sendAmount.setText(it?.toString())
             })
 
-            viewModel.addressLiveData.observe(this, Observer {
+            viewModel.addressLiveData.observe(viewLifecycleOwner, Observer {
                 sendAddress.setText(it)
             })
 
-            viewModel.feeLiveData.observe(this, Observer {
+            viewModel.feeLiveData.observe(viewLifecycleOwner, Observer {
                 txFeeValue.text = it?.toString()
             })
 
-            viewModel.errorLiveData.observe(this, Observer {
+            viewModel.errorLiveData.observe(viewLifecycleOwner, Observer {
                 val toast = Toast.makeText(context, it, Toast.LENGTH_LONG)
 
                 toast.setGravity(Gravity.CENTER, 0, 0)

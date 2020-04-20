@@ -1,6 +1,6 @@
 package io.horizontalsystems.dashkit.models
 
-import android.arch.persistence.room.Entity
+import androidx.room.Entity
 
 @Entity(primaryKeys = ["txHash", "inputTxHash"])
 class InstantTransactionInput(

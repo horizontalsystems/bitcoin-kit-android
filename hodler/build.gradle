@@ -3,15 +3,15 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         minSdkVersion 23
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionCode 1
         versionName "1.0"
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
 
@@ -40,14 +40,14 @@ dependencies {
 
     implementation project(':bitcoincore')
 
-    androidTestImplementation 'com.android.support.test:runner:1.0.2'
-    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     // Test helpers
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.1'
-    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.1.0"
-    testImplementation "org.powermock:powermock-api-mockito2:2.0.2"
-    testImplementation "org.powermock:powermock-module-junit4:2.0.2"
-    testImplementation 'org.mockito:mockito-inline:2.13.0'
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.6.1'
+    testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
+    testImplementation "org.powermock:powermock-api-mockito2:2.0.7"
+    testImplementation "org.powermock:powermock-module-junit4:2.0.7"
+    testImplementation 'org.mockito:mockito-inline:3.3.3'
 }
