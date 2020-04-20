@@ -11,10 +11,10 @@ import java.nio.charset.StandardCharsets;
  */
 public final class BitcoinOutput {
 
-    private ByteArrayOutputStream out;
+    private UnsafeByteArrayOutputStream out;
 
     public BitcoinOutput() {
-        this.out = new ByteArrayOutputStream(1024);
+        this.out = new UnsafeByteArrayOutputStream(1024);
     }
 
     public BitcoinOutput write(byte[] bytes) {
