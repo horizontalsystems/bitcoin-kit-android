@@ -39,8 +39,8 @@ class Peer(
     val ready: Boolean
         get() = connected && tasks.isEmpty()
 
-    fun start() {
-        peerConnection.start()
+    fun start(peerThreadPool: ExecutorService) {
+        peerThreadPool.execute(peerConnection)
         connectStartTime = System.currentTimeMillis()
     }
 

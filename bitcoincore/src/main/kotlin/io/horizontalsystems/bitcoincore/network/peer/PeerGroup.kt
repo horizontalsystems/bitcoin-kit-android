@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoincore.network.peer
 import io.horizontalsystems.bitcoincore.core.IConnectionManager
 import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
 import io.horizontalsystems.bitcoincore.core.IPeerAddressManagerListener
-import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
@@ -38,6 +37,7 @@ class PeerGroup(
     private val logger = Logger.getLogger("PeerGroup")
     private val peerGroupListeners = mutableListOf<Listener>()
     private val executorService = Executors.newCachedThreadPool()
+    private val peerThreadPool = Executors.newCachedThreadPool()
 
     private val acceptableBlockHeightDifference = 50_000
     private var peerCountToConnectMax = 100
@@ -169,7 +169,7 @@ class PeerGroup(
             peerCountConnected += 1
             peerGroupListeners.forEach { it.onPeerCreate(peer) }
             peerManager.add(peer)
-            peer.start()
+            peer.start(peerThreadPool)
         }
     }
 
