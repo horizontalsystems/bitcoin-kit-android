@@ -34,7 +34,7 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
                     deferred = true)
         ])
 
-class TransactionOutput {
+class TransactionOutput() {
 
     var value: Long = 0
     var lockingScript: ByteArray = byteArrayOf()
@@ -53,8 +53,7 @@ class TransactionOutput {
     @Ignore
     var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
 
-    constructor()
-    constructor(value: Long, index: Int, script: ByteArray, type: ScriptType = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null) {
+    constructor(value: Long, index: Int, script: ByteArray, type: ScriptType = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null): this() {
         this.value = value
         this.lockingScript = script
         this.index = index

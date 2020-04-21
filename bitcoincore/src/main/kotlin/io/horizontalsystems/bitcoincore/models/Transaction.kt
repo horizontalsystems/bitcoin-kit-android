@@ -27,7 +27,7 @@ import java.util.*
                 deferred = true)
         ])
 
-open class Transaction {
+open class Transaction() {
 
     var uid: String = UUID.randomUUID().toString()
 
@@ -45,7 +45,6 @@ open class Transaction {
     var serializedTxInfo: String = ""
     var conflictingTxHash: ByteArray? = null
 
-    constructor()
     constructor(version: Int = 0, lockTime: Long = 0) : this() {
         this.version = version
         this.lockTime = lockTime
