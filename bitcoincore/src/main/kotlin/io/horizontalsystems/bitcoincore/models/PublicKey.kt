@@ -14,10 +14,11 @@ import io.horizontalsystems.bitcoincore.utils.Utils
             Index("scriptHashP2WPKH")
         ])
 
-class PublicKey {
+class PublicKey() {
     var path: String = ""
 
     var account = 0
+
     @ColumnInfo(name = "address_index")
     var index = 0
     var external = true
@@ -30,7 +31,6 @@ class PublicKey {
         return storage.getOutputsOfPublicKey(this).isNotEmpty()
     }
 
-    constructor()
     constructor(account: Int, index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) : this() {
         this.path = "$account/${if (external) 1 else 0}/$index"
         this.account = account

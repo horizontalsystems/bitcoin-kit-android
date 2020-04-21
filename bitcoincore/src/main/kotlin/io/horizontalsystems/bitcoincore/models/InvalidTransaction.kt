@@ -3,11 +3,9 @@ package io.horizontalsystems.bitcoincore.models
 import androidx.room.Entity
 
 @Entity
-class InvalidTransaction : Transaction {
+class InvalidTransaction() : Transaction() {
 
-    constructor()
-
-    constructor(transaction: Transaction, serializedTxInfo: String) {
+    constructor(transaction: Transaction, serializedTxInfo: String) : this() {
         uid = transaction.uid
         hash = transaction.hash
         blockHash = transaction.blockHash
