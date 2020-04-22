@@ -4,6 +4,9 @@ import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.utils.Utils
 import java.lang.Double.valueOf
 import java.util.*
+import kotlin.math.ln
+import kotlin.math.min
+import kotlin.math.pow
 
 /**
  * BloomFilter
@@ -35,13 +38,13 @@ class BloomFilter(elements: List<ByteArray>) {
         //
         // Allocate the filter array
         //
-        val size = Math.min((-1 / Math.pow(Math.log(2.0), 2.0) * elements.size.toDouble() * Math.log(falsePositiveRate)).toInt(),
+        val size = min((-1 / ln(2.0).pow(2.0) * elements.size.toDouble() * ln(falsePositiveRate)).toInt(),
                 MAX_FILTER_SIZE * 8) / 8
         filter = ByteArray(if (size <= 0) 1 else size)
         //
         // Optimal number of hash functions for a given filter size and element count.
         //
-        nHashFuncs = Math.min((filter.size * 8 / elements.size.toDouble() * Math.log(2.0)).toInt(), MAX_HASH_FUNCS)
+        nHashFuncs = min((filter.size * 8 / elements.size.toDouble() * ln(2.0)).toInt(), MAX_HASH_FUNCS)
 
         elements.forEach {
             insert(it)
@@ -83,7 +86,7 @@ class BloomFilter(elements: List<ByteArray>) {
     }
 
     override fun hashCode(): Int {
-        var result = Arrays.hashCode(filter)
+        var result = filter.contentHashCode()
         result = 31 * result + nHashFuncs
         result = 31 * result + nTweak.hashCode()
         result = 31 * result + nFlags
@@ -93,18 +96,18 @@ class BloomFilter(elements: List<ByteArray>) {
     companion object {
 
         /** Bloom filter - Filter is not adjusted for matching outputs  */
-        val UPDATE_NONE = 0
+        const val UPDATE_NONE = 0
 
         /** Bloom filter - Filter is adjusted for all matching outputs  */
-        val UPDATE_ALL = 1
+        const val UPDATE_ALL = 1
 
         /** Bloom filter - Filter is adjusted only for pay-to-pubkey or pay-to-multi-sig  */
-        val UPDATE_P2PUBKEY_ONLY = 2
+        const val UPDATE_P2PUBKEY_ONLY = 2
 
         /** Maximum filter size  */
-        val MAX_FILTER_SIZE = 36000
+        const val MAX_FILTER_SIZE = 36000
 
         /** Maximum number of hash functions  */
-        val MAX_HASH_FUNCS = 50
+        const val MAX_HASH_FUNCS = 50
     }
 }

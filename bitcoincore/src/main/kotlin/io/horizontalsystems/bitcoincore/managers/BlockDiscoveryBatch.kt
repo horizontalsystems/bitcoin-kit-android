@@ -10,7 +10,7 @@ class BlockDiscoveryBatch(private val wallet: Wallet, private val blockHashFetch
     private val gapLimit = wallet.gapLimit
 
     override fun discoverBlockHashes(account: Int, external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> {
-        return Single.create<Pair<List<PublicKey>, List<BlockHash>>> { emitter ->
+        return Single.create { emitter ->
             try {
                 emitter.onSuccess(fetchRecursive(account, external))
             } catch (e: Exception) {

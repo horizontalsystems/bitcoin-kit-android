@@ -42,12 +42,12 @@ object NetworkUtils {
         val socksProxyHost = System.getProperty("socksProxyHost")
         val socksProxyPort = System.getProperty("socksProxyPort")?.toIntOrNull()
 
-        if (socksProxyHost != null && socksProxyPort != null) {
+        return if (socksProxyHost != null && socksProxyPort != null) {
             val socketAddress = InetSocketAddress.createUnresolved(socksProxyHost, socksProxyPort)
             val proxy = Proxy(Proxy.Type.SOCKS, socketAddress)
-            return Socket(proxy)
+            Socket(proxy)
         } else {
-            return Socket()
+            Socket()
         }
     }
 
@@ -76,7 +76,7 @@ object NetworkUtils {
             val sslSocketFactory = sslContext.socketFactory
             val builder = OkHttpClient.Builder()
             builder.sslSocketFactory(sslSocketFactory, (trustAllCerts[0] as X509TrustManager))
-            builder.hostnameVerifier(HostnameVerifier { hostname, session -> true })
+            builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
             builder.connectTimeout(5000, TimeUnit.MILLISECONDS)
             builder.readTimeout(60000, TimeUnit.MILLISECONDS)
             builder.build()

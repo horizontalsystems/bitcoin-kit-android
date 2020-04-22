@@ -26,6 +26,6 @@ class X11Hasher : IHasher {
             hash = it.digest(hash)
         }
 
-        return Arrays.copyOfRange(hash, 0, 32)
+        return hash.copyOfRange(0, 32)
     }
 }

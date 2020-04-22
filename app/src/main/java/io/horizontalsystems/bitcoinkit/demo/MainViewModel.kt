@@ -150,23 +150,27 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun onSendClick() {
-        if (address.isNullOrBlank()) {
-            errorLiveData.value = "Send address cannot be blank"
-        } else if (amount == null) {
-            errorLiveData.value = "Send amount cannot be blank"
-        } else {
-            try {
-                bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData())
+        when {
+            address.isNullOrBlank() -> {
+                errorLiveData.value = "Send address cannot be blank"
+            }
+            amount == null -> {
+                errorLiveData.value = "Send amount cannot be blank"
+            }
+            else -> {
+                try {
+                    bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData())
 
-                amountLiveData.value = null
-                feeLiveData.value = null
-                addressLiveData.value = null
-                errorLiveData.value = "Transaction sent"
-            } catch (e: Exception) {
-                errorLiveData.value = when (e) {
-                    is SendValueErrors.InsufficientUnspentOutputs,
-                    is SendValueErrors.EmptyOutputs -> "Insufficient balance"
-                    else -> e.message ?: "Failed to send transaction (${e.javaClass.name})"
+                    amountLiveData.value = null
+                    feeLiveData.value = null
+                    addressLiveData.value = null
+                    errorLiveData.value = "Transaction sent"
+                } catch (e: Exception) {
+                    errorLiveData.value = when (e) {
+                        is SendValueErrors.InsufficientUnspentOutputs,
+                        is SendValueErrors.EmptyOutputs -> "Insufficient balance"
+                        else -> e.message ?: "Failed to send transaction (${e.javaClass.name})"
+                    }
                 }
             }
         }

@@ -42,7 +42,7 @@ class NetworkMessageParser(private val magic: Long) {
 
         // check:
         val actualChecksum = getCheckSum(payload)
-        if (!Arrays.equals(expectedChecksum, actualChecksum)) {
+        if (!expectedChecksum.contentEquals(actualChecksum)) {
             throw BitcoinException("Checksum failed.")
         }
 
@@ -69,13 +69,13 @@ class NetworkMessageParser(private val magic: Long) {
         if (n <= 0) {
             throw BitcoinException("Bad command bytes.")
         }
-        val b = Arrays.copyOfRange(cmd, 0, n + 1)
+        val b = cmd.copyOfRange(0, n + 1)
         return String(b, StandardCharsets.UTF_8)
     }
 
     private fun getCheckSum(payload: ByteArray): ByteArray {
         val hash = HashUtils.doubleSha256(payload)
-        return Arrays.copyOfRange(hash, 0, 4)
+        return hash.copyOfRange(0, 4)
     }
 }
 

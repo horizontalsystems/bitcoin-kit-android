@@ -5,6 +5,8 @@ import io.horizontalsystems.bitcoincore.network.messages.GetBlocksMessage
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.InvMessage
 import java.util.concurrent.TimeUnit
+import kotlin.math.max
+import kotlin.math.min
 
 class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expectedHashesMinCount: Int) : PeerTask() {
 
@@ -18,10 +20,10 @@ class GetBlockHashesTask(private val blockLocatorHashes: List<ByteArray>, expect
     private val expectedHashesMinCount: Int
 
     init {
-        this.expectedHashesMinCount = Math.min(Math.max(minExpectedBlockHashesCount, expectedHashesMinCount), maxExpectedBlockHashesCount)
+        this.expectedHashesMinCount = min(max(minExpectedBlockHashesCount, expectedHashesMinCount), maxExpectedBlockHashesCount)
 
         val resolvedAllowedIdleTime = maxAllowedIdleTime * this.expectedHashesMinCount / maxExpectedBlockHashesCount.toDouble()
-        allowedIdleTime = Math.max(minAllowedIdleTime, resolvedAllowedIdleTime.toLong())
+        allowedIdleTime = max(minAllowedIdleTime, resolvedAllowedIdleTime.toLong())
     }
 
     override val state: String

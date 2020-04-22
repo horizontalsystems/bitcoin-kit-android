@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import android.annotation.SuppressLint
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import android.graphics.Color
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -12,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInputInfo
 import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
@@ -30,20 +30,18 @@ class TransactionsFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        activity?.let {
-            viewModel = ViewModelProviders.of(it).get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-            viewModel.transactions.observe(this, Observer {
-                it?.let { transactions ->
-                    transactionsAdapter.items = transactions
-                    transactionsAdapter.notifyDataSetChanged()
-                }
-            })
-        }
+        viewModel.transactions.observe(this, Observer {
+            it?.let { transactions ->
+                transactionsAdapter.items = transactions
+                transactionsAdapter.notifyDataSetChanged()
+            }
+        })
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_transactions, null)
+        return inflater.inflate(R.layout.fragment_transactions, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -86,7 +84,7 @@ class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(c
         var text = "#$index"
         text += "\nStatus: ${transactionInfo.status.name}"
         if (transactionInfo is DashTransactionInfo) {
-            text += "\nInstant: ${transactionInfo.instantTx.toString().toUpperCase()}"
+            text += "\nInstant: ${transactionInfo.instantTx.toString().toUpperCase(Locale.getDefault())}"
         }
 
         text += "\nInputs: ${mapInputs(transactionInfo.inputs)}" +

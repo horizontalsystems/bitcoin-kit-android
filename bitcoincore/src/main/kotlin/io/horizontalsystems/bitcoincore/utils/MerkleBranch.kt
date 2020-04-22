@@ -62,10 +62,10 @@ class MerkleBranch {
         //
         val right: ByteArray
         val left = parseBranch(height - 1, pos * 2, matchedHashes)
-        if (pos * 2 + 1 < getTreeWidth(height - 1))
-            right = parseBranch(height - 1, pos * 2 + 1, matchedHashes)
+        right = if (pos * 2 + 1 < getTreeWidth(height - 1))
+            parseBranch(height - 1, pos * 2 + 1, matchedHashes)
         else
-            right = left
+            left
 
         return Utils.doubleDigestTwoBuffers(left, 0, 32, right, 0, 32)
     }

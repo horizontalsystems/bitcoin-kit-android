@@ -69,12 +69,10 @@ class ApiManager(private val host: String) {
         val url = "$host/$uri"
 
         try {
-            val httpClient: OkHttpClient
-
-            if (!safeCall)
-                httpClient = NetworkUtils.getUnsafeOkHttpClient()
+            val httpClient: OkHttpClient = if (!safeCall)
+                NetworkUtils.getUnsafeOkHttpClient()
             else {
-                httpClient = OkHttpClient.Builder()
+                OkHttpClient.Builder()
                         .apply {
                             connectTimeout(5000, TimeUnit.MILLISECONDS)
                             readTimeout(60000, TimeUnit.MILLISECONDS)
