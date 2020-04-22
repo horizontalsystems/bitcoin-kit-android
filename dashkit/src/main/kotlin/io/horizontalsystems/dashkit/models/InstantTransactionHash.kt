@@ -7,11 +7,7 @@ import androidx.room.PrimaryKey
 data class InstantTransactionHash(@PrimaryKey val txHash: ByteArray) {
 
     override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is InstantTransactionHash) return false
-        if (!txHash.contentEquals(other.txHash)) return false
-
-        return true
+        return other === this || other is InstantTransactionHash && txHash.contentEquals(other.txHash)
     }
 
     override fun hashCode(): Int {
