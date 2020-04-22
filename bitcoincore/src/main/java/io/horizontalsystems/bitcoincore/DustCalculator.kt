@@ -11,10 +11,10 @@ class DustCalculator(dustRelayTxFee: Int, val sizeCalculator: TransactionSizeCal
 
         var size = sizeCalculator.outputSize(type)
 
-        if (type.isWitness) {
-            size += sizeCalculator.inputSize(ScriptType.P2WPKH) + sizeCalculator.witnessSize(ScriptType.P2WPKH) / 4
+        size += if (type.isWitness) {
+            sizeCalculator.inputSize(ScriptType.P2WPKH) + sizeCalculator.witnessSize(ScriptType.P2WPKH) / 4
         } else {
-            size += sizeCalculator.inputSize(ScriptType.P2PKH)
+            sizeCalculator.inputSize(ScriptType.P2PKH)
         }
 
         return size * minFeeRate

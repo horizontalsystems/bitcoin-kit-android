@@ -21,13 +21,13 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
             val lockingScript = output.lockingScript
 
             if (isP2PKH(lockingScript)) {
-                payload = Arrays.copyOfRange(lockingScript, 3, 23)
+                payload = lockingScript.copyOfRange(3, 23)
                 scriptType = ScriptType.P2PKH
             } else if (isP2PK(lockingScript)) {
-                payload = Arrays.copyOfRange(lockingScript, 1, lockingScript.size - 1)
+                payload = lockingScript.copyOfRange(1, lockingScript.size - 1)
                 scriptType = ScriptType.P2PK
             } else if (isP2SH(lockingScript)) {
-                payload = Arrays.copyOfRange(lockingScript, 2, lockingScript.size - 1)
+                payload = lockingScript.copyOfRange(2, lockingScript.size - 1)
                 scriptType = ScriptType.P2SH
             } else if (isP2WPKH(lockingScript)) {
                 payload = lockingScript

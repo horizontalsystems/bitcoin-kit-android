@@ -97,7 +97,7 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     }
 
     private fun gapKeysCount(publicKeys: List<PublicKeyWithUsedState>): Int {
-        val lastUsedKey = publicKeys.filter { it.used }.sortedBy { it.publicKey.index }.lastOrNull()
+        val lastUsedKey = publicKeys.filter { it.used }.maxBy { it.publicKey.index }
 
         return when (lastUsedKey) {
             null -> publicKeys.size

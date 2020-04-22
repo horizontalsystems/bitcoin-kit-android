@@ -126,11 +126,11 @@ class BitcoinCashKit : AbstractKit {
     }
 
     companion object {
-        val maxTargetBits: Long = 0x1d00ffff                // Maximum difficulty
-        val targetSpacing = 10 * 60                         // 10 minutes per block.
-        val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
+        const val maxTargetBits: Long = 0x1d00ffff                // Maximum difficulty
+        const val targetSpacing = 10 * 60                         // 10 minutes per block.
+        const val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
         var heightInterval = targetTimespan / targetSpacing // 2016 blocks
-        val svForkHeight = 556767
+        const val svForkHeight = 556767
         val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
 
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode): String = "BitcoinCash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"

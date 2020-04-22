@@ -20,7 +20,7 @@ class InstantTransactionManager(
     fun instantTransactionInputs(txHash: ByteArray, instantTransaction: FullTransaction?): List<InstantTransactionInput> {
         // check if inputs already created
         val inputs = storage.instantTransactionInputs(txHash)
-        if (!inputs.isEmpty()) {
+        if (inputs.isNotEmpty()) {
             return inputs
         }
 

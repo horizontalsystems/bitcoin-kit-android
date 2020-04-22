@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.demo
 
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.text.Editable
@@ -13,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
 import io.horizontalsystems.hodler.LockTimeInterval
 import kotlinx.android.synthetic.main.fragment_send_receive.*
 
@@ -20,38 +20,37 @@ class SendReceiveFragment : Fragment() {
     private lateinit var viewModel: MainViewModel
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_send_receive, null)
+        return inflater.inflate(R.layout.fragment_send_receive, container, false)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        activity?.let { activity ->
-            viewModel = ViewModelProviders.of(activity).get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-            viewModel.receiveAddressLiveData.observe(viewLifecycleOwner, Observer {
-                receiveAddressText.text = it
-            })
+        viewModel.receiveAddressLiveData.observe(viewLifecycleOwner, Observer {
+            receiveAddressText.text = it
+        })
 
-            viewModel.amountLiveData.observe(viewLifecycleOwner, Observer {
-                sendAmount.setText(it?.toString())
-            })
+        viewModel.amountLiveData.observe(viewLifecycleOwner, Observer {
+            sendAmount.setText(it?.toString())
+        })
 
-            viewModel.addressLiveData.observe(viewLifecycleOwner, Observer {
-                sendAddress.setText(it)
-            })
+        viewModel.addressLiveData.observe(viewLifecycleOwner, Observer {
+            sendAddress.setText(it)
+        })
 
-            viewModel.feeLiveData.observe(viewLifecycleOwner, Observer {
-                txFeeValue.text = it?.toString()
-            })
+        viewModel.feeLiveData.observe(viewLifecycleOwner, Observer {
+            txFeeValue.text = it?.toString()
+        })
 
-            viewModel.errorLiveData.observe(viewLifecycleOwner, Observer {
-                val toast = Toast.makeText(context, it, Toast.LENGTH_LONG)
+        viewModel.errorLiveData.observe(viewLifecycleOwner, Observer {
+            val toast = Toast.makeText(context, it, Toast.LENGTH_LONG)
 
-                toast.setGravity(Gravity.CENTER, 0, 0)
-                toast.show()
-            })
-        }
+            toast.setGravity(Gravity.CENTER, 0, 0)
+            toast.show()
+        })
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -69,7 +68,7 @@ class SendReceiveFragment : Fragment() {
             viewModel.onMaxClick()
         }
 
-        sendAmount.addTextChangedListener(SimpleTextWatcher { s ->
+        sendAmount.addTextChangedListener(SimpleTextWatcher {
             viewModel.amount = try {
                 sendAmount.text?.toString()?.toLong()
             } catch (e: NumberFormatException) {
@@ -77,7 +76,7 @@ class SendReceiveFragment : Fragment() {
             }
         })
 
-        sendAddress.addTextChangedListener(SimpleTextWatcher { s ->
+        sendAddress.addTextChangedListener(SimpleTextWatcher {
             viewModel.address = sendAddress.text.toString()
         })
 

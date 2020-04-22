@@ -23,7 +23,7 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
         var totalValue = 0L
         var recipientValue = 0L
         var sentValue = 0L
-        var fee = 0L
+        var fee: Long
 
         for (unspentOutput in sortedOutputs) {
             selectedOutputs.add(unspentOutput)

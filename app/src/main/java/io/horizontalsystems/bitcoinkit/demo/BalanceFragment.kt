@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoinkit.demo
 
 import androidx.lifecycle.Observer
-import androidx.lifecycle.ViewModelProviders
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -9,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.lifecycle.ViewModelProvider
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import java.text.SimpleDateFormat
 import java.util.*
@@ -29,62 +29,61 @@ class BalanceFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        activity?.let {
-            viewModel = ViewModelProviders.of(it).get(MainViewModel::class.java)
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
 
-            viewModel.balance.observe(this, Observer { balance ->
-                when (balance) {
-                    null -> {
-                        balanceValue.text = ""
-                        balanceUnspendableValue.text = ""
-                    }
-                    else -> {
-                        balanceValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.spendable / 100_000_000.0)
-                        balanceUnspendableValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.unspendable / 100_000_000.0)
-                    }
+        viewModel.balance.observe(this, Observer { balance ->
+            when (balance) {
+                null -> {
+                    balanceValue.text = ""
+                    balanceUnspendableValue.text = ""
                 }
-            })
-
-            val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
-            viewModel.lastBlock.observe(this, Observer {
-                it?.let { blockInfo ->
-                    lastBlockValue.text = blockInfo.height.toString()
-
-                    val strDate = dateFormat.format(Date(blockInfo.timestamp * 1000))
-                    lastBlockDateValue.text = strDate
+                else -> {
+                    balanceValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.spendable / 100_000_000.0)
+                    balanceUnspendableValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.unspendable / 100_000_000.0)
                 }
-            })
+            }
+        })
 
-            viewModel.state.observe(this, Observer { state ->
-                when (state) {
-                    is BitcoinCore.KitState.Synced -> {
-                        stateValue.text = "synced"
-                    }
-                    is BitcoinCore.KitState.Syncing -> {
-                        stateValue.text = "syncing ${"%.3f".format(state.progress)}"
-                    }
-                    is BitcoinCore.KitState.NotSynced -> {
-                        stateValue.text = "not synced"
-                    }
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
+        viewModel.lastBlock.observe(this, Observer {
+            it?.let { blockInfo ->
+                lastBlockValue.text = blockInfo.height.toString()
+
+                val strDate = dateFormat.format(Date(blockInfo.timestamp * 1000))
+                lastBlockDateValue.text = strDate
+            }
+        })
+
+        viewModel.state.observe(this, Observer { state ->
+            when (state) {
+                is BitcoinCore.KitState.Synced -> {
+                    stateValue.text = "synced"
                 }
-            })
-
-            viewModel.status.observe(this, Observer {
-                when (it) {
-                    MainViewModel.State.STARTED -> {
-                        startButton.isEnabled = false
-                    }
-                    else -> {
-                        startButton.isEnabled = true
-                    }
+                is BitcoinCore.KitState.Syncing -> {
+                    stateValue.text = "syncing ${"%.3f".format(state.progress)}"
                 }
-            })
+                is BitcoinCore.KitState.NotSynced -> {
+                    stateValue.text = "not synced"
+                }
+            }
+        })
 
-        }
+        viewModel.status.observe(this, Observer {
+            when (it) {
+                MainViewModel.State.STARTED -> {
+                    startButton.isEnabled = false
+                }
+                else -> {
+                    startButton.isEnabled = true
+                }
+            }
+        })
+
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_balance, null)
+        return inflater.inflate(R.layout.fragment_balance, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {

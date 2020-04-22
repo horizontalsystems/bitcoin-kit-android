@@ -141,10 +141,10 @@ class PeerGroup(
     //
 
     private fun setPeerCountToConnect(peer: Peer) {
-        if (peer.announcedLastBlockHeight - localDownloadedBestBlockHeight > acceptableBlockHeightDifference) {
-            peerCountToConnect = peerCountToConnectMax
+        peerCountToConnect = if (peer.announcedLastBlockHeight - localDownloadedBestBlockHeight > acceptableBlockHeightDifference) {
+            peerCountToConnectMax
         } else {
-            peerCountToConnect = 0
+            0
         }
     }
 

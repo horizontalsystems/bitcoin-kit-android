@@ -82,7 +82,6 @@ class InputSetter(
             unspentOutput.output.keyHash = unspentOutput.output.keyHash?.drop(2)?.toByteArray()
         }
 
-        val inputToSign = InputToSign(transactionInput, previousOutput, unspentOutput.publicKey)
-        return inputToSign
+        return InputToSign(transactionInput, previousOutput, unspentOutput.publicKey)
     }
 }

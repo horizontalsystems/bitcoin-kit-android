@@ -42,17 +42,17 @@ class InventoryItem {
         /**
          * Any data of with this number may be ignored.
          */
-        val ERROR = 0
+        const val ERROR = 0
 
         /**
          * Hash is related to a transaction.
          */
-        val MSG_TX = 1
+        const val MSG_TX = 1
 
         /**
          * Hash is related to a data block.
          */
-        val MSG_BLOCK = 2
+        const val MSG_BLOCK = 2
 
         /**
          * Hash of a block header; identical to MSG_BLOCK. Only to be used in
@@ -60,13 +60,13 @@ class InventoryItem {
          * rather than a block message; this only works if a bloom filter has been
          * set.
          */
-        val MSG_FILTERED_BLOCK = 3
+        const val MSG_FILTERED_BLOCK = 3
 
         /**
          * Hash of a block header; identical to MSG_BLOCK. Only to be used in
          * getdata message. Indicates the reply should be a cmpctblock message. See
          * BIP 152 for more info.
          */
-        val MSG_CMPCT_BLOCK = 4
+        const val MSG_CMPCT_BLOCK = 4
     }
 }

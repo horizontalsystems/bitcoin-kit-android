@@ -114,7 +114,7 @@ class CashAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(ad
             throw AddressFormatException("Data length ${data.size} != hash size $hashSize")
         }
 
-        return CashAddress(correctedAddress, Arrays.copyOfRange(data, 1, data.size), addressType)
+        return CashAddress(correctedAddress, data.copyOfRange(1, data.size), addressType)
     }
 
     override fun convert(bytes: ByteArray, scriptType: ScriptType): CashAddress {

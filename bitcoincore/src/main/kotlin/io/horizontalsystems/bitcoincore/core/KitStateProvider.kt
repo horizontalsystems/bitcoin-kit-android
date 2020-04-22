@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
+import kotlin.math.max
 
 interface ISyncStateListener {
     fun onSyncStart()
@@ -49,7 +50,7 @@ class KitStateProvider : ISyncStateListener {
     }
 
     override fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int) {
-        currentBestBlockHeight = Math.max(currentBestBlockHeight, height)
+        currentBestBlockHeight = max(currentBestBlockHeight, height)
 
         val blocksDownloaded = currentBestBlockHeight - initialBestBlockHeight
         val allBlocksToDownload = maxBlockHeight - initialBestBlockHeight
@@ -59,10 +60,10 @@ class KitStateProvider : ISyncStateListener {
             else -> blocksDownloaded / allBlocksToDownload.toDouble()
         }
 
-        if (progress >= 1) {
-            syncState = KitState.Synced
+        syncState = if (progress >= 1) {
+            KitState.Synced
         } else {
-            syncState = KitState.Syncing(progress)
+            KitState.Syncing(progress)
         }
     }
 }

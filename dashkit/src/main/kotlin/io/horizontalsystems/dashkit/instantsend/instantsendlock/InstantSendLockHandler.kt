@@ -43,7 +43,7 @@ class InstantSendLockHandler(
             instantTransactionManager.makeInstant(isLock.txHash)
             delegate?.onUpdateInstant(isLock.txHash)
         } catch (e: Exception) {
-            logger?.severe(e.message)
+            logger.severe(e.message)
         }
     }
 

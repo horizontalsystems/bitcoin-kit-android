@@ -23,8 +23,8 @@ class InputSigner(private val hdWallet: HDWallet, val network: Network) {
         val txContent = TransactionSerializer.serializeForSignature(transaction, inputsToSign, outputs, index, prevOutput.scriptType.isWitness || network.sigHashForked) + byteArrayOf(network.sigHashValue, 0, 0, 0)
         val signature = privateKey.createSignature(txContent) + network.sigHashValue
 
-        return when {
-            prevOutput.scriptType == ScriptType.P2PK -> listOf(signature)
+        return when (prevOutput.scriptType) {
+            ScriptType.P2PK -> listOf(signature)
             else -> listOf(signature, publicKey.publicKey)
         }
     }

@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.logging.Logger
+import kotlin.math.max
 
 class InitialBlockDownload(
         private var blockSyncer: BlockSyncer,
@@ -159,7 +160,7 @@ class InitialBlockDownload(
             }
 
             if (!peer.blockHashesSynced) {
-                val expectedHashesMinCount = Math.max(peer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
+                val expectedHashesMinCount = max(peer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
                 peer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(peer.announcedLastBlockHeight), expectedHashesMinCount))
             }
 

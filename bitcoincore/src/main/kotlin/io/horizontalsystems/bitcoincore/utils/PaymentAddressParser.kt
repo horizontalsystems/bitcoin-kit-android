@@ -22,10 +22,10 @@ class PaymentAddressParser(private val validScheme: String, private val removeSc
         val schemeSeparatedParts = paymentAddress.split(":")
         // check exist scheme. If scheme equal network scheme (Bitcoin or bitcoincash), remove scheme for bitcoin or leave for cash. Otherwise, leave wrong scheme to make throw in validator
         if (schemeSeparatedParts.size >= 2) {
-            if (schemeSeparatedParts[0] == validScheme) {
-                parsedString = if (removeScheme) schemeSeparatedParts[1] else paymentAddress
+            parsedString = if (schemeSeparatedParts[0] == validScheme) {
+                if (removeScheme) schemeSeparatedParts[1] else paymentAddress
             } else {
-                parsedString = paymentAddress
+                paymentAddress
             }
         }
 
@@ -45,7 +45,7 @@ class PaymentAddressParser(private val validScheme: String, private val removeSc
             if (parts.size == 2) {
                 when (parts[0]) {
                     parameterVersion -> version = parts [1]
-                    parameterAmount-> amount = parts[1].toDouble() ?: null //todo add try catch for exception
+                    parameterAmount-> amount = parts[1].toDoubleOrNull() //todo add try catch for exception
                     parameterLabel -> label = parts [1]
                     parameterMessage -> message = parts[1]
                     else -> parameters[parts[0]] = parts[1]

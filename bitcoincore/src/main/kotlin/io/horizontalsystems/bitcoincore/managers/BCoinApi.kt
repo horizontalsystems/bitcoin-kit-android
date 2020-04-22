@@ -5,7 +5,7 @@ import com.eclipsesource.json.JsonObject
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import java.util.logging.Logger
 
-class BCoinApi(private val host: String) : IInitialSyncApi {
+class BCoinApi(host: String) : IInitialSyncApi {
     private val apiManager = ApiManager(host)
     private val logger = Logger.getLogger("BCoinApi")
 
