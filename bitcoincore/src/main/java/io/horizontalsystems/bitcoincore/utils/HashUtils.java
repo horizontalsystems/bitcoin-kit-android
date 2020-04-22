@@ -1,9 +1,9 @@
 package io.horizontalsystems.bitcoincore.utils;
 
-import org.spongycastle.crypto.Digest;
-import org.spongycastle.crypto.digests.SHA256Digest;
-import org.spongycastle.crypto.generators.SCrypt;
-import org.spongycastle.util.Arrays;
+import org.bouncycastle.crypto.Digest;
+import org.bouncycastle.crypto.digests.SHA256Digest;
+import org.bouncycastle.crypto.generators.SCrypt;
+import org.bouncycastle.util.Arrays;
 
 public class HashUtils {
 
