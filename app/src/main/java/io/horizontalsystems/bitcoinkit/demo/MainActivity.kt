@@ -5,41 +5,53 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.fragment.app.Fragment
 import androidx.appcompat.app.AppCompatActivity
 import android.view.MenuItem
+import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemSelectedListener {
+
+    private val balanceFragment = BalanceFragment()
+    private val transactionsFragment = TransactionsFragment()
+    private val sendReceiveFragment = SendReceiveFragment()
+    private val fm = supportFragmentManager
+    private var active: Fragment = balanceFragment
+
+    lateinit var viewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        //loading the default fragment
-        loadFragment(BalanceFragment())
-
-        //getting bottom navigation view and attaching the listener
         val navigation = findViewById<BottomNavigationView>(R.id.navigation)
         navigation.setOnNavigationItemSelectedListener(this)
+
+        fm.beginTransaction().add(R.id.fragment_container, sendReceiveFragment, "3").hide(sendReceiveFragment).commit()
+        fm.beginTransaction().add(R.id.fragment_container, transactionsFragment, "2").hide(transactionsFragment).commit()
+        fm.beginTransaction().add(R.id.fragment_container, balanceFragment, "1").commit()
+
+        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel.init()
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        val fragment: Fragment? = when (item.itemId) {
-            R.id.navigation_home -> BalanceFragment()
-            R.id.navigation_transactions -> TransactionsFragment()
-            R.id.navigation_send_receive -> SendReceiveFragment()
+        val fragment = when (item.itemId) {
+            R.id.navigation_home -> balanceFragment
+            R.id.navigation_transactions -> transactionsFragment
+            R.id.navigation_send_receive -> sendReceiveFragment
             else -> null
         }
 
-        return loadFragment(fragment)
-    }
-
-    private fun loadFragment(fragment: Fragment?): Boolean {
-        //switching fragment
         if (fragment != null) {
             supportFragmentManager
                     .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
+                    .hide(active)
+                    .show(fragment)
                     .commit()
+
+            active = fragment
+
             return true
         }
+
         return false
     }
 

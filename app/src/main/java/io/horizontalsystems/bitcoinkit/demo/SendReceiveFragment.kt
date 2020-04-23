@@ -26,7 +26,7 @@ class SendReceiveFragment : Fragment() {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
 
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel = activity?.let { ViewModelProvider(it).get(MainViewModel::class.java) } ?: return
 
         viewModel.receiveAddressLiveData.observe(viewLifecycleOwner, Observer {
             receiveAddressText.text = it

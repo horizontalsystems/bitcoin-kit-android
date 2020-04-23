@@ -29,7 +29,7 @@ class BalanceFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel = activity?.let { ViewModelProvider(it).get(MainViewModel::class.java) } ?: return
 
         viewModel.balance.observe(this, Observer { balance ->
             when (balance) {
