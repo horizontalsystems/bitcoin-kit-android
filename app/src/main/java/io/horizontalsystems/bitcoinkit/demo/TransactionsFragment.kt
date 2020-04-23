@@ -30,7 +30,7 @@ class TransactionsFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewModel = ViewModelProvider(this).get(MainViewModel::class.java)
+        viewModel = activity?.let { ViewModelProvider(it).get(MainViewModel::class.java) } ?: return
 
         viewModel.transactions.observe(this, Observer {
             it?.let { transactions ->
