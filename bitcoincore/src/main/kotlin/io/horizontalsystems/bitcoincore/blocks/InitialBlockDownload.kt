@@ -72,13 +72,10 @@ class InitialBlockDownload(
     }
 
     override fun onStart() {
-        syncStateListener.onSyncStart()
         blockSyncer.prepareForDownload()
     }
 
-    override fun onStop(error: Exception) {
-        syncStateListener.onSyncStop(error)
-    }
+    override fun onStop() = Unit
 
     override fun onPeerCreate(peer: Peer) {
         peer.localBestBlockHeight = blockSyncer.localDownloadedBestBlockHeight

@@ -24,20 +24,12 @@ class InitialSyncer(
 
     private val logger = Logger.getLogger("InitialSyncer")
     private val disposables = CompositeDisposable()
-    private var isRestoring = false
 
     fun sync() {
-        if (isRestoring) {
-            return
-        } else {
-            isRestoring = true
-        }
-
         syncForAccount(0)
     }
 
     fun terminate() {
-        isRestoring = false
         disposables.clear()
     }
 
@@ -80,7 +72,6 @@ class InitialSyncer(
     }
 
     private fun handleSuccess() {
-        isRestoring = false
         listener?.onSyncSuccess()
     }
 
@@ -88,7 +79,6 @@ class InitialSyncer(
         errorStorage?.addApiError(error)
         logger.severe("Initial Sync Error: ${error.message}")
 
-        isRestoring = false
         listener?.onSyncFailed(error)
     }
 }
