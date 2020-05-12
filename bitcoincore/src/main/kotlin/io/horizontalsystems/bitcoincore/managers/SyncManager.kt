@@ -7,23 +7,59 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 
 class SyncManager(private val peerGroup: PeerGroup,
                   private val initialSyncer: InitialSyncer,
-                  private val stateListener: ISyncStateListener,
-                  private val stateManager: StateManager)
+                  private val syncStateListener: ISyncStateListener,
+                  private val stateManager: StateManager,
+                  private val connectionManager: ConnectionManager)
     : InitialSyncer.Listener, IConnectionManagerListener {
 
+    sealed class State {
+        object Stopped : State()
+        object Idle : State()
+        object InitialSyncing : State()
+        object PeerGroupRunning : State()
+    }
+
+    private var state: State = State.Stopped
+
     fun start() {
-        stateListener.onSyncStart()
+        if (state !is State.Stopped && state !is State.Idle) return
+
+        if (connectionManager.isConnected) {
+            startSync()
+        } else {
+            state = State.Idle
+            syncStateListener.onSyncStop(BitcoinCore.StateError.NoInternet())
+        }
+    }
+
+    private fun startSync() {
+        syncStateListener.onSyncStart()
 
         if (stateManager.restored) {
-            peerGroup.start()
+            startPeerGroup()
         } else {
+            state = State.InitialSyncing
             initialSyncer.sync()
         }
     }
 
-    fun stop(error: Exception) {
-        initialSyncer.terminate()
-        peerGroup.stop(error)
+    private fun startPeerGroup() {
+        state = State.PeerGroupRunning
+        peerGroup.start()
+    }
+
+    fun stop() {
+        when (state) {
+            State.InitialSyncing -> {
+                initialSyncer.terminate()
+            }
+            State.PeerGroupRunning -> {
+                peerGroup.stop()
+            }
+        }
+
+        state = State.Stopped
+        syncStateListener.onSyncStop(BitcoinCore.StateError.NotStarted())
     }
 
     //
@@ -31,10 +67,12 @@ class SyncManager(private val peerGroup: PeerGroup,
     //
 
     override fun onConnectionChange(isConnected: Boolean) {
-        if (isConnected) {
-            start()
-        } else {
-            stop(BitcoinCore.StateError.NoInternet())
+        if (isConnected && state is State.Idle) {
+            startSync()
+        } else if (!isConnected && state == State.PeerGroupRunning) {
+            peerGroup.stop()
+            state = State.Idle
+            syncStateListener.onSyncStop(BitcoinCore.StateError.NoInternet())
         }
     }
 
@@ -44,10 +82,11 @@ class SyncManager(private val peerGroup: PeerGroup,
 
     override fun onSyncSuccess() {
         stateManager.restored = true
-        peerGroup.start()
+        startPeerGroup()
     }
 
     override fun onSyncFailed(error: Throwable) {
-        stateListener.onSyncStop(error)
+        state = State.Idle
+        syncStateListener.onSyncStop(error)
     }
 }

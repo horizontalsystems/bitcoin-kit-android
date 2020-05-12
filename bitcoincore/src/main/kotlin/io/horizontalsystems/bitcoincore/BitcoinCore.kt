@@ -203,7 +203,7 @@ class BitcoinCoreBuilder {
         val errorStorage = ErrorStorage()
         val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager, errorStorage)
 
-        val syncManager = SyncManager(peerGroup, initialSyncer, kitStateProvider, stateManager)
+        val syncManager = SyncManager(peerGroup, initialSyncer, kitStateProvider, stateManager, connectionManager)
         initialSyncer.listener = syncManager
         connectionManager.listener = syncManager
 
@@ -394,7 +394,7 @@ class BitcoinCore(
 
     fun stop() {
         dataProvider.clear()
-        syncManager.stop(StateError.NotStarted())
+        syncManager.stop()
     }
 
     fun refresh() {
@@ -575,7 +575,7 @@ class BitcoinCore(
 
         override fun equals(other: Any?) = when {
             this is Synced && other is Synced -> true
-            this is NotSynced && other is NotSynced -> true
+            this is NotSynced && other is NotSynced -> exception == other.exception
             this is Syncing && other is Syncing -> this.progress == other.progress
             else -> false
         }

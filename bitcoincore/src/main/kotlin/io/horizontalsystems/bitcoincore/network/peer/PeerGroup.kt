@@ -23,7 +23,7 @@ class PeerGroup(
 
     interface Listener {
         fun onStart() = Unit
-        fun onStop(error: Exception) = Unit
+        fun onStop() = Unit
         fun onPeerCreate(peer: Peer) = Unit
         fun onPeerConnect(peer: Peer) = Unit
         fun onPeerDisconnect(peer: Peer, e: Exception?) = Unit
@@ -46,7 +46,7 @@ class PeerGroup(
     private var peerCountConnected = 0          // number of peers connected to
 
     fun start() {
-        if (running || !connectionManager.isConnected) {
+        if (running) {
             return
         }
 
@@ -56,10 +56,10 @@ class PeerGroup(
         connectPeersIfRequired()
     }
 
-    fun stop(error: Exception) {
+    fun stop() {
         running = false
         peerManager.disconnectAll()
-        peerGroupListeners.forEach { it.onStop(error) }
+        peerGroupListeners.forEach { it.onStop() }
     }
 
     fun addPeerGroupListener(listener: Listener) {
