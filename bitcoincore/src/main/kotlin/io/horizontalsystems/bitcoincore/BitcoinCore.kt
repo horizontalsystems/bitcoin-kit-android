@@ -201,9 +201,9 @@ class BitcoinCoreBuilder {
         val blockDiscovery = BlockDiscoveryBatch(Wallet(hdWallet), blockHashFetcher, checkpoint.block.height)
         val stateManager = StateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
         val errorStorage = ErrorStorage()
-        val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, kitStateProvider, errorStorage)
+        val initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, errorStorage)
 
-        val syncManager = SyncManager(peerGroup, initialSyncer)
+        val syncManager = SyncManager(peerGroup, initialSyncer, kitStateProvider)
         initialSyncer.listener = syncManager
         connectionManager.listener = syncManager
 
