@@ -12,7 +12,6 @@ import java.util.logging.Logger
 class InitialSyncer(
         private val storage: IStorage,
         private val blockDiscovery: IBlockDiscovery,
-        private val stateManager: StateManager,
         private val publicKeyManager: PublicKeyManager,
         private val errorStorage: ErrorStorage?) {
 
@@ -28,24 +27,16 @@ class InitialSyncer(
     private var isRestoring = false
 
     fun sync() {
-        if (stateManager.restored) {
-            listener?.onSyncSuccess()
+        if (isRestoring) {
             return
-        }
-
-        if (isRestoring) return else {
+        } else {
             isRestoring = true
         }
 
-        try {
-            syncForAccount(0)
-        } catch (e: Exception) {
-            isRestoring = false
-            handle(e)
-        }
+        syncForAccount(0)
     }
 
-    fun stop() {
+    fun terminate() {
         isRestoring = false
         disposables.clear()
     }
@@ -71,7 +62,7 @@ class InitialSyncer(
                             handle(account, publicKeys, blockHashes)
                         },
                         {
-                            handle(it)
+                            handleError(it)
                         })
 
         disposables.add(disposable)
@@ -84,12 +75,16 @@ class InitialSyncer(
             storage.addBlockHashes(blockHashes)
             syncForAccount(account + 1)
         } else {
-            stateManager.restored = true
-            listener?.onSyncSuccess()
+            handleSuccess()
         }
     }
 
-    private fun handle(error: Throwable) {
+    private fun handleSuccess() {
+        isRestoring = false
+        listener?.onSyncSuccess()
+    }
+
+    private fun handleError(error: Throwable) {
         errorStorage?.addApiError(error)
         logger.severe("Initial Sync Error: ${error.message}")
 
