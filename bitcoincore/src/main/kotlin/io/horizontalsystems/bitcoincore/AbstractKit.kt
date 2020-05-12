@@ -23,6 +23,8 @@ abstract class AbstractKit {
     val networkName: String
         get() = network.javaClass.simpleName
 
+    val syncState get() = bitcoinCore.syncState
+
     fun start() {
         bitcoinCore.start()
     }
