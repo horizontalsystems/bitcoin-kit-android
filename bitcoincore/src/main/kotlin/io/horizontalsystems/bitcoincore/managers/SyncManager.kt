@@ -7,16 +7,22 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 
 class SyncManager(private val peerGroup: PeerGroup,
                   private val initialSyncer: InitialSyncer,
-                  private val stateListener: ISyncStateListener)
+                  private val stateListener: ISyncStateListener,
+                  private val stateManager: StateManager)
     : InitialSyncer.Listener, IConnectionManagerListener {
 
     fun start() {
         stateListener.onSyncStart()
-        initialSyncer.sync()
+
+        if (stateManager.restored) {
+            peerGroup.start()
+        } else {
+            initialSyncer.sync()
+        }
     }
 
     fun stop(error: Exception) {
-        initialSyncer.stop()
+        initialSyncer.terminate()
         peerGroup.stop(error)
     }
 
@@ -37,7 +43,7 @@ class SyncManager(private val peerGroup: PeerGroup,
     //
 
     override fun onSyncSuccess() {
-        initialSyncer.stop()
+        stateManager.restored = true
         peerGroup.start()
     }
 
