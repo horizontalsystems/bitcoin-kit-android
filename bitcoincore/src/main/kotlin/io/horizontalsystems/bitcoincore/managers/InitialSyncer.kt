@@ -96,6 +96,6 @@ class InitialSyncer(
         logger.severe("Initial Sync Error: ${error.message}")
 
         isRestoring = false
-        stateListener.onSyncStop()
+        stateListener.onSyncStop(error)
     }
 }

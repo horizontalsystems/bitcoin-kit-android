@@ -394,7 +394,7 @@ class BitcoinCore(
 
     fun stop() {
         dataProvider.clear()
-        syncManager.stop()
+        syncManager.stop(StateError.NotStarted())
     }
 
     fun refresh() {
@@ -570,7 +570,7 @@ class BitcoinCore(
 
     sealed class KitState {
         object Synced : KitState()
-        object NotSynced : KitState()
+        class NotSynced(val exception: Throwable) : KitState()
         class Syncing(val progress: Double) : KitState()
 
         override fun equals(other: Any?) = when {
@@ -593,6 +593,11 @@ class BitcoinCore(
         class Full : SyncMode()
         class Api : SyncMode()
         class NewWallet : SyncMode()
+    }
+
+    sealed class StateError : Exception() {
+        class NotStarted : StateError()
+        class NoInternet : StateError()
     }
 
 }

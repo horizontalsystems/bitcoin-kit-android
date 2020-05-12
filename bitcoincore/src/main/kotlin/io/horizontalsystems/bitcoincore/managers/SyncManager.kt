@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 
@@ -10,9 +11,9 @@ class SyncManager(private val peerGroup: PeerGroup, private val initialSyncer: I
         initialSyncer.sync()
     }
 
-    fun stop() {
+    fun stop(error: Exception) {
         initialSyncer.stop()
-        peerGroup.stop()
+        peerGroup.stop(error)
     }
 
     //
@@ -23,7 +24,7 @@ class SyncManager(private val peerGroup: PeerGroup, private val initialSyncer: I
         if (isConnected) {
             start()
         } else {
-            stop()
+            stop(BitcoinCore.StateError.NoInternet())
         }
     }
 

@@ -1,11 +1,12 @@
 package io.horizontalsystems.bitcoincore.core
 
+import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import kotlin.math.max
 
 interface ISyncStateListener {
     fun onSyncStart()
-    fun onSyncStop()
+    fun onSyncStop(error: Throwable)
     fun onSyncFinish()
     fun onInitialBestBlockHeightUpdate(height: Int)
     fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
@@ -21,7 +22,7 @@ class KitStateProvider : ISyncStateListener {
     private var initialBestBlockHeight = 0
     private var currentBestBlockHeight = 0
 
-    var syncState: KitState = KitState.NotSynced
+    var syncState: KitState = KitState.NotSynced(BitcoinCore.StateError.NotStarted())
         private set(value) {
             if (value != field) {
                 field = value
@@ -36,8 +37,8 @@ class KitStateProvider : ISyncStateListener {
         syncState = KitState.Syncing(0.0)
     }
 
-    override fun onSyncStop() {
-        syncState = KitState.NotSynced
+    override fun onSyncStop(error: Throwable) {
+        syncState = KitState.NotSynced(error)
     }
 
     override fun onSyncFinish() {
