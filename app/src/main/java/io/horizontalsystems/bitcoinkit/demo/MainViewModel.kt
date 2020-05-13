@@ -28,6 +28,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val lastBlock = MutableLiveData<BlockInfo>()
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
+    val transactionRaw = MutableLiveData<String>()
     lateinit var networkName: String
     private val disposables = CompositeDisposable()
 
@@ -196,5 +197,9 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             pluginData[HodlerPlugin.id] = HodlerData(it)
         }
         return pluginData
+    }
+
+    fun onRawTransactionClick(transactionHash: String) {
+        transactionRaw.postValue(bitcoinKit.getRawTransaction(transactionHash))
     }
 }
