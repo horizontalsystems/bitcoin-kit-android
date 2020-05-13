@@ -220,6 +220,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getByHash(hash)
     }
 
+    override fun getFullTransaction(hash: ByteArray): FullTransaction? {
+        return getTransaction(hash)?.let { convertToFullTransaction(it) }
+    }
+
     override fun getValidOrInvalidTransaction(uid: String): Transaction? {
         return store.transaction.getValidOrInvalidByUid(uid)
     }
@@ -255,9 +259,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
     }
 
     override fun getNewTransactions(): List<FullTransaction> {
-        return store.transaction.getNewTransactions().map {
-            FullTransaction(header = it, inputs = getTransactionInputs(it), outputs = getTransactionOutputs(it))
-        }
+        return store.transaction.getNewTransactions().map { convertToFullTransaction(it) }
     }
 
     override fun isRelayedTransactionExists(hash: ByteArray): Boolean {
@@ -293,6 +295,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun incomingPendingTransactionsExist(): Boolean {
         return store.transaction.getIncomingPendingTxCount() > 0
+    }
+
+    private fun convertToFullTransaction(transaction: Transaction): FullTransaction {
+        return FullTransaction(header = transaction, inputs = getTransactionInputs(transaction), outputs = getTransactionOutputs(transaction))
     }
 
     // InvalidTransaction

@@ -568,6 +568,10 @@ class BitcoinCore(
         return pluginManager.maximumSpendLimit(pluginData)
     }
 
+    fun getRawTransaction(transactionHash: String): String? {
+        return dataProvider.getRawTransaction(transactionHash)
+    }
+
     sealed class KitState {
         object Synced : KitState()
         class NotSynced(val exception: Throwable) : KitState()
