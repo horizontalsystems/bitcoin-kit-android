@@ -61,7 +61,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         }
 
         lastBlock.value = bitcoinKit.lastBlockInfo
-        state.value = KitState.NotSynced
+        state.value = bitcoinKit.syncState
 
         started = false
     }
