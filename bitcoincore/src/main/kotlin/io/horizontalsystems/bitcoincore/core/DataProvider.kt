@@ -1,9 +1,12 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.reactivex.Single
@@ -89,6 +92,12 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
 
                 emitter.onSuccess(results.map { transactionInfoConverter.transactionInfo(it) })
             }
+
+    fun getRawTransaction(transactionHash: String): String? {
+        return storage.getFullTransaction(transactionHash.hexToByteArray().reversedArray())?.let {
+            TransactionSerializer.serialize(it).toHexString()
+        }
+    }
 
     private fun blockInfo(block: Block) = BlockInfo(
             block.headerHash.toReversedHex(),
