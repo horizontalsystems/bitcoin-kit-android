@@ -1,17 +1,19 @@
 package io.horizontalsystems.bitcoinkit.demo
 
 import android.annotation.SuppressLint
-import androidx.lifecycle.Observer
 import android.graphics.Color
 import android.os.Bundle
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInputInfo
 import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
@@ -21,11 +23,11 @@ import io.horizontalsystems.hodler.HodlerPlugin
 import java.text.DateFormat
 import java.util.*
 
-class TransactionsFragment : Fragment() {
+class TransactionsFragment : Fragment(), ViewHolderTransaction.Listener {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var transactionsRecyclerView: RecyclerView
-    private val transactionsAdapter = TransactionsAdapter()
+    private val transactionsAdapter = TransactionsAdapter(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +38,17 @@ class TransactionsFragment : Fragment() {
             it?.let { transactions ->
                 transactionsAdapter.items = transactions
                 transactionsAdapter.notifyDataSetChanged()
+            }
+        })
+
+        viewModel.transactionRaw.observe(this, Observer { transactionHex ->
+            activity?.let {
+                val dialog = AlertDialog.Builder(it)
+                        .setMessage(transactionHex)
+                        .setTitle("Transaction HEX")
+                        .create()
+
+                dialog.show()
             }
         })
     }
@@ -51,15 +64,19 @@ class TransactionsFragment : Fragment() {
         transactionsRecyclerView.adapter = transactionsAdapter
         transactionsRecyclerView.layoutManager = LinearLayoutManager(context)
     }
+
+    override fun onClickRawTransaction(transactionHash: String) {
+        viewModel.onRawTransactionClick(transactionHash)
+    }
 }
 
-class TransactionsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+class TransactionsAdapter(private val listener: ViewHolderTransaction.Listener) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var items = listOf<TransactionInfo>()
 
     override fun getItemCount() = items.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
-            ViewHolderTransaction(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_transaction, parent, false))
+            ViewHolderTransaction(LayoutInflater.from(parent.context).inflate(R.layout.view_holder_transaction, parent, false), listener)
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
@@ -68,11 +85,21 @@ class TransactionsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 }
 
-class ViewHolderTransaction(val containerView: View) : RecyclerView.ViewHolder(containerView) {
+class ViewHolderTransaction(val containerView: View, private val listener: Listener) : RecyclerView.ViewHolder(containerView) {
+
+    interface Listener {
+        fun onClickRawTransaction(transactionHash: String)
+    }
+
     private val summary = containerView.findViewById<TextView>(R.id.summary)!!
+    private val buttonRaw = containerView.findViewById<Button>(R.id.buttonRaw)!!
 
     @SuppressLint("SetTextI18n")
     fun bind(transactionInfo: TransactionInfo, index: Int) {
+        buttonRaw.setOnClickListener {
+            listener.onClickRawTransaction(transactionInfo.transactionHash)
+        }
+
         containerView.setBackgroundColor(if (index % 2 == 0) Color.parseColor("#dddddd") else Color.TRANSPARENT)
 
         val txAmount = calculateAmount(transactionInfo)
