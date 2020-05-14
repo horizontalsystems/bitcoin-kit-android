@@ -99,6 +99,12 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
         }
     }
 
+    fun getTransaction(transactionHash: String): TransactionInfo? {
+        return storage.getFullTransactionInfo(transactionHash.hexToByteArray().reversedArray())?.let {
+            transactionInfoConverter.transactionInfo(it)
+        }
+    }
+
     private fun blockInfo(block: Block) = BlockInfo(
             block.headerHash.toReversedHex(),
             block.height,

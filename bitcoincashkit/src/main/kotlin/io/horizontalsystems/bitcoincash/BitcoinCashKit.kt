@@ -18,7 +18,6 @@ import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.InsightApi
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -26,7 +25,6 @@ import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.Mnemonic
-import io.reactivex.Single
 
 class BitcoinCashKit : AbstractKit {
     enum class NetworkType {
@@ -119,10 +117,6 @@ class BitcoinCashKit : AbstractKit {
         bitcoinCore.prependAddressConverter(bech32)
 
         bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
-    }
-
-    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return bitcoinCore.transactions(fromUid, limit)
     }
 
     companion object {

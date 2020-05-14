@@ -572,6 +572,10 @@ class BitcoinCore(
         return dataProvider.getRawTransaction(transactionHash)
     }
 
+    fun getTransaction(hash: String) : TransactionInfo? {
+        return dataProvider.getTransaction(hash)
+    }
+
     sealed class KitState {
         object Synced : KitState()
         class NotSynced(val exception: Throwable) : KitState()

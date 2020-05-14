@@ -4,10 +4,12 @@ import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.reactivex.Single
 
 abstract class AbstractKit {
 
@@ -35,6 +37,14 @@ abstract class AbstractKit {
 
     fun refresh() {
         bitcoinCore.refresh()
+    }
+
+    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return bitcoinCore.transactions(fromUid, limit)
+    }
+
+    fun getTransaction(hash: String): TransactionInfo? {
+        return bitcoinCore.getTransaction(hash)
     }
 
     fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData> = mapOf()): Long {

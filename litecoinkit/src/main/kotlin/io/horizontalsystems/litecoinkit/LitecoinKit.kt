@@ -12,7 +12,6 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.managers.*
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -22,7 +21,6 @@ import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.horizontalsystems.litecoinkit.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.litecoinkit.validators.ProofOfWorkValidator
-import io.reactivex.Single
 
 class LitecoinKit : AbstractKit {
     enum class NetworkType {
@@ -134,10 +132,6 @@ class LitecoinKit : AbstractKit {
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
         }
-    }
-
-    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return bitcoinCore.transactions(fromUid, limit)
     }
 
     companion object {
