@@ -193,10 +193,14 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, confirmedUnspentOutputProvider))
     }
 
-    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<DashTransactionInfo>> {
-        return bitcoinCore.transactions(fromUid, limit).map {
+    fun dashTransactions(fromUid: String? = null, limit: Int? = null): Single<List<DashTransactionInfo>> {
+        return transactions(fromUid, limit).map {
             it.mapNotNull { it as? DashTransactionInfo }
         }
+    }
+
+    fun getDashTransaction(hash: String): DashTransactionInfo? {
+        return getTransaction(hash) as? DashTransactionInfo
     }
 
     // BitcoinCore.Listener
