@@ -22,9 +22,7 @@ class BlockDiscoveryBatch(private val wallet: Wallet, private val blockHashFetch
     private fun fetchRecursive(account: Int, external: Boolean, publicKeys: List<PublicKey> = listOf(), blockHashes: List<BlockHash> = listOf(), prevCount: Int = 0, prevLastUsedIndex: Int = -1, startIndex: Int = 0): Pair<List<PublicKey>, List<BlockHash>> {
         val count = gapLimit - prevCount + prevLastUsedIndex + 1
 
-        val newPublicKeys = List(count) {
-            wallet.publicKey(account, it + startIndex, external)
-        }
+        val newPublicKeys = wallet.publicKeys(account, startIndex until startIndex + count, external)
 
         val (newBlockHashes, lastUsedIndex) = blockHashFetcher.getBlockHashes(newPublicKeys)
 

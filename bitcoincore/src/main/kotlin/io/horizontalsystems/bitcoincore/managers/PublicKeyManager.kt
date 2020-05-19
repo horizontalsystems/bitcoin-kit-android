@@ -89,10 +89,11 @@ class PublicKeyManager(
         if (keysCount < wallet.gapLimit) {
             val lastIndex = publicKeys.maxBy { it.publicKey.index }?.publicKey?.index ?: -1
 
-            for (i in 1..wallet.gapLimit - keysCount) {
-                val publicKey = wallet.publicKey(account, lastIndex + i, external)
-                keys.add(publicKey)
-            }
+            val newKeysStartIndex = lastIndex + 1
+            val indices = newKeysStartIndex until (newKeysStartIndex + wallet.gapLimit - keysCount)
+            val newKeys = wallet.publicKeys(account, indices, external)
+
+            keys.addAll(newKeys)
         }
 
         addKeys(keys)
