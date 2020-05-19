@@ -1,13 +1,15 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.publicKey
+import io.horizontalsystems.bitcoincore.core.Wallet
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.storage.PublicKeyWithUsedState
-import io.horizontalsystems.hdwalletkit.HDWallet
 
-class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWallet, private val restoreKeyConverter: RestoreKeyConverterChain)
-    : IBloomFilterProvider {
+class PublicKeyManager(
+        private val storage: IStorage,
+        private val wallet: Wallet,
+        private val restoreKeyConverter: RestoreKeyConverterChain
+) : IBloomFilterProvider {
 
     // IBloomFilterProvider
 
@@ -36,7 +38,7 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     fun getPublicKeyByPath(path: String): PublicKey {
         val parts = path.split("/").map { it.toInt() }
 
-        return hdWallet.publicKey(parts[0], parts[2], parts[1] == 1)
+        return wallet.publicKey(parts[0], parts[2], parts[1] == 1)
     }
 
     fun fillGap() {
@@ -67,11 +69,11 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
         val lastAccount = publicKeys.map { it.publicKey.account }.max() ?: return false
 
         for (i in 0..lastAccount) {
-            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && it.publicKey.external }) < hdWallet.gapLimit) {
+            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && it.publicKey.external }) < wallet.gapLimit) {
                 return true
             }
 
-            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && !it.publicKey.external }) < hdWallet.gapLimit) {
+            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && !it.publicKey.external }) < wallet.gapLimit) {
                 return true
             }
         }
@@ -84,11 +86,11 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
         val keysCount = gapKeysCount(publicKeys)
         val keys = mutableListOf<PublicKey>()
 
-        if (keysCount < hdWallet.gapLimit) {
+        if (keysCount < wallet.gapLimit) {
             val lastIndex = publicKeys.maxBy { it.publicKey.index }?.publicKey?.index ?: -1
 
-            for (i in 1..hdWallet.gapLimit - keysCount) {
-                val publicKey = hdWallet.publicKey(account, lastIndex + i, external)
+            for (i in 1..wallet.gapLimit - keysCount) {
+                val publicKey = wallet.publicKey(account, lastIndex + i, external)
                 keys.add(publicKey)
             }
         }
@@ -114,8 +116,8 @@ class PublicKeyManager(private val storage: IStorage, private val hdWallet: HDWa
     }
 
     companion object {
-        fun create(storage: IStorage, hdWallet: HDWallet, restoreKeyConverter: RestoreKeyConverterChain): PublicKeyManager {
-            val addressManager = PublicKeyManager(storage, hdWallet, restoreKeyConverter)
+        fun create(storage: IStorage, wallet: Wallet, restoreKeyConverter: RestoreKeyConverterChain): PublicKeyManager {
+            val addressManager = PublicKeyManager(storage, wallet, restoreKeyConverter)
             addressManager.fillGap()
             return addressManager
         }
