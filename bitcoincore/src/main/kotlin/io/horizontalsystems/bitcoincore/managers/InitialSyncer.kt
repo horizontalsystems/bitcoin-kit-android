@@ -13,7 +13,8 @@ class InitialSyncer(
         private val storage: IStorage,
         private val blockDiscovery: IBlockDiscovery,
         private val publicKeyManager: PublicKeyManager,
-        private val errorStorage: ErrorStorage?) {
+        private val errorStorage: ErrorStorage?
+) {
 
     interface Listener {
         fun onSyncSuccess()
@@ -34,24 +35,13 @@ class InitialSyncer(
     }
 
     private fun syncForAccount(account: Int) {
-        val externalObservable = blockDiscovery.discoverBlockHashes(account, true)
-        val internalObservable = blockDiscovery.discoverBlockHashes(account, false)
-
-        val disposable = Single
-                .merge(externalObservable, internalObservable)
-                .toList()
+        val disposable = blockDiscovery.discoverBlockHashes(account)
                 .subscribeOn(Schedulers.io())
                 .subscribe(
-                        { pairsList ->
-                            val publicKeys = mutableListOf<PublicKey>()
-                            val blockHashes = mutableListOf<BlockHash>()
+                        { (publicKeys, blockHashes) ->
+                            val sortedUniqueBlockHashes = blockHashes.distinct().sortedBy { it.height }
 
-                            pairsList.forEach { (keys, hashes) ->
-                                publicKeys.addAll(keys)
-                                blockHashes.addAll(hashes)
-                            }
-
-                            handle(account, publicKeys, blockHashes)
+                            handle(account, publicKeys, sortedUniqueBlockHashes)
                         },
                         {
                             handleError(it)
