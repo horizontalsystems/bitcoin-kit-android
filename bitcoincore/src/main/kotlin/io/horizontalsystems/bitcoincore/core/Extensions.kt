@@ -1,14 +1,7 @@
 package io.horizontalsystems.bitcoincore.core
 
-import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
-import io.horizontalsystems.hdwalletkit.HDWallet
 import java.util.*
-
-fun HDWallet.publicKey(account: Int, index: Int, external: Boolean): PublicKey {
-    val hdPubKey = hdPublicKey(account, index, external)
-    return PublicKey(account, index, hdPubKey.external, hdPubKey.publicKey, hdPubKey.publicKeyHash)
-}
 
 fun List<FullTransaction>.inTopologicalOrder(): List<FullTransaction> {
 
