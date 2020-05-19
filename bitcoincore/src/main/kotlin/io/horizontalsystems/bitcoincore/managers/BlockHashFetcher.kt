@@ -5,28 +5,42 @@ import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
 
-class BlockHashFetcher(private val restoreKeyConverter: IRestoreKeyConverter, private val initialSyncerApi: IInitialSyncApi, private val helper: BlockHashFetcherHelper) {
+class BlockHashFetcher(
+        private val restoreKeyConverter: IRestoreKeyConverter,
+        private val initialSyncerApi: IInitialSyncApi,
+        private val helper: BlockHashFetcherHelper
+) {
 
-    fun getBlockHashes(publicKeys: List<PublicKey>): Pair<List<BlockHash>, Int> {
-        val addresses = publicKeys.map {
+    fun getBlockHashes(externalKeys: List<PublicKey>, internalKeys: List<PublicKey>): BlockHashesResponse {
+        val externalAddresses = externalKeys.map {
             restoreKeyConverter.keysForApiRestore(it)
         }
-
-        val transactions = initialSyncerApi.getTransactions(addresses.flatten())
+        val internalAddresses = internalKeys.map {
+            restoreKeyConverter.keysForApiRestore(it)
+        }
+        val allAddresses = externalAddresses.flatten() + internalAddresses.flatten()
+        val transactions = initialSyncerApi.getTransactions(allAddresses)
 
         if (transactions.isEmpty()) {
-            return Pair(listOf(), -1)
+            return BlockHashesResponse(listOf(), -1, -1)
         }
 
-        val lastUsedIndex = helper.lastUsedIndex(addresses, transactions.map { it.txOutputs }.flatten())
+        val outputs = transactions.flatMap { it.txOutputs }
+        val externalLastUsedIndex = helper.lastUsedIndex(externalAddresses, outputs)
+        val internalLastUsedIndex = helper.lastUsedIndex(internalAddresses, outputs)
 
         val blockHashes = transactions.map {
             BlockHash(it.blockHash.toReversedByteArray(), it.blockHeight, 0)
         }
 
-        return Pair(blockHashes, lastUsedIndex)
+        return BlockHashesResponse(blockHashes, externalLastUsedIndex, internalLastUsedIndex)
     }
 
+    data class BlockHashesResponse(
+            val blockHashes: List<BlockHash>,
+            val externalLastUsedIndex: Int,
+            val internalLastUsedIndex: Int
+    )
 }
 
 class BlockHashFetcherHelper {

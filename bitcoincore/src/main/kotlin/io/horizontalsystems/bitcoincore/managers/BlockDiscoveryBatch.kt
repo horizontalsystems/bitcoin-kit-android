@@ -5,36 +5,62 @@ import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.reactivex.Single
 
-class BlockDiscoveryBatch(private val wallet: Wallet, private val blockHashFetcher: BlockHashFetcher, private val maxHeight: Int) : IBlockDiscovery {
+class BlockDiscoveryBatch(
+        private val wallet: Wallet,
+        private val blockHashFetcher: BlockHashFetcher,
+        private val maxHeight: Int
+) : IBlockDiscovery {
 
     private val gapLimit = wallet.gapLimit
 
-    override fun discoverBlockHashes(account: Int, external: Boolean): Single<Pair<List<PublicKey>, List<BlockHash>>> {
+    override fun discoverBlockHashes(account: Int): Single<Pair<List<PublicKey>, List<BlockHash>>> {
         return Single.create { emitter ->
             try {
-                emitter.onSuccess(fetchRecursive(account, external))
+                emitter.onSuccess(fetchRecursive(account))
             } catch (e: Exception) {
                 emitter.tryOnError(e)
             }
         }
     }
 
-    private fun fetchRecursive(account: Int, external: Boolean, publicKeys: List<PublicKey> = listOf(), blockHashes: List<BlockHash> = listOf(), prevCount: Int = 0, prevLastUsedIndex: Int = -1, startIndex: Int = 0): Pair<List<PublicKey>, List<BlockHash>> {
-        val count = gapLimit - prevCount + prevLastUsedIndex + 1
+    private fun fetchRecursive(
+            account: Int,
+            blockHashes: List<BlockHash> = listOf(),
+            externalBatchInfo: KeyBlockHashBatchInfo = KeyBlockHashBatchInfo(),
+            internalBatchInfo: KeyBlockHashBatchInfo = KeyBlockHashBatchInfo()
+    ): Pair<List<PublicKey>, List<BlockHash>> {
 
-        val newPublicKeys = wallet.publicKeys(account, startIndex until startIndex + count, external)
+        val externalCount = gapLimit - externalBatchInfo.prevCount + externalBatchInfo.prevLastUsedIndex + 1
+        val internalCount = gapLimit - internalBatchInfo.prevCount + internalBatchInfo.prevLastUsedIndex + 1
 
-        val (newBlockHashes, lastUsedIndex) = blockHashFetcher.getBlockHashes(newPublicKeys)
+        val externalNewKeys = wallet.publicKeys(account, externalBatchInfo.startIndex until externalBatchInfo.startIndex + externalCount, true)
+        val internalNewKeys = wallet.publicKeys(account, internalBatchInfo.startIndex until internalBatchInfo.startIndex + internalCount, false)
 
-        val resultBlockHashes = blockHashes + newBlockHashes.filter { it.height <= maxHeight }
-        val resultPublicKeys = publicKeys + newPublicKeys
+        val externalPublicKeys = externalBatchInfo.publicKeys + externalNewKeys
+        val internalPublicKeys = internalBatchInfo.publicKeys + internalNewKeys
+
+        val fetchResponse = blockHashFetcher.getBlockHashes(externalNewKeys, internalNewKeys)
+        val resultBlockHashes = blockHashes + fetchResponse.blockHashes.filter { it.height <= maxHeight }
 
         return when {
             // found all unused keys
-            lastUsedIndex < 0 -> Pair(resultPublicKeys, resultBlockHashes)
+            fetchResponse.externalLastUsedIndex < 0 && fetchResponse.internalLastUsedIndex < 0 -> {
+                Pair(externalPublicKeys + internalPublicKeys, resultBlockHashes)
+            }
             // found some used keys
-            else -> fetchRecursive(account, external, resultPublicKeys, resultBlockHashes, count, lastUsedIndex, startIndex + count)
+            else -> {
+                val externalBatch = KeyBlockHashBatchInfo(externalPublicKeys, externalCount, fetchResponse.externalLastUsedIndex, externalBatchInfo.startIndex + externalCount)
+                val internalBatch = KeyBlockHashBatchInfo(internalPublicKeys, internalCount, fetchResponse.internalLastUsedIndex, internalBatchInfo.startIndex + internalCount)
+                fetchRecursive(account, resultBlockHashes, externalBatch, internalBatch)
+            }
         }
     }
+
+    private data class KeyBlockHashBatchInfo(
+            var publicKeys: List<PublicKey> = listOf(),
+            var prevCount: Int = 0,
+            var prevLastUsedIndex: Int = -1,
+            var startIndex: Int = 0
+    )
 
 }
