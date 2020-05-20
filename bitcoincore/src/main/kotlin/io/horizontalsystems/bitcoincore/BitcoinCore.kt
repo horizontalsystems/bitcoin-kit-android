@@ -160,7 +160,7 @@ class BitcoinCoreBuilder {
 
         val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
 
-        val kitStateProvider = KitStateProvider()
+        val kitStateManager = KitStateManager()
 
         val peerHostManager = PeerAddressManager(network, storage)
         val bloomFilterManager = BloomFilterManager()
@@ -173,8 +173,8 @@ class BitcoinCoreBuilder {
         val blockchain = Blockchain(storage, blockValidator, dataProvider)
         val checkpoint = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
 
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateProvider, checkpoint)
-        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateProvider, MerkleBlockExtractor(network.maxBlockSize))
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateManager, checkpoint)
+        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateManager, MerkleBlockExtractor(network.maxBlockSize))
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
@@ -198,13 +198,13 @@ class BitcoinCoreBuilder {
         val transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
-        val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
+        val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, kitStateManager, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(wallet, blockHashFetcher, checkpoint.block.height)
-        val stateManager = StateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
+        val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
         val errorStorage = ErrorStorage()
         val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager, errorStorage)
 
-        val syncManager = SyncManager(peerGroup, initialSyncer, kitStateProvider, stateManager, connectionManager)
+        val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, kitStateManager, apiSyncStateManager)
         initialSyncer.listener = syncManager
         connectionManager.listener = syncManager
 
@@ -214,7 +214,7 @@ class BitcoinCoreBuilder {
                 publicKeyManager,
                 addressConverter,
                 restoreKeyConverterChain,
-                kitStateProvider,
+                kitStateManager,
                 transactionCreator,
                 transactionFeeCalculator,
                 paymentAddressParser,
@@ -226,7 +226,7 @@ class BitcoinCoreBuilder {
                 errorStorage)
 
         dataProvider.listener = bitcoinCore
-        kitStateProvider.listener = bitcoinCore
+        kitStateManager.listener = bitcoinCore
 
         val watchedTransactionManager = WatchedTransactionManager()
         bloomFilterManager.addBloomFilterProvider(watchedTransactionManager)
@@ -304,7 +304,7 @@ class BitcoinCore(
         private val publicKeyManager: PublicKeyManager,
         private val addressConverter: AddressConverterChain,
         private val restoreKeyConverterChain: RestoreKeyConverterChain,
-        private val kitStateProvider: KitStateProvider,
+        private val kitStateManager: KitStateManager,
         private val transactionCreator: TransactionCreator,
         private val transactionFeeCalculator: TransactionFeeCalculator,
         private val paymentAddressParser: PaymentAddressParser,
@@ -313,8 +313,8 @@ class BitcoinCore(
         private var peerManager: PeerManager,
         private val dustCalculator: DustCalculator,
         private val pluginManager: PluginManager,
-        private val errorStorage: ErrorStorage)
-    : KitStateProvider.Listener, DataProvider.Listener {
+        private val errorStorage: ErrorStorage
+) : IKitStateManagerListener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit
@@ -382,7 +382,7 @@ class BitcoinCore(
     //  DataProvider getters
     val balance get() = dataProvider.balance
     val lastBlockInfo get() = dataProvider.lastBlockInfo
-    val syncState get() = kitStateProvider.syncState
+    val syncState get() = kitStateManager.syncState
 
     var listener: Listener? = null
 
@@ -539,7 +539,7 @@ class BitcoinCore(
     }
 
     //
-    // KitStateProvider Listener implementations
+    // IKitStateManagerListener implementations
     //
     override fun onKitStateUpdate(state: KitState) {
         listenerExecutor.execute {
@@ -581,11 +581,13 @@ class BitcoinCore(
         object Synced : KitState()
         class NotSynced(val exception: Throwable) : KitState()
         class Syncing(val progress: Double) : KitState()
+        class ApiSyncing(val transactions: Int) : KitState()
 
         override fun equals(other: Any?) = when {
             this is Synced && other is Synced -> true
             this is NotSynced && other is NotSynced -> exception == other.exception
             this is Syncing && other is Syncing -> this.progress == other.progress
+            this is ApiSyncing && other is ApiSyncing -> this.transactions == other.transactions
             else -> false
         }
 
@@ -593,6 +595,12 @@ class BitcoinCore(
             var result = javaClass.hashCode()
             if (this is Syncing) {
                 result = 31 * result + progress.hashCode()
+            }
+            if (this is NotSynced) {
+                result = 31 * result + exception.hashCode()
+            }
+            if (this is ApiSyncing) {
+                result = 31 * result + transactions.hashCode()
             }
             return result
         }

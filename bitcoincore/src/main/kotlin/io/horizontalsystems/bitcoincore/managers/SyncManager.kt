@@ -2,64 +2,55 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
-import io.horizontalsystems.bitcoincore.core.ISyncStateListener
+import io.horizontalsystems.bitcoincore.core.IKitStateManager
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 
-class SyncManager(private val peerGroup: PeerGroup,
-                  private val initialSyncer: InitialSyncer,
-                  private val syncStateListener: ISyncStateListener,
-                  private val stateManager: StateManager,
-                  private val connectionManager: ConnectionManager)
-    : InitialSyncer.Listener, IConnectionManagerListener {
+class SyncManager(
+        private val connectionManager: ConnectionManager,
+        private val initialSyncer: InitialSyncer,
+        private val peerGroup: PeerGroup,
+        private val stateManager: IKitStateManager,
+        private val apiSyncStateManager: ApiSyncStateManager
+) : InitialSyncer.Listener, IConnectionManagerListener {
 
-    sealed class State {
-        object Stopped : State()
-        object Idle : State()
-        object InitialSyncing : State()
-        object PeerGroupRunning : State()
+    private fun startSync() {
+        if (apiSyncStateManager.restored) {
+            startPeerGroup()
+        } else {
+            startInitialSync()
+        }
     }
 
-    private var state: State = State.Stopped
+    private fun startInitialSync() {
+        stateManager.setApiSyncStarted()
+        initialSyncer.sync()
+    }
+
+    private fun startPeerGroup() {
+        stateManager.setBlocksSyncStarted()
+        peerGroup.start()
+    }
 
     fun start() {
-        if (state !is State.Stopped && state !is State.Idle) return
+        if (stateManager.syncState !is BitcoinCore.KitState.NotSynced) return
 
         if (connectionManager.isConnected) {
             startSync()
         } else {
-            state = State.Idle
-            syncStateListener.onSyncStop(BitcoinCore.StateError.NoInternet())
+            stateManager.setSyncFailed(BitcoinCore.StateError.NoInternet())
         }
-    }
-
-    private fun startSync() {
-        syncStateListener.onSyncStart()
-
-        if (stateManager.restored) {
-            startPeerGroup()
-        } else {
-            state = State.InitialSyncing
-            initialSyncer.sync()
-        }
-    }
-
-    private fun startPeerGroup() {
-        state = State.PeerGroupRunning
-        peerGroup.start()
     }
 
     fun stop() {
-        when (state) {
-            State.InitialSyncing -> {
+        when (stateManager.syncState) {
+            is BitcoinCore.KitState.ApiSyncing -> {
                 initialSyncer.terminate()
             }
-            State.PeerGroupRunning -> {
+            is BitcoinCore.KitState.Syncing -> {
                 peerGroup.stop()
             }
         }
-
-        state = State.Stopped
-        syncStateListener.onSyncStop(BitcoinCore.StateError.NotStarted())
+        stateManager.setSyncFailed(BitcoinCore.StateError.NotStarted())
     }
 
     //
@@ -67,12 +58,11 @@ class SyncManager(private val peerGroup: PeerGroup,
     //
 
     override fun onConnectionChange(isConnected: Boolean) {
-        if (isConnected && state is State.Idle) {
+        if (isConnected && stateManager.syncIdle) {
             startSync()
-        } else if (!isConnected && state == State.PeerGroupRunning) {
+        } else if (!isConnected && stateManager.syncState is BitcoinCore.KitState.Syncing) {
             peerGroup.stop()
-            state = State.Idle
-            syncStateListener.onSyncStop(BitcoinCore.StateError.NoInternet())
+            stateManager.setSyncFailed(BitcoinCore.StateError.NoInternet())
         }
     }
 
@@ -81,12 +71,11 @@ class SyncManager(private val peerGroup: PeerGroup,
     //
 
     override fun onSyncSuccess() {
-        stateManager.restored = true
+        apiSyncStateManager.restored = true
         startPeerGroup()
     }
 
     override fun onSyncFailed(error: Throwable) {
-        state = State.Idle
-        syncStateListener.onSyncStop(error)
+        stateManager.setSyncFailed(error)
     }
 }

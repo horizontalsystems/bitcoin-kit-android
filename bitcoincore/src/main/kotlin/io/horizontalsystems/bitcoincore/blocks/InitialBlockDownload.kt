@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.blocks
 
-import io.horizontalsystems.bitcoincore.core.ISyncStateListener
+import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
 import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.peer.*
@@ -15,7 +15,7 @@ import kotlin.math.max
 class InitialBlockDownload(
         private var blockSyncer: BlockSyncer,
         private val peerManager: PeerManager,
-        private val syncStateListener: ISyncStateListener,
+        private val listener: IBlockSyncListener,
         private val merkleBlockExtractor: MerkleBlockExtractor)
     : IInventoryItemsHandler, IPeerTaskHandler, PeerGroup.Listener, GetMerkleBlocksTask.MerkleBlockHandler {
 
@@ -173,9 +173,9 @@ class InitialBlockDownload(
 
                 // Some peers fail to send InventoryMessage within expected time
                 // and become 'synced' in InitialBlockDownload without sending all of their blocks.
-                // In such case, we shouldn't call 'onSyncFinish'
+                // In such case, we assume not all blocks are downloaded
                 if (blockSyncer.localDownloadedBestBlockHeight >= peer.announcedLastBlockHeight) {
-                    syncStateListener.onSyncFinish()
+                    listener.onBlockSyncFinished()
                 }
             }
         }

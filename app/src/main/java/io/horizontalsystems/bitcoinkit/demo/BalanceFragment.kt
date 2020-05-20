@@ -59,11 +59,14 @@ class BalanceFragment : Fragment() {
                 is BitcoinCore.KitState.Synced -> {
                     stateValue.text = "synced"
                 }
+                is BitcoinCore.KitState.ApiSyncing -> {
+                    stateValue.text = "api syncing ${state.transactions} txs"
+                }
                 is BitcoinCore.KitState.Syncing -> {
                     stateValue.text = "syncing ${"%.3f".format(state.progress)}"
                 }
                 is BitcoinCore.KitState.NotSynced -> {
-                    stateValue.text = "not synced"
+                    stateValue.text = "not synced ${state.exception.javaClass.simpleName}"
                 }
             }
         })
