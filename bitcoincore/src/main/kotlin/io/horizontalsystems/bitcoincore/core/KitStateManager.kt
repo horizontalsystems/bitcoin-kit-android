@@ -4,25 +4,16 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import kotlin.math.max
 
-interface ISyncStateListener {
-    fun onSyncStart()
-    fun onSyncStop(error: Throwable)
-    fun onSyncFinish()
-    fun onInitialBestBlockHeightUpdate(height: Int)
-    fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
-}
+class KitStateManager : IKitStateManager, IBlockSyncListener, IApiSyncListener {
 
-class KitStateProvider : ISyncStateListener {
-
-    interface Listener {
-        fun onKitStateUpdate(state: KitState)
-    }
-
-    var listener: Listener? = null
     private var initialBestBlockHeight = 0
     private var currentBestBlockHeight = 0
+    private var foundTransactionsCount = 0
 
-    var syncState: KitState = KitState.NotSynced(BitcoinCore.StateError.NotStarted())
+    //
+    // IKitStateManager
+    //
+    override var syncState: KitState = KitState.NotSynced(BitcoinCore.StateError.NotStarted())
         private set(value) {
             if (value != field) {
                 field = value
@@ -30,20 +21,37 @@ class KitStateProvider : ISyncStateListener {
             }
         }
 
-    //
-    // SyncStateListener implementations
-    //
-    override fun onSyncStart() {
+    override val syncIdle: Boolean
+        get() = syncState.let {
+            it is KitState.NotSynced && it.exception !is BitcoinCore.StateError.NotStarted
+        }
+
+    override var listener: IKitStateManagerListener? = null
+
+    override fun setApiSyncStarted() {
+        syncState = KitState.ApiSyncing(foundTransactionsCount)
+    }
+
+    override fun setBlocksSyncStarted() {
         syncState = KitState.Syncing(0.0)
     }
 
-    override fun onSyncStop(error: Throwable) {
+    override fun setSyncFailed(error: Throwable) {
         syncState = KitState.NotSynced(error)
     }
 
-    override fun onSyncFinish() {
-        syncState = KitState.Synced
+    //
+    // IApiSyncListener
+    //
+
+    override fun onTransactionsFound(count: Int) {
+        foundTransactionsCount += count
+        syncState = KitState.ApiSyncing(foundTransactionsCount)
     }
+
+    //
+    // IBlockSyncListener implementations
+    //
 
     override fun onInitialBestBlockHeightUpdate(height: Int) {
         initialBestBlockHeight = height
@@ -67,4 +75,9 @@ class KitStateProvider : ISyncStateListener {
             KitState.Syncing(progress)
         }
     }
+
+    override fun onBlockSyncFinished() {
+        syncState = KitState.Synced
+    }
+
 }

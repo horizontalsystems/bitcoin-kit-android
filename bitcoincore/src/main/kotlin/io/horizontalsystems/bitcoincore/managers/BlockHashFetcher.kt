@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.core.IApiSyncListener
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.models.BlockHash
@@ -8,6 +9,7 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 class BlockHashFetcher(
         private val restoreKeyConverter: IRestoreKeyConverter,
         private val initialSyncerApi: IInitialSyncApi,
+        private val listener: IApiSyncListener,
         private val helper: BlockHashFetcherHelper
 ) {
 
@@ -24,6 +26,8 @@ class BlockHashFetcher(
         if (transactions.isEmpty()) {
             return BlockHashesResponse(listOf(), -1, -1)
         }
+
+        listener.onTransactionsFound(transactions.size)
 
         val outputs = transactions.flatMap { it.txOutputs }
         val externalLastUsedIndex = helper.lastUsedIndex(externalAddresses, outputs)

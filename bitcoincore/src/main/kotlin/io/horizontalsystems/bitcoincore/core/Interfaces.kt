@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.core
 
+import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.managers.TransactionItem
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.network.peer.Peer
@@ -164,4 +165,28 @@ interface ITransactionDataSorterFactory {
 interface ITransactionDataSorter {
     fun sortOutputs(outputs: List<TransactionOutput>): List<TransactionOutput>
     fun sortUnspents(unspents: List<UnspentOutput>): List<UnspentOutput>
+}
+
+interface IKitStateManager {
+    val syncState: BitcoinCore.KitState
+    val syncIdle: Boolean
+    var listener: IKitStateManagerListener?
+
+    fun setApiSyncStarted()
+    fun setBlocksSyncStarted()
+    fun setSyncFailed(error: Throwable)
+}
+
+interface IKitStateManagerListener {
+    fun onKitStateUpdate(state: BitcoinCore.KitState)
+}
+
+interface IApiSyncListener {
+    fun onTransactionsFound(count: Int)
+}
+
+interface IBlockSyncListener {
+    fun onBlockSyncFinished()
+    fun onInitialBestBlockHeightUpdate(height: Int)
+    fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
 }

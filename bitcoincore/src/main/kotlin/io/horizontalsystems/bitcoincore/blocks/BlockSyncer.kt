@@ -2,7 +2,7 @@ package io.horizontalsystems.bitcoincore.blocks
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.ISyncStateListener
+import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.BlockHash
@@ -16,9 +16,10 @@ class BlockSyncer(
         private val blockchain: Blockchain,
         private val transactionProcessor: TransactionProcessor,
         private val publicKeyManager: PublicKeyManager,
-        private val listener: ISyncStateListener,
+        private val listener: IBlockSyncListener,
         private val checkpoint: Checkpoint,
-        private val state: State = State()) {
+        private val state: State = State()
+) {
 
     private val sqliteMaxVariableNumber = 999
 

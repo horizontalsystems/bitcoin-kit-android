@@ -2,7 +2,10 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IStorage
 
-class StateManager(private val storage: IStorage, private val restoreFromApi: Boolean) {
+class ApiSyncStateManager(
+        private val storage: IStorage,
+        private val restoreFromApi: Boolean
+) {
 
     var restored: Boolean
         get() {
