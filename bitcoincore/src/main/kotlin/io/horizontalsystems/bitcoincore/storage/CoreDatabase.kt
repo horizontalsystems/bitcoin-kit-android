@@ -9,7 +9,7 @@ import androidx.room.migration.Migration
 import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
 
-@Database(version = 9, exportSchema = false, entities = [
+@Database(version = 10, exportSchema = false, entities = [
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -41,6 +41,7 @@ abstract class CoreDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .allowMainThreadQueries()
                     .addMigrations(
+                            add_rawTransaction_to_Transaction,
                             add_conflictingTxHash_to_Transaction,
                             add_table_InvalidTransaction,
                             update_transaction_output,
@@ -50,6 +51,13 @@ abstract class CoreDatabase : RoomDatabase() {
                     )
                     .fallbackToDestructiveMigration()
                     .build()
+        }
+
+        private val add_rawTransaction_to_Transaction = object : Migration(9, 10) {
+            override fun migrate(database: SupportSQLiteDatabase) {
+                database.execSQL("ALTER TABLE `Transaction` ADD COLUMN `rawTransaction` TEXT")
+                database.execSQL("ALTER TABLE `InvalidTransaction` ADD COLUMN `rawTransaction` TEXT")
+            }
         }
 
         private val add_conflictingTxHash_to_Transaction = object : Migration(8, 9) {

@@ -5,7 +5,7 @@ import androidx.room.Entity
 @Entity
 class InvalidTransaction() : Transaction() {
 
-    constructor(transaction: Transaction, serializedTxInfo: String) : this() {
+    constructor(transaction: Transaction, serializedTxInfo: String, rawTransaction: String?) : this() {
         uid = transaction.uid
         hash = transaction.hash
         blockHash = transaction.blockHash
@@ -20,6 +20,7 @@ class InvalidTransaction() : Transaction() {
         conflictingTxHash = transaction.conflictingTxHash
 
         this.serializedTxInfo = serializedTxInfo
+        this.rawTransaction = rawTransaction
     }
 
 }

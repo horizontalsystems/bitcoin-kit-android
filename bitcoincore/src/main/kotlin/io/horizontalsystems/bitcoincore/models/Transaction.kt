@@ -44,6 +44,7 @@ open class Transaction() {
     var status: Int = Status.RELAYED
     var serializedTxInfo: String = ""
     var conflictingTxHash: ByteArray? = null
+    var rawTransaction: String? = null
 
     constructor(version: Int = 0, lockTime: Long = 0) : this() {
         this.version = version
