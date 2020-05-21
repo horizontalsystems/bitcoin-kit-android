@@ -179,7 +179,7 @@ class TransactionProcessor(
         val invalidTransactions = invalidTransactionsFullInfo.map { fullTxInfo ->
             val txInfo = txInfoConverter.transactionInfo(fullTxInfo)
             val serializedTxInfo = txInfo.serialize()
-            InvalidTransaction(fullTxInfo.header, serializedTxInfo)
+            InvalidTransaction(fullTxInfo.header, serializedTxInfo, fullTxInfo.rawTransaction)
         }
 
         storage.moveTransactionToInvalidTransactions(invalidTransactions)

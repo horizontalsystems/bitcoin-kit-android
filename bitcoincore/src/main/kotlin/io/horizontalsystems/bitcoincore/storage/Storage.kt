@@ -177,7 +177,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return transactions.map { tx ->
             FullTransactionInfo(
                     tx.block,
-                    if (tx.transaction.status == Transaction.Status.INVALID) InvalidTransaction(tx.transaction, tx.transaction.serializedTxInfo) else tx.transaction,
+                    if (tx.transaction.status == Transaction.Status.INVALID) InvalidTransaction(tx.transaction, tx.transaction.serializedTxInfo, tx.transaction.rawTransaction) else tx.transaction,
                     inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
                     outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) }
             )
@@ -218,10 +218,6 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getTransaction(hash: ByteArray): Transaction? {
         return store.transaction.getByHash(hash)
-    }
-
-    override fun getFullTransaction(hash: ByteArray): FullTransaction? {
-        return getTransaction(hash)?.let { convertToFullTransaction(it) }
     }
 
     override fun getValidOrInvalidTransaction(uid: String): Transaction? {

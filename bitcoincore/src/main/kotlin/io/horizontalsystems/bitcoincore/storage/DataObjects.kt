@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.storage
 
 import androidx.room.Embedded
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.utils.HashUtils
@@ -64,4 +65,12 @@ class FullTransactionInfo(
         val block: Block?,
         val header: Transaction,
         val inputs: List<InputWithPreviousOutput>,
-        val outputs: List<TransactionOutput>)
+        val outputs: List<TransactionOutput>) {
+
+    val rawTransaction: String
+        get() {
+            val fullTransaction = FullTransaction(header, inputs.map { it.input }, outputs)
+            return TransactionSerializer.serialize(fullTransaction).toHexString()
+        }
+}
+

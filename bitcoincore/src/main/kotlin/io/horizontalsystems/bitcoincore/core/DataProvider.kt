@@ -2,11 +2,9 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.reactivex.Single
@@ -14,8 +12,11 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
 import java.util.concurrent.TimeUnit
 
-class DataProvider(private val storage: IStorage, private val unspentOutputProvider: UnspentOutputProvider, private val transactionInfoConverter: ITransactionInfoConverter)
-    : IBlockchainDataListener {
+class DataProvider(
+        private val storage: IStorage,
+        private val unspentOutputProvider: UnspentOutputProvider,
+        private val transactionInfoConverter: ITransactionInfoConverter
+) : IBlockchainDataListener {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>)
@@ -94,9 +95,9 @@ class DataProvider(private val storage: IStorage, private val unspentOutputProvi
             }
 
     fun getRawTransaction(transactionHash: String): String? {
-        return storage.getFullTransaction(transactionHash.hexToByteArray().reversedArray())?.let {
-            TransactionSerializer.serialize(it).toHexString()
-        }
+        val hashByteArray = transactionHash.hexToByteArray().reversedArray()
+        return storage.getFullTransactionInfo(hashByteArray)?.rawTransaction
+                ?: storage.getInvalidTransaction(hashByteArray)?.rawTransaction
     }
 
     fun getTransaction(transactionHash: String): TransactionInfo? {
