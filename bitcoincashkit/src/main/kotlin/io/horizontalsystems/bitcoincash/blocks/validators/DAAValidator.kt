@@ -11,7 +11,7 @@ class DAAValidator(
         private val blockValidatorHelper: BitcoinCashBlockValidatorHelper
 ) : IBlockChainedValidator {
     private val largestHash = 1.toBigInteger() shl 256
-    private val consensusDaaForkHeight = 504030 // 2017 November 3, 14:06 GMT
+    private val consensusDaaForkHeight = 504031 // 11/13/2017 @ 8:58pm (UTC)
 
     override fun isBlockValidatable(block: Block, previousBlock: Block): Boolean {
         return previousBlock.height >= consensusDaaForkHeight
