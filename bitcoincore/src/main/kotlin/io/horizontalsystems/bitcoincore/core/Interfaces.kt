@@ -189,6 +189,5 @@ interface IApiSyncListener {
 
 interface IBlockSyncListener {
     fun onBlockSyncFinished()
-    fun onInitialBestBlockHeightUpdate(height: Int)
     fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
 }
