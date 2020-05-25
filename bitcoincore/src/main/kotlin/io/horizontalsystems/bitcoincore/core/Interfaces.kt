@@ -172,8 +172,11 @@ interface IKitStateManager {
     var listener: IKitStateManagerListener?
 
     fun setApiSyncStarted()
+    fun setApiSyncProgress(foundTransactionsCount: Int)
     fun setBlocksSyncStarted()
+    fun setBlocksSyncProgress(progress: Double)
     fun setSyncFailed(error: Throwable)
+    fun setSyncFinished()
 }
 
 interface IKitStateManagerListener {

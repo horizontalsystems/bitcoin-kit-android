@@ -15,10 +15,10 @@ import kotlin.math.max
 class InitialBlockDownload(
         private var blockSyncer: BlockSyncer,
         private val peerManager: PeerManager,
-        private val listener: IBlockSyncListener,
         private val merkleBlockExtractor: MerkleBlockExtractor)
     : IInventoryItemsHandler, IPeerTaskHandler, PeerGroup.Listener, GetMerkleBlocksTask.MerkleBlockHandler {
 
+    var listener: IBlockSyncListener? = null
     val syncedPeers = CopyOnWriteArrayList<Peer>()
     private val peerSyncListeners = mutableListOf<IPeerSyncListener>()
     private val peerSwitchMinimumRatio = 1.5
@@ -175,7 +175,7 @@ class InitialBlockDownload(
                 // and become 'synced' in InitialBlockDownload without sending all of their blocks.
                 // In such case, we assume not all blocks are downloaded
                 if (blockSyncer.localDownloadedBestBlockHeight >= peer.announcedLastBlockHeight) {
-                    listener.onBlockSyncFinished()
+                    listener?.onBlockSyncFinished()
                 }
             }
         }

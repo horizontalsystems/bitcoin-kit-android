@@ -1,9 +1,13 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import android.util.Log
 import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.core.IApiSyncListener
+import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
 import io.horizontalsystems.bitcoincore.core.IKitStateManager
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
+import kotlin.math.max
 
 class SyncManager(
         private val connectionManager: ConnectionManager,
@@ -11,7 +15,11 @@ class SyncManager(
         private val peerGroup: PeerGroup,
         private val stateManager: IKitStateManager,
         private val apiSyncStateManager: ApiSyncStateManager
-) : InitialSyncer.Listener, IConnectionManagerListener {
+) : InitialSyncer.Listener, IConnectionManagerListener, IBlockSyncListener, IApiSyncListener {
+
+    private var initialBestBlockHeight = 0
+    private var currentBestBlockHeight = 0
+    private var foundTransactionsCount = 0
 
     private fun startSync() {
         if (apiSyncStateManager.restored) {
@@ -77,5 +85,45 @@ class SyncManager(
 
     override fun onSyncFailed(error: Throwable) {
         stateManager.setSyncFailed(error)
+    }
+
+    //
+    // IApiSyncListener
+    //
+
+    override fun onTransactionsFound(count: Int) {
+        foundTransactionsCount += count
+        stateManager.setApiSyncProgress(foundTransactionsCount)
+    }
+
+    //
+    // IBlockSyncListener implementations
+    //
+
+    override fun onInitialBestBlockHeightUpdate(height: Int) {
+        initialBestBlockHeight = height
+        currentBestBlockHeight = height
+    }
+
+    override fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int) {
+        currentBestBlockHeight = max(currentBestBlockHeight, height)
+
+        val blocksDownloaded = currentBestBlockHeight - initialBestBlockHeight
+        val allBlocksToDownload = maxBlockHeight - initialBestBlockHeight
+
+        val progress = when {
+            allBlocksToDownload <= 0 -> 1.0
+            else -> blocksDownloaded / allBlocksToDownload.toDouble()
+        }
+
+        if (progress >= 1) {
+            stateManager.setSyncFinished()
+        } else {
+            stateManager.setBlocksSyncProgress(progress)
+        }
+    }
+
+    override fun onBlockSyncFinished() {
+        stateManager.setSyncFinished()
     }
 }
