@@ -166,20 +166,7 @@ interface ITransactionDataSorter {
     fun sortUnspents(unspents: List<UnspentOutput>): List<UnspentOutput>
 }
 
-interface IKitStateManager {
-    val syncState: BitcoinCore.KitState
-    val syncIdle: Boolean
-    var listener: IKitStateManagerListener?
-
-    fun setApiSyncStarted()
-    fun setApiSyncProgress(foundTransactionsCount: Int)
-    fun setBlocksSyncStarted()
-    fun setBlocksSyncProgress(progress: Double)
-    fun setSyncFailed(error: Throwable)
-    fun setSyncFinished()
-}
-
-interface IKitStateManagerListener {
+interface IKitStateListener {
     fun onKitStateUpdate(state: BitcoinCore.KitState)
 }
 

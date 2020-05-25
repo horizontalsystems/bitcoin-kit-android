@@ -160,8 +160,6 @@ class BitcoinCoreBuilder {
 
         val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
 
-        val kitStateManager = KitStateManager()
-
         val peerHostManager = PeerAddressManager(network, storage)
         val bloomFilterManager = BloomFilterManager()
 
@@ -204,7 +202,7 @@ class BitcoinCoreBuilder {
         val errorStorage = ErrorStorage()
         val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager, errorStorage)
 
-        val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, kitStateManager, apiSyncStateManager, blockSyncer.localDownloadedBestBlockHeight)
+        val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, apiSyncStateManager, blockSyncer.localDownloadedBestBlockHeight)
         initialSyncer.listener = syncManager
         connectionManager.listener = syncManager
         blockSyncer.listener = syncManager
@@ -217,7 +215,6 @@ class BitcoinCoreBuilder {
                 publicKeyManager,
                 addressConverter,
                 restoreKeyConverterChain,
-                kitStateManager,
                 transactionCreator,
                 transactionFeeCalculator,
                 paymentAddressParser,
@@ -229,7 +226,7 @@ class BitcoinCoreBuilder {
                 errorStorage)
 
         dataProvider.listener = bitcoinCore
-        kitStateManager.listener = bitcoinCore
+        syncManager.listener = bitcoinCore
 
         val watchedTransactionManager = WatchedTransactionManager()
         bloomFilterManager.addBloomFilterProvider(watchedTransactionManager)
@@ -307,7 +304,6 @@ class BitcoinCore(
         private val publicKeyManager: PublicKeyManager,
         private val addressConverter: AddressConverterChain,
         private val restoreKeyConverterChain: RestoreKeyConverterChain,
-        private val kitStateManager: KitStateManager,
         private val transactionCreator: TransactionCreator,
         private val transactionFeeCalculator: TransactionFeeCalculator,
         private val paymentAddressParser: PaymentAddressParser,
@@ -317,7 +313,7 @@ class BitcoinCore(
         private val dustCalculator: DustCalculator,
         private val pluginManager: PluginManager,
         private val errorStorage: ErrorStorage
-) : IKitStateManagerListener, DataProvider.Listener {
+) : IKitStateListener, DataProvider.Listener {
 
     interface Listener {
         fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit
@@ -385,7 +381,7 @@ class BitcoinCore(
     //  DataProvider getters
     val balance get() = dataProvider.balance
     val lastBlockInfo get() = dataProvider.lastBlockInfo
-    val syncState get() = kitStateManager.syncState
+    val syncState get() = syncManager.syncState
 
     var listener: Listener? = null
 
