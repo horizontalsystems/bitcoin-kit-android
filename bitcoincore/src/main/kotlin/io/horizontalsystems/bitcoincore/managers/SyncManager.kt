@@ -1,10 +1,8 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
-import io.horizontalsystems.bitcoincore.core.IApiSyncListener
-import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
-import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
-import io.horizontalsystems.bitcoincore.core.IKitStateManager
+import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
+import io.horizontalsystems.bitcoincore.core.*
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import kotlin.math.max
 
@@ -12,10 +10,25 @@ class SyncManager(
         private val connectionManager: ConnectionManager,
         private val initialSyncer: InitialSyncer,
         private val peerGroup: PeerGroup,
-        private val stateManager: IKitStateManager,
         private val apiSyncStateManager: ApiSyncStateManager,
         bestBlockHeight: Int
 ) : InitialSyncer.Listener, IConnectionManagerListener, IBlockSyncListener, IApiSyncListener {
+
+    var listener: IKitStateListener? = null
+
+    var syncState: KitState = KitState.NotSynced(BitcoinCore.StateError.NotStarted())
+        private set(value) {
+            if (value != field) {
+                field = value
+                
+                listener?.onKitStateUpdate(field)
+            }
+        }
+
+    private val syncIdle: Boolean
+        get() = syncState.let {
+            it is KitState.NotSynced && it.exception !is BitcoinCore.StateError.NotStarted
+        }
 
     private var initialBestBlockHeight = bestBlockHeight
     private var currentBestBlockHeight = bestBlockHeight
@@ -30,35 +43,35 @@ class SyncManager(
     }
 
     private fun startInitialSync() {
-        stateManager.setApiSyncStarted()
+        syncState = KitState.ApiSyncing(0)
         initialSyncer.sync()
     }
 
     private fun startPeerGroup() {
-        stateManager.setBlocksSyncStarted()
+        syncState = KitState.Syncing(0.0)
         peerGroup.start()
     }
 
     fun start() {
-        if (stateManager.syncState !is BitcoinCore.KitState.NotSynced) return
+        if (syncState !is KitState.NotSynced) return
 
         if (connectionManager.isConnected) {
             startSync()
         } else {
-            stateManager.setSyncFailed(BitcoinCore.StateError.NoInternet())
+            syncState = KitState.NotSynced(BitcoinCore.StateError.NoInternet())
         }
     }
 
     fun stop() {
-        when (stateManager.syncState) {
-            is BitcoinCore.KitState.ApiSyncing -> {
+        when (syncState) {
+            is KitState.ApiSyncing -> {
                 initialSyncer.terminate()
             }
-            is BitcoinCore.KitState.Syncing -> {
+            is KitState.Syncing -> {
                 peerGroup.stop()
             }
         }
-        stateManager.setSyncFailed(BitcoinCore.StateError.NotStarted())
+        syncState = KitState.NotSynced(BitcoinCore.StateError.NotStarted())
     }
 
     //
@@ -66,11 +79,11 @@ class SyncManager(
     //
 
     override fun onConnectionChange(isConnected: Boolean) {
-        if (isConnected && stateManager.syncIdle) {
+        if (isConnected && syncIdle) {
             startSync()
-        } else if (!isConnected && stateManager.syncState is BitcoinCore.KitState.Syncing) {
+        } else if (!isConnected && syncState is KitState.Syncing) {
             peerGroup.stop()
-            stateManager.setSyncFailed(BitcoinCore.StateError.NoInternet())
+            syncState = KitState.NotSynced(BitcoinCore.StateError.NoInternet())
         }
     }
 
@@ -84,7 +97,7 @@ class SyncManager(
     }
 
     override fun onSyncFailed(error: Throwable) {
-        stateManager.setSyncFailed(error)
+        syncState = KitState.NotSynced(error)
     }
 
     //
@@ -93,7 +106,7 @@ class SyncManager(
 
     override fun onTransactionsFound(count: Int) {
         foundTransactionsCount += count
-        stateManager.setApiSyncProgress(foundTransactionsCount)
+        syncState = KitState.ApiSyncing(foundTransactionsCount)
     }
 
     //
@@ -113,14 +126,14 @@ class SyncManager(
             else -> blocksDownloaded / allBlocksToDownload.toDouble()
         }
 
-        if (progress >= 1) {
-            stateManager.setSyncFinished()
+        syncState = if (progress >= 1) {
+            KitState.Synced
         } else {
-            stateManager.setBlocksSyncProgress(progress)
+            KitState.Syncing(progress)
         }
     }
 
     override fun onBlockSyncFinished() {
-        stateManager.setSyncFinished()
+        syncState = KitState.Synced
     }
 }
