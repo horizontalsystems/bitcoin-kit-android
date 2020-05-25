@@ -9,9 +9,10 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 class BlockHashFetcher(
         private val restoreKeyConverter: IRestoreKeyConverter,
         private val initialSyncerApi: IInitialSyncApi,
-        private val listener: IApiSyncListener,
         private val helper: BlockHashFetcherHelper
 ) {
+
+    var listener: IApiSyncListener? = null
 
     fun getBlockHashes(externalKeys: List<PublicKey>, internalKeys: List<PublicKey>): BlockHashesResponse {
         val externalAddresses = externalKeys.map {
@@ -27,7 +28,7 @@ class BlockHashFetcher(
             return BlockHashesResponse(listOf(), -1, -1)
         }
 
-        listener.onTransactionsFound(transactions.size)
+        listener?.onTransactionsFound(transactions.size)
 
         val outputs = transactions.flatMap { it.txOutputs }
         val externalLastUsedIndex = helper.lastUsedIndex(externalAddresses, outputs)

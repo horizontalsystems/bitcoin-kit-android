@@ -1,8 +1,8 @@
 package io.horizontalsystems.bitcoincore.blocks
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
-import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
+import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.BlockHash
@@ -16,10 +16,16 @@ class BlockSyncer(
         private val blockchain: Blockchain,
         private val transactionProcessor: TransactionProcessor,
         private val publicKeyManager: PublicKeyManager,
-        private val listener: IBlockSyncListener,
         private val checkpoint: Checkpoint,
         private val state: State = State()
 ) {
+
+    var listener: IBlockSyncListener? = null
+        set(value) {
+            field = value
+
+            listener?.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight)
+        }
 
     private val sqliteMaxVariableNumber = 999
 
@@ -36,10 +42,6 @@ class BlockSyncer(
 
             return localDownloadedBestBlockHeight.plus(blockHashes.size - existingBlocksCount)
         }
-
-    init {
-        listener.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight)
-    }
 
     fun prepareForDownload() {
         handlePartialBlocks()
@@ -123,7 +125,7 @@ class BlockSyncer(
             storage.deleteBlockHash(block.headerHash)
         }
 
-        listener.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
+        listener?.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
     }
 
     fun shouldRequest(blockHash: ByteArray): Boolean {

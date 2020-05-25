@@ -173,8 +173,8 @@ class BitcoinCoreBuilder {
         val blockchain = Blockchain(storage, blockValidator, dataProvider)
         val checkpoint = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
 
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, kitStateManager, checkpoint)
-        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, kitStateManager, MerkleBlockExtractor(network.maxBlockSize))
+        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, checkpoint)
+        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, MerkleBlockExtractor(network.maxBlockSize))
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
@@ -198,7 +198,7 @@ class BitcoinCoreBuilder {
         val transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
         val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
 
-        val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, kitStateManager, BlockHashFetcherHelper())
+        val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(wallet, blockHashFetcher, checkpoint.block.height)
         val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
         val errorStorage = ErrorStorage()
@@ -207,6 +207,9 @@ class BitcoinCoreBuilder {
         val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, kitStateManager, apiSyncStateManager)
         initialSyncer.listener = syncManager
         connectionManager.listener = syncManager
+        blockSyncer.listener = syncManager
+        initialBlockDownload.listener = syncManager
+        blockHashFetcher.listener = syncManager
 
         val bitcoinCore = BitcoinCore(
                 storage,
