@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import android.util.Log
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IApiSyncListener
 import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
@@ -14,11 +13,12 @@ class SyncManager(
         private val initialSyncer: InitialSyncer,
         private val peerGroup: PeerGroup,
         private val stateManager: IKitStateManager,
-        private val apiSyncStateManager: ApiSyncStateManager
+        private val apiSyncStateManager: ApiSyncStateManager,
+        bestBlockHeight: Int
 ) : InitialSyncer.Listener, IConnectionManagerListener, IBlockSyncListener, IApiSyncListener {
 
-    private var initialBestBlockHeight = 0
-    private var currentBestBlockHeight = 0
+    private var initialBestBlockHeight = bestBlockHeight
+    private var currentBestBlockHeight = bestBlockHeight
     private var foundTransactionsCount = 0
 
     private fun startSync() {
@@ -99,11 +99,6 @@ class SyncManager(
     //
     // IBlockSyncListener implementations
     //
-
-    override fun onInitialBestBlockHeightUpdate(height: Int) {
-        initialBestBlockHeight = height
-        currentBestBlockHeight = height
-    }
 
     override fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int) {
         if (!connectionManager.isConnected) return

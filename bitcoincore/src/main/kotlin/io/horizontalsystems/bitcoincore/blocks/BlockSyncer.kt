@@ -21,11 +21,6 @@ class BlockSyncer(
 ) {
 
     var listener: IBlockSyncListener? = null
-        set(value) {
-            field = value
-
-            listener?.onInitialBestBlockHeightUpdate(localDownloadedBestBlockHeight)
-        }
 
     private val sqliteMaxVariableNumber = 999
 

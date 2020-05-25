@@ -204,7 +204,7 @@ class BitcoinCoreBuilder {
         val errorStorage = ErrorStorage()
         val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager, errorStorage)
 
-        val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, kitStateManager, apiSyncStateManager)
+        val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, kitStateManager, apiSyncStateManager, blockSyncer.localDownloadedBestBlockHeight)
         initialSyncer.listener = syncManager
         connectionManager.listener = syncManager
         blockSyncer.listener = syncManager
