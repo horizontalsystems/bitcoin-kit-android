@@ -106,6 +106,8 @@ class SyncManager(
     }
 
     override fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int) {
+        if (!connectionManager.isConnected) return
+
         currentBestBlockHeight = max(currentBestBlockHeight, height)
 
         val blocksDownloaded = currentBestBlockHeight - initialBestBlockHeight
