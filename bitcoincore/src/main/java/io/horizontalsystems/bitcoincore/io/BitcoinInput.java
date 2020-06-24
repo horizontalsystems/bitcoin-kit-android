@@ -32,10 +32,7 @@ public class BitcoinInput implements AutoCloseable {
         if (in.read(buffer) < 0) {
             throw new EOFException();
         }
-        return readVarInt(0xff & buffer[0]);
-    }
-
-    public long readVarInt(int ch) throws IOException {
+        int ch = 0xff & buffer[0];
         if (ch < 0xfd) {
             return ch;
         }
