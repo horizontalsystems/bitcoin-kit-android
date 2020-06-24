@@ -1,10 +1,9 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import java.io.ByteArrayInputStream
 
 /**
  * MerkleBlock Message
@@ -37,21 +36,19 @@ class MerkleBlockMessage(
 class MerkleBlockMessageParser(private val blockHeaderParser: BlockHeaderParser) : IMessageParser {
     override val command = "merkleblock"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val header = blockHeaderParser.parse(input)
-            val txCount = input.readInt()
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
+        val header = blockHeaderParser.parse(input)
+        val txCount = input.readInt()
 
-            val hashCount = input.readVarInt().toInt()
-            val hashes: MutableList<ByteArray> = mutableListOf()
-            repeat(hashCount) {
-                hashes.add(input.readBytes(32))
-            }
-
-            val flagsCount = input.readVarInt().toInt()
-            val flags = input.readBytes(flagsCount)
-
-            return MerkleBlockMessage(header, txCount, hashCount, hashes, flagsCount, flags)
+        val hashCount = input.readVarInt().toInt()
+        val hashes: MutableList<ByteArray> = mutableListOf()
+        repeat(hashCount) {
+            hashes.add(input.readBytes(32))
         }
+
+        val flagsCount = input.readVarInt().toInt()
+        val flags = input.readBytes(flagsCount)
+
+        return MerkleBlockMessage(header, txCount, hashCount, hashes, flagsCount, flags)
     }
 }

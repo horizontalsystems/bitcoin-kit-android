@@ -2,7 +2,7 @@ package io.horizontalsystems.dashkit.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
@@ -20,7 +20,7 @@ class Masternode() : Comparable<Masternode> {
 
     var hash = byteArrayOf()
 
-    constructor(input: BitcoinInput) : this() {
+    constructor(input: BitcoinInputMarkable) : this() {
         proRegTxHash = input.readBytes(32)
         confirmedHash = input.readBytes(32)
         ipAddress = input.readBytes(16)

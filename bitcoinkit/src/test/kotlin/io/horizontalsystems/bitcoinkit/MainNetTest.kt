@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoinkit
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -22,7 +22,7 @@ class MainNetTest {
 
     @Test
     fun packetMagic() {
-        val stream = BitcoinInput(byteArrayOf(
+        val stream = BitcoinInputMarkable(byteArrayOf(
                 0xf9.toByte(),
                 0xbe.toByte(),
                 0xb4.toByte(),

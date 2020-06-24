@@ -1,8 +1,7 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
-import java.io.ByteArrayInputStream
 
 class PongMessage(val nonce: Long) : IMessage {
     override fun toString(): String {
@@ -13,11 +12,8 @@ class PongMessage(val nonce: Long) : IMessage {
 class PongMessageParser : IMessageParser {
     override val command: String = "pong"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val nonce = input.readLong()
-            return PongMessage(nonce)
-        }
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
+        return PongMessage(input.readLong())
     }
 }
 

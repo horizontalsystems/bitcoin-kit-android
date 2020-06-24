@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.models
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.utils.NetworkUtils
@@ -35,7 +35,7 @@ class NetworkAddress {
     constructor()
 
     @Throws(IOException::class)
-    constructor(input: BitcoinInput, excludeTime: Boolean) {
+    constructor(input: BitcoinInputMarkable, excludeTime: Boolean) {
         if (!excludeTime) {
             time = input.readUnsignedInt()
         }
@@ -65,7 +65,7 @@ class NetworkAddress {
     companion object {
 
         @Throws(IOException::class)
-        fun parse(input: BitcoinInput, excludeTime: Boolean): NetworkAddress {
+        fun parse(input: BitcoinInputMarkable, excludeTime: Boolean): NetworkAddress {
             val addr = NetworkAddress()
             if (!excludeTime) {
                 addr.time = input.readUnsignedInt()
