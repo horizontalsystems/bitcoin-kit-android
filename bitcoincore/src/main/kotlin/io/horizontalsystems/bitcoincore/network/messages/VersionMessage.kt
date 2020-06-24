@@ -1,11 +1,10 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.NetworkAddress
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.utils.NetworkUtils
-import java.io.ByteArrayInputStream
 import java.net.InetAddress
 
 class VersionMessage(val protocolVersion: Int, val services: Long, val timestamp: Long, val recipientAddress: NetworkAddress) : IMessage {
@@ -53,28 +52,25 @@ class VersionMessage(val protocolVersion: Int, val services: Long, val timestamp
 class VersionMessageParser : IMessageParser {
     override val command: String = "version"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val protocolVersion = input.readInt()
-            val services = input.readLong()
-            val timestamp = input.readLong()
-            val recipientAddress = NetworkAddress.parse(input, true)
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
+        val protocolVersion = input.readInt()
+        val services = input.readLong()
+        val timestamp = input.readLong()
+        val recipientAddress = NetworkAddress.parse(input, true)
 
-            val versionMessage = VersionMessage(protocolVersion, services, timestamp, recipientAddress)
+        val versionMessage = VersionMessage(protocolVersion, services, timestamp, recipientAddress)
 
-            if (protocolVersion >= 106) {
-                versionMessage.senderAddress = NetworkAddress.parse(input, true)
-                versionMessage.nonce = input.readLong()
-                versionMessage.subVersion = input.readString()
-                versionMessage.lastBlock = input.readInt()
-                if (protocolVersion >= 70001) {
-                    versionMessage.relay = input.readByte().toInt() != 0
-                }
+        if (protocolVersion >= 106) {
+            versionMessage.senderAddress = NetworkAddress.parse(input, true)
+            versionMessage.nonce = input.readLong()
+            versionMessage.subVersion = input.readString()
+            versionMessage.lastBlock = input.readInt()
+            if (protocolVersion >= 70001) {
+                versionMessage.relay = input.readByte().toInt() != 0
             }
-
-            return versionMessage
         }
 
+        return versionMessage
     }
 }
 

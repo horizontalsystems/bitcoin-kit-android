@@ -1,7 +1,7 @@
 package io.horizontalsystems.bitcoincore.models
 
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -24,7 +24,7 @@ class Checkpoint(fileName: String) {
     }
 
     private fun readBlock(serializedCheckpointBlock: String): Block {
-        BitcoinInput(serializedCheckpointBlock.hexToByteArray()).use { input ->
+        BitcoinInputMarkable(serializedCheckpointBlock.hexToByteArray()).use { input ->
             val version = input.readInt()
             val prevHash = input.readBytes(32)
             val merkleHash = input.readBytes(32)

@@ -2,7 +2,7 @@ package io.horizontalsystems.dashkit.models
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
@@ -21,7 +21,7 @@ class Quorum() : Comparable<Quorum> {
     var quorumSig = byteArrayOf()
     var sig = byteArrayOf()
 
-    constructor(input: BitcoinInput) : this() {
+    constructor(input: BitcoinInputMarkable) : this() {
         version = input.readUnsignedShort()
         type = input.read()
         quorumHash = input.readBytes(32)

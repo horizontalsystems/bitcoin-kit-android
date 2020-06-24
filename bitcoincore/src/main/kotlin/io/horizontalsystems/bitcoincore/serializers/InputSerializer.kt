@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.serializers
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.storage.InputToSign
@@ -18,7 +18,7 @@ object InputSerializer {
                 .toByteArray()
     }
 
-    fun deserialize(input: BitcoinInput): TransactionInput {
+    fun deserialize(input: BitcoinInputMarkable): TransactionInput {
         val previousOutputHash = input.readBytes(32)
         val previousOutputIndex = input.readUnsignedInt()
         val sigScriptLength = input.readVarInt()
@@ -69,7 +69,7 @@ object InputSerializer {
         return output.toByteArray()
     }
 
-    fun deserializeWitness(input: BitcoinInput): MutableList<ByteArray> {
+    fun deserializeWitness(input: BitcoinInputMarkable): MutableList<ByteArray> {
         val stackSize = input.readVarInt()
         val witnessData = mutableListOf<ByteArray>()
 

@@ -1,6 +1,6 @@
 package io.horizontalsystems.bitcoincore.models
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import java.io.IOException
 
@@ -23,7 +23,7 @@ class InventoryItem {
     constructor()
 
     @Throws(IOException::class)
-    constructor(input: BitcoinInput) {
+    constructor(input: BitcoinInputMarkable) {
         this.type = input.readInt()
         this.hash = input.readBytes(32)
     }

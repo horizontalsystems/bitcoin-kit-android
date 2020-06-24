@@ -1,11 +1,11 @@
 package io.horizontalsystems.bitcoincore.serializers
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 
 object OutputSerializer {
-    fun deserialize(input: BitcoinInput, vout: Long): TransactionOutput {
+    fun deserialize(input: BitcoinInputMarkable, vout: Long): TransactionOutput {
         val value = input.readLong()
         val scriptLength = input.readVarInt() // do not store
         val lockingScript = input.readBytes(scriptLength.toInt())

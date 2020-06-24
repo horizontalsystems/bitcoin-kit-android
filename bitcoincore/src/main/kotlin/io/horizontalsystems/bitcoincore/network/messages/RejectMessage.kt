@@ -1,7 +1,6 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
-import java.io.ByteArrayInputStream
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 
 class RejectMessage(private val responseToMessage: String,
                     private val rejectCode: Byte,
@@ -15,14 +14,12 @@ class RejectMessage(private val responseToMessage: String,
 class RejectMessageParser : IMessageParser {
     override val command = "reject"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val responseToMessage = input.readString()
-            val rejectCode = input.readByte()
-            val reason = input.readString()
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
+        val responseToMessage = input.readString()
+        val rejectCode = input.readByte()
+        val reason = input.readString()
 
-            return RejectMessage(responseToMessage, rejectCode, reason)
-        }
+        return RejectMessage(responseToMessage, rejectCode, reason)
     }
 
 }

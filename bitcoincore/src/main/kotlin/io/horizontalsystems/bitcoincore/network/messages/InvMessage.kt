@@ -1,10 +1,9 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.InventoryItem
-import java.io.ByteArrayInputStream
 
 class InvMessage : IMessage {
     var inventory: List<InventoryItem>
@@ -33,15 +32,13 @@ class InvMessage : IMessage {
 class InvMessageParser : IMessageParser {
     override val command: String = "inv"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
-        BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val count = input.readVarInt() // do not store count
-            val inventory = List(count.toInt()) {
-                InventoryItem(input)
-            }
-
-            return InvMessage(inventory)
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
+        val count = input.readVarInt() // do not store count
+        val inventory = List(count.toInt()) {
+            InventoryItem(input)
         }
+
+        return InvMessage(inventory)
     }
 }
 

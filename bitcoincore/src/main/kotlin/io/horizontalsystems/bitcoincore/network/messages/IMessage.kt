@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.network.messages
 
 import io.horizontalsystems.bitcoincore.exceptions.BitcoinException
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.io.IOException
@@ -12,7 +13,7 @@ interface IMessage
 
 interface IMessageParser {
     val command: String
-    fun parseMessage(payload: ByteArray): IMessage
+    fun parseMessage(input: BitcoinInputMarkable): IMessage
 }
 
 interface IMessageSerializer {
@@ -47,7 +48,9 @@ class NetworkMessageParser(private val magic: Long) {
         }
 
         try {
-            return messageParsers[command]?.parseMessage(payload) ?: UnknownMessage(command)
+            BitcoinInputMarkable(payload).use {
+                return messageParsers[command]?.parseMessage(it) ?: UnknownMessage(command)
+            }
         } catch (e: Exception) {
             throw RuntimeException(e)
         }

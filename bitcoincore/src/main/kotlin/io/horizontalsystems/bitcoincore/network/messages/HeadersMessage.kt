@@ -2,10 +2,9 @@ package io.horizontalsystems.bitcoincore.network.messages
 
 import io.horizontalsystems.bitcoincore.core.IHasher
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import java.io.ByteArrayInputStream
 
 class HeadersMessage(val headers: Array<BlockHeader>) : IMessage {
     override fun toString(): String {
@@ -16,33 +15,31 @@ class HeadersMessage(val headers: Array<BlockHeader>) : IMessage {
 class HeadersMessageParser(private val hasher: IHasher) : IMessageParser {
     override val command: String = "headers"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
-        return BitcoinInput(ByteArrayInputStream(payload)).use { input ->
-            val count = input.readVarInt().toInt()
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
+        val count = input.readVarInt().toInt()
 
-            val headers = Array(count) {
-                val version = input.readInt()
-                val prevHash = input.readBytes(32)
-                val merkleHash = input.readBytes(32)
-                val timestamp = input.readUnsignedInt()
-                val bits = input.readUnsignedInt()
-                val nonce = input.readUnsignedInt()
-                input.readVarInt() // tx count always zero
+        val headers = Array(count) {
+            val version = input.readInt()
+            val prevHash = input.readBytes(32)
+            val merkleHash = input.readBytes(32)
+            val timestamp = input.readUnsignedInt()
+            val bits = input.readUnsignedInt()
+            val nonce = input.readUnsignedInt()
+            input.readVarInt() // tx count always zero
 
-                val headerPayload = BitcoinOutput().also {
-                    it.writeInt(version)
-                    it.write(prevHash)
-                    it.write(merkleHash)
-                    it.writeUnsignedInt(timestamp)
-                    it.writeUnsignedInt(bits)
-                    it.writeUnsignedInt(nonce)
-                }
-
-                BlockHeader(version, prevHash, merkleHash, timestamp, bits, nonce, hasher.hash(headerPayload.toByteArray()))
+            val headerPayload = BitcoinOutput().also {
+                it.writeInt(version)
+                it.write(prevHash)
+                it.write(merkleHash)
+                it.writeUnsignedInt(timestamp)
+                it.writeUnsignedInt(bits)
+                it.writeUnsignedInt(nonce)
             }
 
-            HeadersMessage(headers)
+            BlockHeader(version, prevHash, merkleHash, timestamp, bits, nonce, hasher.hash(headerPayload.toByteArray()))
         }
+
+        return HeadersMessage(headers)
     }
 }
 

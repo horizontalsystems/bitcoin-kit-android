@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.network.messages
 
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
+
 class VerAckMessage : IMessage {
     override fun toString(): String {
         return "VerAckMessage()"
@@ -9,7 +11,7 @@ class VerAckMessage : IMessage {
 class VerAckMessageParser : IMessageParser {
     override val command: String = "verack"
 
-    override fun parseMessage(payload: ByteArray): IMessage {
+    override fun parseMessage(input: BitcoinInputMarkable): IMessage {
         return VerAckMessage()
     }
 }

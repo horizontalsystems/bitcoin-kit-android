@@ -1,9 +1,9 @@
 package io.horizontalsystems.dashkit.models
 
-import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 
-class CoinbaseTransaction(input: BitcoinInput) {
+class CoinbaseTransaction(input: BitcoinInputMarkable) {
     val transaction = TransactionSerializer.deserialize(input)
     val coinbaseTransactionSize: Long
     val version: Int
@@ -14,19 +14,12 @@ class CoinbaseTransaction(input: BitcoinInput) {
     init {
         coinbaseTransactionSize = input.readVarInt()
 
-        val coinbaseTxPayload = ByteArray(coinbaseTransactionSize.toInt())
-
-        input.readFully(coinbaseTxPayload)
-        val coinbaseTransactionInput = BitcoinInput(coinbaseTxPayload)
-
-        version = coinbaseTransactionInput.readUnsignedShort()
-        height = coinbaseTransactionInput.readUnsignedInt()
-        merkleRootMNList = coinbaseTransactionInput.readBytes(32)
+        version = input.readUnsignedShort()
+        height = input.readUnsignedInt()
+        merkleRootMNList = input.readBytes(32)
         merkleRootQuorums = when {
-            version >= 2 -> coinbaseTransactionInput.readBytes(32)
+            version >= 2 -> input.readBytes(32)
             else -> null
         }
-
-        coinbaseTransactionInput.close()
     }
 }
