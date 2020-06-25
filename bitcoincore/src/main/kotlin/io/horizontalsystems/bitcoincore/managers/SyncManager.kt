@@ -67,7 +67,7 @@ class SyncManager(
             is KitState.ApiSyncing -> {
                 initialSyncer.terminate()
             }
-            is KitState.Syncing -> {
+            is KitState.Syncing, is KitState.Synced -> {
                 peerGroup.stop()
             }
         }
@@ -81,7 +81,7 @@ class SyncManager(
     override fun onConnectionChange(isConnected: Boolean) {
         if (isConnected && syncIdle) {
             startSync()
-        } else if (!isConnected && syncState is KitState.Syncing) {
+        } else if (!isConnected && (syncState is KitState.Syncing || syncState is KitState.Synced)) {
             peerGroup.stop()
             syncState = KitState.NotSynced(BitcoinCore.StateError.NoInternet())
         }
