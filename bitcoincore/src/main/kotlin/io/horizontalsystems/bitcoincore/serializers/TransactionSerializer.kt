@@ -18,7 +18,7 @@ object TransactionSerializer {
         val outputs = mutableListOf<TransactionOutput>()
 
         transaction.version = input.readInt()
-        input.mark(1)
+        input.mark()
         val marker = 0xff and input.readUnsignedByte()
         val inputCount = if (marker == 0) {  // segwit marker: 0x00
             input.read()  // skip segwit flag: 0x01

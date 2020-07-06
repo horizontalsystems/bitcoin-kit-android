@@ -12,8 +12,9 @@ public final class BitcoinInputMarkable extends BitcoinInput {
         this.count = data.length;
     }
 
-    public void mark(int readlimit) {
-        in.mark(readlimit);
+    public void mark() {
+        // since the readlimit for ByteArrayInputStream has no meaning set it to 0
+        in.mark(0);
     }
 
     public void reset() throws IOException {
