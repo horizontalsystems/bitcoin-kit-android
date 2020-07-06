@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoincore.storage.BlockHeader
 class BlockHeaderParser(private val hasher: IHasher) {
 
     fun parse(input: BitcoinInputMarkable): BlockHeader {
-        input.mark(80)
+        input.mark()
         val payload = input.readBytes(80)
         val hash = hasher.hash(payload)
         input.reset()

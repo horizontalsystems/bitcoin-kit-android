@@ -24,7 +24,7 @@ class ISLockMessageParser : IMessageParser {
     override val command: String = "islock"
 
     override fun parseMessage(input: BitcoinInputMarkable): IMessage {
-        input.mark(input.count)
+        input.mark()
         val payload = input.readBytes(input.count)
         input.reset()
 
