@@ -44,6 +44,9 @@ interface BlockDao {
     @Query("SELECT * FROM Block WHERE height = :height limit 1")
     fun getBlockByHeight(height: Int): Block?
 
+    @Query("SELECT * FROM Block WHERE height = :height ORDER by stale DESC limit 1")
+    fun getBlockByHeightStatePrioritized(height: Int): Block?
+
     @Query("SELECT COUNT(headerHash) FROM Block")
     fun count(): Int
 

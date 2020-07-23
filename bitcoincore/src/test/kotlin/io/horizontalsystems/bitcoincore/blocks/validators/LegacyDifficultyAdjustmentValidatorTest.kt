@@ -78,7 +78,7 @@ object LegacyDifficultyAdjustmentValidatorTest : Spek({
 
             val check2 = Block(check2Head, prevBlock)
 
-            whenever(storage.getBlock(check2.height - 2016)).thenReturn(check1)
+            whenever(storage.getBlockByHeightStalePrioritized(check2.height - 2016)).thenReturn(check1)
 
             Assertions.assertDoesNotThrow {
                 validator.validate(check2, prevBlock)
