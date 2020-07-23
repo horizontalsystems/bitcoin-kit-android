@@ -81,7 +81,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
     // Block
 
     override fun getBlockByHeightStalePrioritized(height: Int): Block? {
-        return store.block.getBlockByHeightStatePrioritized(height)
+        return store.block.getBlockByHeightStalePrioritized(height)
     }
 
     override fun getBlock(height: Int): Block? {
