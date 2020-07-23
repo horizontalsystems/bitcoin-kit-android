@@ -38,6 +38,7 @@ interface IStorage {
 
     //  Block
 
+    fun getBlockByHeightStalePrioritized(height: Int): Block?
     fun getBlock(height: Int): Block?
     fun getBlock(hashHash: ByteArray): Block?
     fun getBlock(stale: Boolean, sortedHeight: String): Block?
