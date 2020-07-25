@@ -39,6 +39,14 @@ abstract class AbstractKit {
         bitcoinCore.refresh()
     }
 
+    fun onEnterForeground(){
+        bitcoinCore.onEnterForeground()
+    }
+
+    fun onEnterBackground(){
+        bitcoinCore.onEnterBackground()
+    }
+
     fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
         return bitcoinCore.transactions(fromUid, limit)
     }
