@@ -223,7 +223,8 @@ class BitcoinCoreBuilder {
                 peerManager,
                 dustCalculator,
                 pluginManager,
-                errorStorage)
+                errorStorage,
+                connectionManager)
 
         dataProvider.listener = bitcoinCore
         syncManager.listener = bitcoinCore
@@ -312,7 +313,8 @@ class BitcoinCore(
         private var peerManager: PeerManager,
         private val dustCalculator: DustCalculator,
         private val pluginManager: PluginManager,
-        private val errorStorage: ErrorStorage
+        private val errorStorage: ErrorStorage,
+        private val connectionManager: IConnectionManager
 ) : IKitStateListener, DataProvider.Listener {
 
     interface Listener {
@@ -399,6 +401,14 @@ class BitcoinCore(
 
     fun refresh() {
         start()
+    }
+
+    fun onEnterForeground(){
+        connectionManager.onEnterForeground()
+    }
+
+    fun onEnterBackground(){
+        connectionManager.onEnterBackground()
     }
 
     fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {

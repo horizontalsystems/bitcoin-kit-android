@@ -23,13 +23,22 @@ class ConnectionManager(context: Context) : IConnectionManager {
     private var hasConnection = false
     private var callback = ConnectionStatusCallback()
 
-    init {
+    override fun onEnterForeground() {
+        isConnected = getInitialConnectionStatus()
         try {
             connectivityManager.unregisterNetworkCallback(callback)
         } catch (e: Exception) {
             //was not registered, or already unregistered
         }
         connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(), callback)
+    }
+
+    override fun onEnterBackground() {
+        try {
+            connectivityManager.unregisterNetworkCallback(callback)
+        } catch (e: Exception) {
+            //already unregistered
+        }
     }
 
     private fun getInitialConnectionStatus(): Boolean {
@@ -43,6 +52,7 @@ class ConnectionManager(context: Context) : IConnectionManager {
 
         return hasValidInternet
     }
+
 
     inner class ConnectionStatusCallback : ConnectivityManager.NetworkCallback() {
 
