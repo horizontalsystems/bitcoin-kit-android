@@ -1,27 +1,27 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import io.horizontalsystems.bitcoincore.core.IConnectionManager
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
-import java.util.concurrent.Executors
 
 class ConnectionManager(context: Context) : IConnectionManager {
 
     private val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 
     override var listener: IConnectionManagerListener? = null
-    override var isConnected = getInitialConnectionStatus()
+    override var isConnected: Boolean = false
 
     private var hasValidInternet = false
     private var hasConnection = false
     private var callback = ConnectionStatusCallback()
+
+    init {
+        onEnterForeground()
+    }
 
     override fun onEnterForeground() {
         isConnected = getInitialConnectionStatus()
