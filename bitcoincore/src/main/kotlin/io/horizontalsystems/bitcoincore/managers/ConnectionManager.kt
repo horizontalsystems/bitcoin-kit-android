@@ -24,7 +24,7 @@ class ConnectionManager(context: Context) : IConnectionManager {
     }
 
     override fun onEnterForeground() {
-        isConnected = getInitialConnectionStatus()
+        setInitialValues()
         try {
             connectivityManager.unregisterNetworkCallback(callback)
         } catch (e: Exception) {
@@ -39,6 +39,13 @@ class ConnectionManager(context: Context) : IConnectionManager {
         } catch (e: Exception) {
             //already unregistered
         }
+    }
+
+    private fun setInitialValues() {
+        hasConnection = false
+        hasValidInternet = false
+        isConnected = getInitialConnectionStatus()
+        listener?.onConnectionChange(isConnected)
     }
 
     private fun getInitialConnectionStatus(): Boolean {
