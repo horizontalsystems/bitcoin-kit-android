@@ -38,7 +38,11 @@ class TransactionCreator(
             bloomFilterManager.regenerateBloomFilter()
         }
 
-        transactionSender.sendPendingTransactions()
+        try {
+            transactionSender.sendPendingTransactions()
+        } catch (e: Exception) {
+            // ignore any exception since the tx is inserted to the db
+        }
 
         return transaction
     }

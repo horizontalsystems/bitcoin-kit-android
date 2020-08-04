@@ -38,7 +38,12 @@ class TransactionProcessor(
         process(transaction)
 
         storage.addTransaction(transaction)
-        dataListener.onTransactionsUpdate(listOf(transaction.header), listOf(), null)
+
+        try {
+            dataListener.onTransactionsUpdate(listOf(transaction.header), listOf(), null)
+        } catch (e: Exception) {
+            // ignore any exception since the tx is inserted to the db
+        }
 
         if (irregularOutputFinder.hasIrregularOutput(transaction.outputs)) {
             throw BloomFilterManager.BloomFilterExpired
