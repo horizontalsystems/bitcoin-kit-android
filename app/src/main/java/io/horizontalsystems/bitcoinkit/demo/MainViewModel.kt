@@ -29,6 +29,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val state = MutableLiveData<KitState>()
     val status = MutableLiveData<State>()
     val transactionRaw = MutableLiveData<String>()
+    val statusInfo = MutableLiveData<Map<String, Any>>()
     lateinit var networkName: String
     private val disposables = CompositeDisposable()
 
@@ -84,6 +85,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun showDebugInfo() {
         bitcoinKit.showDebugInfo()
+    }
+
+    fun showStatusInfo() {
+        statusInfo.postValue(bitcoinKit.statusInfo())
     }
 
     //

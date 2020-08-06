@@ -8,8 +8,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import io.horizontalsystems.bitcoincore.BitcoinCore
+import kotlinx.android.synthetic.main.fragment_balance.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -82,7 +84,15 @@ class BalanceFragment : Fragment() {
             }
         })
 
-
+        viewModel.statusInfo.observe(this, Observer { statusInfo ->
+            activity?.let {
+                val dialog = AlertDialog.Builder(it)
+                        .setMessage(formatMapToString(statusInfo))
+                        .setTitle("Status Info")
+                        .create()
+                dialog.show()
+            }
+        })
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -115,5 +125,34 @@ class BalanceFragment : Fragment() {
         buttonDebug.setOnClickListener {
             viewModel.showDebugInfo()
         }
+
+        buttonStatus.setOnClickListener {
+            viewModel.showStatusInfo()
+        }
     }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun formatMapToString(status: Map<String, Any>?, indentation: String = "", bullet: String = "", level: Int = 0): String? {
+        if (status == null)
+            return null
+
+        val sb = StringBuilder()
+        status.toList().forEach { (key, value) ->
+            val title = "$indentation$bullet$key"
+            when (value) {
+                is Map<*, *> -> {
+                    val formattedValue = formatMapToString(value as? Map<String, Any>, "\t\t$indentation", " - ", level + 1)
+                    sb.append("$title:\n$formattedValue${if (level < 2) "\n" else ""}")
+                }
+                else -> {
+                    sb.appendln("$title: $value")
+                }
+            }
+        }
+
+        val statusString = sb.trimEnd()
+
+        return if (statusString.isEmpty()) "" else "$statusString\n"
+    }
+
 }

@@ -593,13 +593,11 @@ class BitcoinCore(
             else -> false
         }
 
-        override fun toString(): String {
-            return when(this) {
-                is Synced -> "Synced"
-                is NotSynced -> "NotSynced-${this.exception.javaClass.simpleName}"
-                is Syncing -> "Syncing-${(this.progress * 100).roundToInt() / 100.0}"
-                is ApiSyncing -> "ApiSyncing-$transactions"
-            }
+        override fun toString() = when(this) {
+            is Synced -> "Synced"
+            is NotSynced -> "NotSynced-${this.exception.javaClass.simpleName}"
+            is Syncing -> "Syncing-${(this.progress * 100).roundToInt() / 100.0}"
+            is ApiSyncing -> "ApiSyncing-$transactions"
         }
 
         override fun hashCode(): Int {
