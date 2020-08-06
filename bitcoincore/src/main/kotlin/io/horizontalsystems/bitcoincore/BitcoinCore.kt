@@ -23,6 +23,7 @@ import io.reactivex.Single
 import java.util.*
 import java.util.concurrent.Executor
 import kotlin.collections.LinkedHashMap
+import kotlin.math.roundToInt
 
 class BitcoinCoreBuilder {
 
@@ -481,6 +482,7 @@ class BitcoinCore(
 
         statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it * 1000) } ?: "N/A"
         statusInfo["Syncing Peer"] = initialBlockDownload.syncPeer?.host ?: "N/A"
+        statusInfo["Sync State"] = syncState.toString()
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
 
         val peers = LinkedHashMap<String, Any>()
@@ -589,6 +591,15 @@ class BitcoinCore(
             this is Syncing && other is Syncing -> this.progress == other.progress
             this is ApiSyncing && other is ApiSyncing -> this.transactions == other.transactions
             else -> false
+        }
+
+        override fun toString(): String {
+            return when(this) {
+                is Synced -> "Synced"
+                is NotSynced -> "NotSynced-${this.exception.javaClass.simpleName}"
+                is Syncing -> "Syncing-${(this.progress * 100).roundToInt() / 100.0}"
+                is ApiSyncing -> "ApiSyncing-$transactions"
+            }
         }
 
         override fun hashCode(): Int {
