@@ -199,8 +199,7 @@ class BitcoinCoreBuilder {
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(wallet, blockHashFetcher, checkpoint.block.height)
         val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
-        val errorStorage = ErrorStorage()
-        val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager, errorStorage)
+        val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager)
 
         val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, apiSyncStateManager, blockSyncer.localDownloadedBestBlockHeight)
         initialSyncer.listener = syncManager
@@ -223,7 +222,6 @@ class BitcoinCoreBuilder {
                 peerManager,
                 dustCalculator,
                 pluginManager,
-                errorStorage,
                 connectionManager)
 
         dataProvider.listener = bitcoinCore
@@ -313,7 +311,6 @@ class BitcoinCore(
         private var peerManager: PeerManager,
         private val dustCalculator: DustCalculator,
         private val pluginManager: PluginManager,
-        private val errorStorage: ErrorStorage,
         private val connectionManager: IConnectionManager
 ) : IKitStateListener, DataProvider.Listener {
 
@@ -420,12 +417,7 @@ class BitcoinCore(
     }
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
-        try {
-            return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData)
-        } catch (error: Exception) {
-            errorStorage.addSendError(error)
-            throw error
-        }
+        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData)
     }
 
     fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
@@ -489,7 +481,6 @@ class BitcoinCore(
 
         statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it * 1000) } ?: "N/A"
         statusInfo["Syncing Peer"] = initialBlockDownload.syncPeer?.host ?: "N/A"
-        statusInfo["Errors"] = errorStorage.errors
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
 
         val peers = LinkedHashMap<String, Any>()
