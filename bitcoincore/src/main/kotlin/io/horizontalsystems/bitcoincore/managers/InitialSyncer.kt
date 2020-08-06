@@ -1,10 +1,8 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import io.horizontalsystems.bitcoincore.core.ErrorStorage
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.reactivex.Single
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import java.util.logging.Logger
@@ -12,8 +10,7 @@ import java.util.logging.Logger
 class InitialSyncer(
         private val storage: IStorage,
         private val blockDiscovery: IBlockDiscovery,
-        private val publicKeyManager: PublicKeyManager,
-        private val errorStorage: ErrorStorage?
+        private val publicKeyManager: PublicKeyManager
 ) {
 
     interface Listener {
@@ -66,7 +63,6 @@ class InitialSyncer(
     }
 
     private fun handleError(error: Throwable) {
-        errorStorage?.addApiError(error)
         logger.severe("Initial Sync Error: ${error.message}")
 
         listener?.onSyncFailed(error)
