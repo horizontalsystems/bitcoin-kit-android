@@ -66,21 +66,6 @@ class PeerGroup(
         peerGroupListeners.add(listener)
     }
 
-    fun someReadyPeers(): List<Peer> {
-        return peerManager.someReadyPeers()
-    }
-
-    @Throws
-    fun checkPeersSynced() {
-        if (peerManager.peersCount < 1) {
-            throw Error("No peers connected")
-        }
-
-        if (!peerManager.hasSyncedPeer()) {
-            throw Error("Peers not synced yet")
-        }
-    }
-
     //
     // PeerListener implementations
     //

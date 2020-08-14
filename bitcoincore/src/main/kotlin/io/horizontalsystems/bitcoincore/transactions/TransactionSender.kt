@@ -1,27 +1,28 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.SentTransaction
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
 import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
+import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.network.peer.task.SendTransactionTask
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class TransactionSender(
         private val transactionSyncer: TransactionSyncer,
-        private val peerGroup: PeerGroup,
+        private val peerManager: PeerManager,
+        private val initialBlockDownload: InitialBlockDownload,
         private val storage: IStorage,
         private val timer: TransactionSendTimer,
         private val maxRetriesCount: Int = 3,
-        private val retriesPeriod: Int = 60
-) : IPeerTaskHandler, TransactionSendTimer.Listener {
+        private val retriesPeriod: Int = 60)
+    : IPeerTaskHandler, TransactionSendTimer.Listener {
 
     fun sendPendingTransactions() {
         try {
-            peerGroup.checkPeersSynced()
-
             val transactions = transactionSyncer.getNewTransactions()
             if (transactions.isEmpty()) {
                 timer.stop()
@@ -30,17 +31,18 @@ class TransactionSender(
 
             val transactionsToSend = getTransactionsToSend(transactions)
             if (transactionsToSend.isNotEmpty()) {
-                send(transactionsToSend, peerGroup.someReadyPeers())
+                send(transactionsToSend)
             }
 
         } catch (e: PeerGroup.Error) {
 //            logger.warning("Handling pending transactions failed with: ${e.message}")
         }
-
     }
 
     fun canSendTransaction() {
-        peerGroup.checkPeersSynced()
+        if (getPeersToSend().isEmpty()) {
+            throw PeerGroup.Error("peers not synced")
+        }
     }
 
     fun transactionsRelayed(transactions: List<FullTransaction>) {
@@ -59,7 +61,33 @@ class TransactionSender(
         }
     }
 
-    private fun send(transactions: List<FullTransaction>, peers: List<Peer>) {
+    private fun getPeersToSend(): List<Peer> {
+        if (peerManager.peersCount < minConnectedPeerSize) {
+            return emptyList()
+        }
+
+        val freeSyncedPeer = initialBlockDownload.syncedPeers
+                .sortedBy { it.ready } // not ready first
+                .firstOrNull()
+                ?: return emptyList()
+
+        val readyPeers = peerManager.readyPears()
+                .filter { it != freeSyncedPeer }
+                .sortedBy { it.synced } // not synced first
+
+        if (readyPeers.size == 1) {
+            return readyPeers
+        }
+
+        return readyPeers.take(readyPeers.size / 2)
+    }
+
+    private fun send(transactions: List<FullTransaction>) {
+        val peers = getPeersToSend()
+        if (peers.isEmpty()) {
+            return
+        }
+
         timer.startIfNotRunning()
 
         transactions.forEach { transaction ->
@@ -95,7 +123,7 @@ class TransactionSender(
         sentTransaction.sendSuccess = true
 
         if (sentTransaction.retriesCount >= maxRetriesCount) {
-            transactionSyncer.handleInvalid(transaction.header.hash)
+            // transactionSyncer.handleInvalid(transaction.header.hash)
             storage.deleteSentTransaction(sentTransaction)
         } else {
             storage.updateSentTransaction(sentTransaction)
@@ -120,4 +148,7 @@ class TransactionSender(
         sendPendingTransactions()
     }
 
+    companion object {
+        const val minConnectedPeerSize = 2
+    }
 }

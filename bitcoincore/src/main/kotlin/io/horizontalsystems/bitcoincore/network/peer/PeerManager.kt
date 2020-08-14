@@ -22,25 +22,16 @@ class PeerManager {
         peers.clear()
     }
 
-    fun someReadyPeers(): List<Peer> {
-        val readyPeers = peers.values.filter { it.ready }
-        if (readyPeers.isEmpty()) {
-            return listOf()
-        }
-
-        if (readyPeers.size == 1) {
-            return readyPeers
-        }
-
-        return readyPeers.take(readyPeers.size / 2)
-    }
-
     fun connected(): List<Peer> {
         return peers.values.filter { it.connected }
     }
 
     fun sorted(): List<Peer> {
         return connected().sortedBy { it.connectionTime }
+    }
+
+    fun readyPears(): List<Peer> {
+        return peers.values.filter { it.connected && it.ready }
     }
 
     fun hasSyncedPeer(): Boolean {
