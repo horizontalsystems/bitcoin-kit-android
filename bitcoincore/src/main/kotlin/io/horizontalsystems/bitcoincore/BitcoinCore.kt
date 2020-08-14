@@ -20,6 +20,7 @@ import io.horizontalsystems.bitcoincore.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.reactivex.Single
+import java.lang.Error
 import java.util.*
 import java.util.concurrent.Executor
 import kotlin.collections.LinkedHashMap
@@ -89,6 +90,10 @@ class BitcoinCoreBuilder {
     }
 
     fun setPeerSize(peerSize: Int): BitcoinCoreBuilder {
+        if (peerSize < TransactionSender.minConnectedPeerSize) {
+            throw Error("Peer size cannot be less than ${TransactionSender.minConnectedPeerSize}")
+        }
+
         this.peerSize = peerSize
         return this
     }
@@ -179,7 +184,7 @@ class BitcoinCoreBuilder {
 
         val transactionSyncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager)
         val transactionSendTimer = TransactionSendTimer(60)
-        val transactionSender = TransactionSender(transactionSyncer, peerGroup, storage, transactionSendTimer).apply {
+        val transactionSender = TransactionSender(transactionSyncer, peerManager, initialBlockDownload, storage, transactionSendTimer).apply {
             transactionSendTimer.listener = this
         }
 

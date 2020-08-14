@@ -65,6 +65,18 @@ class Peer(
         peerConnection.sendMessage(MempoolMessage())
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (other is Peer) {
+            return host == other.host
+        }
+
+        return false
+    }
+
+    override fun hashCode(): Int {
+        return host.hashCode()
+    }
+
     //
     // PeerConnection Listener implementations
     //

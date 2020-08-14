@@ -17,12 +17,13 @@ object PeerManagerTest : Spek({
 
     val peerManager by memoized { PeerManager() }
 
-    fun addPeer(connected: Boolean, synced: Boolean, host: String = "0.0.0.0"): Peer {
+    fun addPeer(synced: Boolean, connected: Boolean = true, host: String = "0.0.0.0", ready: Boolean = true): Peer {
         val peer = mock<Peer> {}
 
         whenever(peer.connected).thenReturn(connected)
         whenever(peer.synced).thenReturn(synced)
         whenever(peer.host).thenReturn(host)
+        whenever(peer.ready).thenReturn(ready)
 
         peerManager.add(peer)
 
@@ -61,21 +62,6 @@ object PeerManagerTest : Spek({
         }
     }
 
-    describe("#someReadyPeers") {
-        it("gets some ready peers") {
-            whenever(peer3.ready).thenReturn(true)
-
-            peerManager.add(peer1)
-            peerManager.add(peer2)
-            peerManager.add(peer3)
-            assertEquals(3, peerManager.peersCount)
-
-            val somePeers = peerManager.someReadyPeers()
-            assertEquals(1, somePeers.size)
-            assertEquals(peer3.host, somePeers[0].host)
-        }
-    }
-
     describe("#connected") {
         it("gets connected peers") {
             peerManager.add(peer1)
@@ -102,6 +88,24 @@ object PeerManagerTest : Spek({
             whenever(peer3.connectionTime).thenReturn(100)
 
             assertEquals(listOf(peer3, peer2), peerManager.sorted())
+        }
+    }
+
+    describe("#readyPears") {
+        it("returns a list of ready peers") {
+            addPeer(host = "0.0.0.1", connected = true, synced = true, ready = false)
+            addPeer(host = "0.0.0.2", connected = true, synced = true, ready = false)
+            val p3 = addPeer(host = "0.0.0.3", connected = true, synced = true, ready = true)
+            val p4 = addPeer(host = "0.0.0.4", connected = true, synced = true, ready = true)
+
+            assertEquals(listOf(p3, p4), peerManager.readyPears())
+        }
+
+        it("returns an empty list") {
+            addPeer(host = "0.0.0.1", connected = true, synced = true, ready = false)
+            addPeer(host = "0.0.0.2", connected = true, synced = true, ready = false)
+
+            assertEquals(listOf<Peer>(), peerManager.readyPears())
         }
     }
 
