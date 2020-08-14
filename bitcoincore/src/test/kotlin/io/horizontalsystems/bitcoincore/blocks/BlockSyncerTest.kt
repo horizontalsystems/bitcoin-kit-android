@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoincore.blocks
 import com.nhaarman.mockitokotlin2.*
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.KitStateProvider
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
@@ -27,7 +26,6 @@ object BlockSyncerTest : Spek({
     val blockchain = mock(Blockchain::class.java)
     val transactionProcessor = mock(TransactionProcessor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
-    val listener = mock(KitStateProvider::class.java)
     val network = mock(Network::class.java)
 
     val state = mock(BlockSyncer.State::class.java)
@@ -44,16 +42,16 @@ object BlockSyncerTest : Spek({
         whenever(storage.blocksCount()).thenReturn(1)
         whenever(storage.lastBlock()).thenReturn(null)
 
-        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpoint, state)
+        blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, network.lastCheckpoint, state)
     }
 
     afterEachTest {
-        reset(storage, blockchain, transactionProcessor, publicKeyManager, listener, network, state)
+        reset(storage, blockchain, transactionProcessor, publicKeyManager, network, state)
     }
 
     describe("#init") {
         beforeEach {
-            reset(storage, listener)
+            reset(storage)
         }
 
         context("when there are some saved blocks") {
@@ -61,29 +59,11 @@ object BlockSyncerTest : Spek({
                 whenever(storage.blocksCount()).thenReturn(1)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
-                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpoint, state)
+                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, network.lastCheckpoint, state)
             }
 
             it("does not saves block to storage") {
                 verify(storage, never()).saveBlock(checkpointBlock)
-            }
-
-            it("triggers #onInitialBestBlockHeightUpdate event on listener") {
-                verify(listener).onInitialBestBlockHeightUpdate(checkpointBlock.height)
-            }
-        }
-
-        context("when there is no block in storage") {
-            beforeEach {
-                whenever(storage.blocksCount()).thenReturn(0)
-                whenever(storage.lastBlock()).thenReturn(checkpointBlock)
-
-                BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, listener, network.lastCheckpoint, state)
-            }
-
-            it("triggers #onInitialBestBlockHeightUpdate event on listener") {
-                verify(listener).onInitialBestBlockHeightUpdate(checkpointBlock.height)
-                verifyNoMoreInteractions(listener)
             }
         }
     }
@@ -406,7 +386,6 @@ object BlockSyncerTest : Spek({
 
             verify(blockchain).connect(merkleBlock)
             verify(transactionProcessor).processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
-            verify(listener).onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
         }
 
         context("when merkle block height it not null") {

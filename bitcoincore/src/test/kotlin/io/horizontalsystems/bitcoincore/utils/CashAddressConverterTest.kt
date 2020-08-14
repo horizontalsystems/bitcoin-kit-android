@@ -34,7 +34,7 @@ object CashAddressConverterTest : Spek({
         }
     }
 
-    describe("") {
+    describe("CashAddressConverter") {
 
         it("convert_strings") {
             converter = CashAddressConverter(hrp)
