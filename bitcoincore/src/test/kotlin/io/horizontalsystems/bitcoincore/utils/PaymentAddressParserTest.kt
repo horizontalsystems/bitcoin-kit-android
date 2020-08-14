@@ -14,7 +14,7 @@ object PaymentAddressParserTest : Spek({
         assertEquals(bitcoinPaymentData, paymentData)
     }
 
-    describe("") {
+    describe("PaymentAddressParser") {
 
         it("parse_BitcoinPaymentAddress") {
             addressParser = PaymentAddressParser("bitcoin", true)

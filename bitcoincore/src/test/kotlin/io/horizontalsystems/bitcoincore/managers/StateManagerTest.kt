@@ -11,7 +11,7 @@ import org.spekframework.spek2.style.specification.describe
 
 object StateManagerTest : Spek({
 
-    lateinit var stateManager: StateManager
+    lateinit var stateManager: ApiSyncStateManager
 
     val storage = mock(IStorage::class.java)
     val networkSyncableFromApi = mock(Network::class.java)
@@ -26,7 +26,7 @@ object StateManagerTest : Spek({
 
         context("when `restoreFromApi` is true") {
             it("marks as `restored`") {
-                stateManager = StateManager(storage, false)
+                stateManager = ApiSyncStateManager(storage, false)
                 assertTrue(stateManager.restored)
             }
         }
@@ -37,7 +37,7 @@ object StateManagerTest : Spek({
             }
 
             it("marks as `restored`") {
-                stateManager = StateManager(storage, true)
+                stateManager = ApiSyncStateManager(storage, true)
                 assertTrue(stateManager.restored)
             }
         }
@@ -48,7 +48,7 @@ object StateManagerTest : Spek({
             }
 
             it("marks as not `restored`") {
-                stateManager = StateManager(storage, true)
+                stateManager = ApiSyncStateManager(storage, true)
                 assertFalse(stateManager.restored)
             }
         }
