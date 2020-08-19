@@ -25,7 +25,6 @@ class TransactionMediator {
      * Also just return ConflictResolution.ACCEPT when there is no conflicting transactions.
      * @param receivedTransaction transaction that is received from network
      * @param conflictingTransactions transactions that spend one of receivedTransaction's inputs
-     * @param updateTransactions it is "out" parameter, transactions that need to be updated
      * @return conflict resolution type {@link ConflictResolution}
      * @see ConflictResolution
      */

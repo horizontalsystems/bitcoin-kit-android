@@ -34,8 +34,4 @@ class TransactionSyncer(
         return !storage.isRelayedTransactionExists(hash)
     }
 
-    fun handleInvalid(txHash: ByteArray) {
-        transactionProcessor.processInvalid(txHash)
-    }
-
 }
