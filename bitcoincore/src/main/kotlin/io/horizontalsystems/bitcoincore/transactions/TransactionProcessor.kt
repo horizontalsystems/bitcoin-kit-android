@@ -178,7 +178,7 @@ class TransactionProcessor(
         }
     }
 
-    fun processInvalid(txHash: ByteArray, conflictingTxHash: ByteArray? = null) {
+    private fun processInvalid(txHash: ByteArray, conflictingTxHash: ByteArray? = null) {
         val invalidTransactionsFullInfo = getDescendantTransactionsFullInfo(txHash)
 
         if (invalidTransactionsFullInfo.isEmpty())
