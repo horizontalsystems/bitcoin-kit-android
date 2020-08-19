@@ -15,4 +15,7 @@ interface InvalidTransactionDao {
     @Query("DELETE FROM InvalidTransaction")
     fun deleteAll()
 
+    @Query("DELETE FROM InvalidTransaction where uid = :uid")
+    fun delete(uid: String)
+
 }

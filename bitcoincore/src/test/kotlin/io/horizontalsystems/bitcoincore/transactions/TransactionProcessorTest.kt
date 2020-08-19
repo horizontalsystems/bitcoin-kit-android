@@ -17,7 +17,6 @@ import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
-import java.lang.Exception
 
 object TransactionProcessorTest : Spek({
 
@@ -92,7 +91,7 @@ object TransactionProcessorTest : Spek({
 
     describe("process") {
         beforeEach {
-            whenever(txMediator.resolveConflicts(any(), any(), any()))
+            whenever(txMediator.resolveConflicts(any(), any()))
                     .thenReturn(conflictResolution)
         }
 

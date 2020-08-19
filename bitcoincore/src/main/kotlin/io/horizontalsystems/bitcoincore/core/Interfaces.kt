@@ -84,6 +84,7 @@ interface IStorage {
 
     fun getInvalidTransaction(hash: ByteArray): InvalidTransaction?
     fun moveTransactionToInvalidTransactions(invalidTransactions: List<InvalidTransaction>)
+    fun moveInvalidTransactionToTransactions(invalidTransaction: InvalidTransaction, toTransactions: FullTransaction)
     fun deleteAllInvalidTransactions()
 
     //  Transaction Output
