@@ -6,8 +6,9 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 /**
  * Enum class used for deciding to accept or ignore transaction after conflict resolution.
  */
-enum class ConflictResolution {
-    IGNORE, ACCEPT
+sealed class ConflictResolution {
+    class Ignore(val needToUpdate: List<Transaction>) : ConflictResolution()
+    class Accept(val needToMakeInvalid: List<Transaction>) : ConflictResolution()
 }
 
 /**
@@ -28,19 +29,17 @@ class TransactionMediator {
      * @return conflict resolution type {@link ConflictResolution}
      * @see ConflictResolution
      */
-    fun resolveConflicts(receivedTransaction: FullTransaction, conflictingTransactions: List<Transaction>, updateTransactions: MutableList<Transaction>): ConflictResolution {
-        if (conflictingTransactions.isEmpty())
-            return ConflictResolution.ACCEPT
-
-        if (receivedTransaction.header.blockHash != null) {
-            updateTransactions.addAll(conflictingTransactions)
-            return ConflictResolution.ACCEPT
+    fun resolveConflicts(receivedTransaction: FullTransaction, conflictingTransactions: List<Transaction>): ConflictResolution {
+        if (receivedTransaction.header.blockHash != null || conflictingTransactions.isEmpty()) {
+            return ConflictResolution.Accept(conflictingTransactions)
         }
 
-        val conflictingTxHash = if (conflictingTransactions.any { it.blockHash != null })
+        val updateTransactions = mutableListOf<Transaction>()
+        val conflictingTxHash = if (conflictingTransactions.any { it.blockHash != null }) {
             null
-        else
+        } else {
             receivedTransaction.header.hash
+        }
 
         conflictingTransactions.forEach {
             if (it.conflictingTxHash == null && conflictingTxHash != null) {
@@ -49,7 +48,6 @@ class TransactionMediator {
             }
         }
 
-        return ConflictResolution.IGNORE
+        return ConflictResolution.Ignore(updateTransactions)
     }
-
 }

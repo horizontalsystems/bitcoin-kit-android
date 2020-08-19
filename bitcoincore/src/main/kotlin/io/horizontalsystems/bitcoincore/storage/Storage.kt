@@ -234,15 +234,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun addTransaction(transaction: FullTransaction) {
         store.runInTransaction {
-            store.transaction.insert(transaction.header)
-
-            transaction.inputs.forEach {
-                store.input.insert(it)
-            }
-
-            transaction.outputs.forEach {
-                store.output.insert(it)
-            }
+            addWithoutTransaction(transaction)
         }
     }
 
@@ -301,6 +293,18 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return FullTransaction(header = transaction, inputs = getTransactionInputs(transaction), outputs = getTransactionOutputs(transaction))
     }
 
+    private fun addWithoutTransaction(transaction: FullTransaction) {
+        store.transaction.insert(transaction.header)
+
+        transaction.inputs.forEach {
+            store.input.insert(it)
+        }
+
+        transaction.outputs.forEach {
+            store.output.insert(it)
+        }
+    }
+
     // InvalidTransaction
 
     override fun getInvalidTransaction(hash: ByteArray): InvalidTransaction? {
@@ -318,6 +322,13 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
                 store.transaction.deleteByHash(invalidTransaction.hash)
             }
+        }
+    }
+
+    override fun moveInvalidTransactionToTransactions(invalidTransaction: InvalidTransaction, toTransactions: FullTransaction) {
+        store.runInTransaction {
+            addWithoutTransaction(toTransactions)
+            store.invalidTransaction.delete(invalidTransaction.uid)
         }
     }
 

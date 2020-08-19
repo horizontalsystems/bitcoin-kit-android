@@ -67,7 +67,8 @@ class TransactionProcessor(
                     continue
                 }
 
-                if (storage.getInvalidTransaction(transaction.header.hash) != null) {
+                val invalidTransaction = storage.getInvalidTransaction(transaction.header.hash)
+                if (invalidTransaction != null && block == null) {
                     continue
                 }
 
@@ -97,20 +98,29 @@ class TransactionProcessor(
                     relay(transaction.header, index, block)
 
                     val conflictingTransactions = storage.getConflictingTransactions(transaction)
-                    val updatedTransactions = mutableListOf<Transaction>()
+                    val conflictResolution = transactionMediator.resolveConflicts(transaction, conflictingTransactions)
 
-                    when (transactionMediator.resolveConflicts(transaction, conflictingTransactions, updatedTransactions)) {
-                        ConflictResolution.IGNORE -> {
-                            updatedTransactions.forEach { storage.updateTransaction(it) }
-                            updated.addAll(updatedTransactions)
+                    when (conflictResolution) {
+                        is ConflictResolution.Ignore -> {
+                            conflictResolution.needToUpdate.forEach {
+                                storage.updateTransaction(it)
+                            }
+                            updated.addAll(conflictResolution.needToUpdate)
                         }
-                        ConflictResolution.ACCEPT -> {
-                            updatedTransactions.forEach { processInvalid(it.hash, transaction.header.hash) }
-                            storage.addTransaction(transaction)
-                            inserted.add(transaction.header)
+                        is ConflictResolution.Accept -> {
+                            conflictResolution.needToMakeInvalid.forEach {
+                                processInvalid(it.hash, transaction.header.hash)
+                            }
+
+                            if (invalidTransaction != null) {
+                                storage.moveInvalidTransactionToTransactions(invalidTransaction, transaction)
+                                updated.add(transaction.header)
+                            } else {
+                                storage.addTransaction(transaction)
+                                inserted.add(transaction.header)
+                            }
                         }
                     }
-
 
                     if (!skipCheckBloomFilter) {
                         val checkDoubleSpend = !transaction.header.isOutgoing && block == null
