@@ -15,15 +15,7 @@ import io.horizontalsystems.litecoinkit.TestNetLitecoin
 import java.io.*
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
-import java.util.logging.Level
-import java.util.logging.Logger
 import kotlin.system.exitProcess
-
-fun main() {
-    Logger.getLogger("").level = Level.SEVERE
-    BuildCheckpoints()
-    Thread.sleep(5000)
-}
 
 class BuildCheckpoints : CheckpointSyncer.Listener {
 
@@ -45,7 +37,13 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
     }
 
-    init {
+    fun build(checkpoint: Block) {
+        println(" ================== CHECKPOINT ================== ")
+        println(serialize(checkpoint).toHexString())
+        println(" ================================================ ")
+    }
+
+    fun sync() {
         syncers.forEach { it.start() }
     }
 
