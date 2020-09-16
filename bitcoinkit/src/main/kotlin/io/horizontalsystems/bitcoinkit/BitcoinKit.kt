@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.*
 import io.horizontalsystems.bitcoincore.core.Bip
+import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -60,23 +61,24 @@ class BitcoinKit : AbstractKit {
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, bip))
         val storage = Storage(database)
-        var initialSyncUrl = ""
+        val initialSyncApi: IInitialSyncApi
 
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://btc.horizontalsystems.xyz/apg"
+                initialSyncApi = InsightApi("https://explorer.api.bitcoin.com/btc/v1")
                 MainNet()
             }
             NetworkType.TestNet -> {
-                initialSyncUrl = "https://btc-testnet.horizontalsystems.xyz/api"
+                initialSyncApi = BCoinApi("https://btc-testnet.horizontalsystems.xyz/api")
                 TestNet()
             }
-            NetworkType.RegTest -> RegTest()
+            NetworkType.RegTest -> {
+                initialSyncApi = InsightApi("")
+                RegTest()
+            }
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoin", removeScheme = true)
-        val initialSyncApi = BCoinApi(initialSyncUrl)
-
         val blockHelper = BlockValidatorHelper(storage)
 
         val blockValidatorSet = BlockValidatorSet()
