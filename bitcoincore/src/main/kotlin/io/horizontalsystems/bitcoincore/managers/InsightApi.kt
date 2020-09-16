@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import java.util.logging.Logger
 
 class InsightApi(host: String) : IInitialSyncApi {
+    private val maxAddressSize = 100
     private val apiManager = ApiManager(host)
     private val logger = Logger.getLogger("InsightApi")
 
@@ -12,7 +13,7 @@ class InsightApi(host: String) : IInitialSyncApi {
 
         val transactions = mutableListOf<TransactionItem>()
 
-        addresses.chunked( 99).forEach { addrs ->
+        addresses.chunked(maxAddressSize).forEach { addrs ->
             fetchTransactions(addrs, transactions, 0, 50)
         }
 
