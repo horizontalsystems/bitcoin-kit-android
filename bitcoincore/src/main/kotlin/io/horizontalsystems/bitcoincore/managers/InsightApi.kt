@@ -12,7 +12,9 @@ class InsightApi(host: String) : IInitialSyncApi {
 
         val transactions = mutableListOf<TransactionItem>()
 
-        fetchTransactions(addresses, transactions, 0, 50)
+        addresses.chunked( 99).forEach { addrs ->
+            fetchTransactions(addrs, transactions, 0, 50)
+        }
 
         return transactions
     }
