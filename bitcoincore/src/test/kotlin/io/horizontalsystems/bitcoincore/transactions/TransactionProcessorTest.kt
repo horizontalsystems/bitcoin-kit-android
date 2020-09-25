@@ -37,7 +37,7 @@ object TransactionProcessorTest : Spek({
     beforeEachTest {
         fullTransaction = Fixtures.transactionP2PKH
         transaction = fullTransaction.header
-        processor = PendingTransactionProcessor(storage, extractor, outputsCache, publicKeyManager, irregularOutputFinder, blockchainDataListener, txInfoConverter, txMediator)
+        processor = PendingTransactionProcessor(storage, extractor, publicKeyManager, irregularOutputFinder, blockchainDataListener, conflictsResolver)
     }
 
     fun transactions(): List<FullTransaction> {
@@ -128,7 +128,7 @@ object TransactionProcessorTest : Spek({
             transactions[1].header.status = Transaction.Status.NEW
 
             try {
-                processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), null, false)
+                processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), false)
 
                 transactions.forEachIndexed { index, _ ->
                     Assert.assertEquals(transactions[index].header.status, Transaction.Status.RELAYED)
@@ -148,7 +148,7 @@ object TransactionProcessorTest : Spek({
                 transaction.header.order = 0
             }
 
-            processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), block, false)
+            processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), false)
 
             transactions.forEachIndexed { index, _ ->
                 Assert.assertEquals(transactions[index].header.status, Transaction.Status.RELAYED)

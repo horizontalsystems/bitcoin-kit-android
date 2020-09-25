@@ -11,4 +11,8 @@ class TransactionConflictsResolver {
     fun getTransactionsConflictingWithInBlockTransaction(fullTransaction: FullTransaction): List<Transaction> {
         TODO("Not yet implemented")
     }
+
+    fun getTransactionsConflictingWithPendingTransaction(transaction: FullTransaction): List<Transaction> {
+        TODO("Not yet implemented")
+    }
 }

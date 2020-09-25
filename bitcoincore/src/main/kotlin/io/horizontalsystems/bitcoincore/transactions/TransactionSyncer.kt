@@ -20,7 +20,7 @@ class TransactionSyncer(
         var needToUpdateBloomFilter = false
 
         try {
-            transactionProcessor.processReceived(transactions, null, false)
+            transactionProcessor.processReceived(transactions, false)
         } catch (e: BloomFilterManager.BloomFilterExpired) {
             needToUpdateBloomFilter = true
         }
