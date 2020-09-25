@@ -33,7 +33,7 @@ class TransactionCreator(
         val transaction = transactionBuilderFunction.invoke()
 
         try {
-            processor.processOutgoing(transaction)
+            processor.processCreated(transaction)
         } catch (ex: BloomFilterManager.BloomFilterExpired) {
             bloomFilterManager.regenerateBloomFilter()
         }

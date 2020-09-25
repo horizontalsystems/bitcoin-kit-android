@@ -111,7 +111,7 @@ class BlockSyncer(
         }
 
         try {
-            transactionProcessor.processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
+            transactionProcessor.processReceived(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
         } catch (e: BloomFilterManager.BloomFilterExpired) {
             state.iterationHasPartialBlocks = true
         }

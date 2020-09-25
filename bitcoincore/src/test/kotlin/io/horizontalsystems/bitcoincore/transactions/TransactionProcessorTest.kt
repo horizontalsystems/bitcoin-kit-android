@@ -96,7 +96,7 @@ object TransactionProcessorTest : Spek({
         }
 
         it("process") {
-            processor.processOutgoing(fullTransaction)
+            processor.processCreated(fullTransaction)
 
             Mockito.verify(extractor).extractOutputs(fullTransaction)
             Mockito.verify(outputsCache).hasOutputs(fullTransaction.inputs)
@@ -108,7 +108,7 @@ object TransactionProcessorTest : Spek({
         it("process_isMine") {
             transaction.isMine = true
 
-            processor.processOutgoing(fullTransaction)
+            processor.processCreated(fullTransaction)
 
             Mockito.verify(extractor).extractOutputs(fullTransaction)
             Mockito.verify(extractor).extractInputs(fullTransaction)
@@ -128,7 +128,7 @@ object TransactionProcessorTest : Spek({
             transactions[1].header.status = Transaction.Status.NEW
 
             try {
-                processor.processIncoming(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), null, false)
+                processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), null, false)
 
                 transactions.forEachIndexed { index, _ ->
                     Assert.assertEquals(transactions[index].header.status, Transaction.Status.RELAYED)
@@ -148,7 +148,7 @@ object TransactionProcessorTest : Spek({
                 transaction.header.order = 0
             }
 
-            processor.processIncoming(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), block, false)
+            processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), block, false)
 
             transactions.forEachIndexed { index, _ ->
                 Assert.assertEquals(transactions[index].header.status, Transaction.Status.RELAYED)
