@@ -9,12 +9,12 @@ import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.transactions.TransactionProcessor
+import io.horizontalsystems.bitcoincore.transactions.BlockTransactionProcessor
 
 class BlockSyncer(
         private val storage: IStorage,
         private val blockchain: Blockchain,
-        private val transactionProcessor: TransactionProcessor,
+        private val transactionProcessor: BlockTransactionProcessor,
         private val publicKeyManager: PublicKeyManager,
         private val checkpoint: Checkpoint,
         private val state: State = State()

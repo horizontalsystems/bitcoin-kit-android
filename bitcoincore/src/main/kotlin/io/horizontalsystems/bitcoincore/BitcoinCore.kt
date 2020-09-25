@@ -164,7 +164,8 @@ class BitcoinCoreBuilder {
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager)
         val transactionMediator = TransactionMediator()
 
-        val transactionProcessor = TransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
+        val pendingTransactionProcessor = PendingTransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
+        val blockTransactionProcessor = BlockTransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
 
         val peerHostManager = PeerAddressManager(network, storage)
         val bloomFilterManager = BloomFilterManager()
@@ -177,12 +178,12 @@ class BitcoinCoreBuilder {
         val blockchain = Blockchain(storage, blockValidator, dataProvider)
         val checkpoint = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
 
-        val blockSyncer = BlockSyncer(storage, blockchain, transactionProcessor, publicKeyManager, checkpoint)
+        val blockSyncer = BlockSyncer(storage, blockchain, blockTransactionProcessor, publicKeyManager, checkpoint)
         val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, MerkleBlockExtractor(network.maxBlockSize))
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
-        val transactionSyncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager)
+        val transactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, publicKeyManager)
         val transactionSendTimer = TransactionSendTimer(60)
         val transactionSender = TransactionSender(transactionSyncer, peerManager, initialBlockDownload, storage, transactionSendTimer).apply {
             transactionSendTimer.listener = this
@@ -200,7 +201,7 @@ class BitcoinCoreBuilder {
         val recipientSetter = RecipientSetter(addressConverter, pluginManager)
         val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
         val transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, bip.scriptType)
-        val transactionCreator = TransactionCreator(transactionBuilder, transactionProcessor, transactionSender, bloomFilterManager)
+        val transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSender, bloomFilterManager)
 
         val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
         val blockDiscovery = BlockDiscoveryBatch(wallet, blockHashFetcher, checkpoint.block.height)
@@ -240,7 +241,8 @@ class BitcoinCoreBuilder {
         bloomFilterManager.addBloomFilterProvider(irregularOutputFinder)
 
         bitcoinCore.watchedTransactionManager = watchedTransactionManager
-        transactionProcessor.listener = watchedTransactionManager
+        pendingTransactionProcessor.listener = watchedTransactionManager
+        blockTransactionProcessor.listener = watchedTransactionManager
 
         bitcoinCore.peerGroup = peerGroup
         bitcoinCore.transactionSyncer = transactionSyncer

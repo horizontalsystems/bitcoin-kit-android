@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.ITransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toHexString
-import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.InvalidTransaction
@@ -16,7 +15,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import java.util.*
 import kotlin.collections.HashSet
 
-class TransactionProcessor(
+class BlockTransactionProcessor(
         private val storage: IStorage,
         private val extractor: TransactionExtractor,
         private val outputsCache: OutputsCache,
@@ -29,26 +28,6 @@ class TransactionProcessor(
     private val processedNotMineTransactions = HashSet<NotMineTransaction>()
 
     var listener: WatchedTransactionManager? = null
-
-    fun processCreated(transaction: FullTransaction) {
-        if (storage.getTransaction(transaction.header.hash) != null) {
-            throw TransactionCreator.TransactionAlreadyExists("hash = ${transaction.header.hash.toReversedHex()}")
-        }
-
-        process(transaction)
-
-        storage.addTransaction(transaction)
-
-        try {
-            dataListener.onTransactionsUpdate(listOf(transaction.header), listOf(), null)
-        } catch (e: Exception) {
-            // ignore any exception since the tx is inserted to the db
-        }
-
-        if (irregularOutputFinder.hasIrregularOutput(transaction.outputs)) {
-            throw BloomFilterManager.BloomFilterExpired
-        }
-    }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
     fun processReceived(transactions: List<FullTransaction>, block: Block?, skipCheckBloomFilter: Boolean) {

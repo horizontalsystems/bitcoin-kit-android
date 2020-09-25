@@ -7,7 +7,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class TransactionSyncer(
         private val storage: IStorage,
-        private val transactionProcessor: TransactionProcessor,
+        private val transactionProcessor: PendingTransactionProcessor,
         private val publicKeyManager: PublicKeyManager) {
 
     fun getNewTransactions(): List<FullTransaction> {

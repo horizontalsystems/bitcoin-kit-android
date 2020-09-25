@@ -15,7 +15,7 @@ object TransactionSyncerTest : Spek({
     lateinit var syncer: TransactionSyncer
 
     val storage = mock(IStorage::class.java)
-    val transactionProcessor = mock(TransactionProcessor::class.java)
+    val transactionProcessor = mock(PendingTransactionProcessor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
 
     val fullTransaction = mock(FullTransaction::class.java)

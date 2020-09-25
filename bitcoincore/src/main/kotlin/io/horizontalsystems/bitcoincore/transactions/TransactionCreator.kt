@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 
 class TransactionCreator(
         private val builder: TransactionBuilder,
-        private val processor: TransactionProcessor,
+        private val processor: PendingTransactionProcessor,
         private val transactionSender: TransactionSender,
         private val bloomFilterManager: BloomFilterManager) {
 

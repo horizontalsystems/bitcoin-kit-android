@@ -11,7 +11,7 @@ import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.transactions.TransactionProcessor
+import io.horizontalsystems.bitcoincore.transactions.PendingTransactionProcessor
 import org.junit.Assert.assertEquals
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.reset
@@ -24,7 +24,7 @@ object BlockSyncerTest : Spek({
 
     val storage = mock(IStorage::class.java)
     val blockchain = mock(Blockchain::class.java)
-    val transactionProcessor = mock(TransactionProcessor::class.java)
+    val transactionProcessor = mock(PendingTransactionProcessor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
     val network = mock(Network::class.java)
 
