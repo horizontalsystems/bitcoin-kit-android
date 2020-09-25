@@ -10,7 +10,12 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 import java.util.*
 
-class TransactionExtractor(private val addressConverter: IAddressConverter, private val storage: IStorage, private val pluginManager: PluginManager) {
+class TransactionExtractor(
+        private val addressConverter: IAddressConverter,
+        private val storage: IStorage,
+        private val pluginManager: PluginManager,
+        private val outputsCache: OutputsCache
+) {
 
     fun extractOutputs(transaction: FullTransaction) {
         var nullDataOutput : TransactionOutput? = null
@@ -209,5 +214,20 @@ class TransactionExtractor(private val addressConverter: IAddressConverter, priv
         }
 
         return null
+    }
+
+    fun extract(transaction: FullTransaction) {
+        extractOutputs(transaction)
+
+        if (outputsCache.hasOutputs(transaction.inputs)) {
+            transaction.header.isMine = true
+            transaction.header.isOutgoing = true
+        }
+
+        if (transaction.header.isMine) {
+            outputsCache.add(transaction.outputs)
+            extractAddress(transaction)
+            extractInputs(transaction)
+        }
     }
 }

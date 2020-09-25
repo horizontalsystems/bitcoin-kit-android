@@ -224,6 +224,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getByHash(hash)
     }
 
+    override fun getFullTransaction(hash: ByteArray): FullTransaction? {
+        return store.transaction.getByHash(hash)?.let { convertToFullTransaction(it) }
+    }
+
     override fun getValidOrInvalidTransaction(uid: String): Transaction? {
         return store.transaction.getValidOrInvalidByUid(uid)
     }
@@ -240,6 +244,20 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun updateTransaction(transaction: Transaction) {
         store.transaction.update(transaction)
+    }
+
+    override fun updateTransaction(transaction: FullTransaction) {
+        store.runInTransaction {
+            store.transaction.update(transaction.header)
+            transaction.inputs.forEach {
+                store.input.update(it)
+            }
+
+            transaction.outputs.forEach {
+                store.output.update(it)
+            }
+        }
+
     }
 
     override fun getBlockTransactions(block: Block): List<Transaction> {

@@ -8,6 +8,9 @@ interface TransactionInputDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(input: TransactionInput)
 
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    fun update(input: TransactionInput)
+
     @Delete
     fun delete(input: TransactionInput)
 
