@@ -385,7 +385,7 @@ object BlockSyncerTest : Spek({
             blockSyncer.handleMerkleBlock(merkleBlock, maxBlockHeight)
 
             verify(blockchain).connect(merkleBlock)
-            verify(transactionProcessor).processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
+            verify(transactionProcessor).processReceived(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks)
         }
 
         context("when merkle block height it not null") {
@@ -403,7 +403,7 @@ object BlockSyncerTest : Spek({
 
         context("when bloom filter expired while processing transaction") {
             beforeEach {
-                whenever(transactionProcessor.processIncoming(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks))
+                whenever(transactionProcessor.processReceived(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks))
                         .thenThrow(BloomFilterManager.BloomFilterExpired)
             }
 

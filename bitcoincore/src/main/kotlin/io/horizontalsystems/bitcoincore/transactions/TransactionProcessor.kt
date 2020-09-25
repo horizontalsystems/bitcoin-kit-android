@@ -30,7 +30,7 @@ class TransactionProcessor(
 
     var listener: WatchedTransactionManager? = null
 
-    fun processOutgoing(transaction: FullTransaction) {
+    fun processCreated(transaction: FullTransaction) {
         if (storage.getTransaction(transaction.header.hash) != null) {
             throw TransactionCreator.TransactionAlreadyExists("hash = ${transaction.header.hash.toReversedHex()}")
         }
@@ -51,7 +51,7 @@ class TransactionProcessor(
     }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
-    fun processIncoming(transactions: List<FullTransaction>, block: Block?, skipCheckBloomFilter: Boolean) {
+    fun processReceived(transactions: List<FullTransaction>, block: Block?, skipCheckBloomFilter: Boolean) {
         var needToUpdateBloomFilter = false
 
         val inserted = mutableListOf<Transaction>()
