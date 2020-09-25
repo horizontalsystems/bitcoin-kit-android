@@ -67,10 +67,12 @@ interface IStorage {
     fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo?
 
     fun getTransaction(hash: ByteArray): Transaction?
+    fun getFullTransaction(hash: ByteArray): FullTransaction?
     fun getValidOrInvalidTransaction(uid: String): Transaction?
     fun getTransactionOfOutput(output: TransactionOutput): Transaction?
     fun addTransaction(transaction: FullTransaction)
     fun updateTransaction(transaction: Transaction)
+    fun updateTransaction(transaction: FullTransaction)
     fun getBlockTransactions(block: Block): List<Transaction>
     fun getNewTransactions(): List<FullTransaction>
     fun getNewTransaction(hash: ByteArray): Transaction?

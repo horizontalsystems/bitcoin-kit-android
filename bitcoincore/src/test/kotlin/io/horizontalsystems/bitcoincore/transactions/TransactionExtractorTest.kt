@@ -26,13 +26,15 @@ object TransactionExtractorTest : Spek({
     lateinit var transactionInput: TransactionInput
     lateinit var fullTransaction: FullTransaction
     lateinit var extractor: TransactionExtractor
+    lateinit var transactionOutputsCache: OutputsCache
 
     beforeEachTest {
         transactionOutput = TransactionOutput()
         transactionInput = TransactionInput(byteArrayOf(), 0)
         fullTransaction = FullTransaction(Transaction(), listOf(transactionInput), listOf(transactionOutput))
+        transactionOutputsCache = OutputsCache()
 
-        extractor = TransactionExtractor(addressConverter, storage, pluginManager)
+        extractor = TransactionExtractor(addressConverter, storage, pluginManager, transactionOutputsCache)
     }
 
     describe("#extract") {

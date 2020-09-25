@@ -8,6 +8,9 @@ interface TransactionOutputDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insert(output: TransactionOutput)
 
+    @Update(onConflict = OnConflictStrategy.REPLACE)
+    fun update(output: TransactionOutput)
+
     @Query("select * from transactionOutput where transactionHash in (:txHashes)")
     fun getTransactionsOutputs(txHashes: List<ByteArray>): List<TransactionOutput>
 
