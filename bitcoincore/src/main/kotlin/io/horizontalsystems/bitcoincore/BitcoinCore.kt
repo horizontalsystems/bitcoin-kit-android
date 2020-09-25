@@ -164,14 +164,22 @@ class BitcoinCoreBuilder {
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager, transactionOutputsCache)
         val transactionMediator = TransactionMediator()
 
-        val pendingTransactionProcessor = PendingTransactionProcessor(storage, transactionExtractor, transactionOutputsCache, publicKeyManager, irregularOutputFinder, dataProvider, transactionInfoConverter, transactionMediator)
+        val conflictsResolver = TransactionConflictsResolver()
+        val pendingTransactionProcessor = PendingTransactionProcessor(
+                storage,
+                transactionExtractor,
+                publicKeyManager,
+                irregularOutputFinder,
+                dataProvider,
+                conflictsResolver
+        )
         val blockTransactionProcessor = BlockTransactionProcessor(
                 storage,
                 transactionExtractor,
                 publicKeyManager,
                 irregularOutputFinder,
                 dataProvider,
-                TransactionConflictsResolver(),
+                conflictsResolver,
                 TransactionInvalidator()
         )
 
@@ -249,7 +257,7 @@ class BitcoinCoreBuilder {
         bloomFilterManager.addBloomFilterProvider(irregularOutputFinder)
 
         bitcoinCore.watchedTransactionManager = watchedTransactionManager
-        pendingTransactionProcessor.listener = watchedTransactionManager
+        pendingTransactionProcessor.transactionListener = watchedTransactionManager
         blockTransactionProcessor.transactionListener = watchedTransactionManager
 
         bitcoinCore.peerGroup = peerGroup

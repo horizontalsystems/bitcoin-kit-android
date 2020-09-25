@@ -37,7 +37,7 @@ object TransactionSyncerTest : Spek({
             it("doesn't do anything") {
                 syncer.handleRelayed(listOf())
 
-                verify(transactionProcessor, never()).processReceived(any(), any(), any())
+                verify(transactionProcessor, never()).processReceived(any(), any())
                 verify(publicKeyManager, never()).fillGap()
             }
         }
@@ -47,14 +47,14 @@ object TransactionSyncerTest : Spek({
 
             context("when need to update bloom filter") {
                 beforeEach {
-                    whenever(transactionProcessor.processReceived(eq(transactions), eq(null), eq(false)))
+                    whenever(transactionProcessor.processReceived(eq(transactions), eq(false)))
                             .thenThrow(BloomFilterManager.BloomFilterExpired)
                 }
 
                 it("fills addresses gap and regenerates bloom filter") {
                     syncer.handleRelayed(transactions)
 
-                    verify(transactionProcessor).processReceived(eq(transactions), eq(null), eq(false))
+                    verify(transactionProcessor).processReceived(eq(transactions), eq(false))
                     verify(publicKeyManager).fillGap()
                 }
             }
@@ -63,7 +63,7 @@ object TransactionSyncerTest : Spek({
                 it("doesn't run address fillGap and doesn't regenerate bloom filter") {
                     syncer.handleRelayed(transactions)
 
-                    verify(transactionProcessor).processReceived(eq(transactions), eq(null), eq(false))
+                    verify(transactionProcessor).processReceived(eq(transactions), eq(false))
                     verify(publicKeyManager, never()).fillGap()
                 }
             }
