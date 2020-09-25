@@ -20,7 +20,7 @@ import org.spekframework.spek2.style.specification.describe
 
 object TransactionProcessorTest : Spek({
 
-    lateinit var processor: TransactionProcessor
+    lateinit var processor: PendingTransactionProcessor
     lateinit var transaction: Transaction
     lateinit var fullTransaction: FullTransaction
 
@@ -37,7 +37,7 @@ object TransactionProcessorTest : Spek({
     beforeEachTest {
         fullTransaction = Fixtures.transactionP2PKH
         transaction = fullTransaction.header
-        processor = TransactionProcessor(storage, extractor, outputsCache, publicKeyManager, irregularOutputFinder, blockchainDataListener, txInfoConverter, txMediator)
+        processor = PendingTransactionProcessor(storage, extractor, outputsCache, publicKeyManager, irregularOutputFinder, blockchainDataListener, txInfoConverter, txMediator)
     }
 
     fun transactions(): List<FullTransaction> {
