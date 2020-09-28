@@ -173,6 +173,7 @@ class BitcoinCoreBuilder {
                 dataProvider,
                 conflictsResolver
         )
+        val invalidator = TransactionInvalidator(storage, transactionInfoConverter, dataProvider)
         val blockTransactionProcessor = BlockTransactionProcessor(
                 storage,
                 transactionExtractor,
@@ -180,7 +181,7 @@ class BitcoinCoreBuilder {
                 irregularOutputFinder,
                 dataProvider,
                 conflictsResolver,
-                TransactionInvalidator()
+                invalidator
         )
 
         val peerHostManager = PeerAddressManager(network, storage)
