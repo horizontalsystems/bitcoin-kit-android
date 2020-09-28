@@ -1,13 +1,11 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import com.nhaarman.mockitokotlin2.any
-import com.nhaarman.mockitokotlin2.reset
-import com.nhaarman.mockitokotlin2.whenever
 import io.horizontalsystems.bitcoincore.Fixtures
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.ITransactionInfoConverter
-import io.horizontalsystems.bitcoincore.managers.*
+import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
+import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
@@ -30,9 +28,7 @@ object TransactionProcessorTest : Spek({
     val publicKeyManager = mock(PublicKeyManager::class.java)
     val blockchainDataListener = mock(IBlockchainDataListener::class.java)
     val irregularOutputFinder = mock(IIrregularOutputFinder::class.java)
-    val txInfoConverter = mock(ITransactionInfoConverter::class.java)
-    val txMediator = mock(TransactionMediator::class.java)
-    val conflictResolution = mock(ConflictResolution::class.java)
+    val conflictsResolver = mock(TransactionConflictsResolver::class.java)
 
     beforeEachTest {
         fullTransaction = Fixtures.transactionP2PKH
@@ -85,15 +81,7 @@ object TransactionProcessorTest : Spek({
         return listOf(tx1, tx2, tx3, tx4)
     }
 
-    afterEachTest {
-        reset(txMediator)
-    }
-
     describe("process") {
-        beforeEach {
-            whenever(txMediator.resolveConflicts(any(), any()))
-                    .thenReturn(conflictResolution)
-        }
 
         it("process") {
             processor.processCreated(fullTransaction)
