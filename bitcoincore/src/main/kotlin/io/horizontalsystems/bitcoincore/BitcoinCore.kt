@@ -162,7 +162,6 @@ class BitcoinCoreBuilder {
         val irregularOutputFinder = IrregularOutputFinder(storage)
         val transactionOutputsCache = OutputsCache.create(storage)
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager, transactionOutputsCache)
-        val transactionMediator = TransactionMediator()
 
         val conflictsResolver = TransactionConflictsResolver(storage)
         val pendingTransactionProcessor = PendingTransactionProcessor(
