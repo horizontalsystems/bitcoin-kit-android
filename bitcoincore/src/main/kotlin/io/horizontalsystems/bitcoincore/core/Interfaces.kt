@@ -103,6 +103,7 @@ interface IStorage {
     fun getTransactionInputs(transaction: Transaction): List<TransactionInput>
     fun getTransactionInputs(txHash: ByteArray): List<TransactionInput>
     fun getTransactionInputs(txHashes: List<ByteArray>): List<TransactionInput>
+    fun getTransactionInput(previousOutputTxHash: ByteArray, previousOutputIndex: Long): TransactionInput?
     fun getTransactionInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput>
 
     // PublicKey

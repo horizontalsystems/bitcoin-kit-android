@@ -394,6 +394,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.input.getTransactionInputs(txHashes)
     }
 
+    override fun getTransactionInput(previousOutputTxHash: ByteArray, previousOutputIndex: Long): TransactionInput? {
+        return store.input.getInput(previousOutputTxHash, previousOutputIndex)
+    }
+
     override fun getTransactionInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput> {
         return store.input.getInputsByPrevOutputTxHash(txHash)
     }
