@@ -164,7 +164,7 @@ class BitcoinCoreBuilder {
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager, transactionOutputsCache)
         val transactionMediator = TransactionMediator()
 
-        val conflictsResolver = TransactionConflictsResolver()
+        val conflictsResolver = TransactionConflictsResolver(storage)
         val pendingTransactionProcessor = PendingTransactionProcessor(
                 storage,
                 transactionExtractor,
