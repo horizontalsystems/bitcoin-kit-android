@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
@@ -75,5 +76,15 @@ class Bip84RestoreKeyConverter(private val addressConverter: IAddressConverter) 
 
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
         return listOf(publicKey.publicKeyHash)
+    }
+}
+
+class KeyHashRestoreKeyConverter : IRestoreKeyConverter {
+    override fun keysForApiRestore(publicKey: PublicKey): List<String> {
+        return listOf(publicKey.publicKeyHash.toHexString())
+    }
+
+    override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
+       return listOf(publicKey.publicKeyHash)
     }
 }
