@@ -19,9 +19,7 @@ class TransactionConflictsResolver(private val storage: IStorage) {
         // If any of conflicting transactions is already in a block, then current transaction is invalid and non of them is conflicting with it.
         if (conflictingTransactions.any { it.blockHash != null }) return listOf()
 
-        return conflictingTransactions.filter {
-            it.conflictingTxHash == null
-        }
+        return conflictingTransactions
     }
 
     fun getIncomingPendingTransactionsConflictingWith(transaction: FullTransaction): List<Transaction> {
