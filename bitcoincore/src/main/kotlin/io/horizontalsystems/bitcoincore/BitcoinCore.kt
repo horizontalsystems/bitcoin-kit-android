@@ -505,6 +505,7 @@ class BitcoinCore(
 
         statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it * 1000) } ?: "N/A"
         statusInfo["Syncing Peer"] = initialBlockDownload.syncPeer?.host ?: "N/A"
+        statusInfo["Derivation"] = bip.toString()
         statusInfo["Sync State"] = syncState.toString()
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
 
