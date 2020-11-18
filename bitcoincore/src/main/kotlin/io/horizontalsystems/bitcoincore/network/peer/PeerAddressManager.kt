@@ -69,7 +69,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
 
         @Synchronized
         fun getUsedPeers(): List<String> {
-            return usedPeers
+            return usedPeers.toList()
         }
 
         @Synchronized
