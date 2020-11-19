@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincash
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import io.horizontalsystems.bitcoincash.blocks.BitcoinCashBlockValidatorHelper
+import io.horizontalsystems.bitcoincash.blocks.validators.AsertValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.DAAValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.EDAValidator
 import io.horizontalsystems.bitcoincash.blocks.validators.ForkValidator
@@ -88,8 +89,14 @@ class BitcoinCashKit : AbstractKit {
             val blockHelper = BitcoinCashBlockValidatorHelper(storage)
 
             val daaValidator = DAAValidator(targetSpacing, blockHelper)
+            val asertValidator = AsertValidator()
+
+            blockValidatorChain.add(ForkValidator(bchnChainForkHeight, bchnChainForkBlockHash, asertValidator))
+            blockValidatorChain.add(asertValidator  )
+
             blockValidatorChain.add(ForkValidator(svForkHeight, abcForkBlockHash, daaValidator))
             blockValidatorChain.add(daaValidator)
+
             blockValidatorChain.add(LegacyDifficultyAdjustmentValidator(blockHelper, heightInterval, targetTimespan, maxTargetBits))
             blockValidatorChain.add(EDAValidator(maxTargetBits, blockHelper, BlockMedianTimeHelper(storage)))
         }
@@ -120,12 +127,16 @@ class BitcoinCashKit : AbstractKit {
     }
 
     companion object {
-        const val maxTargetBits: Long = 0x1d00ffff                // Maximum difficulty
-        const val targetSpacing = 10 * 60                         // 10 minutes per block.
-        const val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
-        var heightInterval = targetTimespan / targetSpacing // 2016 blocks
-        const val svForkHeight = 556767
+        const val maxTargetBits: Long = 0x1d00ffff              // Maximum difficulty
+        const val targetSpacing = 10 * 60                       // 10 minutes per block.
+        const val targetTimespan: Long = 14 * 24 * 60 * 60      // 2 weeks per difficulty cycle, on average.
+        var heightInterval = targetTimespan / targetSpacing     // 2016 blocks
+
+        const val svForkHeight = 556767                         // 2018 November 14
+        const val bchnChainForkHeight = 661648                  // 2020 November 15, 14:13 GMT
+
         val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
+        val bchnChainForkBlockHash = "0000000000000000029e471c41818d24b8b74c911071c4ef0b4a0509f9b5a8ce".toReversedByteArray()
 
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode): String = "BitcoinCash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
@@ -139,5 +150,4 @@ class BitcoinCashKit : AbstractKit {
             }
         }
     }
-
 }
