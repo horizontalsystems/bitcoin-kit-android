@@ -56,24 +56,26 @@ class PeerAddressManager(private val network: Network) : IPeerAddressManager {
     }
 
     private fun getLeastScoreFastestPeer(): PeerAddress? {
-        return state.getLeastScoreFastestPeerAddressExcludingIps(state.usedPeers.toList())
+        return state.getLeastScoreFastestPeerAddressExcludingIps(state.getUsedPeers())
     }
 
     private class State {
-        val allPeers = CopyOnWriteArrayList<PeerAddress>()
-        var usedPeers = CopyOnWriteArrayList<String>()
-            private set
+        private val allPeers = mutableListOf<PeerAddress>()
+        private var usedPeers = mutableListOf<String>()
 
-        fun add(ip: String) {
-            synchronized(this) {
-                usedPeers.add(ip)
-            }
+        @Synchronized
+        fun getUsedPeers(): List<String> {
+            return usedPeers.toList()
         }
 
+        @Synchronized
+        fun add(ip: String) {
+            usedPeers.add(ip)
+        }
+
+        @Synchronized
         fun remove(ip: String) {
-            synchronized(this) {
-                usedPeers.removeAll { it == ip }
-            }
+            usedPeers.removeAll { it == ip }
         }
 
         @Synchronized
