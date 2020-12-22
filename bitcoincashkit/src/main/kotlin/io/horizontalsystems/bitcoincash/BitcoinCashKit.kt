@@ -28,9 +28,20 @@ import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.Mnemonic
 
 class BitcoinCashKit : AbstractKit {
-    enum class NetworkType {
-        MainNet,
-        TestNet
+    sealed class NetworkType {
+        class MainNet(val coinType: MainNetBitcoinCash.CoinType): NetworkType()
+        object TestNet: NetworkType()
+
+        val description: String
+            get() = when (this) {
+                is MainNet -> {
+                    when (coinType) {
+                        MainNetBitcoinCash.CoinType.Type0 -> "mainNet" // back compatibility for database file name in old NetworkType
+                        MainNetBitcoinCash.CoinType.Type145 -> "mainNet-145"
+                    }
+                }
+                is TestNet -> "testNet"
+            }
     }
 
     interface Listener : BitcoinCore.Listener
@@ -48,7 +59,7 @@ class BitcoinCashKit : AbstractKit {
             context: Context,
             words: List<String>,
             walletId: String,
-            networkType: NetworkType = NetworkType.MainNet,
+            networkType: NetworkType = NetworkType.MainNet(MainNetBitcoinCash.CoinType.Type145),
             peerSize: Int = 10,
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
@@ -58,7 +69,7 @@ class BitcoinCashKit : AbstractKit {
             context: Context,
             seed: ByteArray,
             walletId: String,
-            networkType: NetworkType = NetworkType.MainNet,
+            networkType: NetworkType = NetworkType.MainNet(MainNetBitcoinCash.CoinType.Type145),
             peerSize: Int = 10,
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
@@ -68,9 +79,9 @@ class BitcoinCashKit : AbstractKit {
         val initialSyncUrl: String
 
         network = when (networkType) {
-            NetworkType.MainNet -> {
+            is NetworkType.MainNet -> {
                 initialSyncUrl = "https://explorer.api.bitcoin.com/bch/v1"
-                MainNetBitcoinCash()
+                MainNetBitcoinCash(networkType.coinType)
             }
             NetworkType.TestNet -> {
                 initialSyncUrl = "https://explorer.api.bitcoin.com/tbch/v1"
@@ -85,7 +96,7 @@ class BitcoinCashKit : AbstractKit {
         blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
 
         val blockValidatorChain = BlockValidatorChain()
-        if (networkType == NetworkType.MainNet) {
+        if (networkType is NetworkType.MainNet) {
             val blockHelper = BitcoinCashBlockValidatorHelper(storage)
 
             val daaValidator = DAAValidator(targetSpacing, blockHelper)
@@ -138,7 +149,7 @@ class BitcoinCashKit : AbstractKit {
         val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
         val bchnChainForkBlockHash = "0000000000000000029e471c41818d24b8b74c911071c4ef0b4a0509f9b5a8ce".toReversedByteArray()
 
-        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode): String = "BitcoinCash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
+        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode): String = "BitcoinCash-${networkType.description}-$walletId-${syncMode.javaClass.simpleName}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
             for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
