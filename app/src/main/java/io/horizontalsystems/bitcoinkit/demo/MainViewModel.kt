@@ -191,8 +191,9 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         } catch (e: Exception) {
             amountLiveData.value = 0
             errorLiveData.value = when (e) {
+
                 is SendValueErrors.Dust,
-                is SendValueErrors.EmptyOutputs -> "You need at least ${e.message} satoshis to make an transaction!"
+                is SendValueErrors.EmptyOutputs -> "You need at least ${e.message} satoshis to make an transaction"
                 is AddressFormatException -> "Could not Format Address"
                 else -> e.message ?: "Maximum could not be calculated"
             }
