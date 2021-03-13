@@ -26,4 +26,5 @@ public class AddressFormatException extends BitcoinException {
         super(msg);
     }
 
+
 }
