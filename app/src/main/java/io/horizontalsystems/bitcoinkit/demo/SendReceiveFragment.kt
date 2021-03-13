@@ -4,6 +4,7 @@ import androidx.lifecycle.Observer
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.text.Editable
+import android.text.SpannableStringBuilder
 import android.text.TextWatcher
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -13,6 +14,8 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.lifecycle.ViewModelProvider
+import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
+import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.hodler.LockTimeInterval
 import kotlinx.android.synthetic.main.fragment_send_receive.*
 
@@ -45,7 +48,8 @@ class SendReceiveFragment : Fragment() {
         })
 
         viewModel.errorLiveData.observe(viewLifecycleOwner, Observer {
-            val toast = Toast.makeText(context, it, Toast.LENGTH_LONG)
+            //TODO TOASTS NO PREVIOUS OUTPUT SCRIPT CHANGE THE SEED?
+            val toast = Toast.makeText(context, "$it", Toast.LENGTH_LONG)
 
             toast.setGravity(Gravity.CENTER, 0, 0)
             toast.show()
@@ -65,7 +69,10 @@ class SendReceiveFragment : Fragment() {
         }
 
         maxButton.setOnClickListener {
-            viewModel.onMaxClick()
+
+
+                viewModel.onMaxClick()
+
         }
 
         sendAmount.addTextChangedListener(SimpleTextWatcher {

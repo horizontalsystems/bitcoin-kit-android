@@ -1,11 +1,14 @@
 package io.horizontalsystems.bitcoinkit.demo
 
+import android.text.SpannableStringBuilder
+import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IPluginData
+import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
@@ -16,6 +19,7 @@ import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.android.synthetic.main.fragment_send_receive.*
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
@@ -42,11 +46,12 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private lateinit var bitcoinKit: BitcoinKit
 
     private val walletId = "MyWallet"
-    private val networkType = BitcoinKit.NetworkType.MainNet
+    private val networkType = BitcoinKit.NetworkType.TestNet
     private val syncMode = BitcoinCore.SyncMode.Api()
     private val bip = Bip.BIP44
 
     fun init() {
+        //TODO create unique seed phrase,perhaps using shared preferences?
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
 
         bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, syncMode = syncMode, bip = bip)
@@ -161,25 +166,37 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             }
             else -> {
                 try {
-                    bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData())
+                  val transaction =  bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData())
 
                     amountLiveData.value = null
                     feeLiveData.value = null
                     addressLiveData.value = null
-                    errorLiveData.value = "Transaction sent"
+                    errorLiveData.value = "Transaction sent ${transaction.header.serializedTxInfo}"
                 } catch (e: Exception) {
                     errorLiveData.value = when (e) {
                         is SendValueErrors.InsufficientUnspentOutputs,
                         is SendValueErrors.EmptyOutputs -> "Insufficient balance"
+                        is AddressFormatException -> "Could not Format Address"
                         else -> e.message ?: "Failed to send transaction (${e.javaClass.name})"
                     }
+
                 }
             }
         }
     }
 
     fun onMaxClick() {
-        amountLiveData.value = bitcoinKit.maximumSpendableValue(address, feePriority.feeRate, getPluginData())
+        try {
+            amountLiveData.value = bitcoinKit.maximumSpendableValue(address, feePriority.feeRate, getPluginData())
+        } catch (e: Exception) {
+            amountLiveData.value = 0
+            errorLiveData.value = when (e) {
+                is SendValueErrors.Dust,
+                is SendValueErrors.EmptyOutputs -> "You need at least ${e.message} satoshis to make an transaction!"
+                is AddressFormatException -> "Could not Format Address"
+                else -> e.message ?: "Maximum could not be calculated"
+            }
+        }
     }
 
     private fun updateFee() {
