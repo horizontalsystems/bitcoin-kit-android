@@ -53,8 +53,9 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     fun init() {
         //TODO create unique seed phrase,perhaps using shared preferences?
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
+        val passphrase = ""
 
-        bitcoinKit = BitcoinKit(App.instance, words, walletId, networkType, syncMode = syncMode, bip = bip)
+        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, bip = bip)
 
         bitcoinKit.listener = this
 
