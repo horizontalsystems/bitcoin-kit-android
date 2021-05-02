@@ -1,7 +1,11 @@
 package io.horizontalsystems.bitcoinkit
 
 import io.horizontalsystems.bitcoincore.network.Network
-
+/**
+ * @author Hello
+ *
+ *  Extends from the abstract Network class and overrides all variables. Configures connection to the RegTest.
+ */
 class RegTest : Network() {
     override var port: Int = 18444
 
