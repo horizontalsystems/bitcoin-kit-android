@@ -20,7 +20,20 @@ import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.horizontalsystems.hodler.HodlerPlugin
 
+/**
+ *
+ *
+ * The kit that connects to the Bitcoin Network and creates the Bitcoin wallet.
+ * Extends from the AbstractKit class.
+ * @property NetworkType The enum class type that determines which bitcoin network the kit is connects to. (MainNet, TestNet, or RegTest)
+ * @property Listener Interface of BitcoinCore.Listener
+ * @property bitcoinCore Reference to the BitcoinCore class.
+ * @property network  The type of network that this kit is connected to. It is determined by the NetWorkType enum class.
+ * @property listener Changeable variable of BitcoinCore.Listener.
+ *
+ */
 class BitcoinKit : AbstractKit {
+
     enum class NetworkType {
         MainNet,
         TestNet,
@@ -37,7 +50,17 @@ class BitcoinKit : AbstractKit {
             field = value
             bitcoinCore.listener = value
         }
-
+    /**
+     * @constructor Creates and initializes the BitcoinKit
+     * @param context The Android context
+     * @param words A list of words of type String
+     * @param walletId an arbitrary ID of type String.
+     * @param networkType The network type. The default is MainNet
+     * @param peerSize The # of peer-nodes required. The default is 10 peers.
+     * @param syncMode How the kit syncs with the blockchain. Default is SyncMode.Api().
+     * @param confirmationsThreshold How many confirmations required to be considered confirmed. Default is 6 confirmations.
+     * @param bip which BIP algorithm to use for wallet generation. Default is BIP44.
+     */
     constructor(
             context: Context,
             words: List<String>,
@@ -48,8 +71,23 @@ class BitcoinKit : AbstractKit {
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6,
             bip: Bip = Bip.BIP44
+<<<<<<< HEAD
     ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
+=======
+    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+    /**
+     * @constructor Creates and initializes the BitcoinKit
+     * @param context The Android context
+     * @param seed A byte array that contains the seedphrase.
+     * @param walletId an arbitrary ID of type String.
+     * @param networkType The network type. The default is MainNet.
+     * @param peerSize The # of peer-nodes required. The default is 10 peers.
+     * @param syncMode How the kit syncs with the blockchain. The default is SyncMode.Api().
+     * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 6 confirmations.
+     * @param bip which BIP algorithm to use for wallet generation. The default is BIP44.
+     */
+>>>>>>> origin/master
     constructor(
             context: Context,
             seed: ByteArray,
@@ -143,8 +181,23 @@ class BitcoinKit : AbstractKit {
         const val targetTimespan: Long = 14 * 24 * 60 * 60        // 2 weeks per difficulty cycle, on average.
         const val heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
+        /**
+         * Gets the name of the BitcoinKit database
+         * @param networkType The network type (MAIN, TEST, or REG)
+         * @param walletId The walletID
+         * @param syncMode The SyncMode
+         * @param bip The BIP
+         * @return database name
+         */
+
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip): String = "Bitcoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${bip.name}"
 
+        /**
+         * Clears the database
+         * @param context The context of the BitcoinKit.
+         * @param networkType The networkType of the BitcoinKit.
+         * @param walletId The string wallet ID of the BitcoinKit.
+         */
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
             for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
                 for (bip in Bip.values())
