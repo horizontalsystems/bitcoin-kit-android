@@ -27,7 +27,12 @@ interface TransactionInputDao {
     fun getTransactionInputs(hashes: List<ByteArray>): List<TransactionInput>
 
     @Query("""
-        SELECT inputs.*, outputs.publicKeyPath, outputs.value
+        SELECT 
+            inputs.*, 
+            outputs.publicKeyPath, 
+            outputs.value, 
+            outputs.`index`, 
+            outputs.transactionHash as outputTransactionHash
          FROM TransactionInput as inputs
          LEFT JOIN TransactionOutput AS outputs ON outputs.transactionHash = inputs.previousOutputTxHash AND outputs.`index` = inputs.previousOutputIndex
          WHERE inputs.transactionHash IN(:txHashes)
