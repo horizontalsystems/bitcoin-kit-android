@@ -40,6 +40,9 @@ interface TransactionOutputDao {
     @Query("select * from TransactionOutput where transactionHash = :hash order by rowId")
     fun getByHash(hash: ByteArray): List<TransactionOutput>
 
+    @Query("UPDATE `transactionOutput` SET failedToSpend = 1 WHERE transactionHash = :transactionHash AND `index` = :index")
+    fun markFailedToSpend(transactionHash: ByteArray, index: Int)
+
     @Query("select * from TransactionOutput where publicKeyPath = :path")
     fun getListByPath(path: String): List<TransactionOutput>
 

@@ -334,6 +334,13 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
             invalidTransactions.forEach { invalidTransaction ->
                 store.invalidTransaction.insert(invalidTransaction)
 
+                val inputs = store.input.getInputsWithPrevouts(listOf(invalidTransaction.hash))
+                inputs.forEach { input ->
+                    input.previousOutput?.let {
+                        store.output.markFailedToSpend(it.outputTransactionHash, it.index)
+                    }
+                }
+
                 store.input.deleteByTxHash(invalidTransaction.hash)
 
                 store.output.deleteByTxHash(invalidTransaction.hash)
