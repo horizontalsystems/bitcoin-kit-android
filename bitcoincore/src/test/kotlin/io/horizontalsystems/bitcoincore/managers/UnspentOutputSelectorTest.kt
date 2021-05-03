@@ -102,5 +102,43 @@ object UnspentOutputSelectorTest : Spek({
                 Assertions.assertArrayEquals(arrayOf(utxo2, utxo3, utxo4, utxo5), selector.select(1100, feeRate, senderPay = true, dust = 1, pluginDataOutputSize = 0).outputs.toTypedArray())
             }
         }
+
+        context("when there are outputs with the failed status") {
+            val txSizeCalculator = Mockito.mock(TransactionSizeCalculator::class.java)
+            val unspentOutputProvider = Mockito.mock(UnspentOutputProvider::class.java)
+            val selector = UnspentOutputSelector(txSizeCalculator, unspentOutputProvider)
+
+            val publicKey = Mockito.mock(PublicKey::class.java)
+            val transaction = Mockito.mock(Transaction::class.java)
+            val block = Mockito.mock(Block::class.java)
+
+            val outputs = listOf(
+                    TransactionOutput().apply { value = 1000; failedToSpend = false },
+                    TransactionOutput().apply { value = 1000; failedToSpend = false },
+                    TransactionOutput().apply { value = 2000; failedToSpend = true },
+                    TransactionOutput().apply { value = 2000; failedToSpend = false })
+
+            val unspentOutputFailed = UnspentOutput(outputs[2], publicKey, transaction, block)
+            val unspentOutputs = listOf(
+                    UnspentOutput(outputs[0], publicKey, transaction, block),
+                    UnspentOutput(outputs[1], publicKey, transaction, block),
+                    unspentOutputFailed,
+                    UnspentOutput(outputs[3], publicKey, transaction, block)
+            )
+
+            beforeEach {
+                whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
+                whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
+                whenever(txSizeCalculator.outputSize(any())).thenReturn(2)
+                whenever(txSizeCalculator.transactionSize(any(), any(), any())).thenReturn(100)
+            }
+
+
+            it("first selects the failed ones") {
+                val unspentOutputInfo = selector.select(100, 1, senderPay = true, dust = 1, pluginDataOutputSize = 0)
+
+                Assert.assertEquals(listOf(unspentOutputFailed), unspentOutputInfo.outputs)
+            }
+        }
     }
 })
