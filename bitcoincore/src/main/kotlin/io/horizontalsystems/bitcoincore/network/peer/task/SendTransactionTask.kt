@@ -7,11 +7,12 @@ import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.InvMessage
 import io.horizontalsystems.bitcoincore.network.messages.TransactionMessage
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import java.util.concurrent.TimeUnit
 
 class SendTransactionTask(val transaction: FullTransaction) : PeerTask() {
 
     init {
-        allowedIdleTime = 30
+        allowedIdleTime = TimeUnit.SECONDS.toMillis(30)
     }
 
     override val state: String
