@@ -52,8 +52,9 @@ class BitcoinKit : AbstractKit {
         }
     /**
      * @constructor Creates and initializes the BitcoinKit
-     * @param context The Android context
-     * @param words A list of words of type String
+     * @param context The Android context.
+     * @param words A list of words of type String.
+     * @param passphrase The passphrase to the wallet.
      * @param walletId an arbitrary ID of type String.
      * @param networkType The network type. The default is MainNet
      * @param peerSize The # of peer-nodes required. The default is 10 peers.
@@ -71,11 +72,11 @@ class BitcoinKit : AbstractKit {
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6,
             bip: Bip = Bip.BIP44
-<<<<<<< HEAD
+
     ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
-=======
-    ) : this(context, Mnemonic().toSeed(words), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+
+
     /**
      * @constructor Creates and initializes the BitcoinKit
      * @param context The Android context
@@ -87,7 +88,7 @@ class BitcoinKit : AbstractKit {
      * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 6 confirmations.
      * @param bip which BIP algorithm to use for wallet generation. The default is BIP44.
      */
->>>>>>> origin/master
+
     constructor(
             context: Context,
             seed: ByteArray,
