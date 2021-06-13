@@ -62,6 +62,9 @@ public class BitcoinInput implements AutoCloseable {
 
     /**
      * Read and fill bytes into byte array.
+     *
+     * @param b Arbitrary byte array
+     * @throws IOException
      */
     public void readFully(byte b[]) throws IOException {
         int off = 0;
@@ -76,6 +79,11 @@ public class BitcoinInput implements AutoCloseable {
         }
     }
 
+    /**
+     * Read and castes the read value to byte
+     * @return The converted int
+     * @throws IOException
+     */
     public byte readByte() throws IOException {
         int ch = in.read();
         if (ch < 0) {
@@ -83,7 +91,11 @@ public class BitcoinInput implements AutoCloseable {
         }
         return (byte) (ch);
     }
-
+    /**
+     * Read and return
+     * @return The read value
+     * @throws IOException
+     */
     public int readUnsignedByte() throws IOException {
         int ch = in.read();
         if (ch < 0) {
@@ -91,7 +103,12 @@ public class BitcoinInput implements AutoCloseable {
         }
         return ch;
     }
-
+    /**
+     * Read and create a short
+     *
+     * @return Converted Byte Array
+     * @throws IOException
+     */
     public short readShort() throws IOException {
         int ch1 = in.read();
         int ch2 = in.read();
@@ -100,7 +117,12 @@ public class BitcoinInput implements AutoCloseable {
         }
         return (short) ((ch2 << 8) + (ch1 << 0));
     }
-
+    /**
+     * Read and create an unsigned short
+     *
+     * @return Converted Byte Array
+     * @throws IOException
+     */
     public int readUnsignedShort() throws IOException {
         int ch1 = in.read();
         int ch2 = in.read();
@@ -118,7 +140,12 @@ public class BitcoinInput implements AutoCloseable {
         }
         return (char) ((ch2 << 8) + (ch1 << 0));
     }
-
+    /**
+     * Read and create an int
+     *
+     * @return Converted Byte Array
+     * @throws IOException
+     */
     public int readInt() throws IOException {
         int ch1 = in.read();
         int ch2 = in.read();
@@ -129,7 +156,12 @@ public class BitcoinInput implements AutoCloseable {
         }
         return ((ch4 << 24) + (ch3 << 16) + (ch2 << 8) + (ch1 << 0));
     }
-
+    /**
+     * Read and create an unsigned int
+     *
+     * @return Converted Byte Array
+     * @throws IOException
+     */
     public long readUnsignedInt() throws IOException {
         int ch1 = in.read();
         int ch2 = in.read();
@@ -141,7 +173,12 @@ public class BitcoinInput implements AutoCloseable {
         long ln4 = ch4 & 0x00000000ffffffffL;
         return (ln4 << 24) + (ch3 << 16) + (ch2 << 8) + (ch1 << 0);
     }
-
+    /**
+     * Read and create a long
+     *
+     * @return Converted Byte Array
+     * @throws IOException
+     */
     public long readLong() throws IOException {
         readFully(bufferOf8bytes);
         return (((long) bufferOf8bytes[7] << 56) + ((long) (bufferOf8bytes[6] & 255) << 48)
@@ -150,6 +187,12 @@ public class BitcoinInput implements AutoCloseable {
                 + ((bufferOf8bytes[1] & 255) << 8) + ((bufferOf8bytes[0] & 255) << 0));
     }
 
+    /**
+     * Read and create a String
+     *
+     * @return Converted Byte Array with Charset UTF-8 format
+     * @throws IOException
+     */
     public String readString() throws IOException {
         long len = readVarInt();
         if (len == 0) {
@@ -160,6 +203,13 @@ public class BitcoinInput implements AutoCloseable {
         return new String(buffer, StandardCharsets.UTF_8);
     }
 
+    /**
+     * Read and put values into a byte array
+     *
+     * @param len The desired length of the byte array
+     * @return A byte array with a length of len
+     * @throws IOException
+     */
     public byte[] readBytes(int len) throws IOException {
         if (len == 0) {
             return EMPTY_BYTES;
