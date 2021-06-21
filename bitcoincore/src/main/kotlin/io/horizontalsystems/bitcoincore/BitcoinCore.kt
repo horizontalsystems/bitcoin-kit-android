@@ -199,7 +199,7 @@ class BitcoinCoreBuilder {
         val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
         peerHostManager.listener = peerGroup
 
-        val transactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, publicKeyManager)
+        val transactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)
         val transactionSendTimer = TransactionSendTimer(60)
         val transactionSender = TransactionSender(transactionSyncer, peerManager, initialBlockDownload, storage, transactionSendTimer).apply {
             transactionSendTimer.listener = this

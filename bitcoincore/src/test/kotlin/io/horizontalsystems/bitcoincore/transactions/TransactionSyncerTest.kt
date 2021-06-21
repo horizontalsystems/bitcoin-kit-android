@@ -17,6 +17,7 @@ object TransactionSyncerTest : Spek({
     val storage = mock(IStorage::class.java)
     val transactionProcessor = mock(PendingTransactionProcessor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
+    val invalidator = mock(TransactionInvalidator::class.java)
 
     val fullTransaction = mock(FullTransaction::class.java)
     val transaction = mock(Transaction::class.java)
@@ -25,7 +26,7 @@ object TransactionSyncerTest : Spek({
         whenever(transaction.hash).thenReturn(byteArrayOf(1, 2, 3))
         whenever(fullTransaction.header).thenReturn(transaction)
 
-        syncer = TransactionSyncer(storage, transactionProcessor, publicKeyManager)
+        syncer = TransactionSyncer(storage, transactionProcessor, invalidator, publicKeyManager)
     }
 
     afterEachTest {

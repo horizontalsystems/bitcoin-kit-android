@@ -17,8 +17,12 @@ class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, p
             throw SendValueErrors.EmptyOutputs
         }
 
-        //  select outputs with least value until we get needed value
-        val sortedOutputs = unspentOutputs.sortedBy { it.output.value }
+        val sortedOutputs = unspentOutputs.sortedWith(compareByDescending<UnspentOutput> {
+            it.output.failedToSpend
+        }.thenBy {
+            it.output.value
+        })
+
         val selectedOutputs = mutableListOf<UnspentOutput>()
         var totalValue = 0L
         var recipientValue = 0L

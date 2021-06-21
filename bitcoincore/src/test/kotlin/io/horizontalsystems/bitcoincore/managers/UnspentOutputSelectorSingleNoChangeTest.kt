@@ -63,6 +63,25 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
 
         }
 
+        context("when there is at least one output failed to spend before") {
+            val feeRate = 1
+            val unspentOutput = mock<UnspentOutput>()
+            val transactionOutput = mock<TransactionOutput>() {
+                on { failedToSpend } doReturn true
+            }
+
+            beforeEach {
+                whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf(unspentOutput))
+                whenever(unspentOutput.output).thenReturn(transactionOutput)
+            }
+
+            it("throws error HasOutputFailedToSpend") {
+                assertThrows<SendValueErrors.HasOutputFailedToSpend> {
+                    unspentOutputSelector.select(200, feeRate, ScriptType.P2PKH, ScriptType.P2PKH, true, 100, 0)
+                }
+            }
+        }
+
         context("success") {
             val sendingAmount = 200L
             val feeRate = 1

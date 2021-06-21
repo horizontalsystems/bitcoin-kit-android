@@ -16,6 +16,10 @@ class UnspentOutputSelectorSingleNoChange(private val calculator: TransactionSiz
             throw SendValueErrors.EmptyOutputs
         }
 
+        if (unspentOutputs.any { it.output.failedToSpend }) {
+            throw SendValueErrors.HasOutputFailedToSpend
+        }
+
         //  try to find 1 unspent output with exactly matching value
         for (unspentOutput in unspentOutputs) {
             val output = unspentOutput.output

@@ -123,6 +123,7 @@ class TransactionSender(
         sentTransaction.sendSuccess = true
 
         if (sentTransaction.retriesCount >= maxRetriesCount) {
+            transactionSyncer.handleInvalid(transaction)
             storage.deleteSentTransaction(sentTransaction)
         } else {
             storage.updateSentTransaction(sentTransaction)

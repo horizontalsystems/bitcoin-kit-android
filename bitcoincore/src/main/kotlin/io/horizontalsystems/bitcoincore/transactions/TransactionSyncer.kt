@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 class TransactionSyncer(
         private val storage: IStorage,
         private val transactionProcessor: PendingTransactionProcessor,
+        private val invalidator: TransactionInvalidator,
         private val publicKeyManager: PublicKeyManager) {
 
     fun getNewTransactions(): List<FullTransaction> {
@@ -34,4 +35,7 @@ class TransactionSyncer(
         return !storage.isRelayedTransactionExists(hash)
     }
 
+    fun handleInvalid(fullTransaction: FullTransaction) {
+        invalidator.invalidate(fullTransaction.header)
+    }
 }

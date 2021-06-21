@@ -47,6 +47,7 @@ class TransactionOutput() {
     var scriptType: ScriptType = ScriptType.UNKNOWN
     var keyHash: ByteArray? = null
     var address: String? = null
+    var failedToSpend = false
 
     var pluginId: Byte? = null
     var pluginData: String? = null
