@@ -117,7 +117,7 @@ public class Utils {
      *
      * @param       data            Byte array to check
      * @param       index           Bit position
-     * @return      TRUE if the bit is set
+     * @return                      TRUE if the bit is set
      */
     public static boolean checkBitLE(byte[] data, int index) {
         return (data[index>>>3] & bitMask[7&index]) != 0;
@@ -161,7 +161,7 @@ public class Utils {
      *
      * @param       bytes           The byte array
      * @param       offset          Starting offset within the array
-     * @return The long value
+     * @return                      The long value
      */
     public static long readUint32BE(byte[] bytes, int offset) {
         return (((long) bytes[offset++] & 0x00FFL) << 24) |
@@ -170,7 +170,10 @@ public class Utils {
                 ((long) bytes[offset] & 0x00FFL);
     }
 
-    /** Parse 2 bytes from the stream as unsigned 16-bit integer in little endian format. */
+    /** Parse 2 bytes from the stream as unsigned 16-bit integer in little endian format.
+     * @param       is       InputStream
+     * @return               The int value
+     */
     public static int readUint16FromStream(InputStream is) {
         try {
             return (is.read() & 0xff) |
@@ -180,7 +183,10 @@ public class Utils {
         }
     }
 
-    /** Parse 4 bytes from the stream as unsigned 32-bit integer in little endian format. */
+    /** Parse 4 bytes from the stream as unsigned 32-bit integer in little endian format.
+     * @param       is InputStream
+     * @return         The long value
+     */
     public static long readUint32FromStream(InputStream is) {
         try {
             return (is.read() & 0xffl) |
@@ -191,15 +197,34 @@ public class Utils {
             throw new RuntimeException(x);
         }
     }
-
+    /**
+     * Convert int to byte array
+     *
+     * @param       value Arbitrary int value
+     * @return            Converted int
+     */
     public static byte[] intToByteArray(int value) {
         return new byte[]{(byte) (value >> 24), (byte) (value >> 16), (byte) (value >> 8), (byte) value};
     }
-
+    /**
+     * Convert int to byte array
+     *
+     * @param       data        Arbitrary byte array
+     * @return                  Converted byte array
+     */
     public static int byteArrayToUInt16LE(byte[] data) {
         return (data[0] & 0xff) | ((data[1] & 0xff) << 8);
     }
 
+    /**
+     * Parse an int value from bytes
+     *
+     * @param       b1      Arbitrary byte
+     * @param       b2      Arbitrary byte
+     * @param       b3      Arbitrary byte
+     * @param       b4      Arbitrary byte
+     * @return              Parsed int value
+     */
     public static int intFromBytes(byte b1, byte b2, byte b3, byte b4) {
         return b1 << 24 | (b2 & 255) << 16 | (b3 & 255) << 8 | b4 & 255;
     }

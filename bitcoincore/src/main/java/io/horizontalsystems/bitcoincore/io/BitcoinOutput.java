@@ -8,15 +8,24 @@ import java.nio.charset.StandardCharsets;
  * Output "stream" for bitcoin protocol.
  *
  * @author Michael Liao
+ *
  */
 public final class BitcoinOutput {
 
     private UnsafeByteArrayOutputStream out;
 
+    /**
+     * Creates an instance of UnsafeByteArrayOutputStream of size 1024.
+     */
     public BitcoinOutput() {
         this.out = new UnsafeByteArrayOutputStream(1024);
     }
 
+    /**
+     * Writes a byte array to the OutputStream.
+     * @param bytes Byte array that's to be written.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput write(byte[] bytes) {
         try {
             out.write(bytes);
@@ -25,18 +34,30 @@ public final class BitcoinOutput {
         }
         return this;
     }
-
+    /**
+     * Writes a byte to the OutputStream.
+     * @param v The byte to be written.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeByte(int v) {
         out.write(v);
         return this;
     }
-
+    /**
+     * Writes a short to the OutputStream.
+     * @param v The short to be written.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeShort(short v) {
         out.write(0xff & v);
         out.write(0xff & (v >> 8));
         return this;
     }
-
+    /**
+     * Writes an int to the OutputStream.
+     * @param v Int value.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeInt(int v) {
         out.write(0xff & v);
         out.write(0xff & (v >> 8));
@@ -44,7 +65,11 @@ public final class BitcoinOutput {
         out.write(0xff & (v >> 24));
         return this;
     }
-
+    /**
+     * Writes a 32-bit int to the OutputStream.
+     * @param v Long value to be converted.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeInt32(long v) {
         out.write((int)(0xff & v));
         out.write((int)(0xff & (v >> 8)));
@@ -53,6 +78,11 @@ public final class BitcoinOutput {
         return this;
     }
 
+    /**
+     * Writes a Long to the OutputStream.
+     * @param v Long value to be converted.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeLong(long v) {
         out.write((int) (0xff & v));
         out.write((int) (0xff & (v >> 8)));
@@ -65,6 +95,11 @@ public final class BitcoinOutput {
         return this;
     }
 
+    /**
+     * Writes a var int to the OutputStream.
+     * @param n Long value to be converted.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeVarInt(long n) {
         if (n < 0xfd) {
             writeByte((int) n);
@@ -82,18 +117,33 @@ public final class BitcoinOutput {
         return this;
     }
 
+    /**
+     *  Writes an unsigned int to the OutputStream.
+     * @param ln Long value to be converted.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeUnsignedInt(long ln) {
         int n = (int) (0xffffffff & ln);
         writeInt(n);
         return this;
     }
 
+    /**
+     * Writes an unsigned short to the OutputStream.
+     * @param i integer value to be casted as an unsigned short.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeUnsignedShort(int i) {
         short n = (short) (0xffff & i);
         writeShort(n);
         return this;
     }
 
+    /**
+     * Writes a String to the OutputStream.
+     * @param str String value to be written.
+     * @return The newly written OutputStream.
+     */
     public BitcoinOutput writeString(String str) {
         byte[] bs = str.getBytes(StandardCharsets.UTF_8);
         writeVarInt(bs.length);

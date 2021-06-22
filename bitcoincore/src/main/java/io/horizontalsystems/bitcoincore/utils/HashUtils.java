@@ -11,6 +11,7 @@ public class HashUtils {
 
     /**
      * Get SHA-256 hash.
+     * @param input     Byte array representing a transaction
      */
     public static byte[] sha256(byte[] input) {
         Digest d = new SHA256Digest();
@@ -22,6 +23,7 @@ public class HashUtils {
 
     /**
      * Get double SHA-256 hash.
+     * @param input     Byte array representing a transaction
      */
     public static byte[] doubleSha256(byte[] input) {
         byte[] round1 = sha256(input);
@@ -39,19 +41,26 @@ public class HashUtils {
      * @param p     Parallelization parameter. Must be a positive integer less than or equal to
      *              <code>Integer.MAX_VALUE / (128 * r * 8)</code>.
      * @param dkLen the length of the key to generate.
-     * @return the generated key.
+     * @return      the generated key.
      */
     public static byte[] scrypt(byte[] P, byte[] S, int N, int r, int p, int dkLen) {
         return SCrypt.generate(P, S, N, r, p, dkLen);
     }
 
     /**
-     * Convert byte array to hex string.
+     * Convert byte array to hex string without separating characters.
+     *
+     * @param b   Arbitrary byte array
      */
     public static String toHexString(byte[] b) {
         return toHexString(b, false);
     }
-
+    /**
+     * Convert byte array to hex string.
+     *
+     * @param b     Arbitrary byte array
+     * @param sep   Determines if data is separated via a space ' '
+     */
     public static String toHexString(byte[] b, boolean sep) {
         StringBuilder sb = new StringBuilder(b.length << 2);
         for (byte x : b) {
@@ -67,7 +76,9 @@ public class HashUtils {
     }
 
     /**
-     * Convert byte array (little endian) to hex string.
+     * Convert byte array (little endian format) to hex string.
+     *
+     * @param b     A byte array in little endian format
      */
     public static String toHexStringAsLE(byte[] b) {
         StringBuilder sb = new StringBuilder(b.length << 2);
@@ -80,12 +91,20 @@ public class HashUtils {
         }
         return sb.toString();
     }
-
+    /**
+     * Convert string hash to byte array in little endian format
+     *
+     * @param hash      String hash
+     */
     public static byte[] toBytesAsLE(String hash) {
         byte[] r = toBytes(hash);
         return Arrays.reverse(r);
     }
-
+    /**
+     * Convert string hash to byte array.
+     *
+     * @param hash      String hash
+     */
     public static byte[] toBytes(String hash) {
         if (hash.length() % 2 == 1) {
             throw new IllegalArgumentException("Invalid hash length.");
@@ -101,7 +120,11 @@ public class HashUtils {
         }
         return data;
     }
-
+    /**
+     * Convert char to int.
+     *
+     * @param ch    Arbitrary char value
+     */
     static int char2int(char ch) {
         if (ch >= '0' && ch <= '9') {
             return ch - '0';
