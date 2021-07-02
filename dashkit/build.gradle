@@ -60,8 +60,7 @@ dependencies {
     kapt 'androidx.room:room-compiler:2.2.5'
 
     api project(':bitcoincore')
-    api 'org.dashj:dashj-bls:0.15.3'
-
+    implementation files('libs/dashj-bls-0.15.3.jar')
     implementation 'de.sfuhrm:saphir-hash-jca:3.0.6'
 
     // Test helpers
