@@ -6,10 +6,10 @@ import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoincore.utils.NetworkUtils
-import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
 import java.util.concurrent.ExecutorService
 import java.util.logging.Logger
 
@@ -68,31 +68,16 @@ class PeerConnection(
                     listener.onMessage(parsedMsg)
                 }
             }
-
-            listener.disconnected(disconnectError)
-        } catch (e: SocketTimeoutException) {
-            logger.warning("Socket timeout exception: ${e.message}")
-            listener.disconnected(e)
-        } catch (e: ConnectException) {
-            logger.warning("Connect exception: ${e.message}")
-            listener.disconnected(e)
-        } catch (e: IOException) {
-            logger.warning("IOException: ${e.message}")
-            listener.disconnected(e)
-        } catch (e: InterruptedException) {
-            logger.warning("Peer connection thread interrupted: ${e.message}")
-            listener.disconnected()
         } catch (e: Exception) {
-            logger.warning("Peer connection exception: ${e.message}")
-            listener.disconnected(e)
+            close(e)
         } finally {
-            isRunning = false
-
             outputStream?.close()
             outputStream = null
 
             inputStream?.close()
             inputStream = null
+
+            listener.disconnected(disconnectError)
         }
     }
 
