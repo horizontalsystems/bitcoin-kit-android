@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageSerializer
 import io.horizontalsystems.bitcoincore.utils.NetworkUtils
 import java.io.IOException
+import java.io.InputStream
 import java.io.OutputStream
 import java.net.*
 import java.util.concurrent.ExecutorService
@@ -32,6 +33,7 @@ class PeerConnection(
 
     private val logger = Logger.getLogger("Peer[$host]")
     private var outputStream: OutputStream? = null
+    private var inputStream: InputStream? = null
     private var disconnectError: Exception? = null
 
     @Volatile
@@ -45,12 +47,14 @@ class PeerConnection(
             socket.soTimeout = 10000
 
             outputStream = socket.getOutputStream()
-            val inStream = socket.getInputStream()
-            val inputStream = BitcoinInput(inStream)
+            val inputStream = socket.getInputStream()
+            val bitcoinInput = BitcoinInput(inputStream)
 
             logger.info("Socket $host connected.")
 
             listener.socketConnected(socket.inetAddress)
+
+            this.inputStream = inputStream
             // loop:
             while (isRunning) {
                 listener.onTimePeriodPassed()
@@ -58,8 +62,8 @@ class PeerConnection(
                 Thread.sleep(1000)
 
                 // try receive message:
-                while (isRunning && inStream.available() > 0) {
-                    val parsedMsg = networkMessageParser.parseMessage(inputStream)
+                while (isRunning && inputStream.available() > 0) {
+                    val parsedMsg = networkMessageParser.parseMessage(bitcoinInput)
                     logger.info("<= $parsedMsg")
                     listener.onMessage(parsedMsg)
                 }
@@ -83,23 +87,31 @@ class PeerConnection(
             listener.disconnected(e)
         } finally {
             isRunning = false
+
+            outputStream?.close()
+            outputStream = null
+
+            inputStream?.close()
+            inputStream = null
         }
     }
 
+    @Synchronized
     fun close(error: Exception?) {
         disconnectError = error
-        outputStream = null
         isRunning = false
     }
 
     @Synchronized
     fun sendMessage(message: IMessage) {
         sendingExecutor.execute {
-            try {
-                logger.info("=> $message")
-                outputStream?.write(networkMessageSerializer.serialize(message))
-            } catch (e: Exception) {
-                close(e)
+            if (isRunning) {
+                try {
+                    logger.info("=> $message")
+                    outputStream?.write(networkMessageSerializer.serialize(message))
+                } catch (e: Exception) {
+                    close(e)
+                }
             }
         }
     }
