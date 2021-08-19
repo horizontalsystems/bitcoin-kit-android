@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.core.IPeerAddressManagerListener
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.util.concurrent.Executors
 import java.util.logging.Logger
@@ -97,12 +98,21 @@ class PeerGroup(
 
     override fun onReceiveMessage(peer: Peer, message: IMessage) {
         if (message is AddrMessage) {
-            val addrs = message.addresses
-            val peerIps = mutableListOf<String>()
-            for (address in addrs) {
-                val addr = InetAddress.getByAddress(address.address)
-                peerIps.add(addr.hostAddress)
-            }
+            val peerIps = message.addresses
+                // exclude peers those don't support bloom filter
+                .filter {
+                    it.services and network.serviceBloomFilter == network.serviceBloomFilter
+                }
+                .map {
+                    InetAddress.getByAddress(it.address)
+                }
+                // exclude ipv6 addresses
+                .filter {
+                    it !is Inet6Address
+                }
+                .map {
+                    it.hostAddress
+                }
 
             hostManager.addIps(peerIps)
         } else if (message is InvMessage) {
