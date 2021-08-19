@@ -21,12 +21,13 @@ class MainNet : Network() {
     override val dustRelayTxFee = 3000 // https://github.com/bitcoin/bitcoin/blob/c536dfbcb00fb15963bf5d507b7017c241718bf6/src/policy/policy.h#L50
 
     override var dnsSeeds = listOf(
-            "seed.bitcoin.sipa.be",             // Pieter Wuille
-            "dnsseed.bluematt.me",              // Matt Corallo
-            "dnsseed.bitcoin.dashjr.org",       // Luke Dashjr
-            "seed.bitcoinstats.com",            // Chris Decker
-            "seed.bitcoin.jonasschnelli.ch",    // Jonas Schnelli
-            "seed.btc.petertodd.org",           // Peter Todd
-            "seed.bitcoin.sprovoost.nl"         // Sjors Provoost
+        "seed.bitcoin.sipa.be",             // Pieter Wuille
+        "dnsseed.bluematt.me",              // Matt Corallo
+        "seed.bitcoinstats.com",            // Chris Decker
+        "seed.btc.petertodd.org",           // Peter Todd
+        "seed.bitcoin.sprovoost.nl",        // Sjors Provoost
+        "seed.bitnodes.io",                 // Addy Yeow
+        "dnsseed.emzy.de",                  // Stephan Oeste
+        "seed.bitcoin.wiz.biz"              // Jason Maurice
     )
 }
