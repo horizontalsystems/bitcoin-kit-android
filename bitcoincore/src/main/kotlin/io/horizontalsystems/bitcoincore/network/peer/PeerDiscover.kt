@@ -3,6 +3,7 @@ package io.horizontalsystems.bitcoincore.network.peer
 import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.UnknownHostException
 import java.util.logging.Logger
@@ -19,9 +20,11 @@ class PeerDiscover(private val peerAddressManager: IPeerAddressManager) {
             val ips = mutableListOf<String>()
             dnsList.forEach { host ->
                 try {
-                    InetAddress.getAllByName(host).forEach {
-                        ips.add(it.hostAddress)
-                    }
+                    InetAddress
+                        .getAllByName(host)
+                        .filter { it !is Inet6Address }.forEach { inetAddress ->
+                            ips.add(inetAddress.hostAddress)
+                        }
                 } catch (e: UnknownHostException) {
                     logger.warning("Cannot look up host: $host")
                 }
