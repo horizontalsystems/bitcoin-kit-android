@@ -84,12 +84,21 @@ class PeerGroup(
     override fun onDisconnect(peer: Peer, e: Exception?) {
         peerManager.remove(peer)
 
-        if (e == null) {
-            logger.info("Peer ${peer.host} disconnected.")
-            hostManager.markSuccess(peer.host)
-        } else {
-            logger.warning("Peer ${peer.host} disconnected with error ${e.javaClass.simpleName}, ${e.message}.")
-            hostManager.markFailed(peer.host)
+        when (e) {
+            null -> {
+                logger.info("Peer ${peer.host} disconnected.")
+                hostManager.markSuccess(peer.host)
+            }
+            is PeerTimer.Error.Timeout -> {
+                logger.warning("Peer ${peer.host} disconnected. Warning: ${e.javaClass.simpleName}, ${e.message}.")
+                // since the peer can be normally interacted after awhile we should not remove it from list
+                // that is why we mark it as disconnected with no error
+                hostManager.markSuccess(peer.host)
+            }
+            else -> {
+                logger.warning("Peer ${peer.host} disconnected. Error: ${e.javaClass.simpleName}, ${e.message}.")
+                hostManager.markFailed(peer.host)
+            }
         }
 
         peerGroupListeners.forEach { it.onPeerDisconnect(peer, e) }
