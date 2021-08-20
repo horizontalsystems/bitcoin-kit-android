@@ -12,15 +12,16 @@ import java.util.concurrent.Executors
 import java.util.logging.Logger
 
 class PeerGroup(
-        private val hostManager: IPeerAddressManager,
-        private val network: Network,
-        private val peerManager: PeerManager,
-        peerSize: Int,
-        private val networkMessageParser: NetworkMessageParser,
-        private val networkMessageSerializer: NetworkMessageSerializer,
-        private val connectionManager: IConnectionManager,
-        private val localDownloadedBestBlockHeight: Int)
-    : Peer.Listener, IPeerAddressManagerListener {
+    private val hostManager: IPeerAddressManager,
+    private val network: Network,
+    private val peerManager: PeerManager,
+    peerSize: Int,
+    private val networkMessageParser: NetworkMessageParser,
+    private val networkMessageSerializer: NetworkMessageSerializer,
+    private val connectionManager: IConnectionManager,
+    private val localDownloadedBestBlockHeight: Int,
+    private val handleAddrMessage: Boolean
+) : Peer.Listener, IPeerAddressManagerListener {
 
     interface Listener {
         fun onStart() = Unit
@@ -106,7 +107,7 @@ class PeerGroup(
     }
 
     override fun onReceiveMessage(peer: Peer, message: IMessage) {
-        if (message is AddrMessage) {
+        if (message is AddrMessage && handleAddrMessage) {
             val peerIps = message.addresses
                 // exclude peers those don't support bloom filter
                 .filter {
