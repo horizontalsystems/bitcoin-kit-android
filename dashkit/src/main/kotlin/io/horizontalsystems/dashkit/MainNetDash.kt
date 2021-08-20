@@ -21,8 +21,8 @@ class MainNetDash : Network() {
     override val dustRelayTxFee = 1000 // https://github.com/dashpay/dash/blob/master/src/policy/policy.h#L36
 
     override var dnsSeeds = listOf(
-            "dnsseed.dash.org",
-            "dnsseed.dashdot.io",
+            "x5.dnsseed.dash.org",
+            "x5.dnsseed.dashdot.io",
             "dnsseed.masternode.io"
     )
 }
