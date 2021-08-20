@@ -48,6 +48,7 @@ class BitcoinCoreBuilder {
     private var syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api()
     private var peerSize = 10
     private val plugins = mutableListOf<IPlugin>()
+    private var handleAddrMessage = true
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -120,6 +121,11 @@ class BitcoinCoreBuilder {
 
     fun setBlockValidator(blockValidator: IBlockValidator): BitcoinCoreBuilder {
         this.blockValidator = blockValidator
+        return this
+    }
+
+    fun setHandleAddrMessage(handle: Boolean): BitcoinCoreBuilder {
+        handleAddrMessage = handle
         return this
     }
 
@@ -196,7 +202,7 @@ class BitcoinCoreBuilder {
 
         val blockSyncer = BlockSyncer(storage, blockchain, blockTransactionProcessor, publicKeyManager, checkpoint)
         val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, MerkleBlockExtractor(network.maxBlockSize))
-        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight)
+        val peerGroup = PeerGroup(peerHostManager, network, peerManager, peerSize, networkMessageParser, networkMessageSerializer, connectionManager, blockSyncer.localDownloadedBestBlockHeight, handleAddrMessage)
         peerHostManager.listener = peerGroup
 
         val transactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)

@@ -151,6 +151,7 @@ class BitcoinKit : AbstractKit {
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
                 .setBlockValidator(blockValidatorSet)
+                .setHandleAddrMessage(false)
                 .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
                 .build()
 
