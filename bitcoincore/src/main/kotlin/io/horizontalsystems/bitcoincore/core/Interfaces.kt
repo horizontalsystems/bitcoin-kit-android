@@ -18,10 +18,9 @@ interface IStorage {
     //  PeerAddress
 
     fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress?
-    fun increasePeerAddressScore(ip: String)
     fun deletePeerAddress(ip: String)
     fun setPeerAddresses(list: List<PeerAddress>)
-    fun setPeerConnectionTime(ip: String, time: Long)
+    fun markConnected(ip: String, time: Long)
 
     //  BlockHash
 

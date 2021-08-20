@@ -74,14 +74,6 @@ class PeerHostManagerTest {
     }
 
     @Test
-    fun markSuccess() {
-        val peerIp = ipsPeers[0]
-        peerAddressManager.markSuccess(peerIp)
-
-        verify(storage).increasePeerAddressScore(peerIp)
-    }
-
-    @Test
     fun markFailed() {
         val peerIp = ipsPeers[0]
         peerAddressManager.markFailed(peerIp)
