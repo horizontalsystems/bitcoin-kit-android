@@ -17,19 +17,19 @@ class PeerDiscover(private val peerAddressManager: IPeerAddressManager) {
 
         // todo: launch coroutines for each dns resolve
         GlobalScope.launch {
-            val ips = mutableListOf<String>()
             dnsList.forEach { host ->
                 try {
-                    InetAddress
+                    val ips = InetAddress
                         .getAllByName(host)
-                        .filter { it !is Inet6Address }.forEach { inetAddress ->
-                            ips.add(inetAddress.hostAddress)
-                        }
+                        .filter { it !is Inet6Address }
+                        .map { it.hostAddress }
+
+                    logger.info("Fetched ${ips.size} peer addresses from host: $host")
+                    peerAddressManager.addIps(ips)
                 } catch (e: UnknownHostException) {
                     logger.warning("Cannot look up host: $host")
                 }
             }
-            peerAddressManager.addIps(ips)
         }
     }
 }
