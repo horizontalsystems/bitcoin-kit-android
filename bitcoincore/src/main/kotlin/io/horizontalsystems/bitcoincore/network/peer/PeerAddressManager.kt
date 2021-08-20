@@ -52,12 +52,10 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
 
     override fun markSuccess(ip: String) {
         state.remove(ip)
-
-        storage.increasePeerAddressScore(ip)
     }
 
     override fun markConnected(peer: Peer) {
-        storage.setPeerConnectionTime(peer.host, peer.connectionTime)
+        storage.markConnected(peer.host, peer.connectionTime)
     }
 
     private fun getLeastScoreFastestPeer(): PeerAddress? {

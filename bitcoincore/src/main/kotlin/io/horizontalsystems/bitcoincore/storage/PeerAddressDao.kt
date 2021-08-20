@@ -11,11 +11,8 @@ interface PeerAddressDao {
     @Query("SELECT * FROM PeerAddress WHERE ip NOT IN(:ips) ORDER BY score ASC, connectionTime ASC LIMIT 1")
     fun getLeastScoreFastest(ips: List<String>): PeerAddress?
 
-    @Query("UPDATE PeerAddress SET score = score + 1 WHERE ip = :ip")
-    fun increaseScore(ip: String)
-
-    @Query("UPDATE PeerAddress SET connectionTime = :time WHERE ip = :ip")
-    fun setConnectionTime(time: Long, ip: String)
+    @Query("UPDATE PeerAddress SET connectionTime = :time, score = score + 1 WHERE ip = :ip")
+    fun setSuccessConnectionTime(time: Long, ip: String)
 
     @Delete
     fun delete(peerAddress: PeerAddress)

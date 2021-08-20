@@ -24,10 +24,6 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.peerAddress.getLeastScoreFastest(ips)
     }
 
-    override fun increasePeerAddressScore(ip: String) {
-        store.peerAddress.increaseScore(ip)
-    }
-
     override fun deletePeerAddress(ip: String) {
         store.peerAddress.delete(PeerAddress(ip))
     }
@@ -36,8 +32,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.peerAddress.insertAll(list)
     }
 
-    override fun setPeerConnectionTime(ip: String, time: Long) {
-        store.peerAddress.setConnectionTime(time, ip)
+    override fun markConnected(ip: String, time: Long) {
+        store.peerAddress.setSuccessConnectionTime(time, ip)
     }
 
     // BlockHash
