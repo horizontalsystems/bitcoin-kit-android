@@ -173,24 +173,37 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         val txHashes = transactions.map { it.transaction.hash }
         val inputs = store.input.getInputsWithPrevouts(txHashes)
         val outputs = store.output.getTransactionsOutputs(txHashes)
+        val metadata = store.transactionMetadata.getTransactionMetadata(txHashes)
 
         return transactions.map { tx ->
             FullTransactionInfo(
                     tx.block,
                     if (tx.transaction.status == Transaction.Status.INVALID) InvalidTransaction(tx.transaction, tx.transaction.serializedTxInfo, tx.transaction.rawTransaction) else tx.transaction,
                     inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
-                    outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) }
+                    outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) },
+                    metadata.first { it.transactionHash.contentEquals(tx.transaction.hash) }
             )
         }
     }
 
-    override fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo> {
+    override fun getFullTransactionInfo(fromTransaction: Transaction?, type: TransactionFilterType?, limit: Int?): List<FullTransactionInfo> {
         var query = "SELECT transactions.*, Block.*" +
                 " FROM (SELECT * FROM `Transaction` UNION ALL SELECT * FROM InvalidTransaction) as transactions" +
-                " LEFT JOIN Block ON transactions.blockHash = Block.headerHash"
+                " LEFT JOIN Block ON transactions.blockHash = Block.headerHash" +
+                " LEFT JOIN TransactionMetadata ON transactions.hash = TransactionMetadata.transactionHash"
 
+        val whereConditions = mutableListOf<String>()
         if (fromTransaction != null) {
-            query += " WHERE transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order})"
+            whereConditions.add("(transactions.timestamp < ${fromTransaction.timestamp} OR (transactions.timestamp = ${fromTransaction.timestamp} AND transactions.`order` < ${fromTransaction.order}))")
+        }
+
+        type?.let { filterType ->
+            val types = filterType.types.map { it.value }.joinToString(", ")
+            whereConditions.add("TransactionMetadata.type IN ($types)")
+        }
+
+        if (whereConditions.isNotEmpty()) {
+            query += " WHERE " + whereConditions.joinToString(" AND ")
         }
 
         query += " ORDER BY timestamp DESC, `order` DESC"
@@ -206,12 +219,14 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getTransactionWithBlock(txHash)?.let { tx ->
             val inputs = store.input.getInputsWithPrevouts(listOf(txHash))
             val outputs = store.output.getTransactionsOutputs(listOf(txHash))
+            val metadata = store.transactionMetadata.getTransactionMetadata(listOf(txHash))
 
             FullTransactionInfo(
-                    tx.block,
-                    tx.transaction,
-                    inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
-                    outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) }
+                tx.block,
+                tx.transaction,
+                inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
+                outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) },
+                metadata.first { it.transactionHash.contentEquals(tx.transaction.hash) }
             )
         }
     }
@@ -309,6 +324,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     private fun addWithoutTransaction(transaction: FullTransaction) {
         store.transaction.insert(transaction.header)
+        store.transactionMetadata.insert(transaction.metadata)
 
         transaction.inputs.forEach {
             store.input.insert(it)

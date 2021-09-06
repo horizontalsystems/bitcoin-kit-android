@@ -10,6 +10,8 @@ import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.transactions.extractors.MyOutputsCache
+import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 import org.junit.Assert
 import org.mockito.Mockito
 import org.mockito.Mockito.mock
@@ -23,7 +25,7 @@ object TransactionProcessorTest : Spek({
     lateinit var fullTransaction: FullTransaction
 
     val storage = mock(IStorage::class.java)
-    val outputsCache = mock(OutputsCache::class.java)
+    val outputsCache = mock(MyOutputsCache::class.java)
     val extractor = mock(TransactionExtractor::class.java)
     val publicKeyManager = mock(PublicKeyManager::class.java)
     val blockchainDataListener = mock(IBlockchainDataListener::class.java)

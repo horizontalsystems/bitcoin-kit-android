@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.core.ITransactionInfoConverter
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.InvalidTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionMetadata
 import io.horizontalsystems.bitcoincore.models.TransactionStatus
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.dashkit.instantsend.InstantTransactionManager
@@ -18,7 +19,7 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
 
         if (transaction.status == Transaction.Status.INVALID) {
             (transaction as? InvalidTransaction)?.let {
-                return getInvalidTransactionInfo(it)
+                return getInvalidTransactionInfo(it, fullTransactionInfo.metadata)
             }
         }
 
@@ -30,6 +31,8 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
                 txInfo.transactionIndex,
                 txInfo.inputs,
                 txInfo.outputs,
+                txInfo.amount,
+                txInfo.type,
                 txInfo.fee,
                 txInfo.blockHeight,
                 txInfo.timestamp,
@@ -39,22 +42,27 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
         )
     }
 
-    private fun getInvalidTransactionInfo(transaction: InvalidTransaction): DashTransactionInfo {
+    private fun getInvalidTransactionInfo(
+        transaction: InvalidTransaction,
+        metadata: TransactionMetadata
+    ): DashTransactionInfo {
         return try {
             DashTransactionInfo(transaction.serializedTxInfo)
         } catch (ex: Exception) {
             DashTransactionInfo(
-                    uid = transaction.uid,
-                    transactionHash = transaction.hash.toHexString(),
-                    transactionIndex = transaction.order,
-                    timestamp = transaction.timestamp,
-                    status = TransactionStatus.INVALID,
-                    inputs = listOf(),
-                    outputs = listOf(),
-                    fee = null,
-                    blockHeight = null,
-                    conflictingTxHash = null,
-                    instantTx = false
+                uid = transaction.uid,
+                transactionHash = transaction.hash.toHexString(),
+                transactionIndex = transaction.order,
+                inputs = listOf(),
+                outputs = listOf(),
+                amount = metadata.amount,
+                type = metadata.type,
+                fee = null,
+                blockHeight = null,
+                timestamp = transaction.timestamp,
+                status = TransactionStatus.INVALID,
+                conflictingTxHash = null,
+                instantTx = false
             )
         }
     }

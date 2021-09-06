@@ -10,8 +10,9 @@ import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.migrations.Migration_10_11
 import io.horizontalsystems.bitcoincore.storage.migrations.Migration_11_12
+import io.horizontalsystems.bitcoincore.storage.migrations.Migration_12_13
 
-@Database(version = 12, exportSchema = false, entities = [
+@Database(version = 13, exportSchema = false, entities = [
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -21,9 +22,13 @@ import io.horizontalsystems.bitcoincore.storage.migrations.Migration_11_12
     TransactionInput::class,
     TransactionOutput::class,
     PublicKey::class,
-    InvalidTransaction::class
+    InvalidTransaction::class,
+    TransactionMetadata::class
 ])
-@TypeConverters(ScriptTypeConverter::class)
+@TypeConverters(
+    ScriptTypeConverter::class,
+    TransactionTypeConverter::class
+)
 abstract class CoreDatabase : RoomDatabase() {
 
     abstract val blockchainState: BlockchainStateDao
@@ -32,6 +37,7 @@ abstract class CoreDatabase : RoomDatabase() {
     abstract val block: BlockDao
     abstract val sentTransaction: SentTransactionDao
     abstract val transaction: TransactionDao
+    abstract val transactionMetadata: TransactionMetadataDao
     abstract val input: TransactionInputDao
     abstract val output: TransactionOutputDao
     abstract val publicKey: PublicKeyDao
@@ -43,6 +49,7 @@ abstract class CoreDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .allowMainThreadQueries()
                     .addMigrations(
+                            Migration_12_13,
                             Migration_11_12,
                             Migration_10_11,
                             add_rawTransaction_to_Transaction,

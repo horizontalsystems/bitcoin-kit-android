@@ -11,6 +11,8 @@ open class TransactionInfo {
     var transactionIndex: Int = 0
     var inputs: List<TransactionInputInfo> = listOf()
     var outputs: List<TransactionOutputInfo> = listOf()
+    var amount: Long = 0
+    var type: TransactionType
     var fee: Long? = null
     var blockHeight: Int? = null
     var timestamp: Long = 0
@@ -22,6 +24,8 @@ open class TransactionInfo {
                 transactionIndex: Int,
                 inputs: List<TransactionInputInfo>,
                 outputs: List<TransactionOutputInfo>,
+                amount: Long,
+                type: TransactionType,
                 fee: Long?,
                 blockHeight: Int?,
                 timestamp: Long,
@@ -32,6 +36,8 @@ open class TransactionInfo {
         this.transactionIndex = transactionIndex
         this.inputs = inputs
         this.outputs = outputs
+        this.amount = amount
+        this.type = type
         this.fee = fee
         this.blockHeight = blockHeight
         this.timestamp = timestamp
@@ -47,6 +53,8 @@ open class TransactionInfo {
         transactionIndex = jsonObject.get("transactionIndex").asInt()
         inputs = parseInputs(jsonObject.get("inputs").asArray())
         outputs = parseOutputs(jsonObject.get("outputs").asArray())
+        amount = jsonObject.get("amount").asLong()
+        type = TransactionType.fromValue(jsonObject.get("type").asInt()) ?: TransactionType.Incoming
         fee = jsonObject.get("fee")?.asLong()
         blockHeight = jsonObject.get("blockHeight")?.asInt()
         timestamp = jsonObject.get("timestamp").asLong()
@@ -125,6 +133,8 @@ open class TransactionInfo {
         jsonObject.add("transactionIndex", transactionIndex)
         jsonObject.add("inputs", inputsToJson(inputs))
         jsonObject.add("outputs", outputsToJson(outputs))
+        jsonObject.add("amount", amount)
+        jsonObject.add("type", type.value)
         fee?.let { jsonObject.add("fee", it) }
         blockHeight?.let { jsonObject.add("blockHeight", it) }
         jsonObject.add("timestamp", timestamp)

@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoincore
 
 import io.horizontalsystems.bitcoincore.core.IPluginData
-import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
-import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
@@ -47,8 +44,8 @@ abstract class AbstractKit {
         bitcoinCore.onEnterBackground()
     }
 
-    fun transactions(fromUid: String? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return bitcoinCore.transactions(fromUid, limit)
+    fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return bitcoinCore.transactions(fromUid, type, limit)
     }
 
     fun getTransaction(hash: String): TransactionInfo? {

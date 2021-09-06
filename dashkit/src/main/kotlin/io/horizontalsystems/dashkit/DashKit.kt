@@ -13,6 +13,7 @@ import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -194,8 +195,8 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, confirmedUnspentOutputProvider))
     }
 
-    fun dashTransactions(fromUid: String? = null, limit: Int? = null): Single<List<DashTransactionInfo>> {
-        return transactions(fromUid, limit).map {
+    fun dashTransactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<DashTransactionInfo>> {
+        return transactions(fromUid, type, limit).map {
             it.mapNotNull { it as? DashTransactionInfo }
         }
     }

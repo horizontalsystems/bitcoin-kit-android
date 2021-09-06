@@ -5,7 +5,6 @@ import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
@@ -80,19 +79,13 @@ class DataProvider(
         balanceSubjectDisposable.dispose()
     }
 
-    fun transactions(fromUid: String?, limit: Int? = null): Single<List<TransactionInfo>> =
-            Single.create { emitter ->
-                var results = listOf<FullTransactionInfo>()
-                if (fromUid != null) {
-                    storage.getValidOrInvalidTransaction(fromUid)?.let {
-                        results = storage.getFullTransactionInfo(it, limit)
-                    }
-                } else {
-                    results = storage.getFullTransactionInfo(null, limit)
-                }
-
-                emitter.onSuccess(results.map { transactionInfoConverter.transactionInfo(it) })
-            }
+    fun transactions(fromUid: String?, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+        return Single.create { emitter ->
+            val fromTransaction = fromUid?.let { storage.getValidOrInvalidTransaction(it) }
+            val transactions = storage.getFullTransactionInfo(fromTransaction, type, limit)
+            emitter.onSuccess(transactions.map { transactionInfoConverter.transactionInfo(it) })
+        }
+    }
 
     fun getRawTransaction(transactionHash: String): String? {
         val hashByteArray = transactionHash.hexToByteArray().reversedArray()
