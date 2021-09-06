@@ -10,6 +10,8 @@ import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.transactions.extractors.MyOutputsCache
+import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import org.junit.Assert.*
@@ -26,13 +28,13 @@ object TransactionExtractorTest : Spek({
     lateinit var transactionInput: TransactionInput
     lateinit var fullTransaction: FullTransaction
     lateinit var extractor: TransactionExtractor
-    lateinit var transactionOutputsCache: OutputsCache
+    lateinit var transactionOutputsCache: MyOutputsCache
 
     beforeEachTest {
         transactionOutput = TransactionOutput()
         transactionInput = TransactionInput(byteArrayOf(), 0)
         fullTransaction = FullTransaction(Transaction(), listOf(transactionInput), listOf(transactionOutput))
-        transactionOutputsCache = OutputsCache()
+        transactionOutputsCache = MyOutputsCache()
 
         extractor = TransactionExtractor(addressConverter, storage, pluginManager, transactionOutputsCache)
     }

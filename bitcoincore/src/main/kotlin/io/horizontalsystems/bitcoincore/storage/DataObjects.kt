@@ -17,10 +17,14 @@ class BlockHeader(
 
 class FullTransaction(val header: Transaction, val inputs: List<TransactionInput>, val outputs: List<TransactionOutput>) {
 
+    val metadata: TransactionMetadata
+
     init {
         if (header.hash.isEmpty()) {
             header.hash = HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = false))
         }
+
+        metadata = TransactionMetadata(header.hash)
 
         inputs.forEach {
             it.transactionHash = header.hash
@@ -73,7 +77,9 @@ class FullTransactionInfo(
         val block: Block?,
         val header: Transaction,
         val inputs: List<InputWithPreviousOutput>,
-        val outputs: List<TransactionOutput>) {
+        val outputs: List<TransactionOutput>,
+        val metadata: TransactionMetadata
+) {
 
     val rawTransaction: String
         get() {

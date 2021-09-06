@@ -62,7 +62,7 @@ interface IStorage {
     //  Transaction
 
     fun getFullTransactionInfo(transactions: List<TransactionWithBlock>): List<FullTransactionInfo>
-    fun getFullTransactionInfo(fromTransaction: Transaction?, limit: Int?): List<FullTransactionInfo>
+    fun getFullTransactionInfo(fromTransaction: Transaction?, type: TransactionFilterType?, limit: Int?): List<FullTransactionInfo>
     fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo?
 
     fun getTransaction(hash: ByteArray): Transaction?

@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoincore.transactions
+package io.horizontalsystems.bitcoincore.transactions.builder
 
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.core.IRecipientSetter

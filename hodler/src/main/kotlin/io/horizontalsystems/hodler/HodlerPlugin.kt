@@ -69,7 +69,6 @@ class HodlerPlugin(
             storage.getPublicKeyByKeyOrKeyHash(pubkeyHash)?.let { pubkey ->
                 output.redeemScript = redeemScript
                 output.setPublicKey(pubkey)
-                transaction.header.isMine = true
             }
         }
     }

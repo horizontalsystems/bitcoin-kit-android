@@ -11,15 +11,12 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
 
         if (transaction.status == Transaction.Status.INVALID) {
             (transaction as? InvalidTransaction)?.let {
-                return getInvalidTransactionInfo(it)
+                return getInvalidTransactionInfo(it, fullTransaction.metadata)
             }
         }
 
         val inputsInfo = mutableListOf<TransactionInputInfo>()
         val outputsInfo = mutableListOf<TransactionOutputInfo>()
-        var inputsTotalValue = 0L
-        var outputsTotalValue = 0L
-        var allInputsHaveValue = true
 
         fullTransaction.inputs.forEach { input ->
             var mine = false
@@ -30,18 +27,12 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
                 if (input.previousOutput.publicKeyPath != null) {
                     mine = true
                 }
-            } else {
-                allInputsHaveValue = false
             }
-
-            inputsTotalValue += value ?: 0
 
             inputsInfo.add(TransactionInputInfo(mine, value, input.input.address))
         }
 
         fullTransaction.outputs.forEach { output ->
-            outputsTotalValue += output.value
-
             val outputInfo = TransactionOutputInfo(mine = output.publicKeyPath != null,
                     changeOutput = output.changeOutput,
                     value = output.value,
@@ -53,35 +44,42 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             outputsInfo.add(outputInfo)
         }
 
-        val fee = if (allInputsHaveValue) inputsTotalValue - outputsTotalValue else null
-
         return TransactionInfo(
-                uid = transaction.uid,
-                transactionHash = transaction.hash.toReversedHex(),
-                transactionIndex = transaction.order,
-                inputs = inputsInfo,
-                outputs = outputsInfo,
-                fee = fee,
-                blockHeight = fullTransaction.block?.height,
-                timestamp = transaction.timestamp,
-                status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW,
-                conflictingTxHash = transaction.conflictingTxHash?.toReversedHex())
+            uid = transaction.uid,
+            transactionHash = transaction.hash.toReversedHex(),
+            transactionIndex = transaction.order,
+            inputs = inputsInfo,
+            outputs = outputsInfo,
+            amount = fullTransaction.metadata.amount,
+            type = fullTransaction.metadata.type,
+            fee = fullTransaction.metadata.fee,
+            blockHeight = fullTransaction.block?.height,
+            timestamp = transaction.timestamp,
+            status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW,
+            conflictingTxHash = transaction.conflictingTxHash?.toReversedHex()
+        )
     }
 
-    private fun getInvalidTransactionInfo(transaction: InvalidTransaction): TransactionInfo {
+    private fun getInvalidTransactionInfo(
+        transaction: InvalidTransaction,
+        metadata: TransactionMetadata
+    ): TransactionInfo {
         return try {
             TransactionInfo(transaction.serializedTxInfo)
         } catch (ex: Exception) {
             TransactionInfo(
-                    uid = transaction.uid,
-                    transactionHash = transaction.hash.toReversedHex(),
-                    transactionIndex = transaction.order,
-                    timestamp = transaction.timestamp,
-                    status = TransactionStatus.INVALID,
-                    inputs = listOf(),
-                    outputs = listOf(),
-                    fee = null,
-                    blockHeight = null)
+                uid = transaction.uid,
+                transactionHash = transaction.hash.toReversedHex(),
+                transactionIndex = transaction.order,
+                inputs = listOf(),
+                outputs = listOf(),
+                amount = metadata.amount,
+                type = metadata.type,
+                fee = metadata.fee,
+                blockHeight = null,
+                timestamp = transaction.timestamp,
+                status = TransactionStatus.INVALID
+            )
         }
     }
 

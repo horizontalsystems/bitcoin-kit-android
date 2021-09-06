@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 
 class PendingTransactionProcessor(
         private val storage: IStorage,

@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoincore.transactions
+package io.horizontalsystems.bitcoincore.transactions.extractors
 
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.PluginManager
@@ -11,10 +11,10 @@ import io.horizontalsystems.bitcoincore.utils.Utils
 import java.util.*
 
 class TransactionExtractor(
-        private val addressConverter: IAddressConverter,
-        private val storage: IStorage,
-        private val pluginManager: PluginManager,
-        private val outputsCache: OutputsCache
+    private val addressConverter: IAddressConverter,
+    private val storage: IStorage,
+    private val pluginManager: PluginManager,
+    private val metadataExtractor: TransactionMetadataExtractor
 ) {
 
     fun extractOutputs(transaction: FullTransaction) {
@@ -48,7 +48,6 @@ class TransactionExtractor(
 
             // Set public key if exist
             getPublicKey(output)?.let {
-                transaction.header.isMine = true
                 output.setPublicKey(it)
             }
         }
@@ -218,14 +217,9 @@ class TransactionExtractor(
 
     fun extract(transaction: FullTransaction) {
         extractOutputs(transaction)
-
-        if (outputsCache.hasOutputs(transaction.inputs)) {
-            transaction.header.isMine = true
-            transaction.header.isOutgoing = true
-        }
+        metadataExtractor.extract(transaction)
 
         if (transaction.header.isMine) {
-            outputsCache.add(transaction.outputs)
             extractAddress(transaction)
             extractInputs(transaction)
         }
