@@ -383,6 +383,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.output.getPreviousOutput(input.previousOutputTxHash, input.previousOutputIndex.toInt())
     }
 
+    override fun getOutput(transactionHash: ByteArray, index: Int): TransactionOutput? {
+        return store.output.getPreviousOutput(transactionHash, index)
+    }
+
     override fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput> {
         return store.output.getByHash(transaction.hash)
     }

@@ -92,6 +92,7 @@ interface IStorage {
 
     fun getUnspentOutputs(): List<UnspentOutput>
     fun getPreviousOutput(input: TransactionInput): TransactionOutput?
+    fun getOutput(transactionHash: ByteArray, index: Int): TransactionOutput?
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
     fun getMyOutputs(): List<TransactionOutput>
