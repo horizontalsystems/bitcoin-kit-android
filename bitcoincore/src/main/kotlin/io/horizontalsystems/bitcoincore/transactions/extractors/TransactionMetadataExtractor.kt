@@ -5,8 +5,10 @@ import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import kotlin.math.absoluteValue
 
-class TransactionMetadataExtractor(private val storage: IStorage) {
-    private val myOutputsCache = MyOutputsCache.create(storage)
+class TransactionMetadataExtractor(
+    private val myOutputsCache: MyOutputsCache,
+    private val outputProvider: ITransactionOutputProvider
+) {
 
     fun extract(transaction: FullTransaction) {
 
@@ -57,7 +59,7 @@ class TransactionMetadataExtractor(private val storage: IStorage) {
             var inputsTotalValue = 0L
             var allInputsHaveValue = true
             for (input in transaction.inputs) {
-                val previousOutput = storage.getPreviousOutput(input)
+                val previousOutput = outputProvider.get(input.previousOutputTxHash, input.previousOutputIndex.toInt())
                 if (previousOutput != null) {
                     inputsTotalValue += previousOutput.value
                 } else {
@@ -84,5 +86,15 @@ class TransactionMetadataExtractor(private val storage: IStorage) {
         if (myOutputsTotalValue > 0) {
             myOutputsCache.add(transaction.outputs)
         }
+    }
+}
+
+interface ITransactionOutputProvider {
+    fun get(transactionHash: ByteArray, index: Int): TransactionOutput?
+}
+
+class TransactionOutputProvider(private val storage: IStorage): ITransactionOutputProvider {
+    override fun get(transactionHash: ByteArray, index: Int): TransactionOutput? {
+        return storage.getOutput(transactionHash, index)
     }
 }

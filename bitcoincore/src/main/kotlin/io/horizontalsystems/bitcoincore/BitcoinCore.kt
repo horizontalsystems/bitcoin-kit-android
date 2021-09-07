@@ -15,8 +15,10 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.*
 import io.horizontalsystems.bitcoincore.transactions.builder.*
+import io.horizontalsystems.bitcoincore.transactions.extractors.MyOutputsCache
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionMetadataExtractor
+import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionOutputProvider
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.*
 import io.horizontalsystems.hdwalletkit.HDWallet
@@ -168,7 +170,10 @@ class BitcoinCoreBuilder {
         val pendingOutpointsProvider = PendingOutpointsProvider(storage)
 
         val irregularOutputFinder = IrregularOutputFinder(storage)
-        val metadataExtractor = TransactionMetadataExtractor(storage)
+        val metadataExtractor = TransactionMetadataExtractor(
+            MyOutputsCache.create(storage),
+            TransactionOutputProvider(storage)
+        )
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager, metadataExtractor)
 
         val conflictsResolver = TransactionConflictsResolver(storage)
