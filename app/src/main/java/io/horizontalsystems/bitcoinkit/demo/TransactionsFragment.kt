@@ -14,12 +14,14 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.tabs.TabLayout
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.models.TransactionInputInfo
 import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.hodler.HodlerOutputData
 import io.horizontalsystems.hodler.HodlerPlugin
+import kotlinx.android.synthetic.main.fragment_transactions.*
 import java.text.DateFormat
 import java.util.*
 
@@ -63,6 +65,27 @@ class TransactionsFragment : Fragment(), ViewHolderTransaction.Listener {
         transactionsRecyclerView = view.findViewById(R.id.transactions)
         transactionsRecyclerView.adapter = transactionsAdapter
         transactionsRecyclerView.layoutManager = LinearLayoutManager(context)
+
+        viewModel.types.forEach {
+            val text = tabs.newTab()
+                .setText(it?.name ?: "All")
+                .setId(it?.ordinal ?: 100)
+
+            tabs.addTab(text)
+        }
+
+        tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
+            override fun onTabSelected(tab: TabLayout.Tab) {
+                viewModel.setTransactionFilterType(viewModel.types.find {
+                    it?.ordinal == tab.id
+                })
+            }
+
+            override fun onTabUnselected(tab: TabLayout.Tab?) = Unit
+            override fun onTabReselected(tab: TabLayout.Tab?) = Unit
+        })
+
+        viewModel.setTransactionFilterType(null)
     }
 
     override fun onClickRawTransaction(transactionHash: String) {
