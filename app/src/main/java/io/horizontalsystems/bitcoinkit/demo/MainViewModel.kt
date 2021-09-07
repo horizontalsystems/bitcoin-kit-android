@@ -10,10 +10,7 @@ import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
-import io.horizontalsystems.bitcoincore.models.BalanceInfo
-import io.horizontalsystems.bitcoincore.models.BlockInfo
-import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
-import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
@@ -26,6 +23,9 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     enum class State {
         STARTED, STOPPED
     }
+
+    private var transactionFilterType: TransactionFilterType? = null
+    val types = listOf(null) + TransactionFilterType.values()
 
     val transactions = MutableLiveData<List<TransactionInfo>>()
     val balance = MutableLiveData<BalanceInfo>()
@@ -46,7 +46,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     private lateinit var bitcoinKit: BitcoinKit
 
     private val walletId = "MyWallet"
-    private val networkType = BitcoinKit.NetworkType.TestNet
+    private val networkType = BitcoinKit.NetworkType.MainNet
     private val syncMode = BitcoinCore.SyncMode.Api()
     private val bip = Bip.BIP44
 
@@ -61,12 +61,6 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
         networkName = bitcoinKit.networkName
         balance.value = bitcoinKit.balance
-
-        bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.value = txList
-        }.let {
-            disposables.add(it)
-        }
 
         lastBlock.value = bitcoinKit.lastBlockInfo
         state.value = bitcoinKit.syncState
@@ -101,11 +95,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     // BitcoinKit Listener implementations
     //
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
-        bitcoinKit.transactions().subscribe { txList: List<TransactionInfo> ->
-            transactions.postValue(txList)
-        }.let {
-            disposables.add(it)
-        }
+        setTransactionFilterType(transactionFilterType)
     }
 
     override fun onTransactionsDelete(hashes: List<String>) {
@@ -225,5 +215,15 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun onRawTransactionClick(transactionHash: String) {
         transactionRaw.postValue(bitcoinKit.getRawTransaction(transactionHash))
+    }
+
+    fun setTransactionFilterType(transactionFilterType: TransactionFilterType?) {
+        this.transactionFilterType = transactionFilterType
+
+        bitcoinKit.transactions(type = transactionFilterType).subscribe { txList: List<TransactionInfo> ->
+            transactions.postValue(txList)
+        }.let {
+            disposables.add(it)
+        }
     }
 }
