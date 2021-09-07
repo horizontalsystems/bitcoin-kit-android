@@ -102,14 +102,14 @@ class ViewHolderTransaction(val containerView: View, private val listener: Liste
 
         containerView.setBackgroundColor(if (index % 2 == 0) Color.parseColor("#dddddd") else Color.TRANSPARENT)
 
-        val txAmount = calculateAmount(transactionInfo)
+        val txAmount = transactionInfo.amount
         val amount = NumberFormatHelper.cryptoAmountFormat.format(txAmount / 100_000_000.0)
         val fee = transactionInfo.fee?.let {
             NumberFormatHelper.cryptoAmountFormat.format(it / 100_000_000.0)
         } ?: "n/a"
 
         var text = "#$index"
-        text += "\nStatus: ${transactionInfo.status.name}"
+        text += "\nStatus: ${transactionInfo.status.name}, ${transactionInfo.type.name}"
         if (transactionInfo is DashTransactionInfo) {
             text += "\nInstant: ${transactionInfo.instantTx.toString().toUpperCase(Locale.getDefault())}"
         }
@@ -130,24 +130,6 @@ class ViewHolderTransaction(val containerView: View, private val listener: Liste
             println(transactionInfo)
             println(text)
         }
-    }
-
-    private fun calculateAmount(transactionInfo: TransactionInfo): Long {
-        var myInputsTotalValue = 0L
-
-        transactionInfo.inputs.forEach { input ->
-            if (input.mine) {
-                myInputsTotalValue += input.value ?: 0
-            }
-        }
-
-        var myOutputsTotalValue = 0L
-
-        transactionInfo.outputs.forEach {
-            myOutputsTotalValue += if (it.mine && it.address != null) it.value else 0
-        }
-
-        return myOutputsTotalValue - myInputsTotalValue + (transactionInfo.fee ?: 0)
     }
 
     private fun mapOutputs(list: List<TransactionOutputInfo>): String {
