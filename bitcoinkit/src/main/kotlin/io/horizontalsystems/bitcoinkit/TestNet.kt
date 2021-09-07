@@ -20,10 +20,9 @@ class TestNet : Network() {
     override val dustRelayTxFee = 3000 // https://github.com/bitcoin/bitcoin/blob/c536dfbcb00fb15963bf5d507b7017c241718bf6/src/policy/policy.h#L50
 
     override var dnsSeeds = listOf(
-            "testnet-seed.bitcoin.petertodd.org",    // Peter Todd
-            "testnet-seed.bitcoin.jonasschnelli.ch", // Jonas Schnelli
-            "testnet-seed.bluematt.me",              // Matt Corallo
-            "testnet-seed.bitcoin.schildbach.de",    // Andreas Schildbach
-            "bitcoin-testnet.bloqseeds.net"          // Bloq
+        "x5.testnet-seed.bitcoin.jonasschnelli.ch",
+        "x5.seed.tbtc.petertodd.org",
+        "x5.seed.testnet.bitcoin.sprovoost.nl",
+        "testnet-seed.bluematt.me"
     )
 }
