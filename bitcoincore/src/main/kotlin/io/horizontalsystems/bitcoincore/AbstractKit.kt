@@ -56,12 +56,18 @@ abstract class AbstractKit {
         return bitcoinCore.fee(value, address, senderPay, feeRate, pluginData)
     }
 
+    fun sendSafe(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData> = mapOf()
+                 ,unlockedHeight:Long ? ): FullTransaction {
+        val unlockedHeight = unlockedHeight ?: 0;
+        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, pluginData,unlockedHeight )
+    }
+
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData> = mapOf()): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, pluginData)
+        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, pluginData,null)
     }
 
     fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType)
+        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType,null)
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {

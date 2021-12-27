@@ -7,7 +7,12 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 class UnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int = 6, val pluginManager: PluginManager) : IUnspentOutputProvider {
     override fun getSpendableUtxo(): List<UnspentOutput> {
+        val lastBlockHeight = storage.lastBlock()?.height ?: 0
         return getConfirmedUtxo().filter {
+            val unlockedHeight = it.output.unlockedHeight;
+            if ( unlockedHeight != null && unlockedHeight > lastBlockHeight){
+                return@filter false
+            }
             pluginManager.isSpendable(it)
         }
     }
@@ -15,7 +20,6 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
     fun getBalance(): BalanceInfo {
         val spendable = getSpendableUtxo().map { it.output.value }.sum()
         val unspendable = getUnspendableUtxo().map { it.output.value }.sum()
-
         return BalanceInfo(spendable, unspendable)
     }
 
@@ -30,19 +34,26 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
             if (it.transaction.isOutgoing) {
                 return@filter true
             }
-
             val block = it.block ?: return@filter false
             if (block.height <= lastBlockHeight - confirmationsThreshold + 1) {
                 return@filter true
             }
-
             false
         }
     }
 
     private fun getUnspendableUtxo(): List<UnspentOutput> {
+        val lastBlockHeight = storage.lastBlock()?.height ?: 0
+
         return getConfirmedUtxo().filter {
+            val unlockedHeight = it.output.unlockedHeight;
+            if ( unlockedHeight != null && unlockedHeight > lastBlockHeight){
+                return@filter true
+            }
             !pluginManager.isSpendable(it)
         }
     }
+
+
+
 }

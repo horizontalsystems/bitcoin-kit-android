@@ -178,22 +178,22 @@ class BitcoinCoreBuilder {
 
         val conflictsResolver = TransactionConflictsResolver(storage)
         val pendingTransactionProcessor = PendingTransactionProcessor(
-                storage,
-                transactionExtractor,
-                publicKeyManager,
-                irregularOutputFinder,
-                dataProvider,
-                conflictsResolver
+            storage,
+            transactionExtractor,
+            publicKeyManager,
+            irregularOutputFinder,
+            dataProvider,
+            conflictsResolver
         )
         val invalidator = TransactionInvalidator(storage, transactionInfoConverter, dataProvider)
         val blockTransactionProcessor = BlockTransactionProcessor(
-                storage,
-                transactionExtractor,
-                publicKeyManager,
-                irregularOutputFinder,
-                dataProvider,
-                conflictsResolver,
-                invalidator
+            storage,
+            transactionExtractor,
+            publicKeyManager,
+            irregularOutputFinder,
+            dataProvider,
+            conflictsResolver,
+            invalidator
         )
 
         val peerHostManager = PeerAddressManager(network, storage)
@@ -245,20 +245,20 @@ class BitcoinCoreBuilder {
         blockHashFetcher.listener = syncManager
 
         val bitcoinCore = BitcoinCore(
-                storage,
-                dataProvider,
-                publicKeyManager,
-                addressConverter,
-                restoreKeyConverterChain,
-                transactionCreator,
-                transactionFeeCalculator,
-                paymentAddressParser,
-                syncManager,
-                bip,
-                peerManager,
-                dustCalculator,
-                pluginManager,
-                connectionManager)
+            storage,
+            dataProvider,
+            publicKeyManager,
+            addressConverter,
+            restoreKeyConverterChain,
+            transactionCreator,
+            transactionFeeCalculator,
+            paymentAddressParser,
+            syncManager,
+            bip,
+            peerManager,
+            dustCalculator,
+            pluginManager,
+            connectionManager)
 
         dataProvider.listener = bitcoinCore
         syncManager.listener = bitcoinCore
@@ -287,26 +287,26 @@ class BitcoinCoreBuilder {
         // this part can be moved to another place
 
         bitcoinCore.addMessageParser(AddrMessageParser())
-                .addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
-                .addMessageParser(InvMessageParser())
-                .addMessageParser(GetDataMessageParser())
-                .addMessageParser(PingMessageParser())
-                .addMessageParser(PongMessageParser())
-                .addMessageParser(TransactionMessageParser())
-                .addMessageParser(VerAckMessageParser())
-                .addMessageParser(VersionMessageParser())
-                .addMessageParser(RejectMessageParser())
+            .addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
+            .addMessageParser(InvMessageParser())
+            .addMessageParser(GetDataMessageParser())
+            .addMessageParser(PingMessageParser())
+            .addMessageParser(PongMessageParser())
+            .addMessageParser(TransactionMessageParser())
+            .addMessageParser(VerAckMessageParser())
+            .addMessageParser(VersionMessageParser())
+            .addMessageParser(RejectMessageParser())
 
         bitcoinCore.addMessageSerializer(FilterLoadMessageSerializer())
-                .addMessageSerializer(GetBlocksMessageSerializer())
-                .addMessageSerializer(InvMessageSerializer())
-                .addMessageSerializer(GetDataMessageSerializer())
-                .addMessageSerializer(MempoolMessageSerializer())
-                .addMessageSerializer(PingMessageSerializer())
-                .addMessageSerializer(PongMessageSerializer())
-                .addMessageSerializer(TransactionMessageSerializer())
-                .addMessageSerializer(VerAckMessageSerializer())
-                .addMessageSerializer(VersionMessageSerializer())
+            .addMessageSerializer(GetBlocksMessageSerializer())
+            .addMessageSerializer(InvMessageSerializer())
+            .addMessageSerializer(GetDataMessageSerializer())
+            .addMessageSerializer(MempoolMessageSerializer())
+            .addMessageSerializer(PingMessageSerializer())
+            .addMessageSerializer(PongMessageSerializer())
+            .addMessageSerializer(TransactionMessageSerializer())
+            .addMessageSerializer(VerAckMessageSerializer())
+            .addMessageSerializer(VersionMessageSerializer())
 
         val bloomFilterLoader = BloomFilterLoader(bloomFilterManager, peerManager)
         bloomFilterManager.listener = bloomFilterLoader
@@ -335,20 +335,20 @@ class BitcoinCoreBuilder {
 }
 
 class BitcoinCore(
-        private val storage: IStorage,
-        private val dataProvider: DataProvider,
-        private val publicKeyManager: PublicKeyManager,
-        private val addressConverter: AddressConverterChain,
-        private val restoreKeyConverterChain: RestoreKeyConverterChain,
-        private val transactionCreator: TransactionCreator,
-        private val transactionFeeCalculator: TransactionFeeCalculator,
-        private val paymentAddressParser: PaymentAddressParser,
-        private val syncManager: SyncManager,
-        private val bip: Bip,
-        private var peerManager: PeerManager,
-        private val dustCalculator: DustCalculator,
-        private val pluginManager: PluginManager,
-        private val connectionManager: IConnectionManager
+    private val storage: IStorage,
+    private val dataProvider: DataProvider,
+    private val publicKeyManager: PublicKeyManager,
+    private val addressConverter: AddressConverterChain,
+    private val restoreKeyConverterChain: RestoreKeyConverterChain,
+    private val transactionCreator: TransactionCreator,
+    private val transactionFeeCalculator: TransactionFeeCalculator,
+    private val paymentAddressParser: PaymentAddressParser,
+    private val syncManager: SyncManager,
+    private val bip: Bip,
+    private var peerManager: PeerManager,
+    private val dustCalculator: DustCalculator,
+    private val pluginManager: PluginManager,
+    private val connectionManager: IConnectionManager
 ) : IKitStateListener, DataProvider.Listener {
 
     interface Listener {
@@ -453,17 +453,21 @@ class BitcoinCore(
         return transactionFeeCalculator.fee(value, feeRate, senderPay, address, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>
+             , unlockedHeight: Long?     // UPDATE FOR SAFE
+    ): FullTransaction {
+        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData, unlockedHeight)
     }
 
-    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType
+             , unlockedHeight: Long?    // UPDATE FOR SAFE
+    ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf())
+        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf(),unlockedHeight)
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
-        return transactionCreator.create(unspentOutput, address, feeRate, sortType)
+        return transactionCreator.create(unspentOutput, address, feeRate, sortType,null)
     }
 
     fun receiveAddress(): String {

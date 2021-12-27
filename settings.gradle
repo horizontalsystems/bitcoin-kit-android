@@ -6,3 +6,4 @@ include ':app',             // Demo app
         ':litecoinkit',     // Litecoin kit
         ':hodler',          // Hodler
         ':tools'            // Checkpoint syncer
+include ':safekit'

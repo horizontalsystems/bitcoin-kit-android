@@ -59,7 +59,7 @@ open class TransactionInfo {
         blockHeight = jsonObject.get("blockHeight")?.asInt()
         timestamp = jsonObject.get("timestamp").asLong()
         status = TransactionStatus.getByCode(jsonObject.get("status").asInt())
-                ?: TransactionStatus.INVALID
+            ?: TransactionStatus.INVALID
         conflictingTxHash = jsonObject.get("conflictingTxHash")?.asString()
     }
 
@@ -69,9 +69,9 @@ open class TransactionInfo {
         for (inputJsonValue in jsonArray) {
             inputJsonValue.asObject().let {
                 val input = TransactionInputInfo(
-                        mine = it.get("mine").asBoolean(),
-                        value = if (it.get("value")?.isNull == false) it.get("value")?.asLong() else null,
-                        address = if (it.get("address")?.isNull == false) it.get("address")?.asString() else null)
+                    mine = it.get("mine").asBoolean(),
+                    value = if (it.get("value")?.isNull == false) it.get("value")?.asLong() else null,
+                    address = if (it.get("address")?.isNull == false) it.get("address")?.asString() else null)
 
                 inputs.add(input)
             }
@@ -85,12 +85,12 @@ open class TransactionInfo {
         for (outputJsonValue in jsonArray) {
             outputJsonValue.asObject().let {
                 val output = TransactionOutputInfo(
-                        mine = it.get("mine").asBoolean(),
-                        changeOutput = it.get("changeOutput").asBoolean(),
-                        value = it.get("value").asLong(),
-                        address = if (it.get("address")?.isNull == false) it.get("address")?.asString() else null,
-                        pluginId = if (it.get("pluginId")?.isNull == false) it.get("pluginId")?.asString()?.toByte() else null,
-                        pluginDataString = if (it.get("pluginDataString")?.isNull == false) it.get("pluginDataString")?.asString() else null)
+                    mine = it.get("mine").asBoolean(),
+                    changeOutput = it.get("changeOutput").asBoolean(),
+                    value = it.get("value").asLong(),
+                    address = if (it.get("address")?.isNull == false) it.get("address")?.asString() else null,
+                    pluginId = if (it.get("pluginId")?.isNull == false) it.get("pluginId")?.asString()?.toByte() else null,
+                    pluginDataString = if (it.get("pluginDataString")?.isNull == false) it.get("pluginDataString")?.asString() else null)
 
                 outputs.add(output)
             }
@@ -170,12 +170,13 @@ data class TransactionOutputInfo(val mine: Boolean,
                                  val address: String? = null,
                                  val pluginId: Byte? = null,
                                  val pluginData: IPluginOutputData? = null,
+                                 val unlockedHeight: Long? = null,
                                  internal val pluginDataString: String? = null)
 
 data class BlockInfo(
-        val headerHash: String,
-        val height: Int,
-        val timestamp: Long
+    val headerHash: String,
+    val height: Int,
+    val timestamp: Long
 )
 
 data class BalanceInfo(val spendable: Long, val unspendable: Long)

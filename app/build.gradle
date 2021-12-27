@@ -54,4 +54,6 @@ dependencies {
     implementation project(':bitcoinkit')
     implementation project(':dashkit')
     implementation project(':bitcoincashkit')
+    implementation project(':safekit')
+
 }

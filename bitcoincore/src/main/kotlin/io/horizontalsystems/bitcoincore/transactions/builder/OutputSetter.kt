@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
 import io.horizontalsystems.bitcoincore.core.ITransactionDataSorterFactory
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.OP_RETURN
@@ -31,6 +32,23 @@ class OutputSetter(private val transactionDataSorterFactory: ITransactionDataSor
         val sorted = transactionDataSorterFactory.sorter(sortType).sortOutputs(list)
         sorted.forEachIndexed { index, transactionOutput ->
             transactionOutput.index = index
+        }
+
+        /**
+         * UPDATE FOR SAFE - UNLOCKED_HEIGHT TRANSACTION OUTPUT
+         */
+        val toAddress = transaction.recipientAddress.string
+        val unlockedHeight = transaction.unlockedHeight;
+        if ( unlockedHeight != null ){
+            transaction.transaction.version = 103;
+            sorted.forEach{ transactionOutput ->
+                if ( transactionOutput.address.equals(toAddress) ){
+                    transactionOutput.unlockedHeight = unlockedHeight
+                }else{
+                    transactionOutput.unlockedHeight = 0
+                }
+                transactionOutput.reserve = "73616665".hexToByteArray();
+            }
         }
 
         transaction.outputs = sorted

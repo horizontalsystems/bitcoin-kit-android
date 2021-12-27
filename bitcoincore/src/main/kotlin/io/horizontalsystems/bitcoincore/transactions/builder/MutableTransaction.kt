@@ -8,7 +8,9 @@ import io.horizontalsystems.bitcoincore.storage.InputToSign
 
 class MutableTransaction(isOutgoing: Boolean = true) {
 
-    val transaction = Transaction(2, 0)
+    var unlockedHeight : Long? = null
+
+    var transaction = Transaction(2, 0)
     val inputsToSign = mutableListOf<InputToSign>()
     var outputs = listOf<TransactionOutput>()
 

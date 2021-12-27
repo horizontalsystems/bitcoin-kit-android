@@ -8,22 +8,22 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 
 class TransactionCreator(
-        private val builder: TransactionBuilder,
-        private val processor: PendingTransactionProcessor,
-        private val transactionSender: TransactionSender,
-        private val bloomFilterManager: BloomFilterManager) {
+    private val builder: TransactionBuilder,
+    private val processor: PendingTransactionProcessor,
+    private val transactionSender: TransactionSender,
+    private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
+    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>,unlockedHeight:Long?): FullTransaction {
         return create {
-            builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData)
+            builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData, unlockedHeight)
         }
     }
 
     @Throws
-    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType,unlockedHeight:Long?): FullTransaction {
         return create {
-            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType)
+            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType,unlockedHeight)
         }
     }
 

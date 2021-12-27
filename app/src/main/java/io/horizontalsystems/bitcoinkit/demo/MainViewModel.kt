@@ -12,13 +12,17 @@ import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.*
 import io.horizontalsystems.bitcoinkit.BitcoinKit
+import io.horizontalsystems.dashkit.DashKit
+import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.fragment_send_receive.*
+import com.anwang.safewallet.safekit.SafeKit
 
-class MainViewModel : ViewModel(), BitcoinKit.Listener {
+
+class MainViewModel : ViewModel(),  /* BitcoinKit.Listener ,*/ SafeKit.Listener {
 
     enum class State {
         STARTED, STOPPED
@@ -43,11 +47,18 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             status.value = (if (value) State.STARTED else State.STOPPED)
         }
 
-    private lateinit var bitcoinKit: BitcoinKit
+
+//    private lateinit var dashKit: DashKit
+//    private val networkType = DashKit.NetworkType.MainNet
+
+    private lateinit var safeKit: SafeKit
+    private val networkType = SafeKit.NetworkType.MainNet
 
     private val walletId = "MyWallet"
-    private val networkType = BitcoinKit.NetworkType.MainNet
-    private val syncMode = BitcoinCore.SyncMode.Api()
+
+    //    private lateinit var bitcoinKit: BitcoinKit
+//    private val networkType = BitcoinKit.NetworkType.MainNet
+//    private val syncMode = BitcoinCore.SyncMode.Api()
     private val bip = Bip.BIP44
 
     fun init() {
@@ -55,15 +66,26 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
         val passphrase = ""
 
-        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, bip = bip)
+//        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, bip = bip)
+//        bitcoinKit.listener = this
+//        networkName = bitcoinKit.networkName
+//        balance.value = bitcoinKit.balance
+//        lastBlock.value = bitcoinKit.lastBlockInfo
+//        state.value = bitcoinKit.syncState
 
-        bitcoinKit.listener = this
+        safeKit = SafeKit( App.instance,words,passphrase,walletId )
+        safeKit.listener = this
+        networkName = safeKit.networkName
+        balance.value = safeKit.balance
+        lastBlock.value = safeKit.lastBlockInfo
+        state.value = safeKit.syncState
 
-        networkName = bitcoinKit.networkName
-        balance.value = bitcoinKit.balance
-
-        lastBlock.value = bitcoinKit.lastBlockInfo
-        state.value = bitcoinKit.syncState
+//        safeKit = SafeKit( App.instance,words,passphrase,walletId )
+//        safeKit.listener = this
+//        networkName = safeKit.networkName
+//        balance.value = safeKit.balance
+//        lastBlock.value = safeKit.lastBlockInfo
+//        state.value = safeKit.syncState
 
         started = false
     }
@@ -71,32 +93,39 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     fun start() {
         if (started) return
         started = true
-
-        bitcoinKit.start()
+        println("dashKit .start() !!! ")
+        safeKit.start()
     }
 
     fun clear() {
-        bitcoinKit.stop()
-        BitcoinKit.clear(App.instance, networkType, walletId)
-
+        safeKit.stop()
+        SafeKit.clear(App.instance, networkType, walletId)
         init()
     }
 
 
     fun showDebugInfo() {
-        bitcoinKit.showDebugInfo()
+        safeKit.showDebugInfo()
     }
 
     fun showStatusInfo() {
-        statusInfo.postValue(bitcoinKit.statusInfo())
+        statusInfo.postValue(safeKit.statusInfo())
     }
+
+    override fun onTransactionsUpdate(inserted: List<DashTransactionInfo>, updated: List<DashTransactionInfo>) {
+        setTransactionFilterType(transactionFilterType)
+    }
+
+//    override fun onTransactionsUpdate(inserted: List<DashTransactionInfo>, updated: List<DashTransactionInfo>) {
+//        setTransactionFilterType(transactionFilterType)
+//    }
 
     //
     // BitcoinKit Listener implementations
     //
-    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
-        setTransactionFilterType(transactionFilterType)
-    }
+//    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
+//        setTransactionFilterType(transactionFilterType)
+//    }
 
     override fun onTransactionsDelete(hashes: List<String>) {
     }
@@ -144,7 +173,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         }
 
     fun onReceiveClick() {
-        receiveAddressLiveData.value = bitcoinKit.receiveAddress()
+        receiveAddressLiveData.value = safeKit.receiveAddress()
     }
 
     fun onSendClick() {
@@ -157,8 +186,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             }
             else -> {
                 try {
-                  val transaction =  bitcoinKit.send(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData())
-
+                    val transaction = safeKit.sendSafe(address!!, amount!!, feeRate = feePriority.feeRate, sortType = TransactionDataSortType.Shuffle, pluginData = getPluginData() ,unlockedHeight = 0)
                     amountLiveData.value = null
                     feeLiveData.value = null
                     addressLiveData.value = null
@@ -178,7 +206,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun onMaxClick() {
         try {
-            amountLiveData.value = bitcoinKit.maximumSpendableValue(address, feePriority.feeRate, getPluginData())
+            amountLiveData.value = safeKit.maximumSpendableValue(address, feePriority.feeRate, getPluginData())
         } catch (e: Exception) {
             amountLiveData.value = 0
             errorLiveData.value = when (e) {
@@ -202,7 +230,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     private fun fee(value: Long, address: String? = null): Long {
-        return bitcoinKit.fee(value, address, feeRate = feePriority.feeRate, pluginData = getPluginData())
+        return safeKit.fee(value, address, feeRate = feePriority.feeRate, pluginData = getPluginData())
     }
 
     private fun getPluginData(): MutableMap<Byte, IPluginData> {
@@ -214,13 +242,13 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     fun onRawTransactionClick(transactionHash: String) {
-        transactionRaw.postValue(bitcoinKit.getRawTransaction(transactionHash))
+        transactionRaw.postValue(safeKit.getRawTransaction(transactionHash))
     }
 
     fun setTransactionFilterType(transactionFilterType: TransactionFilterType?) {
         this.transactionFilterType = transactionFilterType
 
-        bitcoinKit.transactions(type = transactionFilterType).subscribe { txList: List<TransactionInfo> ->
+        safeKit.transactions(type = transactionFilterType).subscribe { txList: List<TransactionInfo> ->
             transactions.postValue(txList)
         }.let {
             disposables.add(it)

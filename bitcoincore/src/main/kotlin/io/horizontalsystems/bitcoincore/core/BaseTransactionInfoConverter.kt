@@ -34,12 +34,13 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
 
         fullTransaction.outputs.forEach { output ->
             val outputInfo = TransactionOutputInfo(mine = output.publicKeyPath != null,
-                    changeOutput = output.changeOutput,
-                    value = output.value,
-                    address = output.address,
-                    pluginId = output.pluginId,
-                    pluginDataString = output.pluginData,
-                    pluginData = pluginManager.parsePluginData(output, transaction.timestamp))
+                changeOutput = output.changeOutput,
+                value = output.value,
+                address = output.address,
+                pluginId = output.pluginId,
+                pluginDataString = output.pluginData,
+                unlockedHeight = output.unlockedHeight,
+                pluginData = pluginManager.parsePluginData(output, transaction.timestamp))
 
             outputsInfo.add(outputInfo)
         }

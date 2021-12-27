@@ -1,0 +1,51 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 23
+        targetSdkVersion 29
+        versionCode 1
+        versionName "0.4.1"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+        test.java.srcDirs += 'src/test/kotlin'
+    }
+
+    kotlinOptions { jvmTarget = '1.8' }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
+    implementation 'androidx.annotation:annotation:1.1.0'
+
+    // Room
+    implementation 'androidx.room:room-runtime:2.2.5'
+    implementation 'androidx.room:room-rxjava2:2.2.5'
+    kapt 'androidx.room:room-compiler:2.2.5'
+
+
+//    api project(':bitcoin-kit-android:dashkit')
+//    api project(':bitcoin-kit-android:hodler')
+    api project(':dashkit')
+    api project(':hodler')
+
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}

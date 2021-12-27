@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.serializers
 
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -37,7 +38,7 @@ object TransactionSerializer {
         //  outputs
         val outputCount = input.readVarInt()
         for (i in 0 until outputCount) {
-            outputs.add(OutputSerializer.deserialize(input, i))
+            outputs.add(OutputSerializer.deserialize(input, i , transaction.version))
         }
 
         //  extract witness data
@@ -46,7 +47,6 @@ object TransactionSerializer {
                 it.witness = InputSerializer.deserializeWitness(input)
             }
         }
-
         transaction.lockTime = input.readUnsignedInt()
 
         return FullTransaction(transaction, inputs, outputs)

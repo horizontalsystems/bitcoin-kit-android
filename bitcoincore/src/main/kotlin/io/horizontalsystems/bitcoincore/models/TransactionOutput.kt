@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Ignore
 import androidx.room.TypeConverter
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_1
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 /**
@@ -17,22 +18,22 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
  */
 
 @Entity(primaryKeys = ["transactionHash", "index"],
-        foreignKeys = [
-            ForeignKey(
-                    entity = PublicKey::class,
-                    parentColumns = ["path"],
-                    childColumns = ["publicKeyPath"],
-                    onUpdate = ForeignKey.SET_NULL,
-                    onDelete = ForeignKey.SET_NULL,
-                    deferred = true),
-            ForeignKey(
-                    entity = Transaction::class,
-                    parentColumns = ["hash"],
-                    childColumns = ["transactionHash"],
-                    onDelete = ForeignKey.CASCADE,
-                    onUpdate = ForeignKey.CASCADE,
-                    deferred = true)
-        ])
+    foreignKeys = [
+        ForeignKey(
+            entity = PublicKey::class,
+            parentColumns = ["path"],
+            childColumns = ["publicKeyPath"],
+            onUpdate = ForeignKey.SET_NULL,
+            onDelete = ForeignKey.SET_NULL,
+            deferred = true),
+        ForeignKey(
+            entity = Transaction::class,
+            parentColumns = ["hash"],
+            childColumns = ["transactionHash"],
+            onDelete = ForeignKey.CASCADE,
+            onUpdate = ForeignKey.CASCADE,
+            deferred = true)
+    ])
 
 class TransactionOutput() {
 
@@ -54,7 +55,14 @@ class TransactionOutput() {
     @Ignore
     var signatureScriptFunction: ((List<ByteArray>) -> ByteArray)? = null
 
-    constructor(value: Long, index: Int, script: ByteArray, type: ScriptType = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null): this() {
+    // UPDATE FOR SAFE TRANSACTION-OUTPUT
+    var unlockedHeight: Long? = null
+    var reserve: ByteArray? = null
+
+    constructor(value: Long, index: Int, script: ByteArray, type: ScriptType = ScriptType.UNKNOWN, address: String? = null, keyHash: ByteArray? = null, publicKey: PublicKey? = null,
+                unlockedHeight: Long? = null,
+                reserve: ByteArray? = null
+    ): this() {
         this.value = value
         this.lockingScript = script
         this.index = index
@@ -62,6 +70,10 @@ class TransactionOutput() {
         this.address = address
         this.keyHash = keyHash
         publicKey?.let { setPublicKey(it) }
+
+        // UPDATE FOR SAFE TRANSACTION-OUTPUT
+        this.unlockedHeight = unlockedHeight
+        this.reserve = reserve
     }
 
     fun setPublicKey(publicKey: PublicKey) {
