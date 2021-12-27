@@ -26,9 +26,14 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
 
-    implementation project(':bitcoincore')
-    implementation project(':bitcoinkit')
-    implementation project(':dashkit')
-    implementation project(':bitcoincashkit')
-    implementation project(':litecoinkit')
+//    implementation project(':bitcoincore')
+//    implementation project(':bitcoinkit')
+//    implementation project(':dashkit')
+//    implementation project(':bitcoincashkit')
+//    implementation project(':litecoinkit')
+    implementation project(':bitcoin-kit-android:bitcoincore')
+    implementation project(':bitcoin-kit-android:bitcoinkit')
+    implementation project(':bitcoin-kit-android:dashkit')
+    implementation project(':bitcoin-kit-android:bitcoincashkit')
+    implementation project(':bitcoin-kit-android:litecoinkit')
 }

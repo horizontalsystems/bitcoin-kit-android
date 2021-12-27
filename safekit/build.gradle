@@ -38,10 +38,11 @@ dependencies {
     kapt 'androidx.room:room-compiler:2.2.5'
 
 
-//    api project(':bitcoin-kit-android:dashkit')
-//    api project(':bitcoin-kit-android:hodler')
-    api project(':dashkit')
-    api project(':hodler')
+
+//    api project(':dashkit')
+//    api project(':hodler')
+    api project(':bitcoin-kit-android:dashkit')
+    api project(':bitcoin-kit-android:hodler')
 
 }
 

@@ -3,10 +3,16 @@ package io.horizontalsystems.hodler
 import io.horizontalsystems.bitcoincore.utils.Utils
 
 enum class LockTimeInterval(private val value: Int) {
-    hour(7),
-    month(5063),     //  30 * 24 * 60 * 60 / 512
-    halfYear(30881), // 183 * 24 * 60 * 60 / 512
-    year(61593);     // 365 * 24 * 60 * 60 / 512
+//    hour(7),
+//    month(5063),     //  30 * 24 * 60 * 60 / 512
+//    halfYear(30881), // 183 * 24 * 60 * 60 / 512
+//    year(61593),     // 365 * 24 * 60 * 60 / 512
+
+    month_1(1),
+    month_3(3),
+    month_6(6),
+    year_1(12),
+    year_3(36);
 
     private val sequenceTimeSecondsGranularity = 512
     private val relativeLockTimeLockMask = 0x400000 // (1 << 22)
@@ -20,6 +26,10 @@ enum class LockTimeInterval(private val value: Int) {
 
     fun serialize(): String {
         return value.toString()
+    }
+
+    fun value(): Int{
+        return value;
     }
 
     companion object {

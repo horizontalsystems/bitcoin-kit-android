@@ -43,7 +43,9 @@ dependencies {
     implementation 'androidx.room:room-rxjava2:2.2.5'
     kapt 'androidx.room:room-compiler:2.2.5'
 
-    api project(':bitcoincore')
+//    api project(':bitcoincore')
+    api project(':bitcoin-kit-android:bitcoincore')
+
 
     // Test helpers
     testImplementation 'junit:junit:4.13'
