@@ -79,8 +79,8 @@ object NetworkUtils {
             builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
             builder.connectTimeout(5000, TimeUnit.MILLISECONDS)
             builder.readTimeout(60000, TimeUnit.MILLISECONDS)
+//            builder.proxy(Proxy( Proxy.Type.HTTP , InetSocketAddress("47.89.208.160", 58972) ))
             builder.build()
-
         } catch (e: Exception) {
             throw RuntimeException(e)
         }

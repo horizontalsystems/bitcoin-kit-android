@@ -11,8 +11,11 @@ enum class LockTimeInterval(private val value: Int) {
     month_1(1),
     month_3(3),
     month_6(6),
+    month_9(9),
     year_1(12),
-    year_3(36);
+    year_3(36),
+    year_5(60),
+    year_10(120);
 
     private val sequenceTimeSecondsGranularity = 512
     private val relativeLockTimeLockMask = 0x400000 // (1 << 22)
