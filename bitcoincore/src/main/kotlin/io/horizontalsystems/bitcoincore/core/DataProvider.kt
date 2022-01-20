@@ -2,9 +2,12 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
@@ -83,8 +86,30 @@ class DataProvider(
         return Single.create { emitter ->
             val fromTransaction = fromUid?.let { storage.getValidOrInvalidTransaction(it) }
             val transactions = storage.getFullTransactionInfo(fromTransaction, type, limit)
-            emitter.onSuccess(transactions.map { transactionInfoConverter.transactionInfo(it) })
+//            emitter.onSuccess(transactions.map { transactionInfoConverter.transactionInfo(it) })
+            // 如果这个交易中的输出存在 reserve , 且不为正经交易，则忽略不显示这条交易数据
+            emitter.onSuccess(
+                transactions.filter {
+                    return@filter hasRightReserveOutput(it);
+                }.map {
+                    transactionInfoConverter.transactionInfo(it)
+                }
+            )
         }
+    }
+
+    private fun hasRightReserveOutput( transaction: FullTransactionInfo):Boolean{
+        transaction.outputs.forEach {
+            if ( it.reserve != null ){
+                val reserve = it.reserve!!;
+                if ( reserve.toHexString() != "73616665"  // 普通交易
+                    // coinbase 收益
+                    && reserve.toHexString() != "7361666573706f730100c2f824c4364195b71a1fcfa0a28ebae20f3501b21b08ae6d6ae8a3bca98ad9d64136e299eba2400183cd0a479e6350ffaec71bcaf0714a024d14183c1407805d75879ea2bf6b691214c372ae21939b96a695c746a6"){
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     fun getRawTransaction(transactionHash: String): String? {

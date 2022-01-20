@@ -14,7 +14,7 @@ object OutputSerializer {
         val lockingScript = input.readBytes(scriptLength.toInt())
         val index = vout.toInt()
         // 兼容 SAFE 交易
-        if ( txVersion >= 103 ){
+        if ( txVersion >= 102 ){
             val unlockedHeight = input.readLong();
             val reserveLength = input.readVarInt();
             val reserve = input.readBytes( reserveLength.toInt() );
