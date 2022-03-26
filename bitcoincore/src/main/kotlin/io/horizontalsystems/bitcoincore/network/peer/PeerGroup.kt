@@ -127,6 +127,8 @@ class PeerGroup(
             hostManager.addIps(peerIps)
         } else if (message is InvMessage) {
             inventoryItemsHandler?.handleInventoryItems(peer, message.inventory)
+        } else if (message is VersionMessage) {
+            hostManager.saveLastBlock(peer.host, message.lastBlock)
         }
     }
 

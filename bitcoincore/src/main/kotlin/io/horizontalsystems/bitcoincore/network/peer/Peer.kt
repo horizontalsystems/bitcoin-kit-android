@@ -129,6 +129,8 @@ class Peer(
         validatePeerVersion(message)
 
         announcedLastBlockHeight = message.lastBlock
+        // save lastBlock to node
+        listener.onReceiveMessage(this, message)
 
         peerConnection.sendMessage(VerAckMessage())
     } catch (e: Error.UnsuitablePeerVersion) {

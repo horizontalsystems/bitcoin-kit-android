@@ -77,7 +77,7 @@ class PluginManager : IRestoreKeyConverter {
             val plugin = checkNotNull(plugins[it.key])
 
             plugin.maximumSpendLimit()
-        }.min()
+        }.minOrNull()
     }
 
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {

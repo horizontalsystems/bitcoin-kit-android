@@ -36,6 +36,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.peerAddress.setSuccessConnectionTime(time, ip)
     }
 
+    override fun saveLastBlock(ip: String, lastBlock: Int) {
+        store.peerAddress.setLastBlock(ip, lastBlock)
+    }
+
     // BlockHash
 
     override fun getBlockHashesSortedBySequenceAndHeight(limit: Int): List<BlockHash> {

@@ -21,6 +21,7 @@ interface IStorage {
     fun deletePeerAddress(ip: String)
     fun setPeerAddresses(list: List<PeerAddress>)
     fun markConnected(ip: String, time: Long)
+    fun saveLastBlock(ip: String, lastBlock: Int)
 
     //  BlockHash
 
@@ -143,6 +144,7 @@ interface IPeerAddressManager {
     fun markFailed(ip: String)
     fun markSuccess(ip: String)
     fun markConnected(peer: Peer)
+    fun saveLastBlock(ip: String, lastBlock: Int)
 }
 
 interface IPeerAddressManagerListener {

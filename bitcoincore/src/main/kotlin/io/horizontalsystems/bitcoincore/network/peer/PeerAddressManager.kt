@@ -58,6 +58,10 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         storage.markConnected(peer.host, peer.connectionTime)
     }
 
+    override fun saveLastBlock(ip: String, lastBlock: Int) {
+        storage.saveLastBlock(ip, lastBlock)
+    }
+
     private fun getLeastScoreFastestPeer(): PeerAddress? {
         return storage.getLeastScoreFastestPeerAddressExcludingIps(state.getUsedPeers())
     }

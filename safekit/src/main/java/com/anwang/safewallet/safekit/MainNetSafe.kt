@@ -1,8 +1,15 @@
 package com.anwang.safewallet.safekit
 
+import android.content.Context
+import android.util.Log
 import io.horizontalsystems.bitcoincore.network.Network
+import io.reactivex.schedulers.Schedulers
 
-class MainNetSafe : Network() {
+class MainNetSafe(context: Context) : Network() {
+
+    init {
+        MainSafeNetService(context, this)
+    }
 
     override val protocolVersion = 70210
     override val noBloomVersion = 70201

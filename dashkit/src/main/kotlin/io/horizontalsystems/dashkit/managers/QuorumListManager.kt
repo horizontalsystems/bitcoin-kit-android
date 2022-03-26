@@ -51,7 +51,7 @@ class QuorumListManager(
     fun getQuorum(quorumType: QuorumType, requestId: ByteArray): Quorum {
         val typedQuorums = storage.getQuorumsByType(quorumType)
 
-        return typedQuorums.minWith(Comparator { quorum1, quorum2 ->
+        return typedQuorums.minWithOrNull(Comparator { quorum1, quorum2 ->
             val orderingHash1 = orderingHash(quorum1, requestId)
             val orderingHash2 = orderingHash(quorum2, requestId)
 
