@@ -55,6 +55,10 @@ class PeerAddressManager(private val network: Network) : IPeerAddressManager {
         state.setPeerConnectionTime(peer.host, peer.connectionTime)
     }
 
+    override fun saveLastBlock(ip: String, lastBlock: Int) {
+
+    }
+
     private fun getLeastScoreFastestPeer(): PeerAddress? {
         return state.getLeastScoreFastestPeerAddressExcludingIps(state.getUsedPeers())
     }
@@ -80,7 +84,7 @@ class PeerAddressManager(private val network: Network) : IPeerAddressManager {
 
         @Synchronized
         fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress? {
-            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.minBy { it.score }
+            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.minByOrNull { it.score }
         }
 
         @Synchronized
