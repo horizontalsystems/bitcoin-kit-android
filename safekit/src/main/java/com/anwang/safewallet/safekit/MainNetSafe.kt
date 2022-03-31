@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import io.horizontalsystems.bitcoincore.network.Network
 import io.reactivex.schedulers.Schedulers
+import java.util.*
 
 class MainNetSafe(context: Context) : Network() {
 
@@ -39,4 +40,22 @@ class MainNetSafe(context: Context) : Network() {
             "47.89.208.160",
             "47.74.13.245"
     )
+
+    override fun isMainNode(ip: String?): Boolean {
+        if (ip.isNullOrBlank()) {
+            return true
+        }
+        return dnsSeeds.contains(ip)
+    }
+
+    override fun getMainNodeIp(list: List<String>): String? {
+        if (list.isNullOrEmpty()) {
+            return dnsSeeds[Random().nextInt(dnsSeeds.size)]
+        }
+        val notConnectIp = dnsSeeds.filter { !list.contains(it) }
+        if (notConnectIp.isNullOrEmpty()) {
+            return null
+        }
+        return notConnectIp[Random().nextInt(notConnectIp.size)]
+    }
 }

@@ -33,4 +33,12 @@ abstract class Network {
 
     open val sigHashForked: Boolean = false
     open val sigHashValue = Sighash.ALL
+
+    open fun isMainNode(ip: String?): Boolean {
+        return true
+    }
+
+    open fun getMainNodeIp(list: List<String>): String? {
+        return ""
+    }
 }

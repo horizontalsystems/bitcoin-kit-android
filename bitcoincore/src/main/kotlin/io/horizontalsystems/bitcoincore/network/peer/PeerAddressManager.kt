@@ -26,6 +26,13 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
 
     override fun getIp(): String? {
         val peerAddress = getLeastScoreFastestPeer()
+        // Safe 优先从主节点中取节点同步
+        if (!network.isMainNode(peerAddress?.ip)) {
+            val ip = network.getMainNodeIp(state.getUsedPeers())
+            if (ip != null) {
+                return ip
+            }
+        }
         if (peerAddress == null) {
             peerDiscover.lookup(network.dnsSeeds)
             return null
