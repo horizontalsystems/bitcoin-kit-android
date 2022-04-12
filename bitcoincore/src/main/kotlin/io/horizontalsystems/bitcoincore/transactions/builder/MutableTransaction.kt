@@ -10,6 +10,8 @@ class MutableTransaction(isOutgoing: Boolean = true) {
 
     var unlockedHeight : Long? = null
 
+    var reverseHex: String? = null
+
     var transaction = Transaction(2, 0)
     val inputsToSign = mutableListOf<InputToSign>()
     var outputs = listOf<TransactionOutput>()
