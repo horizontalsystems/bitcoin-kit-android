@@ -64,7 +64,7 @@ class PeerConnection(
                 // try receive message:
                 while (isRunning && inputStream.available() > 0) {
                     val parsedMsg = networkMessageParser.parseMessage(bitcoinInput)
-                    logger.info("<= $parsedMsg")
+//                    logger.info("<= $parsedMsg")
                     listener.onMessage(parsedMsg)
                 }
             }
