@@ -1,13 +1,13 @@
 package com.anwang.safewallet.safekit.model
 
-data class SafeNet(
+data class SafeInfo(
     val safe_usdt: String,
     val minamount: String,
-    val eth: SafeChain,
-    val bsc: SafeChain
+    val eth: ChainInfo,
+    val bsc: ChainInfo
 )
 
-data class SafeChain(
+data class ChainInfo(
     val price: String,
     val gas_price_gwei: String,
     val safe_fee: String,

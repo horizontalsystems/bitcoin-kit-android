@@ -1,6 +1,6 @@
 package com.anwang.safewallet.safekit.netwok
 
-import com.anwang.safewallet.safekit.model.SafeNet
+import com.anwang.safewallet.safekit.model.SafeInfo
 import io.reactivex.Single
 import retrofit2.http.GET
 
@@ -11,12 +11,12 @@ class SafeProvider(baseUrl: String) {
             .create(SafeService::class.java)
     }
 
-    fun getSafeNet(): Single<SafeNet> {
-        return service.getSafeNet()
+    fun getSafeInfo(): Single<SafeInfo> {
+        return service.getSafeInfo()
     }
 
     private interface SafeService {
         @GET("v1/gate/testnet")
-        fun getSafeNet(): Single<SafeNet>
+        fun getSafeInfo(): Single<SafeInfo>
     }
 }
