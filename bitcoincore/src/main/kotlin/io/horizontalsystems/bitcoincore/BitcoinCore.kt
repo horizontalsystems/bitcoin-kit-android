@@ -455,19 +455,21 @@ class BitcoinCore(
 
     fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>
              , unlockedHeight: Long?     // UPDATE FOR SAFE
+             , reverseHex: String?     // UPDATE FOR SAFE
     ): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData, unlockedHeight)
+        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData, unlockedHeight, reverseHex)
     }
 
     fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType
              , unlockedHeight: Long?    // UPDATE FOR SAFE
+             , reverseHex: String?     // UPDATE FOR SAFE
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf(),unlockedHeight)
+        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf(), unlockedHeight, reverseHex)
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
-        return transactionCreator.create(unspentOutput, address, feeRate, sortType,null)
+        return transactionCreator.create(unspentOutput, address, feeRate, sortType, null, null)
     }
 
     fun receiveAddress(): String {

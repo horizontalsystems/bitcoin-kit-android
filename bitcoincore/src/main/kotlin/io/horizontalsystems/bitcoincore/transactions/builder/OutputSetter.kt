@@ -39,15 +39,20 @@ class OutputSetter(private val transactionDataSorterFactory: ITransactionDataSor
          */
         val toAddress = transaction.recipientAddress.string
         val unlockedHeight = transaction.unlockedHeight;
-        if ( unlockedHeight != null ){
+        val reverseHex = transaction.reverseHex;
+        if (unlockedHeight != null || reverseHex != null) {
             transaction.transaction.version = 103;
-            sorted.forEach{ transactionOutput ->
-                if ( transactionOutput.address.equals(toAddress) ){
+            sorted.forEach { transactionOutput ->
+                if (transactionOutput.address.equals(toAddress) && unlockedHeight != null) {
                     transactionOutput.unlockedHeight = unlockedHeight
-                }else{
+                } else {
                     transactionOutput.unlockedHeight = 0
                 }
-                transactionOutput.reserve = "73616665".hexToByteArray();
+                if (transactionOutput.address.equals(toAddress) && reverseHex != null) {
+                    transactionOutput.reserve = reverseHex.hexToByteArray();
+                } else {
+                    transactionOutput.reserve = "73616665".hexToByteArray();
+                }
             }
         }
 

@@ -14,16 +14,16 @@ class TransactionCreator(
     private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>,unlockedHeight:Long?): FullTransaction {
+    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>, unlockedHeight:Long?, reverseHex: String?): FullTransaction {
         return create {
-            builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData, unlockedHeight)
+            builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData, unlockedHeight, reverseHex)
         }
     }
 
     @Throws
-    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType,unlockedHeight:Long?): FullTransaction {
+    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType, unlockedHeight:Long?, reverseHex: String?): FullTransaction {
         return create {
-            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType,unlockedHeight)
+            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType, unlockedHeight, reverseHex)
         }
     }
 
