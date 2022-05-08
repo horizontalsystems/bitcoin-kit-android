@@ -5,8 +5,12 @@ import android.util.Log
 import io.horizontalsystems.bitcoincore.network.Network
 import io.reactivex.schedulers.Schedulers
 import java.util.*
+import java.util.logging.Logger
+import kotlin.collections.ArrayList
 
 class MainNetSafe(context: Context) : Network() {
+
+    private val logger = Logger.getLogger("MainNetSafe")
 
     init {
         MainSafeNetService(context, this)
@@ -31,7 +35,6 @@ class MainNetSafe(context: Context) : Network() {
     override var dnsSeeds = listOf(
             "120.78.227.96",
             "114.215.31.37",
-            "47.95.23.220",
             "47.96.254.235",
             "106.14.66.206",
             "47.52.9.168",
@@ -40,6 +43,8 @@ class MainNetSafe(context: Context) : Network() {
             "47.89.208.160",
             "47.74.13.245"
     )
+
+    val connectFailedIp = ArrayList<String>()
 
     override fun isMainNode(ip: String?): Boolean {
         if (ip.isNullOrBlank()) {
@@ -52,10 +57,17 @@ class MainNetSafe(context: Context) : Network() {
         if (list.isNullOrEmpty()) {
             return dnsSeeds[Random().nextInt(dnsSeeds.size)]
         }
-        val notConnectIp = dnsSeeds.filter { !list.contains(it) }
+        val notConnectIp = dnsSeeds.filter { !list.contains(it) && !connectFailedIp.contains(it) }
         if (notConnectIp.isNullOrEmpty()) {
             return null
         }
         return notConnectIp[Random().nextInt(notConnectIp.size)]
+    }
+
+    override fun markedFailed(ip: String?) {
+        ip?.let {
+            logger.info("main node connect fail: $it")
+            connectFailedIp.add(it)
+        }
     }
 }

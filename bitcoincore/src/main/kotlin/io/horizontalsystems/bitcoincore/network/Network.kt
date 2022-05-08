@@ -41,4 +41,8 @@ abstract class Network {
     open fun getMainNodeIp(list: List<String>): String? {
         return ""
     }
+
+    open fun markedFailed(ip: String?) {
+
+    }
 }
