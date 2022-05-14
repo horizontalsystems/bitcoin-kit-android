@@ -38,8 +38,8 @@ class PeerGroup(
     private var running = false
     private val logger = Logger.getLogger("PeerGroup")
     private val peerGroupListeners = mutableListOf<Listener>()
-    private val executorService = Executors.newScheduledThreadPool(150)
-    private val peerThreadPool = Executors.newCachedThreadPool()
+    private val executorService = Executors.newFixedThreadPool(30)
+    private val peerThreadPool = Executors.newFixedThreadPool(100)
 
     private val acceptableBlockHeightDifference = 50_000
     private var peerCountToConnectMax = 100
