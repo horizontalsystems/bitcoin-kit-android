@@ -18,6 +18,7 @@ interface IStorage {
     //  PeerAddress
 
     fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress?
+    fun getLeastScoreFastestPeerAddressExcludingIpsSafe(ips: List<String>): PeerAddress?
     fun deletePeerAddress(ip: String)
     fun setPeerAddresses(list: List<PeerAddress>)
     fun markConnected(ip: String, time: Long)

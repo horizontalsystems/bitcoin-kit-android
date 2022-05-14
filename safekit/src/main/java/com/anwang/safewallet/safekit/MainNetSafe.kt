@@ -70,4 +70,8 @@ class MainNetSafe(context: Context) : Network() {
             connectFailedIp.add(it)
         }
     }
+
+    override fun isSafe(): Boolean {
+        return true
+    }
 }

@@ -45,4 +45,8 @@ abstract class Network {
     open fun markedFailed(ip: String?) {
 
     }
+
+    open fun isSafe(): Boolean {
+        return false
+    }
 }
