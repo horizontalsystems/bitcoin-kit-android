@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.ReConnectVpn
 import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.SentTransaction
@@ -41,6 +42,7 @@ class TransactionSender(
 
     fun canSendTransaction() {
         if (getPeersToSend().isEmpty()) {
+            ReConnectVpn.reConnectVpn()
             throw PeerGroup.Error("peers not synced")
         }
     }
