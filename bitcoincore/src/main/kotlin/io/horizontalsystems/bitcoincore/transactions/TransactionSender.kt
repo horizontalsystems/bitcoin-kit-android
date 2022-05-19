@@ -42,7 +42,6 @@ class TransactionSender(
 
     fun canSendTransaction() {
         if (getPeersToSend().isEmpty()) {
-            ReConnectVpn.reConnectVpn()
             throw PeerGroup.Error("peers not synced")
         }
     }

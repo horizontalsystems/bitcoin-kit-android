@@ -1,5 +1,6 @@
 package io.horizontalsystems.dashkit.managers
 
+import android.util.Log
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.blocks.IPeerSyncListener
 import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
@@ -40,14 +41,20 @@ class MasternodeListSyncer(
             if (workingPeer == null) {
                 bitcoinCore.lastBlockInfo?.let { lastBlockInfo ->
                     initialBlockDownload.syncedPeers.firstOrNull()?.let { syncedPeer ->
-                        val blockHash = lastBlockInfo.headerHash.toReversedByteArray()
-                        val baseBlockHash = masternodeListManager.baseBlockHash
+                        //  Safe 屏蔽  RequestMasternodeListDiffTask 请求
+                        if (!syncedPeer.isSafe()) {
+                            val blockHash = lastBlockInfo.headerHash.toReversedByteArray()
+                            val baseBlockHash = masternodeListManager.baseBlockHash
 
-                        if (!blockHash.contentEquals(baseBlockHash)) {
-                            val task = peerTaskFactory.createRequestMasternodeListDiffTask(baseBlockHash, blockHash)
-                            syncedPeer.addTask(task)
+                            if (!blockHash.contentEquals(baseBlockHash)) {
+                                val task = peerTaskFactory.createRequestMasternodeListDiffTask(
+                                    baseBlockHash,
+                                    blockHash
+                                )
+                                syncedPeer.addTask(task)
 
-                            workingPeer = syncedPeer
+                                workingPeer = syncedPeer
+                            }
                         }
                     }
                 }

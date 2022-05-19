@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.core.IPeerAddressManagerListener
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.PeerAddress
 import io.horizontalsystems.bitcoincore.network.Network
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.logging.Logger
 
 class PeerAddressManager(private val network: Network, private val storage: IStorage) : IPeerAddressManager {
@@ -25,7 +26,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         }
 
     override fun getIp(): String? {
-        var peerAddress = if (network.isSafe()) {
+        /*var peerAddress = if (network.isSafe()) {
             getLeastScoreFastestPeerSafe()
         } else {
             getLeastScoreFastestPeer()
@@ -37,7 +38,9 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
                 return ip
             }
             peerAddress = getLeastScoreFastestPeer()
-        }
+        }*/
+        var peerAddress = getLeastScoreFastestPeer()
+
         if (peerAddress == null) {
             peerDiscover.lookup(network.dnsSeeds)
             return null

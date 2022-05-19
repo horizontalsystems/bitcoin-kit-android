@@ -193,4 +193,8 @@ class Peer(
     open class Error(message: String) : Exception(message) {
         class UnsuitablePeerVersion(message: String) : Error(message)
     }
+
+    fun isSafe(): Boolean {
+        return network.isSafe()
+    }
 }
