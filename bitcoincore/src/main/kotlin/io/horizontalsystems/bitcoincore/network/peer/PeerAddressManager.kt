@@ -26,7 +26,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         }
 
     override fun getIp(): String? {
-        /*var peerAddress = if (network.isSafe()) {
+        var peerAddress = if (network.isSafe()) {
             getLeastScoreFastestPeerSafe()
         } else {
             getLeastScoreFastestPeer()
@@ -38,8 +38,8 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
                 return ip
             }
             peerAddress = getLeastScoreFastestPeer()
-        }*/
-        var peerAddress = getLeastScoreFastestPeer()
+        }
+//        var peerAddress = getLeastScoreFastestPeer()
 
         if (peerAddress == null) {
             peerDiscover.lookup(network.dnsSeeds)
