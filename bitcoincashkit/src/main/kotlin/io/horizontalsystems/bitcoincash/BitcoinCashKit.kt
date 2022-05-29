@@ -18,6 +18,7 @@ import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjust
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
+import io.horizontalsystems.bitcoincore.managers.ConnectionManager
 import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -56,18 +57,20 @@ class BitcoinCashKit : AbstractKit {
         }
 
     constructor(
-            context: Context,
-            words: List<String>,
-            passphrase: String,
-            walletId: String,
-            networkType: NetworkType = NetworkType.MainNet(MainNetBitcoinCash.CoinType.Type145),
-            peerSize: Int = 10,
-            syncMode: SyncMode = SyncMode.Api(),
-            confirmationsThreshold: Int = 6
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+        context: Context,
+        connectionManager: ConnectionManager,
+        words: List<String>,
+        passphrase: String,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet(MainNetBitcoinCash.CoinType.Type145),
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6
+    ) : this(context, connectionManager, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             seed: ByteArray,
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet(MainNetBitcoinCash.CoinType.Type145),
@@ -126,6 +129,7 @@ class BitcoinCashKit : AbstractKit {
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
                 .setBlockValidator(blockValidatorSet)
+                .setConnectionManager(connectionManager)
                 .build()
 
         //  extending bitcoinCore

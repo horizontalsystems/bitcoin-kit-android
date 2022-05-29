@@ -35,6 +35,7 @@ class PeerAddressManager(private val network: Network, private val storage: ISto
         if (!network.isMainNode(peerAddress?.ip)) {
             val ip = network.getMainNodeIp(state.getUsedPeers())
             if (ip != null) {
+                state.add(ip)
                 return ip
             }
             peerAddress = getLeastScoreFastestPeer()

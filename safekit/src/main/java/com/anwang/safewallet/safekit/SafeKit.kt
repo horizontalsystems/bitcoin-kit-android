@@ -72,6 +72,7 @@ class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             words: List<String>,
             passphrase: String,
             walletId: String,
@@ -79,10 +80,11 @@ class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             peerSize: Int = 10,
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+    ) : this(context,connectionManager, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             seed: ByteArray,
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
@@ -143,6 +145,7 @@ class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .setInitialSyncApi(initialSyncApi)
                 .setTransactionInfoConverter(dashTransactionInfoConverter)
                 .setBlockValidator(blockValidatorSet)
+                .setConnectionManager(connectionManager)
 //                .addPlugin(HodlerPlugin(coreBuilder.addressConverter, coreStorage, BlockMedianTimeHelper(coreStorage)))
                 .build()
 

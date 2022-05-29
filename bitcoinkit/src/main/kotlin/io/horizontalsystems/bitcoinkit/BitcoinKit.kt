@@ -64,6 +64,7 @@ class BitcoinKit : AbstractKit {
      */
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             words: List<String>,
             passphrase: String,
             walletId: String,
@@ -73,7 +74,7 @@ class BitcoinKit : AbstractKit {
             confirmationsThreshold: Int = 6,
             bip: Bip = Bip.BIP44
 
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+    ) : this(context, connectionManager, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
 
 
@@ -91,6 +92,7 @@ class BitcoinKit : AbstractKit {
 
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             seed: ByteArray,
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
@@ -153,6 +155,7 @@ class BitcoinKit : AbstractKit {
                 .setBlockValidator(blockValidatorSet)
                 .setHandleAddrMessage(false)
                 .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
+                .setConnectionManager(connectionManager)
                 .build()
 
         //  extending bitcoinCore

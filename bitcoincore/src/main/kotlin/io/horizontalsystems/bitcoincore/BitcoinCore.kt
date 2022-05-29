@@ -54,6 +54,8 @@ class BitcoinCoreBuilder {
     private val plugins = mutableListOf<IPlugin>()
     private var handleAddrMessage = true
 
+    private var connectionManager:ConnectionManager? = null
+
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
         return this
@@ -138,8 +140,14 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setConnectionManager(connectionManager: ConnectionManager): BitcoinCoreBuilder {
+        this.connectionManager = connectionManager
+        return this
+    }
+
     fun build(): BitcoinCore {
-        val context = checkNotNull(this.context)
+//        val context = checkNotNull(this.context)
+        val connectionManager = checkNotNull(this.connectionManager)
         val seed = checkNotNull(this.seed ?: words?.let { Mnemonic().toSeed(it) })
         val network = checkNotNull(this.network)
         val paymentAddressParser = checkNotNull(this.paymentAddressParser)
@@ -161,7 +169,7 @@ class BitcoinCoreBuilder {
 
         val dataProvider = DataProvider(storage, unspentOutputProvider, transactionInfoConverter)
 
-        val connectionManager = ConnectionManager(context)
+//        val connectionManager = ConnectionManager(context)
 
         val hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
 

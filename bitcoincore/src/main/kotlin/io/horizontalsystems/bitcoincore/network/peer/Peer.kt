@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
 import io.horizontalsystems.bitcoincore.crypto.BloomFilter
+import io.horizontalsystems.bitcoincore.network.ExecutorsUtil
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.*
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
@@ -46,6 +47,7 @@ class Peer(
 
     fun close(disconnectError: Exception? = null) {
         peerConnection.close(disconnectError)
+        ExecutorsUtil.getPeerThreadPool().remove(peerConnection)
     }
 
     fun addTask(task: PeerTask) {

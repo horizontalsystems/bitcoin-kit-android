@@ -41,6 +41,7 @@ class LitecoinKit : AbstractKit {
 
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             words: List<String>,
             passphrase: String,
             walletId: String,
@@ -49,10 +50,11 @@ class LitecoinKit : AbstractKit {
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6,
             bip: Bip = Bip.BIP44
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+    ) : this(context, connectionManager, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
 
     constructor(
             context: Context,
+            connectionManager: ConnectionManager,
             seed: ByteArray,
             walletId: String,
             networkType: NetworkType = NetworkType.MainNet,
@@ -113,6 +115,7 @@ class LitecoinKit : AbstractKit {
                 .setStorage(storage)
                 .setInitialSyncApi(initialSyncApi)
                 .setBlockValidator(blockValidatorSet)
+                .setConnectionManager(connectionManager)
                 .build()
 
         //  extending bitcoinCore

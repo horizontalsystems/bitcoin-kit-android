@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.network.peer
 
 import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.network.ExecutorsUtil
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.IMessage
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
@@ -78,6 +79,7 @@ class PeerConnection(
             inputStream = null
 
             listener.disconnected(disconnectError)
+            ExecutorsUtil.getPeerThreadPool().remove(this)
         }
     }
 
