@@ -3,11 +3,13 @@ package io.horizontalsystems.tools
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.utils.HashUtils
+import java.util.logging.Level
+import java.util.logging.Logger
 
 fun main() {
-//    Logger.getLogger("").level = Level.SEVERE
-//    syncCheckpoints()
-    buildCustomCheckpoint()
+    Logger.getLogger("").level = Level.SEVERE
+    syncCheckpoints()
+//    buildCustomCheckpoint()
 }
 
 private fun syncCheckpoints() {

@@ -8,11 +8,10 @@ import java.util.*
 import java.util.logging.Logger
 import kotlin.collections.ArrayList
 
-class MainNetSafe(context: Context) : Network() {
+class MainNetSafe() : Network() {
 
     private val logger = Logger.getLogger("MainNetSafe")
-
-    init {
+    constructor(context: Context) : this() {
         MainSafeNetService(context, this)
     }
 

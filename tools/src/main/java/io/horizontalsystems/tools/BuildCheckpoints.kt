@@ -1,5 +1,7 @@
 package io.horizontalsystems.tools
 
+import com.anwang.safewallet.safekit.MainNetSafe
+import com.anwang.safewallet.safekit.TestNetSafe
 import io.horizontalsystems.bitcoincash.MainNetBitcoinCash
 import io.horizontalsystems.bitcoincash.TestNetBitcoinCash
 import io.horizontalsystems.bitcoincore.extensions.toHexString
@@ -35,6 +37,10 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         // Litecoin
         it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
         it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
+
+        // Safe
+        it.add(CheckpointSyncer(MainNetSafe(), 2017, 2, this))
+        it.add(CheckpointSyncer(TestNetSafe(), 2017, 2, this))
     }
 
     fun build(checkpoint: Block) {
@@ -49,7 +55,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
 
     override fun onSync(network: Network, checkpoints: List<Block>) {
         val networkName = network.javaClass.simpleName
-        val checkpointFile = "${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
+        val checkpointFile = "D:/bitcoin/bitcoin/bitcoin-kit-android/${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
 
         writeCheckpoints(checkpointFile, checkpoints)
 
@@ -102,6 +108,8 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
             is TestNetDash -> "dashkit"
             is MainNetLitecoin,
             is TestNetLitecoin -> "litecoinkit"
+            is MainNetSafe,
+            is TestNetSafe -> "safekit"
             else -> throw Exception("Invalid network")
         }
     }
