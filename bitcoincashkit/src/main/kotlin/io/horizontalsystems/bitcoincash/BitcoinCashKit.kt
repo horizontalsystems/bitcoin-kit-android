@@ -16,8 +16,10 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
+import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
+import io.horizontalsystems.bitcoincore.managers.BlockchainComApi
 import io.horizontalsystems.bitcoincore.managers.InsightApi
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -77,21 +79,20 @@ class BitcoinCashKit : AbstractKit {
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val storage = Storage(database)
-        val initialSyncUrl: String
+        val initialSyncApi: IInitialSyncApi
 
         network = when (networkType) {
             is NetworkType.MainNet -> {
-                initialSyncUrl = "https://explorer.api.bitcoin.com/bch/v1"
+                initialSyncApi = BlockchainComApi("https://api.haskoin.com/bch/blockchain", "https://api.blocksdecoded.com/v1/blockchains/bitcoin-cash")
                 MainNetBitcoinCash(networkType.coinType)
             }
             NetworkType.TestNet -> {
-                initialSyncUrl = "https://explorer.api.bitcoin.com/tbch/v1"
+                initialSyncApi = InsightApi("https://explorer.api.bitcoin.com/tbch/v1")
                 TestNetBitcoinCash()
             }
         }
 
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
-        val initialSyncApi = InsightApi(initialSyncUrl)
 
         val blockValidatorSet = BlockValidatorSet()
         blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
