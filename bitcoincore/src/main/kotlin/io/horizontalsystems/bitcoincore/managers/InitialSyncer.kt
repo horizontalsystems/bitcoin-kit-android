@@ -36,7 +36,7 @@ class InitialSyncer(
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         { (publicKeys, blockHashes) ->
-                            val sortedUniqueBlockHashes = blockHashes.distinct().sortedBy { it.height }
+                            val sortedUniqueBlockHashes = blockHashes.distinctBy { it.height }.sortedBy { it.height }
 
                             handle(account, publicKeys, sortedUniqueBlockHashes)
                         },
