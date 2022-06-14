@@ -1,21 +1,19 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import com.eclipsesource.json.JsonValue
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import java.lang.Integer.min
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 
 class BlockchainComApi(transactionApiUrl: String, blocksApiUrl: String) : IInitialSyncApi {
 
     private val transactionsApiManager = ApiManager(transactionApiUrl)
     private val blocksApiManager = ApiManager(blocksApiUrl)
 
-    companion object {
-        private const val paginationLimit = 100
-        private const val addressesLimit = 50
-    }
-
     private fun getTransactions(addresses: List<String>, offset: Int = 0): List<TransactionResponse> {
         val joinedAddresses = addresses.joinToString("|")
-        val json = transactionsApiManager.doOkHttpGet(false, "multiaddr?active=$joinedAddresses&n=${paginationLimit}&offset=$offset").asObject()
+        val json = requestInQueue(transactionsApiManager, "multiaddr?active=$joinedAddresses&n=${paginationLimit}&offset=$offset").asObject()
 
         val transactionsArray = json["txs"].asArray()
 
@@ -109,5 +107,22 @@ class BlockchainComApi(transactionApiUrl: String, blocksApiUrl: String) : IIniti
         val height: Int,
         val hash: String
     )
+
+    companion object {
+        private const val paginationLimit = 100
+        private const val addressesLimit = 50
+
+        private val executor = Executors.newSingleThreadExecutor()
+
+        fun requestInQueue(apiManager: ApiManager, path: String): JsonValue {
+            val callable = Callable {
+                Thread.sleep(500)
+                apiManager.doOkHttpGet(false, path)
+            }
+
+            return executor.submit(callable).get()
+        }
+
+    }
 
 }
