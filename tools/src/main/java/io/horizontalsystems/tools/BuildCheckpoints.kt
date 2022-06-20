@@ -39,8 +39,8 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
 
         // Safe
-        it.add(CheckpointSyncer(MainNetSafe(), 2017, 2, this))
-        it.add(CheckpointSyncer(TestNetSafe(), 2017, 2, this))
+      //  it.add(CheckpointSyncer(MainNetSafe(), 2017, 2, this))
+      //  it.add(CheckpointSyncer(TestNetSafe(), 2017, 2, this))
     }
 
     fun build(checkpoint: Block) {
@@ -55,7 +55,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
 
     override fun onSync(network: Network, checkpoints: List<Block>) {
         val networkName = network.javaClass.simpleName
-        val checkpointFile = "D:/bitcoin/bitcoin/bitcoin-kit-android/${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
+        val checkpointFile = "D:/SafeWallet/Soft/up-down/bitcoin-kit-android/${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
 
         writeCheckpoints(checkpointFile, checkpoints)
 
