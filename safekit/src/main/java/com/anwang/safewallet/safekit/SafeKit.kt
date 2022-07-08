@@ -117,7 +117,7 @@ class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
         dashTransactionInfoConverter = DashTransactionInfoConverter(instantTransactionManager)
 
-        val blockHelper = BlockValidatorHelper(coreStorage)
+//        val blockHelper = BlockValidatorHelper(coreStorage)
 
         val blockValidatorSet = BlockValidatorSet()
         blockValidatorSet.addBlockValidator(SafeSPOSBlockValidator())

@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
+import io.horizontalsystems.bitcoincore.utils.JsonUtils
 
 class MutableTransaction(isOutgoing: Boolean = true) {
 
@@ -31,10 +32,19 @@ class MutableTransaction(isOutgoing: Boolean = true) {
     }
 
     fun getPluginDataOutputSize(): Int {
-        return if (pluginData.isNotEmpty()) {
-            1 + pluginData.map { 1 + it.value.size }.sum()
+        if (reverseHex != null && !reverseHex!!.startsWith("73616665")) {
+            val lineLock = JsonUtils.stringToObj(reverseHex!!)
+            return if (pluginData.isNotEmpty()) {
+                lineLock.outputSize + pluginData.map { 1 + it.value.size }.sum()
+            } else {
+                0
+            }
         } else {
-            0
+            return if (pluginData.isNotEmpty()) {
+                1 + pluginData.map { 1 + it.value.size }.sum()
+            } else {
+                0
+            }
         }
     }
 

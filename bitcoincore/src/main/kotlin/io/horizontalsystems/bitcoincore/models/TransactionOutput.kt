@@ -80,6 +80,11 @@ class TransactionOutput() {
         this.publicKeyPath = publicKey.path
         this.changeOutput = !publicKey.external
     }
+
+    override fun toString(): String {
+        return "TransactionOutput(value=$value, lockingScript=${lockingScript.contentToString()}, redeemScript=${redeemScript?.contentToString()}, index=$index, transactionHash=${transactionHash.contentToString()}, publicKeyPath=$publicKeyPath, changeOutput=$changeOutput, scriptType=$scriptType, keyHash=${keyHash?.contentToString()}, address=$address, failedToSpend=$failedToSpend, pluginId=$pluginId, pluginData=$pluginData, signatureScriptFunction=$signatureScriptFunction, unlockedHeight=$unlockedHeight, reserve=${reserve?.contentToString()})"
+    }
+
 }
 
 class ScriptTypeConverter {
