@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.utils
 
 import org.json.JSONObject
+import java.math.BigDecimal
 
 object JsonUtils {
 
@@ -17,7 +18,7 @@ object JsonUtils {
     fun stringToObj(str: String): LineLock {
         val json = JSONObject(str)
         val lastHeight = json.optLong("lastHeight")
-        val lockedValue = json.optLong("lockedValue")
+        val lockedValue = json.optString("lockedValue")
         val startMonth = json.optInt("startMonth")
         val intervalMonth = json.optInt("intervalMonth")
         val outputSize = json.optInt("outputSize")
@@ -26,11 +27,14 @@ object JsonUtils {
 
     class LineLock(
         var lastHeight: Long,
-        val lockedValue: Long,
+        var lockedValue: String,
         val startMonth: Int,
         val intervalMonth: Int,
         val outputSize: Int
     ) {
+        override fun toString(): String {
+            return "LineLock(lastHeight=$lastHeight, lockedValue='$lockedValue', startMonth=$startMonth, intervalMonth=$intervalMonth, outputSize=$outputSize)"
+        }
     }
 
 }

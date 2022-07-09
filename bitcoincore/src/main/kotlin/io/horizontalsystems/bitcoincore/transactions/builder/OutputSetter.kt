@@ -22,7 +22,7 @@ class OutputSetter(private val transactionDataSorterFactory: ITransactionDataSor
                 for (index in 0 .. size) {
                     val step = 86400 * (lineLock!!.startMonth + lineLock!!.intervalMonth * index)
                     val unlockedHeight = (lineLock!!.lastHeight).plus( step )
-                    list.add(TransactionOutput(lineLock!!.lockedValue, 0, it.lockingScript, it.scriptType, it.string, it.hash, null, unlockedHeight, "73616665".hexToByteArray()))
+                    list.add(TransactionOutput(lineLock!!.lockedValue.toLong(), 0, it.lockingScript, it.scriptType, it.string, it.hash, null, unlockedHeight, "73616665".hexToByteArray()))
                 }
             } else {
                 list.add(TransactionOutput(transaction.recipientValue, 0, it.lockingScript, it.scriptType, it.string, it.hash))
