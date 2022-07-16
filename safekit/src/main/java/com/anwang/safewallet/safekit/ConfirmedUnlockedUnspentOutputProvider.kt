@@ -30,4 +30,13 @@ class ConfirmedUnlockedUnspentOutputProvider(private val storage: IStorage, priv
 
     }
 
+    fun getLockUxto(): List<UnspentOutput> {
+        return storage.getUnspentOutputs().filter { isLock(it) }
+    }
+
+    private fun isLock(unspentOutput: UnspentOutput): Boolean {
+        val unlockedHeight = unspentOutput.output.unlockedHeight ?: return false;
+        return unlockedHeight > 0;
+    }
+
 }

@@ -6,17 +6,15 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
-import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
-import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.*
-import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.models.BalanceInfo
+import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
-import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
@@ -41,11 +39,7 @@ import io.horizontalsystems.dashkit.models.InstantTransactionState
 import io.horizontalsystems.dashkit.storage.DashKitDatabase
 import io.horizontalsystems.dashkit.storage.DashStorage
 import io.horizontalsystems.dashkit.tasks.PeerTaskFactory
-import io.horizontalsystems.dashkit.validators.DarkGravityWaveTestnetValidator
-import io.horizontalsystems.dashkit.validators.DarkGravityWaveValidator
 import io.horizontalsystems.hdwalletkit.Mnemonic
-import io.horizontalsystems.hodler.HodlerPlugin
-import io.reactivex.Single
 
 class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     enum class NetworkType {
@@ -69,6 +63,11 @@ class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     private val dashStorage: DashStorage
     private val instantSend: InstantSend
     private val dashTransactionInfoConverter: DashTransactionInfoConverter
+    private val confirmedUnlockedUnspentOutputProvider: ConfirmedUnlockedUnspentOutputProvider
+
+    fun getConfirmedUnlockedUnspentOutputProvider(): ConfirmedUnlockedUnspentOutputProvider{
+        return confirmedUnlockedUnspentOutputProvider
+    }
 
     constructor(
             context: Context,
@@ -197,7 +196,7 @@ class SafeKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
 
         val calculator = TransactionSizeCalculator()
         // ADD NEW OUTPUT PROVIDER FOR UNLOCKED
-        val confirmedUnlockedUnspentOutputProvider = ConfirmedUnlockedUnspentOutputProvider(coreStorage, confirmationsThreshold)
+        confirmedUnlockedUnspentOutputProvider = ConfirmedUnlockedUnspentOutputProvider(coreStorage, confirmationsThreshold)
         bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(calculator, confirmedUnlockedUnspentOutputProvider))
         bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, confirmedUnlockedUnspentOutputProvider))
     }
