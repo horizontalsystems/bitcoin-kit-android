@@ -151,6 +151,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
                 .addMessageParser(TransactionLockMessageParser())
                 .addMessageParser(TransactionLockVoteMessageParser())
                 .addMessageParser(ISLockMessageParser())
+                .addMessageParser(TransactionMessageParser())
 
         bitcoinCore.addMessageSerializer(GetMasternodeListDiffMessageSerializer())
 
