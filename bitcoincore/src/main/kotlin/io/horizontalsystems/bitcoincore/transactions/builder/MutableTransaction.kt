@@ -31,15 +31,16 @@ class MutableTransaction(isOutgoing: Boolean = true) {
         transaction.isOutgoing = isOutgoing
     }
 
+    // 计算输出手续费
     fun getPluginDataOutputSize(): Int {
-        if (reverseHex != null && !reverseHex!!.startsWith("73616665")) {
+        if (reverseHex != null && !reverseHex!!.startsWith("73616665")) { // 线性锁仓
             val lineLock = JsonUtils.stringToObj(reverseHex!!)
             return if (pluginData.isNotEmpty()) {
-                lineLock.outputSize + pluginData.map { 1 + it.value.size }.sum()
+                lineLock.outputSize + 1 + pluginData.map { 1 + it.value.size }.sum()
             } else {
                 0
             }
-        } else {
+        } else { // 其他
             return if (pluginData.isNotEmpty()) {
                 1 + pluginData.map { 1 + it.value.size }.sum()
             } else {
