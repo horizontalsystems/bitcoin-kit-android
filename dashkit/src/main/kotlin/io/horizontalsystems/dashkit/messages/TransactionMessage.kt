@@ -26,7 +26,7 @@ class TransactionMessageParser : IMessageParser {
         val hash = HashUtils.doubleSha256(output.toByteArray())
         transaction.setHash(hash)
 
-        return SpecialTransaction(transaction, payload)
+        return SpecialTransaction(transaction, payload, false)
     }
 
     override fun parseMessage(input: BitcoinInputMarkable): IMessage {
