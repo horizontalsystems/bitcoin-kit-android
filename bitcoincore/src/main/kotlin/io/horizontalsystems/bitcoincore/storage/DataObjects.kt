@@ -15,12 +15,17 @@ class BlockHeader(
         val nonce: Long,
         val hash: ByteArray)
 
-open class FullTransaction(val header: Transaction, val inputs: List<TransactionInput>, val outputs: List<TransactionOutput>) {
+open class FullTransaction(
+    val header: Transaction,
+    val inputs: List<TransactionInput>,
+    val outputs: List<TransactionOutput>,
+    val forceHashUpdate: Boolean = true
+) {
 
     lateinit var metadata: TransactionMetadata
 
     init {
-        if (header.hash.isEmpty()) {
+        if (forceHashUpdate) {
             setHash(HashUtils.doubleSha256(TransactionSerializer.serialize(this, withWitness = false)))
         }
     }

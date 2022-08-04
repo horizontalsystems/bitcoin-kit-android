@@ -4,5 +4,6 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class SpecialTransaction(
         val transaction: FullTransaction,
-        extraPayload: ByteArray
-): FullTransaction(transaction.header, transaction.inputs, transaction.outputs)
+        extraPayload: ByteArray,
+        forceHashUpdate: Boolean = true
+): FullTransaction(transaction.header, transaction.inputs, transaction.outputs, forceHashUpdate)
