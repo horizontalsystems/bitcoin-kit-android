@@ -55,7 +55,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
 
     override fun onSync(network: Network, checkpoints: List<Block>) {
         val networkName = network.javaClass.simpleName
-        val checkpointFile = "D:/SafeWallet/Soft/up-down/bitcoin-kit-android/${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
+        val checkpointFile = "D:/bitcoin/bitcoin/bitcoin-kit-android/${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
 
         writeCheckpoints(checkpointFile, checkpoints)
 
