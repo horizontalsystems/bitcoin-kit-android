@@ -1,7 +1,5 @@
 package io.horizontalsystems.bitcoinkit.demo
 
-import android.text.SpannableStringBuilder
-import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore
@@ -16,7 +14,6 @@ import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.android.synthetic.main.fragment_send_receive.*
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
