@@ -1,10 +1,11 @@
 package io.horizontalsystems.bitcoinkit
 
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.network.Network
 /**
  * Extends from the abstract Network class and overrides all variables. Configures connection to the TestNet.
  */
-class TestNet : Network() {
+class TestNet(override val lastCheckpoint: Checkpoint) : Network() {
 
     override var port: Int = 18333
 

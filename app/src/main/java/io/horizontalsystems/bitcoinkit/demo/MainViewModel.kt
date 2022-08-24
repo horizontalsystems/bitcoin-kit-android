@@ -7,8 +7,10 @@ import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
@@ -42,17 +44,30 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     private lateinit var bitcoinKit: BitcoinKit
 
-    private val walletId = "MyWallet"
+    private val walletId = "FastSyncWallet13"
     private val networkType = BitcoinKit.NetworkType.MainNet
     private val syncMode = BitcoinCore.SyncMode.Api()
     private val bip = Bip.BIP44
 
     fun init() {
         //TODO create unique seed phrase,perhaps using shared preferences?
-        val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
+        val words = "supply decline tomato achieve skull sell rent fold mystery cricket rhythm buddy".split(" ")
         val passphrase = ""
 
-        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, bip = bip)
+        val testNetBlock : Block = Block(
+            BlockHeader(777150464, "00000000000000391d536135debbe17550888f5ed921ffd4e3243452d86362b6".toReversedByteArray(),
+                "386ff8d145c1b2bce660e4b7be6461e722e1b1ebf807867d0e877f2a704cf60f".toReversedByteArray(), 1661281593,
+                423228096, 3304394013,
+                "0000000000000014766b22567d0f359c10836d8fd2a38d0d0d316bdbc2ab150f".toReversedByteArray()), 2343559)
+
+        val mainnetBlock : Block = Block(
+            BlockHeader(536870912, "0000000000000000000678534fff9c15753fde701361028e5159c8a0474a4e91".toReversedByteArray(),
+                "fe7ff1066d94cfce513d2280947809e2d1e3115d72f43057d1cfa34081b43574".toReversedByteArray(), 1661285809,
+                386526600, 187228578,
+                "00000000000000000005cff1d36f64f1ceef5d8a0da26ebbd671f1d1a9a1cff6".toReversedByteArray()), 750792)
+
+
+        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, bip = bip, block = mainnetBlock)
 
         bitcoinKit.listener = this
 

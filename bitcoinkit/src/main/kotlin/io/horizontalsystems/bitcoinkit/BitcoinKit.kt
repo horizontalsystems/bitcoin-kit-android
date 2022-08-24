@@ -11,6 +11,8 @@ import io.horizontalsystems.bitcoincore.blocks.validators.*
 import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.managers.*
+import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -71,9 +73,10 @@ class BitcoinKit : AbstractKit {
             peerSize: Int = 10,
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6,
-            bip: Bip = Bip.BIP44
+            bip: Bip = Bip.BIP44,
+            block: Block? = null
 
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip, block = block)
 
 
 
@@ -97,7 +100,8 @@ class BitcoinKit : AbstractKit {
             peerSize: Int = 10,
             syncMode: SyncMode = SyncMode.Api(),
             confirmationsThreshold: Int = 6,
-            bip: Bip = Bip.BIP44
+            bip: Bip = Bip.BIP44,
+            block: Block?
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, bip))
         val storage = Storage(database)
@@ -106,11 +110,11 @@ class BitcoinKit : AbstractKit {
         network = when (networkType) {
             NetworkType.MainNet -> {
                 initialSyncApi = BlockchainComApi("https://blockchain.info", "https://api.blocksdecoded.com/v1/blockchains/bitcoin")
-                MainNet()
+                MainNet(Checkpoint("", block))
             }
             NetworkType.TestNet -> {
                 initialSyncApi = BCoinApi("https://btc-testnet.horizontalsystems.xyz/api")
-                TestNet()
+                TestNet(Checkpoint("", block))
             }
             NetworkType.RegTest -> {
                 initialSyncApi = InsightApi("")
