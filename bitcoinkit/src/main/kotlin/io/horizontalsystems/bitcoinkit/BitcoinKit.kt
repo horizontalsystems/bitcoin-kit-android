@@ -110,10 +110,13 @@ class BitcoinKit : AbstractKit {
         network = when (networkType) {
             NetworkType.MainNet -> {
                 initialSyncApi = BlockchainComApi("https://blockchain.info", "https://api.blocksdecoded.com/v1/blockchains/bitcoin")
+//                initialSyncApi = BlockchainApi("http://10.0.2.2:3001/bitcoin/mainnet")
+
                 MainNet(Checkpoint("", block))
             }
             NetworkType.TestNet -> {
                 initialSyncApi = BCoinApi("https://btc-testnet.horizontalsystems.xyz/api")
+//                initialSyncApi = BlockchainApi("http://10.0.2.2:3001/bitcoin/testnet")
                 TestNet(Checkpoint("", block))
             }
             NetworkType.RegTest -> {

@@ -44,14 +44,15 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     private lateinit var bitcoinKit: BitcoinKit
 
-    private val walletId = "FastSyncWallet13"
+    private val walletId = "SyncDemoWallet42"
     private val networkType = BitcoinKit.NetworkType.MainNet
     private val syncMode = BitcoinCore.SyncMode.Api()
-    private val bip = Bip.BIP44
+    private val bip = Bip.BIP84
 
     fun init() {
         //TODO create unique seed phrase,perhaps using shared preferences?
         val words = "supply decline tomato achieve skull sell rent fold mystery cricket rhythm buddy".split(" ")
+        val words2 = "bid hotel witness assume call limb wink buzz soup picture scatter such".split(" ")
         val passphrase = ""
 
         val testNetBlock : Block = Block(
@@ -61,16 +62,14 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                 "0000000000000014766b22567d0f359c10836d8fd2a38d0d0d316bdbc2ab150f".toReversedByteArray()), 2343559)
 
         val mainnetBlock : Block = Block(
-            BlockHeader(536870912, "0000000000000000000678534fff9c15753fde701361028e5159c8a0474a4e91".toReversedByteArray(),
-                "fe7ff1066d94cfce513d2280947809e2d1e3115d72f43057d1cfa34081b43574".toReversedByteArray(), 1661285809,
-                386526600, 187228578,
-                "00000000000000000005cff1d36f64f1ceef5d8a0da26ebbd671f1d1a9a1cff6".toReversedByteArray()), 750792)
+            BlockHeader(545259520, "00000000000000000004f6be1c3bd65be9fcba704030db756ac9d48ec5d616c2".toReversedByteArray(),
+                "3ed8d4d65c18c0907679b9219ccaeb3f639182258a588abc1f72c7d22a8d25d1".toReversedByteArray(), 1662125853,
+                386471456, 1474792728,
+                "000000000000000000080cbc2c01be5b174b3b4fbc333498614a9a24a6d0e6ea".toReversedByteArray()), 752290)
 
 
-        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, bip = bip, block = mainnetBlock)
-
+        bitcoinKit = BitcoinKit(App.instance, words2, passphrase, walletId, networkType, syncMode = syncMode, bip = bip, block = mainnetBlock)
         bitcoinKit.listener = this
-
         networkName = bitcoinKit.networkName
         balance.value = bitcoinKit.balance
 

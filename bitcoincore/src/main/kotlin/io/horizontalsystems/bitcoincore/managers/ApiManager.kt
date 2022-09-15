@@ -22,11 +22,9 @@ class ApiManager(private val host: String) {
         val url = "$host/$resource"
 
         logger.info("Fetching $url")
-
-        return try {
-            URL(url)
-                    .openConnection()
-                    .apply {
+//HttpURLConnection
+        /*
+        .apply {
                         connectTimeout = 5000
                         readTimeout = 60000
                         setRequestProperty("Accept", "application/json")
@@ -34,6 +32,23 @@ class ApiManager(private val host: String) {
                     .use {
                         Json.parse(it.bufferedReader())
                     }
+         */
+        try {
+            val response = (URL(url)
+                .openConnection() as HttpURLConnection).apply {
+                connectTimeout = 5000
+                readTimeout = 60000
+                requestMethod = "GET"
+                setRequestProperty("Accept", "application/json")
+            }
+//            if (response.responseCode == 429) {
+//                throw BadRequestException()
+//            }
+            return response.inputStream
+                .use {
+                    Json.parse(it.bufferedReader())
+                }
+
         } catch (exception: IOException) {
             throw Exception("${exception.javaClass.simpleName}: $host")
         }
@@ -49,6 +64,7 @@ class ApiManager(private val host: String) {
             val url = URL(path)
             val urlConnection = url.openConnection() as HttpURLConnection
             urlConnection.requestMethod = "POST"
+            urlConnection.setRequestProperty("Content-Type", "application/json")
             val out = BufferedOutputStream(urlConnection.outputStream)
             val writer = BufferedWriter(OutputStreamWriter(out, "UTF-8"))
             writer.write(data)
@@ -73,24 +89,24 @@ class ApiManager(private val host: String) {
                 NetworkUtils.getUnsafeOkHttpClient()
             else {
                 OkHttpClient.Builder()
-                        .apply {
-                            connectTimeout(5000, TimeUnit.MILLISECONDS)
-                            readTimeout(60000, TimeUnit.MILLISECONDS)
-                        }.build()
+                    .apply {
+                        connectTimeout(5000, TimeUnit.MILLISECONDS)
+                        readTimeout(60000, TimeUnit.MILLISECONDS)
+                    }.build()
             }
 
             httpClient.newCall(Request.Builder().url(url).build())
-                    .execute()
-                    .use { response ->
+                .execute()
+                .use { response ->
 
-                        if (response.isSuccessful) {
-                            response.body?.let {
-                                return Json.parse(it.string())
-                            }
+                    if (response.isSuccessful) {
+                        response.body?.let {
+                            return Json.parse(it.string())
                         }
-
-                        throw IOException("Unexpected Error:$response")
                     }
+
+                    throw IOException("Unexpected Error:$response")
+                }
         } catch (e: Exception) {
             throw Exception("${e.javaClass.simpleName}: $host, ${e.localizedMessage}")
         }
