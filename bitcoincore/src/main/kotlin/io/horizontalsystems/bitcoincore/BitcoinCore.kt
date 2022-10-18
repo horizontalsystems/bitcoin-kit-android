@@ -165,7 +165,7 @@ class BitcoinCoreBuilder {
 
         val hdWallet = HDWallet(seed, network.coinType, purpose = bip.purpose)
 
-        val wallet = Wallet(hdWallet!!)
+        val wallet = Wallet(hdWallet)
         val publicKeyManager = PublicKeyManager.create(storage, wallet, restoreKeyConverterChain)
         val pendingOutpointsProvider = PendingOutpointsProvider(storage)
 
@@ -221,7 +221,7 @@ class BitcoinCoreBuilder {
         val transactionDataSorterFactory = TransactionDataSorterFactory()
         val unspentOutputSelector = UnspentOutputSelectorChain()
         val transactionSizeCalculator = TransactionSizeCalculator()
-        val inputSigner = InputSigner(hdWallet!!, network)
+        val inputSigner = InputSigner(hdWallet, network)
         val outputSetter = OutputSetter(transactionDataSorterFactory)
         val dustCalculator = DustCalculator(network.dustRelayTxFee, transactionSizeCalculator)
         val inputSetter = InputSetter(unspentOutputSelector, publicKeyManager, addressConverter, bip.scriptType, transactionSizeCalculator, pluginManager, dustCalculator, transactionDataSorterFactory)
@@ -255,7 +255,6 @@ class BitcoinCoreBuilder {
                 paymentAddressParser,
                 syncManager,
                 bip,
-                hdWallet,
                 peerManager,
                 dustCalculator,
                 pluginManager,
@@ -346,7 +345,6 @@ class BitcoinCore(
         private val paymentAddressParser: PaymentAddressParser,
         private val syncManager: SyncManager,
         private val bip: Bip,
-        private val hdWallet: HDWallet,
         private var peerManager: PeerManager,
         private val dustCalculator: DustCalculator,
         private val pluginManager: PluginManager,
@@ -373,8 +371,6 @@ class BitcoinCore(
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
     val peerTaskHandlerChain = PeerTaskHandlerChain()
 
-    fun getWallet() = hdWallet
-
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener): BitcoinCore {
         initialBlockDownload.addPeerSyncListener(peerSyncListener)
         return this
@@ -389,8 +385,6 @@ class BitcoinCore(
         return this
     }
 
-    fun arePeersReady() = peerGroup.arePeersReady()
-
     fun addMessageSerializer(messageSerializer: IMessageSerializer): BitcoinCore {
         networkMessageSerializer.add(messageSerializer)
         return this
@@ -402,15 +396,6 @@ class BitcoinCore(
 
     fun addPeerTaskHandler(handler: IPeerTaskHandler) {
         peerTaskHandlerChain.addHandler(handler)
-    }
-
-    fun isAddressValid(address: String) : Boolean {
-        try {
-            addressConverter.convert(address)
-            return true
-        } catch(e: Exception) {
-            return false
-        }
     }
 
     fun addPeerGroupListener(listener: PeerGroup.Listener) {
@@ -460,9 +445,6 @@ class BitcoinCore(
         connectionManager.onEnterBackground()
     }
 
-    fun getUnspentOutputs() =
-        dataProvider.getUnspentOutputs()
-
     fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
         return dataProvider.transactions(fromUid, type, limit)
     }
@@ -471,33 +453,17 @@ class BitcoinCore(
         return transactionFeeCalculator.fee(value, feeRate, senderPay, address, pluginData)
     }
 
-    fun fee(unspentOutputs: List<UnspentOutput>, value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
-        return transactionFeeCalculator.fee(unspentOutputs.map { it.output.address!! }, value, feeRate, senderPay, address, pluginData)
+    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
+        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData)
     }
 
-    fun fee(unspentOutput: UnspentOutput, value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
-        return transactionFeeCalculator.fee(listOf(unspentOutput.output.address!!), value, feeRate, senderPay, address, pluginData)
-    }
-
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>, createOnly: Boolean): FullTransaction {
-        return transactionCreator.create(address, value, feeRate, senderPay, sortType, pluginData, createOnly)
-    }
-
-    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, createOnly: Boolean): FullTransaction {
+    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf(), createOnly)
+        return transactionCreator.create(address.string, value, feeRate, senderPay, sortType, mapOf())
     }
 
-    fun redeem(unspentOutput: UnspentOutput, value: Long, address: String, feeRate: Int, sortType: TransactionDataSortType, createOnly: Boolean): FullTransaction {
-        return transactionCreator.create(listOf(unspentOutput.output.address!!), value, address, feeRate, sortType, createOnly)
-    }
-
-    fun broadcast(transaction: FullTransaction): FullTransaction {
-        return transactionCreator.broadcast(transaction)
-    }
-
-    fun redeem(unspentOutputs: List<UnspentOutput>, value: Long, address: String, feeRate: Int, sortType: TransactionDataSortType, createOnly: Boolean): FullTransaction {
-        return transactionCreator.create(unspentOutputs.map { it.output.address!! }, value, address, feeRate, sortType, createOnly)
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+        return transactionCreator.create(unspentOutput, address, feeRate, sortType)
     }
 
     fun receiveAddress(): String {
@@ -626,15 +592,6 @@ class BitcoinCore(
 
     fun maximumSpendableValue(address: String?, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
         return balance.spendable - transactionFeeCalculator.fee(balance.spendable, feeRate, false, address, pluginData)
-    }
-
-    fun maximumSpendableValue(unspentOutputs: List<UnspentOutput>, address: String?, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
-        var maxSpend = 0L
-        unspentOutputs.forEach {
-            maxSpend += it.output.value
-        }
-
-        return maxSpend - transactionFeeCalculator.fee(unspentOutputs.map { it.output.address!! }, maxSpend, feeRate, false, address, pluginData)
     }
 
     fun minimumSpendableValue(address: String?): Int {

@@ -6,49 +6,12 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider, private val outputsLimit: Int? = null) : IUnspentOutputSelector {
 
-    override fun select(
-        unspentOutputAddresses: List<String>,
-        value: Long,
-        feeRate: Int,
-        outputType: ScriptType,
-        changeType: ScriptType,
-        senderPay: Boolean,
-        dust: Int,
-        pluginDataOutputSize: Int
-    ): SelectedUnspentOutputInfo {
-        if (value <= dust) {
-            throw SendValueErrors.Dust
-        }
-
-
-        val spendableUTXOs = unspentOutputProvider.getSpendableUtxo()
-        val unspentOutputs = unspentOutputAddresses.map { spendableUTXOs.find { utxo -> utxo.output.address == it }!! }
-
-        return selectOutputs(unspentOutputs, value, feeRate, outputType, changeType, senderPay, dust, pluginDataOutputSize)
-    }
-
     override fun select(value: Long, feeRate: Int, outputType: ScriptType, changeType: ScriptType, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
         if (value <= dust) {
             throw SendValueErrors.Dust
         }
 
         val unspentOutputs = unspentOutputProvider.getSpendableUtxo()
-        return selectOutputs(unspentOutputs, value, feeRate, outputType, changeType, senderPay, dust, pluginDataOutputSize)
-    }
-
-    private fun selectOutputs(
-        unspentOutputs: List<UnspentOutput>,
-        value: Long,
-        feeRate: Int,
-        outputType: ScriptType,
-        changeType: ScriptType,
-        senderPay: Boolean,
-        dust: Int,
-        pluginDataOutputSize: Int
-    ): SelectedUnspentOutputInfo {
-        if (value <= dust) {
-            throw SendValueErrors.Dust
-        }
 
         if (unspentOutputs.isEmpty()) {
             throw SendValueErrors.EmptyOutputs

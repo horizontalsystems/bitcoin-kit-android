@@ -29,18 +29,6 @@ class TransactionFeeCalculator(
         return inputsTotalValue - outputsTotalValue
     }
 
-    fun fee(unspentOutputs: List<String>, value: Long, feeRate: Int, senderPay: Boolean, toAddress: String?, pluginData: Map<Byte, IPluginData>): Long {
-        val mutableTransaction = MutableTransaction()
-
-        recipientSetter.setRecipient(mutableTransaction, toAddress ?: sampleAddress(), value, pluginData, true)
-        inputSetter.setInputs(mutableTransaction, unspentOutputs, feeRate, senderPay, TransactionDataSortType.None)
-
-        val inputsTotalValue = mutableTransaction.inputsToSign.map { it.previousOutput.value }.sum()
-        val outputsTotalValue = mutableTransaction.recipientValue + mutableTransaction.changeValue
-
-        return inputsTotalValue - outputsTotalValue
-    }
-
     private fun sampleAddress(): String {
         return addressConverter.convert(publicKey = publicKeyManager.changePublicKey(), scriptType = changeScriptType).string
     }

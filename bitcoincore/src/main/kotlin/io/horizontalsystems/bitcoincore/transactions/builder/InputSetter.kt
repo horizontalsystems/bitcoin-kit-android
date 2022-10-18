@@ -56,43 +56,27 @@ class InputSetter(
         pluginManager.processInputs(mutableTransaction)
     }
 
-    fun setInputs(mutableTransaction: MutableTransaction, unspentOutputs: List<String>, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType) {
-        val value = mutableTransaction.recipientValue
-        val dust = dustCalculator.dust(changeScriptType)
-        val unspentOutputInfo = unspentOutputSelector.select(
-            unspentOutputs,
-            value,
-            feeRate,
-            mutableTransaction.recipientAddress.scriptType,
-            changeScriptType,
-            senderPay, dust,
-            mutableTransaction.getPluginDataOutputSize()
-        )
-
-        val sorter = transactionDataSorterFactory.sorter(sortType)
-        val unspentOutputs = sorter.sortUnspents(unspentOutputInfo.outputs)
-
-        for (unspentOutput in unspentOutputs) {
-            mutableTransaction.addInput(inputToSign(unspentOutput))
+    fun setInputs(mutableTransaction: MutableTransaction, unspentOutput: UnspentOutput, feeRate: Int) {
+        if (unspentOutput.output.scriptType != ScriptType.P2SH) {
+            throw TransactionBuilder.BuilderException.NotSupportedScriptType()
         }
 
-        mutableTransaction.recipientValue = unspentOutputInfo.recipientValue
+        // Calculate fee
+        val transactionSize = transactionSizeCalculator.transactionSize(listOf(unspentOutput.output), listOf(mutableTransaction.recipientAddress.scriptType), 0)
+        val fee = transactionSize * feeRate
 
-        // Add change output if needed
-        unspentOutputInfo.changeValue?.let { changeValue ->
-            val changePubKey = publicKeyManager.changePublicKey()
-            val changeAddress = addressConverter.convert(changePubKey, changeScriptType)
-
-            mutableTransaction.changeAddress = changeAddress
-            mutableTransaction.changeValue = changeValue
+        if (unspentOutput.output.value < fee) {
+            throw TransactionBuilder.BuilderException.FeeMoreThanValue()
         }
 
-        pluginManager.processInputs(mutableTransaction)
+        // Add to mutable transaction
+        mutableTransaction.addInput(inputToSign(unspentOutput))
+        mutableTransaction.recipientValue = unspentOutput.output.value - fee
     }
 
     private fun inputToSign(unspentOutput: UnspentOutput): InputToSign {
         val previousOutput = unspentOutput.output
-        val transactionInput = TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong()) // todo: add RBF support here
+        val transactionInput = TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong())
 
         if (unspentOutput.output.scriptType == ScriptType.P2WPKH) {
             unspentOutput.output.keyHash = unspentOutput.output.keyHash?.drop(2)?.toByteArray()

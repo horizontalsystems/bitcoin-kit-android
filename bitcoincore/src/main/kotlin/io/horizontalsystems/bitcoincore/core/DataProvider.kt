@@ -37,9 +37,6 @@ class DataProvider(
             }
         }
 
-    fun getUnspentOutputs() =
-        unspentOutputProvider.getSpendableUtxo()
-
     var lastBlockInfo: BlockInfo?
         private set
 

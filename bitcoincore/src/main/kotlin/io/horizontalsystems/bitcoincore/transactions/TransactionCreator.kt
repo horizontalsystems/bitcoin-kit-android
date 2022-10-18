@@ -14,26 +14,24 @@ class TransactionCreator(
         private val bloomFilterManager: BloomFilterManager) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>, createOnly: Boolean): FullTransaction {
-        if(createOnly)
-            return builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData)
-
+    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
         return create {
             builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData)
         }
     }
 
     @Throws
-    fun create(unspentOutputs: List<String>, value: Long, toAddress: String, feeRate: Int, sortType: TransactionDataSortType, createOnly: Boolean): FullTransaction {
-        if(createOnly)
-            return builder.buildTransaction(unspentOutputs, value, toAddress, feeRate, sortType)
-
+    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
         return create {
-            builder.buildTransaction(unspentOutputs, value, toAddress, feeRate, sortType)
+            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType)
         }
     }
 
-    fun broadcast(transaction: FullTransaction) : FullTransaction {
+    private fun create(transactionBuilderFunction: () -> FullTransaction): FullTransaction {
+        transactionSender.canSendTransaction()
+
+        val transaction = transactionBuilderFunction.invoke()
+
         try {
             processor.processCreated(transaction)
         } catch (ex: BloomFilterManager.BloomFilterExpired) {
@@ -47,11 +45,6 @@ class TransactionCreator(
         }
 
         return transaction
-    }
-
-    private fun create(transactionBuilderFunction: () -> FullTransaction): FullTransaction {
-        transactionSender.canSendTransaction()
-        return broadcast(transactionBuilderFunction.invoke())
     }
 
     open class TransactionCreationException(msg: String) : Exception(msg)
