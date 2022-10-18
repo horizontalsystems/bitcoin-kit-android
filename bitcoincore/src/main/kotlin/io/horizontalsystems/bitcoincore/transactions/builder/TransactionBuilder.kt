@@ -4,7 +4,6 @@ import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.core.IRecipientSetter
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
-import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 class TransactionBuilder(
         private val recipientSetter: IRecipientSetter,
@@ -20,20 +19,18 @@ class TransactionBuilder(
         recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false)
         inputSetter.setInputs(mutableTransaction, feeRate, senderPay, sortType)
         lockTimeSetter.setLockTime(mutableTransaction)
-
         outputSetter.setOutputs(mutableTransaction, sortType)
         signer.sign(mutableTransaction)
 
         return mutableTransaction.build()
     }
 
-    fun buildTransaction(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+    fun buildTransaction(unspentOutputs: List<String>, value: Long, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
         val mutableTransaction = MutableTransaction(false)
 
-        recipientSetter.setRecipient(mutableTransaction, toAddress, unspentOutput.output.value, mapOf(), false)
-        inputSetter.setInputs(mutableTransaction, unspentOutput, feeRate)
+        recipientSetter.setRecipient(mutableTransaction, toAddress, value, mapOf(), false)
+        inputSetter.setInputs(mutableTransaction, unspentOutputs, feeRate, true, sortType)
         lockTimeSetter.setLockTime(mutableTransaction)
-
         outputSetter.setOutputs(mutableTransaction, sortType)
         signer.sign(mutableTransaction)
 
