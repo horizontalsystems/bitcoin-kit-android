@@ -68,6 +68,11 @@ class PeerGroup(
         peerGroupListeners.add(listener)
     }
 
+    fun arePeersReady() : Boolean {
+        return peerManager.readyPears().size >= 2
+                && peerManager.hasSyncedPeer()
+    }
+
     //
     // PeerListener implementations
     //

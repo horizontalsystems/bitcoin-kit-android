@@ -21,6 +21,7 @@ class TransactionSender(
         private val retriesPeriod: Int = 60)
     : IPeerTaskHandler, TransactionSendTimer.Listener {
 
+    @Synchronized
     fun sendPendingTransactions() {
         try {
             val transactions = transactionSyncer.getNewTransactions()
