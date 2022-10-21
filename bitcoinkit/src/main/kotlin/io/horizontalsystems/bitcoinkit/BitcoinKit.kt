@@ -8,7 +8,6 @@ import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.*
-import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.network.Network
@@ -17,7 +16,10 @@ import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
-import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.horizontalsystems.bitcoinkit.BitcoinKit.Listener
+import io.horizontalsystems.bitcoinkit.BitcoinKit.NetworkType
+import io.horizontalsystems.hdwalletkit.*
+import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hodler.HodlerPlugin
 
 /**
@@ -35,9 +37,7 @@ import io.horizontalsystems.hodler.HodlerPlugin
 class BitcoinKit : AbstractKit {
 
     enum class NetworkType {
-        MainNet,
-        TestNet,
-        RegTest
+        MainNet, TestNet, RegTest
     }
 
     interface Listener : BitcoinCore.Listener
@@ -50,6 +50,7 @@ class BitcoinKit : AbstractKit {
             field = value
             bitcoinCore.listener = value
         }
+
     /**
      * @constructor Creates and initializes the BitcoinKit
      * @param context The Android context.
@@ -60,46 +61,64 @@ class BitcoinKit : AbstractKit {
      * @param peerSize The # of peer-nodes required. The default is 10 peers.
      * @param syncMode How the kit syncs with the blockchain. Default is SyncMode.Api().
      * @param confirmationsThreshold How many confirmations required to be considered confirmed. Default is 6 confirmations.
-     * @param bip which BIP algorithm to use for wallet generation. Default is BIP44.
+     * @param purpose which BIP algorithm to use for wallet generation. Default is BIP44.
      */
     constructor(
-            context: Context,
-            words: List<String>,
-            passphrase: String,
-            walletId: String,
-            networkType: NetworkType = NetworkType.MainNet,
-            peerSize: Int = 10,
-            syncMode: SyncMode = SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: Bip = Bip.BIP44
-
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
-
+        context: Context,
+        words: List<String>,
+        passphrase: String,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet,
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6,
+        purpose: Purpose = Purpose.BIP44
+    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, purpose)
 
 
     /**
      * @constructor Creates and initializes the BitcoinKit
+     * @param context The Android context.
+     * @param seed A byte array that contains the seed.
+     * @param walletId an arbitrary ID of type String.
+     * @param networkType The network type. The default is MainNet
+     * @param peerSize The # of peer-nodes required. The default is 10 peers.
+     * @param syncMode How the kit syncs with the blockchain. Default is SyncMode.Api().
+     * @param confirmationsThreshold How many confirmations required to be considered confirmed. Default is 6 confirmations.
+     * @param purpose which BIP algorithm to use for wallet generation. Default is BIP44.
+     */
+    constructor(
+        context: Context,
+        seed: ByteArray,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet,
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6,
+        purpose: Purpose = Purpose.BIP44
+    ) : this(context, HDExtendedKey(seed, purpose), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+
+    /**
+     * @constructor Creates and initializes the BitcoinKit
      * @param context The Android context
-     * @param seed A byte array that contains the seedphrase.
+     * @param extendedKey HDExtendedKey that contains HDKey and version
      * @param walletId an arbitrary ID of type String.
      * @param networkType The network type. The default is MainNet.
      * @param peerSize The # of peer-nodes required. The default is 10 peers.
      * @param syncMode How the kit syncs with the blockchain. The default is SyncMode.Api().
      * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 6 confirmations.
-     * @param bip which BIP algorithm to use for wallet generation. The default is BIP44.
      */
-
     constructor(
-            context: Context,
-            seed: ByteArray,
-            walletId: String,
-            networkType: NetworkType = NetworkType.MainNet,
-            peerSize: Int = 10,
-            syncMode: SyncMode = SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: Bip = Bip.BIP44
+        context: Context,
+        extendedKey: HDExtendedKey,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet,
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6
     ) {
-        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, bip))
+        val purpose = extendedKey.info.purpose
+        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, purpose))
         val storage = Storage(database)
         val initialSyncApi: IInitialSyncApi
 
@@ -139,21 +158,10 @@ class BitcoinKit : AbstractKit {
 
         val coreBuilder = BitcoinCoreBuilder()
 
-        bitcoinCore = coreBuilder
-                .setContext(context)
-                .setSeed(seed)
-                .setNetwork(network)
-                .setBip(bip)
-                .setPaymentAddressParser(paymentAddressParser)
-                .setPeerSize(peerSize)
-                .setSyncMode(syncMode)
-                .setConfirmationThreshold(confirmationsThreshold)
-                .setStorage(storage)
-                .setInitialSyncApi(initialSyncApi)
-                .setBlockValidator(blockValidatorSet)
-                .setHandleAddrMessage(false)
-                .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
-                .build()
+        bitcoinCore = coreBuilder.setContext(context).setExtendedKey(extendedKey).setNetwork(network).setPaymentAddressParser(paymentAddressParser)
+            .setPeerSize(peerSize).setSyncMode(syncMode).setConfirmationThreshold(confirmationsThreshold).setStorage(storage)
+            .setInitialSyncApi(initialSyncApi).setBlockValidator(blockValidatorSet).setHandleAddrMessage(false)
+            .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage))).build()
 
         //  extending bitcoinCore
 
@@ -162,16 +170,16 @@ class BitcoinKit : AbstractKit {
 
         bitcoinCore.prependAddressConverter(bech32AddressConverter)
 
-        when (bip) {
-            Bip.BIP44 -> {
+        when (purpose) {
+            Purpose.BIP44 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58AddressConverter))
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
-            Bip.BIP49 -> {
+            Purpose.BIP49 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
             }
-            Bip.BIP84 -> {
+            Purpose.BIP84 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
         }
@@ -192,7 +200,8 @@ class BitcoinKit : AbstractKit {
          * @return database name
          */
 
-        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip): String = "Bitcoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${bip.name}"
+        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, purpose: Purpose): String =
+            "Bitcoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${purpose.name}"
 
         /**
          * Clears the database
@@ -202,12 +211,11 @@ class BitcoinKit : AbstractKit {
          */
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
             for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
-                for (bip in Bip.values())
-                    try {
-                        SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, bip)))
-                    } catch (ex: Exception) {
-                        continue
-                    }
+                for (purpose in Purpose.values()) try {
+                    SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, purpose)))
+                } catch (ex: Exception) {
+                    continue
+                }
             }
         }
     }

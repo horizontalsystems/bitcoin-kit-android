@@ -24,6 +24,9 @@ abstract class AbstractKit {
 
     val syncState get() = bitcoinCore.syncState
 
+    val watchAccount: Boolean
+        get() = bitcoinCore.watchAccount
+
     fun start() {
         bitcoinCore.start()
     }
@@ -36,11 +39,11 @@ abstract class AbstractKit {
         bitcoinCore.refresh()
     }
 
-    fun onEnterForeground(){
+    fun onEnterForeground() {
         bitcoinCore.onEnterForeground()
     }
 
-    fun onEnterBackground(){
+    fun onEnterBackground() {
         bitcoinCore.onEnterBackground()
     }
 
@@ -56,11 +59,25 @@ abstract class AbstractKit {
         return bitcoinCore.fee(value, address, senderPay, feeRate, pluginData)
     }
 
-    fun send(address: String, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData> = mapOf()): FullTransaction {
+    fun send(
+        address: String,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        pluginData: Map<Byte, IPluginData> = mapOf()
+    ): FullTransaction {
         return bitcoinCore.send(address, value, senderPay, feeRate, sortType, pluginData)
     }
 
-    fun send(hash: ByteArray, scriptType: ScriptType, value: Long, senderPay: Boolean = true, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+    fun send(
+        hash: ByteArray,
+        scriptType: ScriptType,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType
+    ): FullTransaction {
         return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType)
     }
 

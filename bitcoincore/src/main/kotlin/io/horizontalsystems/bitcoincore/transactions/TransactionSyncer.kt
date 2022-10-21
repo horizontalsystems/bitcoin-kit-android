@@ -1,15 +1,16 @@
 package io.horizontalsystems.bitcoincore.transactions
 
+import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class TransactionSyncer(
-        private val storage: IStorage,
-        private val transactionProcessor: PendingTransactionProcessor,
-        private val invalidator: TransactionInvalidator,
-        private val publicKeyManager: PublicKeyManager) {
+    private val storage: IStorage,
+    private val transactionProcessor: PendingTransactionProcessor,
+    private val invalidator: TransactionInvalidator,
+    private val publicKeyManager: IPublicKeyManager
+) {
 
     fun getNewTransactions(): List<FullTransaction> {
         return storage.getNewTransactions()
