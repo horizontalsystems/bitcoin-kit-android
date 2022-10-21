@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.blocks
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
+import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
@@ -15,7 +16,7 @@ class BlockSyncer(
         private val storage: IStorage,
         private val blockchain: Blockchain,
         private val transactionProcessor: BlockTransactionProcessor,
-        private val publicKeyManager: PublicKeyManager,
+        private val publicKeyManager: IPublicKeyManager,
         private val checkpoint: Checkpoint,
         private val state: State = State()
 ) {

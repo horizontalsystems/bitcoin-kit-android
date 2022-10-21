@@ -5,5 +5,5 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.reactivex.Single
 
 interface IBlockDiscovery {
-    fun discoverBlockHashes(account: Int): Single<Pair<List<PublicKey>, List<BlockHash>>>
+    fun discoverBlockHashes(): Single<Pair<List<PublicKey>, List<BlockHash>>>
 }

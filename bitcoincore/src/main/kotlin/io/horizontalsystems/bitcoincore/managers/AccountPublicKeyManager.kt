@@ -1,18 +1,16 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.core.IAccountWallet
 import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
-import io.horizontalsystems.bitcoincore.core.Wallet
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.storage.PublicKeyWithUsedState
 
-class PublicKeyManager(
-        private val storage: IStorage,
-        private val wallet: Wallet,
-        private val restoreKeyConverter: RestoreKeyConverterChain
+class AccountPublicKeyManager(
+    private val storage: IStorage,
+    private val wallet: IAccountWallet,
+    private val restoreKeyConverter: RestoreKeyConverterChain
 ) : IBloomFilterProvider, IPublicKeyManager {
-
-    // IBloomFilterProvider
 
     override var bloomFilterManager: BloomFilterManager? = null
 
@@ -28,7 +26,7 @@ class PublicKeyManager(
 
     @Throws
     override fun receivePublicKey(): PublicKey {
-        return getPublicKey(true)
+        return getPublicKey(external = true)
     }
 
     @Throws
@@ -39,24 +37,14 @@ class PublicKeyManager(
     override fun getPublicKeyByPath(path: String): PublicKey {
         val parts = path.split("/").map { it.toInt() }
 
-        if (parts.size != 3) throw Error.InvalidPath
+        if (parts.size != 2) throw Error.InvalidPath
 
-        return wallet.publicKey(parts[0], parts[2], parts[1] == 0)
+        return wallet.publicKey(parts[1], parts[0] == 0)
     }
 
     override fun fillGap() {
-        val lastUsedAccount = storage.getPublicKeysUsed().map { it.account }.max()
-
-        val requiredAccountsCount = if (lastUsedAccount != null) {
-            lastUsedAccount + 1 + 1 //  One because account starts from 0, One because we must have n+1 accounts
-        } else {
-            1
-        }
-
-        repeat(requiredAccountsCount) { account ->
-            fillGap(account, true)
-            fillGap(account, false)
-        }
+        fillGap(true)
+        fillGap(false)
 
         bloomFilterManager?.regenerateBloomFilter()
     }
@@ -69,23 +57,20 @@ class PublicKeyManager(
 
     override fun gapShifts(): Boolean {
         val publicKeys = storage.getPublicKeysWithUsedState()
-        val lastAccount = publicKeys.map { it.publicKey.account }.max() ?: return false
 
-        for (i in 0..lastAccount) {
-            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && it.publicKey.external }) < wallet.gapLimit) {
-                return true
-            }
+        if (gapKeysCount(publicKeys.filter { it.publicKey.external }) < wallet.gapLimit) {
+            return true
+        }
 
-            if (gapKeysCount(publicKeys.filter { it.publicKey.account == i && !it.publicKey.external }) < wallet.gapLimit) {
-                return true
-            }
+        if (gapKeysCount(publicKeys.filter { !it.publicKey.external }) < wallet.gapLimit) {
+            return true
         }
 
         return false
     }
 
-    private fun fillGap(account: Int, external: Boolean) {
-        val publicKeys = storage.getPublicKeysWithUsedState().filter { it.publicKey.account == account && it.publicKey.external == external }
+    private fun fillGap(external: Boolean) {
+        val publicKeys = storage.getPublicKeysWithUsedState().filter { it.publicKey.external == external }
         val keysCount = gapKeysCount(publicKeys)
         val keys = mutableListOf<PublicKey>()
 
@@ -94,7 +79,7 @@ class PublicKeyManager(
 
             val newKeysStartIndex = lastIndex + 1
             val indices = newKeysStartIndex until (newKeysStartIndex + wallet.gapLimit - keysCount)
-            val newKeys = wallet.publicKeys(account, indices, external)
+            val newKeys = wallet.publicKeys(indices, external)
 
             keys.addAll(newKeys)
         }
@@ -103,9 +88,7 @@ class PublicKeyManager(
     }
 
     private fun gapKeysCount(publicKeys: List<PublicKeyWithUsedState>): Int {
-        val lastUsedKey = publicKeys.filter { it.used }.maxBy { it.publicKey.index }
-
-        return when (lastUsedKey) {
+        return when (val lastUsedKey = publicKeys.filter { it.used }.maxBy { it.publicKey.index }) {
             null -> publicKeys.size
             else -> publicKeys.filter { it.publicKey.index > lastUsedKey.publicKey.index }.size
         }
@@ -114,14 +97,14 @@ class PublicKeyManager(
     @Throws
     private fun getPublicKey(external: Boolean): PublicKey {
         return storage.getPublicKeysUnused()
-                .filter { it.account == 0 && it.external == external }
-                .sortedWith(compareBy { it.index })
-                .firstOrNull() ?: throw Error.NoUnusedPublicKey
+            .filter { it.external == external }
+            .sortedWith(compareBy { it.index })
+            .firstOrNull() ?: throw Error.NoUnusedPublicKey
     }
 
     companion object {
-        fun create(storage: IStorage, wallet: Wallet, restoreKeyConverter: RestoreKeyConverterChain): PublicKeyManager {
-            val addressManager = PublicKeyManager(storage, wallet, restoreKeyConverter)
+        fun create(storage: IStorage, wallet: IAccountWallet, restoreKeyConverter: RestoreKeyConverterChain): AccountPublicKeyManager {
+            val addressManager = AccountPublicKeyManager(storage, wallet, restoreKeyConverter)
             addressManager.fillGap()
             return addressManager
         }
@@ -129,7 +112,7 @@ class PublicKeyManager(
 
     object Error {
         object NoUnusedPublicKey : Exception()
-        object InvalidPath: Exception()
+        object InvalidPath : Exception()
     }
 
 }

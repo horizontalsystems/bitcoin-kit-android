@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
 
 class MempoolTransactions(
         private val transactionSyncer: TransactionSyncer,
-        private val transactionSender: TransactionSender
+        private val transactionSender: TransactionSender?
 ) : IPeerTaskHandler, IInventoryItemsHandler, PeerGroup.Listener {
 
     private val requestedTransactions = hashMapOf<String, MutableList<ByteArray>>()
@@ -18,7 +18,7 @@ class MempoolTransactions(
             is RequestTransactionsTask -> {
                 transactionSyncer.handleRelayed(task.transactions)
                 removeFromRequestedTransactions(peer.host, task.transactions.map { it.header.hash })
-                transactionSender.transactionsRelayed(task.transactions)
+                transactionSender?.transactionsRelayed(task.transactions)
                 true
             }
             else -> false

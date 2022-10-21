@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.transactions
 
 import io.horizontalsystems.bitcoincore.WatchedTransactionManager
 import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
+import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
@@ -13,12 +14,12 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 
 class PendingTransactionProcessor(
-        private val storage: IStorage,
-        private val extractor: TransactionExtractor,
-        private val publicKeyManager: PublicKeyManager,
-        private val irregularOutputFinder: IIrregularOutputFinder,
-        private val dataListener: IBlockchainDataListener,
-        private val conflictsResolver: TransactionConflictsResolver) {
+    private val storage: IStorage,
+    private val extractor: TransactionExtractor,
+    private val publicKeyManager: IPublicKeyManager,
+    private val irregularOutputFinder: IIrregularOutputFinder,
+    private val dataListener: IBlockchainDataListener,
+    private val conflictsResolver: TransactionConflictsResolver) {
 
     private val notMineTransactions = HashSet<ByteArray>()
 

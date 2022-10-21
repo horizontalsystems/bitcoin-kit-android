@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.storage.*
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.hdwalletkit.HDKey
 
 interface IStorage {
 
@@ -184,4 +185,24 @@ interface IApiSyncListener {
 interface IBlockSyncListener {
     fun onBlockSyncFinished()
     fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
+}
+
+interface IPrivateWallet {
+    fun privateKey(account: Int, index: Int, external: Boolean): HDKey
+}
+
+interface IAccountWallet {
+    val gapLimit: Int
+
+    fun publicKey(index: Int, external: Boolean): PublicKey
+    fun publicKeys(indices: IntRange, external: Boolean): List<PublicKey>
+}
+
+interface IPublicKeyManager {
+    fun changePublicKey(): PublicKey
+    fun receivePublicKey(): PublicKey
+    fun fillGap()
+    fun addKeys(keys: List<PublicKey>)
+    fun gapShifts(): Boolean
+    fun getPublicKeyByPath(path: String): PublicKey
 }

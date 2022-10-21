@@ -10,7 +10,6 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BitsValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyTestNetDifficultyValidator
-import io.horizontalsystems.bitcoincore.core.Bip
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
@@ -18,6 +17,8 @@ import io.horizontalsystems.bitcoincore.storage.Storage
 import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
+import io.horizontalsystems.hdwalletkit.HDExtendedKey
+import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.horizontalsystems.litecoinkit.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.litecoinkit.validators.ProofOfWorkValidator
@@ -40,28 +41,49 @@ class LitecoinKit : AbstractKit {
         }
 
     constructor(
-            context: Context,
-            words: List<String>,
-            passphrase: String,
-            walletId: String,
-            networkType: NetworkType = NetworkType.MainNet,
-            peerSize: Int = 10,
-            syncMode: SyncMode = SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: Bip = Bip.BIP44
-    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, bip)
+        context: Context,
+        words: List<String>,
+        passphrase: String,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet,
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6,
+        purpose: Purpose = Purpose.BIP44
+    ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold, purpose)
 
     constructor(
-            context: Context,
-            seed: ByteArray,
-            walletId: String,
-            networkType: NetworkType = NetworkType.MainNet,
-            peerSize: Int = 10,
-            syncMode: SyncMode = SyncMode.Api(),
-            confirmationsThreshold: Int = 6,
-            bip: Bip = Bip.BIP44
+        context: Context,
+        seed: ByteArray,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet,
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6,
+        purpose: Purpose = Purpose.BIP44
+    ) : this(context, HDExtendedKey(seed, purpose), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+
+    /**
+     * @constructor Creates and initializes the BitcoinKit
+     * @param context The Android context
+     * @param extendedKey HDExtendedKey that contains HDKey and version
+     * @param walletId an arbitrary ID of type String.
+     * @param networkType The network type. The default is MainNet.
+     * @param peerSize The # of peer-nodes required. The default is 10 peers.
+     * @param syncMode How the kit syncs with the blockchain. The default is SyncMode.Api().
+     * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 6 confirmations.
+     */
+    constructor(
+        context: Context,
+        extendedKey: HDExtendedKey,
+        walletId: String,
+        networkType: NetworkType = NetworkType.MainNet,
+        peerSize: Int = 10,
+        syncMode: SyncMode = SyncMode.Api(),
+        confirmationsThreshold: Int = 6
     ) {
-        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, bip))
+        val purpose = extendedKey.info.purpose
+        val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, purpose))
         val storage = Storage(database)
         var initialSyncUrl = ""
 
@@ -102,18 +124,17 @@ class LitecoinKit : AbstractKit {
         val coreBuilder = BitcoinCoreBuilder()
 
         bitcoinCore = coreBuilder
-                .setContext(context)
-                .setSeed(seed)
-                .setNetwork(network)
-                .setBip(bip)
-                .setPaymentAddressParser(paymentAddressParser)
-                .setPeerSize(peerSize)
-                .setSyncMode(syncMode)
-                .setConfirmationThreshold(confirmationsThreshold)
-                .setStorage(storage)
-                .setInitialSyncApi(initialSyncApi)
-                .setBlockValidator(blockValidatorSet)
-                .build()
+            .setContext(context)
+            .setExtendedKey(extendedKey)
+            .setNetwork(network)
+            .setPaymentAddressParser(paymentAddressParser)
+            .setPeerSize(peerSize)
+            .setSyncMode(syncMode)
+            .setConfirmationThreshold(confirmationsThreshold)
+            .setStorage(storage)
+            .setInitialSyncApi(initialSyncApi)
+            .setBlockValidator(blockValidatorSet)
+            .build()
 
         //  extending bitcoinCore
 
@@ -122,14 +143,14 @@ class LitecoinKit : AbstractKit {
 
         bitcoinCore.prependAddressConverter(bech32AddressConverter)
 
-        when (bip) {
-            Bip.BIP44 -> {
+        when (purpose) {
+            Purpose.BIP44 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58AddressConverter))
             }
-            Bip.BIP49 -> {
+            Purpose.BIP49 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
             }
-            Bip.BIP84 -> {
+            Purpose.BIP84 -> {
                 bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter())
             }
         }
@@ -142,13 +163,14 @@ class LitecoinKit : AbstractKit {
         const val targetTimespan: Long = 302400         // 3.5 days per difficulty cycle, on average.
         const val heightInterval = targetTimespan / targetSpacing // 2016 blocks
 
-        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, bip: Bip): String = "Litecoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${bip.name}"
+        private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, purpose: Purpose): String =
+            "Litecoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${purpose.name}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
             for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
-                for (bip in Bip.values())
+                for (purpose in Purpose.values())
                     try {
-                        SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, bip)))
+                        SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, purpose)))
                     } catch (ex: Exception) {
                         continue
                     }
