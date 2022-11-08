@@ -17,21 +17,25 @@ class BlockchainComApi(transactionApiUrl: String, blocksApiUrl: String) : IIniti
 
         val transactionsArray = json["txs"].asArray()
 
-        return transactionsArray.map { transactionJson ->
+        return transactionsArray.mapNotNull { transactionJson ->
             val transaction = transactionJson.asObject()
-            val outputs = transaction["out"].asArray().map { outputJson ->
-                val output = outputJson.asObject()
+            //block_height can be null, when transaction is in mempool
+            if (transaction["block_height"].isNumber) {
+                val outputs = transaction["out"].asArray().map { outputJson ->
+                    val output = outputJson.asObject()
 
-                TransactionOutputResponse(
-                    output["script"].asString(),
-                    output["addr"]?.asString()
+                    TransactionOutputResponse(
+                        output["script"].asString(),
+                        output["addr"]?.asString()
+                    )
+                }
+                TransactionResponse(
+                    transaction["block_height"].asInt(),
+                    outputs
                 )
+            } else {
+                null
             }
-
-            TransactionResponse(
-                transaction["block_height"].asInt(),
-                outputs
-            )
         }
     }
 
