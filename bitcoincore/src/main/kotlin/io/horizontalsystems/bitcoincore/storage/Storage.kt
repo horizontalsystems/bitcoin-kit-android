@@ -132,6 +132,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         store.block.insert(block)
     }
 
+    override fun setBlockPartial(headerHash: ByteArray) {
+        store.block.setBlockPartial(headerHash)
+    }
+
     override fun lastBlock(): Block? {
         return store.block.getLastBlock()
     }

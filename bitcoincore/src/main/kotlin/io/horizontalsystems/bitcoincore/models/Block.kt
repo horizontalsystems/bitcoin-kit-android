@@ -36,6 +36,7 @@ class Block() {
     var headerHash: ByteArray = byteArrayOf()
     var height: Int = 0
     var stale = false
+    var partial = false
 
     fun previousBlock(storage: IStorage): Block? {
         return storage.getBlock(hashHash = previousBlockHash)
