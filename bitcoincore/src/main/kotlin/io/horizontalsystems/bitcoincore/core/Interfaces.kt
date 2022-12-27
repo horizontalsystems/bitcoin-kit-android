@@ -51,6 +51,7 @@ interface IStorage {
 
     fun addBlock(block: Block)
     fun saveBlock(block: Block)
+    fun setBlockPartial(headerHash: ByteArray)
 
     fun blocksCount(headerHashes: List<ByteArray>? = null): Int
     fun lastBlock(): Block?

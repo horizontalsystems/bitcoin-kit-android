@@ -11,6 +11,9 @@ interface BlockDao {
     @Update(onConflict = OnConflictStrategy.REPLACE)
     fun update(block: Block)
 
+    @Query("UPDATE Block SET partial = 1 WHERE headerHash = :headerHash")
+    fun setBlockPartial(headerHash: ByteArray)
+
     @Query("SELECT * FROM Block WHERE stale = :stale ORDER BY height DESC limit 1")
     fun getLast(stale: Boolean): Block?
 
