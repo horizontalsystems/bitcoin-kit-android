@@ -1,141 +1,240 @@
 # BitcoinKit
 
-Bitcoin and Bitcoin Cash(ABC) SPV wallet toolkit implemented in Kotlin. This is a full implementation of SPV node including wallet creation/restore, syncronzation with network, send/receive transactions, and more.
+`bitcoin-kit-ios` is a Bitcoin wallet toolkit implemented in Kotlin. It consists of following libraries:
 
-## Features
+- `bitcoincore` is a core library that implements a full Simplified Payment Verification (`SPV`) client in `Kotlin`. It implements Bitcoin `P2P Protocol` and can be extended to be a client of other Bitcoin forks like BitcoinCash, Litecoin, etc. 
+- `bitcoinkit` extends **bitcoincore**, makes it usable with `Bitcoin` network.
+- `bitcoincashkit` extends **bitcoincore**, makes it usable with `BitcoinCash(ABC)` network.
+- `litecoinkit` extends **bitcoincore**, makes it usable with `Litecoin` network.
+- `dashkit` extends **bitcoincore**, makes it usable with `Dash` network.
+- `hodler` is a plugin for `bitcoincore`, that makes it possible to lock certain amount of coins until some time in the future. 
 
-- Full SPV implementation for fast mobile performance
-- Send/Receive Legacy transactions (*P2PKH*, *P2PK*, *P2SH*)
-- Send/Receive Segwit transactions (*P2WPKH*)
-- Send/Receive Segwit transactions compatible with legacy wallets (*P2WPKH-SH*)
-- Fee calculation depending on wether sender pays the fee or receiver
-- Encoding/Decoding of base58, bech32, cashaddr addresses
-- [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) hierarchical deterministic wallets implementation.
-- [BIP39](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) mnemonic code for generating deterministic keys.
-- [BIP44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki) multi-account hierarchy for deterministic wallets.
-- [BIP21](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) URI schemes, which include payment address, amount, label and other params
-- Real-time fee rates
+Being an SPV client, **bitcoincore** downloads and validates all the block headers, inclusion of transactions in the blocks, integrity and immutability of transactions as described in the Bitcoin whitepaper or delegates validation to the extensions that implement the forks of Bitcoin.
+
+## Core Features
+
+- [x] Bitcoin P2P Protocol implementaion in Kotlin.
+- [x] Full SPV implementation for fast mobile performance with account security and privacy in mind
+- [x] `P2PK`, `P2PKH`, `P2SH-P2WPKH`, `P2WPKH` outputs support.
+- [x] Restoring with mnemonic seed. (Generated from private seed phrase)
+- [x] Restoring with [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) extended public key. (This becomes a `Watch account` unable to spend funds)
+- [x] Quick initial restore over node API. (optional)
+- [x] Handling transaction (Replacement)/(Doube spend)/(Failure by expiration)
+- [x] Optimized UTXO selection when spending coins.
+- [x] [BIP69](https://github.com/bitcoin/bips/blob/master/bip-0069.mediawiki) or simple shuffle output ordering. (configurable)
+- [x] [BIP21](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) URI schemes with payment address, amount, label and other parameters
+
+
+# bitcoinkit
 
 ## Usage
 
 ### Initialization
 
-`BitcoinKit` requires you to provide mnemonic phrase when it is initialized:
+First, you nead an instance of *BitcoinKit* class. You can initialize it with Mnemonic seed or BIP32 extended key (private or public). To generate seed from mnemonic seed phrase you can use [HdWalletKit](https://github.com/horizontalsystems/hd-wallet-kit-android) to convert a word list to a seed.
 
 ```kotlin
-val words = listOf("skill", ..., "century")
+val words = listOf("mnemonic", "phrase", "words")
+val passphrase: String = ""
+        
+val seed = Mnemonic().toSeed(words, passphrase)
 ```
 
-#### Bitcoin
+Then you can pass a seed to initialize an instance of *BitcoinKit*
 
 ```kotlin
-val context: Context = App.instance
-val walletId = 'MyWalletId'
-val bitcoinKit = BitcoinKit(context, walletId, words, BitcoinKit.NetworkType.MainNet)
+val context = Application()
+
+val bitcoinKit = BitcoinKit(
+    context = context,
+    seed = seed,
+    walletId = "unique_wallet_id",
+    syncMode = BitcoinCore.SyncMode.Api(),
+    networkType = NetworkType.MainNet,
+    confirmationsThreshold = 6,
+    purpose = HDWallet.Purpose.BIP84
+)
 ```
 
-#### Bitcoin Cash
+#### `purpose`
+
+*bitcoinkit* supports `BIP44`, `BIP49` and `BIP84` wallets. They have different derivation paths, so you need to specify this on kit initialization.
+
+
+#### `syncMode`
+
+*bitcoinkit* pulls all historical transactions of given account from bitcoin peers according to SPV protocol. This process may take several hours as it needs to download every block header with some transactions to find transactions concerning the accounts addresses. In order to speed up the initial blockchain scan, *bitcoincore* has some optimization options:
+
+- It doesn't download blocks added before the [BIP44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki) was implemented by wallets, because there were no transactions concerning addresses generated by BIP44 wallets.
+
+- If you set **API()** or **NewWallet()** to *syncMode* parameter, it first requests from an **API**(currently [Blockchain.com](https://blockchain.info)) the hashes of the blocks where there are transactions we need. Then, it downloads those blocks from the bitcoin peers. This reduces the initial synchronization time to several minutes. This also carries some risks that makes it possible for a middle-man attacker to learn about the addresses requested from your IP address. But your funds are totally safe.
+
+If you set **Full()** to *syncMode*, then only decentralized peers are used. Once the initial blockchain scan is completed, the remaining synchronization works with decentralized peers only for all *syncMode*s.
+
+#### Additional parameters:
+- `networkType`: Mainnet or Testnet
+- `confirmationsThreshold`: Minimum number of confirmations required for an unspent output to be available for use (*default: 6*)
+
+#### Initializing with HD extended key
+
+You can initialize `BitcoinKit` using BIP32 Extended Private/Public Key as follows:
+
 ```kotlin
-val bitCashKit = BitcoinCashKit(context, walletId, words, BitcoinCashKit.NetworkType.MainNet)
+val extendedKey = HDExtendedKey("xprvA1BgyAq84AiAsrMm6DKqwCXDwxLBXq76dpUfuNXNziGMzDxYLjE9AkuYBAQTpt6aJu4nFYamh6BbrRkys5fJcxGd7qixNrpVpPBxui9oYyF")
+
+val bitcoinKit = BitcoinKit(
+    context = context,
+    extendedKey = extendedKey,
+    walletId = "unique_wallet_id",
+    syncMode = BitcoinCore.SyncMode.Api(),
+    networkType = NetworkType.MainNet,
+    confirmationsThreshold = 6
+)
 ```
 
-Both networks can be configured to work in `MainNet` or `TestNet`
-
-##### Additional parameters:
-
-- `peerSize`: Can be configured for number of peers to be connected (*default: 10*)
-- `confirmationsThreshold`: Minimum number of confirmations required for an unspent output in incoming transaction to be spent (*default: 6*)
+If you restore with a public extended key, then you only will be able to watch the wallet. You won't be able to send any transactions. This is how the **watch account** feature is implemented.
 
 ### Starting and Stopping
 
-`BitcoinKit` requires to be started with `start` command, but does not need to be stopped. It will be in synced state as long as it is possible:
+*BitcoinKit* require to be started with `start` command. It will be in synced state as long as it is possible. You can call `stop` to stop it
 
 ```kotlin
 bitcoinKit.start()
-```
-
-#### Clearing data from device
-
-`BitcoinKit` uses internal database for storing data fetched from blockchain. The `clear` command can be used to stop and clean all stored data:
-
-```kotlin
-bitcoinKit.clear()
+bitcoinKit.stop()
 ```
 
 ### Getting wallet data
 
-`BitcoinKit` holds all kinds of data obtained from and needed for working with blockchain network
+#### Balance
 
-#### Current Balance
-
-Balance is provided in `Satoshi`:
+Balance is provided in `Satoshis`:
 
 ```kotlin
-bitcoinKit.balance
-// 2937096768
+val balance = bitcoinKit.balance
+
+println(balance.spendable)
+println(balance.unspendable)
+```
+
+Unspendable balance is non-zero if you have UTXO that is currently not spendable due to some custom unlock script. These custom scripts can be implemented as a plugin, like **Hodler**
+
+#### Last Block Info
+
+```kotlin
+val blockInfo = bitcoinKit.lastBlockInfo ?: return
+
+println(blockInfo.headerHash)
+println(blockInfo.height)
+println(blockInfo.timestamp)
 ```
 
 #### Receive Address
 
-Get an address which you can receive coins to. Receive address is changed each time after you actually get a transaction in which you receive coins to that address
+Get an address which you can receive coins to. Receive address is changed each time after you actually get some coins in that address
+
 ```kotlin
-bitcoinKit.receiveAddress()
-// mfu3iYeZuh18uuN4CrGYz34HSMynZBgZyg
+bitcoinKit.receiveAddress()   // "mgv1KTzGZby57K5EngZVaPdPtphPmEWjiS"
 ```
 
 #### Transactions
 
-You can get all your transactions as follows:
-```kotlin
-bitcoinKit.transactions
+You can get your transactions using `transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null)` method of the *BitcoinKit* instance. It returns *Single<List<TransactionInfo>>*. You'll need to subscribe and get transactions asynchronously. See [RX Single Observers](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Single.html) for more info.
 
-TransactionInfo(
-    transactionHash=baede6420b4b2869cba87d768a7b4e2eef2a9899149f24c5c3d3ff66b8ad1405,
-    from=[TransactionAddress(address=my1ysPMHdeQD6kwnimipbvFrr5NRHDvNgz, mine=false)],
-    to=[
-        TransactionAddress(address=moyrWfrks5EsHLb2hqUr8nUnC9q9DYXMtK, mine=true),
-        TransactionAddress(address=2NDk1BuuKnbVqDAMVgGr6xurnctfaQVxFoN, mine=false)
-    ],
-    amount=32500000,
-    blockHeight=1316822,
-    timestamp=1527595501
-  ),
-  TransactionInfo(
-    transactionHash=60ff9d204c17e0e71a1fd2d3f60b1bada5573857691d30d7518311057cc75720, 
-    from=[
-        TransactionAddress(address=mtmnfGuW4e5RbC64r3vx2qFhS3pobf57Ty, mine=false)
-    ], 
-    to=[
-        TransactionAddress(address=mt59yxihUxy117RPQuEVQ7QSRuHJnRT4fG, mine=true), 
-        TransactionAddress(address=2NAn7FBKvMFWteiHKSDDBudUP4vPwiBfVkr, mine=false)
-    ], 
-    amount=16250000, 
-    blockHeight=1316823, 
-    timestamp=1527595771
-)
-...
-```
-
-### Sending new transaction
-
-In order to create new transaction, call `send(address: String, value: Int, senderPay: Boolean = true)` method on `BitcoinKit`
- - `senderPay`: parameter defines who pays the fee
 
 ```kotlin
-bitcoinKit.send("mrjQyzbX9SiJxRC2mQhT4LvxFEmt9KEeRY", 1000000)
+val disposables = CompositeDisposable()
+
+bitcoinKit.transactions().subscribe { transactionInfos ->
+    for (transactionInfo in transactionInfos) {
+        println("Uid: ${transactionInfo.uid}")
+        println("Hash: ${transactionInfo.transactionHash}")
+    }
+}.let {
+    disposables.add(it)
+}
 ```
 
-This function first validates a given address and amount, creates new transaction, then sends it over the peers network. If there's any error with given address/amount or network, it raises an exception.
+- `fromUid` and `limit` parameters can be used for pagination. 
+- `type` parameter enables to filter transactions by coins flow. You can pass *incoming* OR *outgoing* to get filtered transations
 
-#### Validating transaction before send
 
-One can validate address and fee by using following methods:
+#### TransactionInfo
 
+A sample dump:
+
+```kotlin
+// transactionInfo = {TransactionInfo}
+//    amount = 13114
+//    blockHeight = 740024
+//    conflictingTxHash = null
+//    fee = null
+//    inputs = {ArrayList} size = 1
+//      0 = {TransactionInputInfo}
+//          address = "16s6q8dAgLbDT3szEc4nvTh81deRCBtEa1"
+//          mine = false
+//          value = null
+//    outputs = {ArrayList}  size = 2
+//      0 = {TransactionOutputInfo}
+//          address = "bc1qsg9ul383f8pespcvc8u3katl6gnsr7sjyfe3pc"
+//          changeOutput = false
+//          mine = true
+//          pluginData = null
+//          pluginDataString = null
+//          pluginId = null
+//          value = 13114
+//      1 = {TransactionOutputInfo}
+//          address = "16VCm8mYhHE3EiELi8GiYEqAjnPu1TSgAV"
+//          changeOutput = false
+//          mine = false
+//          pluginData = null
+//          pluginDataString = null
+//          pluginId = null
+//          value = 1422
+//    status = {TransactionStatus} RELAYED
+//    timestamp = 1654766137
+//    transactionHash = "cadf99db1e145dcfadfa2bc3eacb94831eb6c53d376f4f873aa4ac017b8c7f8f"
+//    transactionIndex = 2760
+//    type = {TransactionType} Incoming
+//    uid = "75934663-3c84-4b38-9b6d-810d3433de17"
 ```
-bitcoinKit.validate(address = "mrjQyzbX9SiJxRC2mQhT4LvxFEmt9KEeRY")
-bitcoinKit.fee(value = 1000000, address = "mrjQyzbX9SiJxRC2mQhT4LvxFEmt9KEeRY", senderPay: true)
+
+`uid`
+
+A local unique ID
+
+`type` 
+
+- *Incoming*
+- *Outgoing*
+- *SentToSelf*
+
+`status`
+
+- *NEW* -> transaction is in mempool
+- *RELAYED* -> transaction is in block
+- *INVALID* -> transaction is not included in block due to an error OR replaced by another one (RBF).
+
+
+### Sending BTC
+
+
+```kotlin
+bitcoinKit.send(address = "36k1UofZ2iP2NYax9znDCsksajfKeKLLMJ", value = 100000000, feeRate = 10, sortType = TransactionDataSortType.Bip69)
 ```
-- `senderPay`: parameter defines who pays the fee
+
+This first validates a given address and amount, creates new transaction, then sends it over the peers network. If there's any error with given address/amount or network, it raises an exception.
+
+#### Validate address
+
+```kotlin
+bitcoinKit.validateAddress(address = "mrjQyzbX9SiJxRC2mQhT4LvxFEmt9KEeRY")
+```
+
+#### Evaluate fee
+
+```kotlin
+bitcoinKit.fee(address = "36k1UofZ2iP2NYax9znDCsksajfKeKLLMJ", value = 100000000, feeRate = 10)
+```
 
 
 ### Parsing BIP21 URI
@@ -145,71 +244,149 @@ You can use `parsePaymentAddress` method to parse a BIP21 URI:
 ```kotlin
 bitcoinKit.parsePaymentAddress("bitcoin:175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?amount=50&label=Luke-Jr&message=Donation%20for%20project%20xyz")
 
-BitcoinPaymentData(
-  address=175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W, 
-  version=null, 
-  amount=50.0,
-  label=Luke-Jr,
-  message=Donation for project xyz,
-  parameters=null
-)
+
+// ▿ BitcoinPaymentData
+//   - address : "175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W"
+//   - version : null
+//   - amount : 50.0
+//   - label : "Luke-Jr"
+//   - message : "Donation for project xyz"
+//   - parameters : null
 ```
 
 ### Subscribing to BitcoinKit data
 
-`BitcoinKit` provides with data like transactions, blocks, balance, kitState in real-time. `BitcoinKit.Listener` interface must be implemented and set to `BitcoinKit` instance to receive that data.
+Balance, transactions, last blocks synced and kit state are available in real-time. `BitcoinKit.Listener` interface must be implemented and set to *BitcoinKit* instance to receive that.
 
 ```kotlin
-class MainViewModel : ViewModel(), BitcoinKit.Listener {
-
-    private var bitcoinKit: BitcoinKit
-    ...
+class Manager(val bitcoinKit: BitcoinKit) : BitcoinKit.Listener {
     
     init {
-        bitcoinKit = BitcoinKit(words, BitcoinKit.NetworkType.TestNet)
         bitcoinKit.listener = this
     }
-    
-    override fun onTransactionsUpdate(bitcoinKit: BitcoinKit, inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
-        // do something with transactions
+
+    override fun onBalanceUpdate(balance: BalanceInfo) {
+    }
+
+    override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
+    }
+
+    override fun onKitStateUpdate(state: BitcoinCore.KitState) {
+    }
+
+    override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
     }
 
     override fun onTransactionsDelete(hashes: List<String>) {
-        // do something with transactions
     }
 
-    override fun onBalanceUpdate(bitcoinKit: BitcoinKit, balance: Long) {
-        // do something with balance
-    }
-
-    override fun onLastBlockInfoUpdate(bitcoinKit: BitcoinKit, blockInfo: BlockInfo) {
-        // do something with blockInfo
-    }
-
-    override fun onKitStateUpdate(bitcoinKit: BitcoinKit, state: KitState) {
-        // These states can be used to implement progress bar, etc
-        when (state) {
-            is KitState.Synced -> {
-
-            }
-            is KitState.Syncing -> {
-                // val progress: Double = state.progress
-            }
-            is KitState.NotSynced -> {
-                
-            }
-        }
-    }
 }
 ```
 
-Listener events are run in a dedicated background thread. It can be switched to main thread by setting the ```listenerExecutor``` property to ```MainThreadExecutor()```
+# bitcoincashkit
+
+
+## Features
+
+- [x] `Base58` and `Bech32`
+- [x] Validation of BCH hard forks
+- [x] `ASERT`, `DAA`, `EDA` validations
+
+
+## Usage 
+
+Because BitcoinCash is a fork of Bitcoin, the usage of this library does not differ much from `bitcoinkit`. So we only describe some differences between them.
+
+### Initialization
+
+All BitcoinCash wallets use default [BIP44](https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki) derivation path where *coinType* is `145` according to [SLIP44](https://github.com/satoshilabs/slips/blob/master/slip-0044.md). But since it's a fork of Bitcoin, `0` coinType also can be restored.
 
 ```kotlin
+val context = Application()
+val seed = Mnemonic().toSeed(listOf("mnemonic", "phrase", "words"), "")
 
-bitcoinKit.listenerExecutor = MainThreadExecutor()
+val bitcoinCashKit = BitcoinCashKit(
+        context = context,
+        seed = seed,
+        walletId = "unique_wallet_id",
+        syncMode = BitcoinCore.SyncMode.Api(),
+        networkType = NetworkType.MainNet(MainNetBitcoinCash.CoinType.Type145),
+        confirmationsThreshold = 6
+)
+```
 
-``` 
+# litecoinkit
+
+Usage identical to `bitcoinkit`
+
+# dashkit
+
+## Features
+
+- [x] Instant send
+- [x] LLMQ lock, Masternodes validation
+
+## Usage
+
+### Initialization
+
+```kotlin
+val context = Application()
+val seed = Mnemonic().toSeed(listOf("mnemonic", "phrase", "words"), "")
+
+val dashKit = DashKit(
+        context = context,
+        seed = seed,
+        walletId = "unique_wallet_id",
+        syncMode = BitcoinCore.SyncMode.Api(),
+        networkType = NetworkType.MainNet,
+        confirmationsThreshold = 6
+)
+```
+
+### DashTransactionInfo
+
+Dash has some transactions marked `instant`. So, instead of `TransactionInfo` object *DashKit* works with `DashTransactionInfo` that has that field and a respective `DashKit.Listener` listener class.
+
+
+# hodler
+
+`hodler` is a plugin to `bitcoincore`, that makes it possible to lock bitcoins until some time in the future. It relies on [CHECKSEQUENCEVERIFY](https://github.com/bitcoin/bips/blob/master/bip-0112.mediawiki) and [Relative time-locks](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki). It may be used with other forks of Bitcoin that support them. `UnstooppableWallet` opts in this plugin and enables it for Bitcoin as an experimental feature.
+
+## How it works
+
+To lock funds we create P2SH output where redeem script has `OP_CSV` OpCode that ensures that the input has a proper Sequence Number(`nSequence`) field and that it enables a relative time-lock. 
+
+In [this](https://blockstream.info/tx/1cd11e80d04c82d098f19badb153ea12ec84cda408daaadc566cc129f967a435?input:1&expand) sample transaction the second input unlocks such an output. It has a signature, public key and the following redeem script in it's scriptSig:
+
+`OP_PUSHBYTES_3 070040 OP_CSV OP_DROP OP_DUP OP_HASH160 OP_PUSHBYTES_20 853316620ed93e4ade18f8218f9aa15dc36c768e OP_EQUALVERIFY OP_CHECKSIG`
+
+- `OP_PUSHBYTES_3 070040 OP_CSV OP_DROP` part ensures that needed amount of time is passed. Specifically `07` part of `070040` bytes says that it's locked for 1 hour. See [here](https://github.com/horizontalsystems/bitcoin-kit-android/blob/master/hodler/src/main/kotlin/io/horizontalsystems/hodler/LockTimeInterval.kt) and [here](https://github.com/bitcoin/bips/blob/master/bip-0068.mediawiki) for how it's evaluated.
+- `OP_DUP OP_HASH160 OP_PUSHBYTES_20 853316620ed93e4ade18f8218f9aa15dc36c768e OP_EQUALVERIFY OP_CHECKSIG` part is the same locking script as of `P2PKH` output, that ensures the spender is the owner of the private key matching the public key hashed to `853316620ed93e4ade18f8218f9aa15dc36c768e`.
+
+### Detection of incoming time-locked funds
+
+When you have such an `P2SH` output, you only have an address and a hash of a redeem script in the output. If you are not aware of incoming time-locked funds in advance, there's no way you can detect that a particular output is yours. For this reason, we add an extra `OP_RETURN` output beside that `P2SH` output as a hint. That output tells us 
+
+- ID of the plugin (1 byte): `bitcoincore` can handle multiple plugins like this one.
+- Time-lock period (2 bytes)
+- Hash of the receiver's public key (20 bytes)
+
+For example, [this](https://blockstream.info/tx/bdc3e995100269c8813f291dd9ea5489d8a17bd163002f70b5abbe05b5dccbd3?expand) is a *hint* output for the input above. It has following data:
+
+`OP_RETURN OP_PUSHNUM_1 OP_PUSHBYTES_2 0700 OP_PUSHBYTES_20 853316620ed93e4ade18f8218f9aa15dc36c768e` 
+
+
+## Limitations
+
+### Locked time periods
+
+This plugin can lock coins for `1 hour`, `1 month`, `half a year` and `1 year`. This is a limitation arising from the need of restoring those outputs using Simplified Payment Verification (SPV) `Bloom Filters`. Since each lock time generates different `P2SH` addresses, it wouldn't be possible to restore those outputs without knowing the exact lock time period in advance. So we generate 4 different addresses for each public key and use them in the bloom filters.
+
+### BTC amount
+
+We allow maximum 0.5 BTC to be locked. We assume that's an acceptable amount to be locked if done unintentionally.
+
 
 ## Prerequisites
 * JDK >= 1.8
@@ -243,4 +420,4 @@ All features of the library are used in example project. It can be referred as a
 
 ## License
 
-The `BitcoinKit` is open source and available under the terms of the [MIT License](https://github.com/horizontalsystems/bitcoin-kit-android/blob/master/LICENSE)
+The `bitcoin-kit-android` is open source and available under the terms of the [MIT License](https://github.com/horizontalsystems/bitcoin-kit-android/blob/master/LICENSE)
