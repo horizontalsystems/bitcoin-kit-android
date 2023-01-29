@@ -1,6 +1,6 @@
 # BitcoinKit
 
-`bitcoin-kit-ios` is a Bitcoin wallet toolkit implemented in Kotlin. It consists of following libraries:
+`bitcoin-kit-android` is a Bitcoin wallet toolkit implemented in Kotlin. It consists of following libraries:
 
 - `bitcoincore` is a core library that implements a full Simplified Payment Verification (`SPV`) client in `Kotlin`. It implements Bitcoin `P2P Protocol` and can be extended to be a client of other Bitcoin forks like BitcoinCash, Litecoin, etc. 
 - `bitcoinkit` extends **bitcoincore**, makes it usable with `Bitcoin` network.
@@ -13,13 +13,13 @@ Being an SPV client, **bitcoincore** downloads and validates all the block heade
 
 ## Core Features
 
-- [x] Bitcoin P2P Protocol implementaion in Kotlin.
+- [x] Bitcoin P2P Protocol implementation in Kotlin.
 - [x] Full SPV implementation for fast mobile performance with account security and privacy in mind
 - [x] `P2PK`, `P2PKH`, `P2SH-P2WPKH`, `P2WPKH` outputs support.
 - [x] Restoring with mnemonic seed. (Generated from private seed phrase)
 - [x] Restoring with [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki) extended public key. (This becomes a `Watch account` unable to spend funds)
 - [x] Quick initial restore over node API. (optional)
-- [x] Handling transaction (Replacement)/(Doube spend)/(Failure by expiration)
+- [x] Handling transaction (Replacement)/(Double spend)/(Failure by expiration)
 - [x] Optimized UTXO selection when spending coins.
 - [x] [BIP69](https://github.com/bitcoin/bips/blob/master/bip-0069.mediawiki) or simple shuffle output ordering. (configurable)
 - [x] [BIP21](https://github.com/bitcoin/bips/blob/master/bip-0021.mediawiki) URI schemes with payment address, amount, label and other parameters
@@ -31,7 +31,7 @@ Being an SPV client, **bitcoincore** downloads and validates all the block heade
 
 ### Initialization
 
-First, you nead an instance of *BitcoinKit* class. You can initialize it with Mnemonic seed or BIP32 extended key (private or public). To generate seed from mnemonic seed phrase you can use [HdWalletKit](https://github.com/horizontalsystems/hd-wallet-kit-android) to convert a word list to a seed.
+First, you need an instance of *BitcoinKit* class. You can initialize it with Mnemonic seed or BIP32 extended key (private or public). To generate seed from mnemonic seed phrase you can use [HdWalletKit](https://github.com/horizontalsystems/hd-wallet-kit-android) to convert a word list to a seed.
 
 ```kotlin
 val words = listOf("mnemonic", "phrase", "words")
