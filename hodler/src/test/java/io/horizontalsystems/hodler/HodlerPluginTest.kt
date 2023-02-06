@@ -49,7 +49,7 @@ class HodlerPluginTest {
         val pluginData = mock<IPluginData>()
 
         assertThrows<IllegalStateException> {
-            hodlerPlugin.processOutputs(mutableTransaction, pluginData)
+            hodlerPlugin.processOutputs(mutableTransaction, pluginData, false)
         }
     }
 
@@ -60,21 +60,8 @@ class HodlerPluginTest {
         whenever(mutableTransaction.recipientAddress).thenReturn(recipientAddress)
         whenever(recipientAddress.scriptType).thenReturn(ScriptType.P2SH)
 
-        assertThrows<IllegalStateException> {
-            hodlerPlugin.processOutputs(mutableTransaction, pluginData)
-        }
-    }
-
-    @Test
-    fun processOutputs_lockingMoreThanLimit() {
-        val pluginData = HodlerData(LockTimeInterval.hour)
-
-        whenever(mutableTransaction.recipientAddress).thenReturn(recipientAddress)
-        whenever(recipientAddress.scriptType).thenReturn(ScriptType.P2PKH)
-        whenever(mutableTransaction.recipientValue).thenReturn(50_000_001)
-
-        assertThrows<IllegalStateException> {
-            hodlerPlugin.processOutputs(mutableTransaction, pluginData)
+        assertThrows<java.lang.IllegalStateException> {
+            hodlerPlugin.processOutputs(mutableTransaction, pluginData, false)
         }
     }
 
@@ -92,7 +79,7 @@ class HodlerPluginTest {
         whenever(recipientAddress.hash).thenReturn(pubkeyHash)
         whenever(addressConverter.convert(redeemScriptHash, ScriptType.P2SH)).thenReturn(shAddress)
 
-        hodlerPlugin.processOutputs(mutableTransaction, pluginData)
+        hodlerPlugin.processOutputs(mutableTransaction, pluginData, false)
 
         verify(addressConverter).convert(redeemScriptHash, ScriptType.P2SH)
         verify(mutableTransaction).recipientAddress = shAddress

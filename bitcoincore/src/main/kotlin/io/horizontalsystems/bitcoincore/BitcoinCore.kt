@@ -700,10 +700,6 @@ class BitcoinCore(
         return dustCalculator?.dust(scriptType) ?: throw CoreError.ReadOnlyCore
     }
 
-    fun maximumSpendLimit(pluginData: Map<Byte, IPluginData>): Long? {
-        return pluginManager.maximumSpendLimit(pluginData)
-    }
-
     fun getRawTransaction(transactionHash: String): String? {
         return dataProvider.getRawTransaction(transactionHash)
     }
