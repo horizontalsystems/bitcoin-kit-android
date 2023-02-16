@@ -22,7 +22,7 @@ class InsightApi(host: String) : IInitialSyncApi {
 
     private fun fetchTransactions(addrs: List<String>, txs: MutableList<TransactionItem>, from: Int, to: Int) {
         val joinedAddresses = addrs.joinToString(",")
-        val json = apiManager.doOkHttpGet(false, "addrs/$joinedAddresses/txs?from=$from&to=$to").asObject()
+        val json = apiManager.doOkHttpGet("addrs/$joinedAddresses/txs?from=$from&to=$to").asObject()
 
         val totalItems = json["totalItems"].asInt()
         val receivedTo = json["to"].asInt()

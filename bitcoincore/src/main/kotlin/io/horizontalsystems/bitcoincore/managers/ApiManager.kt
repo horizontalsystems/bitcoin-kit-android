@@ -64,20 +64,16 @@ class ApiManager(private val host: String) {
         }
     }
 
-    fun doOkHttpGet(safeCall: Boolean, uri: String): JsonValue {
+    fun doOkHttpGet(uri: String): JsonValue {
 
         val url = "$host/$uri"
 
         try {
-            val httpClient: OkHttpClient = if (!safeCall)
-                NetworkUtils.getUnsafeOkHttpClient()
-            else {
-                OkHttpClient.Builder()
-                        .apply {
-                            connectTimeout(5000, TimeUnit.MILLISECONDS)
-                            readTimeout(60000, TimeUnit.MILLISECONDS)
-                        }.build()
-            }
+            val httpClient: OkHttpClient = OkHttpClient.Builder()
+                .apply {
+                    connectTimeout(5000, TimeUnit.MILLISECONDS)
+                    readTimeout(60000, TimeUnit.MILLISECONDS)
+                }.build()
 
             httpClient.newCall(Request.Builder().url(url).build())
                     .execute()
