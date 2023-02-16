@@ -41,7 +41,7 @@ class BlockchainComApi(transactionApiUrl: String, blocksApiUrl: String) : IIniti
 
     private fun blocks(heights: List<Int>): List<BlockResponse> {
         val joinedHeights = heights.sorted().joinToString(",") { it.toString() }
-        val blocks = blocksApiManager.doOkHttpGet(false, "hashes?numbers=$joinedHeights").asArray()
+        val blocks = blocksApiManager.doOkHttpGet("hashes?numbers=$joinedHeights").asArray()
 
         return blocks.map { blockJson ->
             val block = blockJson.asObject()
@@ -121,7 +121,7 @@ class BlockchainComApi(transactionApiUrl: String, blocksApiUrl: String) : IIniti
         fun requestInQueue(apiManager: ApiManager, path: String): JsonValue {
             val callable = Callable {
                 Thread.sleep(500)
-                apiManager.doOkHttpGet(false, path)
+                apiManager.doOkHttpGet(path)
             }
 
             return executor.submit(callable).get()

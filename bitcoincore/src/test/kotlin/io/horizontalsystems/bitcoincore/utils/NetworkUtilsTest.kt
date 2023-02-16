@@ -16,20 +16,12 @@ internal class NetworkUtilsTest {
     @Test
     fun testUnsafeHttpRequest() {
 
-        assertDoesNotThrow {
-            doUnsafeHttpRequest()
-        }
-
         assertThrows(SSLHandshakeException::class.java) { doSafeHttpRequest() }
         assertThrows(SSLHandshakeException::class.java) { doUrlConnectionRequest() }
     }
 
     private fun doSafeHttpRequest() {
         doOkHttpRequest(OkHttpClient.Builder().build())
-    }
-
-    private fun doUnsafeHttpRequest() {
-        doOkHttpRequest(NetworkUtils.getUnsafeOkHttpClient())
     }
 
     private fun doUrlConnectionRequest() {
