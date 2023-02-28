@@ -50,12 +50,12 @@ object BlockSyncerTest : Spek({
     }
 
     describe("#init") {
-        beforeEach {
+        beforeEachTest {
             reset(storage)
         }
 
         context("when there are some saved blocks") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.blocksCount()).thenReturn(1)
                 whenever(storage.lastBlock()).thenReturn(checkpointBlock)
 
@@ -90,7 +90,7 @@ object BlockSyncerTest : Spek({
         val blockHash = BlockHash("abc".hexToByteArray(), 1)
 
         context("when no BlockHashes") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf())
                 whenever(storage.blocksCount(listOf())).thenReturn(0)
             }
@@ -111,7 +111,7 @@ object BlockSyncerTest : Spek({
         }
 
         context("when there are some BlockHashes which haven't downloaded blocks") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf(blockHash))
                 whenever(storage.blocksCount(listOf(blockHash.headerHash))).thenReturn(0)
             }
@@ -125,7 +125,7 @@ object BlockSyncerTest : Spek({
         }
 
         context("when there are some BlockHashes which have downloaded blocks") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getBlockchainBlockHashes()).thenReturn(listOf(blockHash))
                 whenever(storage.blocksCount(listOf(blockHash.headerHash))).thenReturn(1)
             }
@@ -143,7 +143,7 @@ object BlockSyncerTest : Spek({
         val emptyBlocks = mock<List<Block>>()
         val blocksHashes = listOf(byteArrayOf(1))
 
-        beforeEach {
+        beforeEachTest {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
             whenever(storage.getBlockHashHeaderHashes(listOf(checkpointBlock.headerHash))).thenReturn(blocksHashes)
 
@@ -209,7 +209,7 @@ object BlockSyncerTest : Spek({
         val emptyBlocks = mock<List<Block>>()
         val blocksHashes = listOf(byteArrayOf(1))
 
-        beforeEach {
+        beforeEachTest {
             whenever(storage.getBlocks(any(), any())).thenReturn(emptyBlocks)
             whenever(storage.getBlockHashHeaderHashes(listOf(checkpointBlock.headerHash))).thenReturn(blocksHashes)
 
@@ -250,7 +250,7 @@ object BlockSyncerTest : Spek({
     describe("#getBlockLocatorHashes") {
         val peerLastBlockHeight = 99
 
-        beforeEach {
+        beforeEachTest {
             whenever(storage.getLastBlockchainBlockHash()).thenReturn(null)
             whenever(storage.getBlocks(checkpointBlock.height, "height", 10)).thenReturn(listOf())
             whenever(storage.getBlock(peerLastBlockHeight)).thenReturn(null)
@@ -265,7 +265,7 @@ object BlockSyncerTest : Spek({
         context("when there's blockchain block hashes") {
             val blockHash = BlockHash("cba".hexToByteArray(), 1)
 
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getLastBlockchainBlockHash()).thenReturn(blockHash)
             }
 
@@ -279,7 +279,7 @@ object BlockSyncerTest : Spek({
             val block2 = mock(Block::class.java)
             val blocks = listOf(block1, block2)
 
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getBlocks(heightGreaterThan = checkpointBlock.height, sortedBy = "height", limit = 10)).thenReturn(blocks)
             }
 
@@ -299,7 +299,7 @@ object BlockSyncerTest : Spek({
             val headerHash = byteArrayOf(1, 2, 3)
             val blockHash = BlockHash(headerHash, 1)
 
-            beforeEach {
+            beforeEachTest {
                 whenever(peerBlock.headerHash).thenReturn(headerHash)
 
                 whenever(storage.getLastBlockchainBlockHash()).thenReturn(blockHash)
@@ -321,14 +321,14 @@ object BlockSyncerTest : Spek({
                 byteArrayOf(4, 5, 6),
                 byteArrayOf(5, 6, 7))
 
-        beforeEach {
+        beforeEachTest {
             whenever(storage.getBlockHashHeaderHashes()).thenReturn(existingHashes)
         }
 
         context("when there's some block hashes") {
             val blockHash = BlockHash(byteArrayOf(1), 99, sequence = 99)
 
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getLastBlockHash()).thenReturn(blockHash)
             }
 
@@ -344,7 +344,7 @@ object BlockSyncerTest : Spek({
         }
 
         context("when there's no block hashes") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getLastBlockHash()).thenReturn(null)
             }
 
@@ -366,7 +366,7 @@ object BlockSyncerTest : Spek({
         val merkleBlock = mock(MerkleBlock::class.java)
         val merkleHeight = 1
 
-        beforeEach {
+        beforeEachTest {
             whenever(merkleBlock.height).thenReturn(null)
             whenever(merkleBlock.associatedTransactions).thenReturn(mutableListOf())
             whenever(block.height).thenReturn(merkleHeight)
@@ -377,7 +377,7 @@ object BlockSyncerTest : Spek({
             whenever(blockchain.forceAdd(merkleBlock, merkleHeight)).thenReturn(block)
         }
 
-        afterEach {
+        afterEachTest {
             reset(merkleBlock)
         }
 
@@ -390,7 +390,7 @@ object BlockSyncerTest : Spek({
 
         context("when merkle block height it not null") {
 
-            beforeEach {
+            beforeEachTest {
                 whenever(merkleBlock.height).thenReturn(merkleHeight)
             }
 
@@ -402,7 +402,7 @@ object BlockSyncerTest : Spek({
         }
 
         context("when bloom filter expired while processing transaction") {
-            beforeEach {
+            beforeEachTest {
                 whenever(transactionProcessor.processReceived(merkleBlock.associatedTransactions, block, state.iterationHasPartialBlocks))
                         .thenThrow(BloomFilterManager.BloomFilterExpired)
             }
@@ -415,7 +415,7 @@ object BlockSyncerTest : Spek({
         }
 
         context("when iteration not have partial blocks") {
-            beforeEach {
+            beforeEachTest {
                 whenever(state.iterationHasPartialBlocks).thenReturn(false)
             }
 
@@ -445,7 +445,7 @@ object BlockSyncerTest : Spek({
         val lastCheckpointBlock = mock<Block>()
         val lastBlockInDB = mock<Block>()
 
-        beforeEach {
+        beforeEachTest {
             whenever(network.bip44Checkpoint).thenReturn(bip44Checkpoint)
             whenever(bip44Checkpoint.block).thenReturn(bip44CheckpointBlock)
             whenever(bip44Checkpoint.additionalBlocks).thenReturn(listOf())
@@ -470,7 +470,7 @@ object BlockSyncerTest : Spek({
             val syncMode = BitcoinCore.SyncMode.Api()
 
             context("when last block in DB earlier than checkpoint block") {
-                beforeEach {
+                beforeEachTest {
                     whenever(lastBlockInDB.height).thenReturn(100)
                     whenever(lastCheckpointBlock.height).thenReturn(200)
                 }
@@ -482,7 +482,7 @@ object BlockSyncerTest : Spek({
             }
 
             context("when last block in DB later than checkpoint block") {
-                beforeEach {
+                beforeEachTest {
                     whenever(storage.lastBlock()).thenReturn(lastBlockInDB)
                     whenever(lastBlockInDB.height).thenReturn(200)
                     whenever(lastCheckpointBlock.height).thenReturn(100)
@@ -496,7 +496,7 @@ object BlockSyncerTest : Spek({
         }
 
         context("when DB has no block") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.lastBlock()).thenReturn(null)
             }
 

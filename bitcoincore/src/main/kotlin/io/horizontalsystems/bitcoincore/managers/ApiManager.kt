@@ -2,12 +2,12 @@ package io.horizontalsystems.bitcoincore.managers
 
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonValue
-import io.horizontalsystems.bitcoincore.utils.NetworkUtils
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.BufferedOutputStream
 import java.io.BufferedWriter
 import java.io.IOException
+import java.io.FileNotFoundException
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -35,7 +35,7 @@ class ApiManager(private val host: String) {
                         Json.parse(it.bufferedReader())
                     }
         } catch (exception: IOException) {
-            throw Exception("${exception.javaClass.simpleName}: $host")
+            throw FileNotFoundException("${exception.javaClass.simpleName}: $host")
         }
     }
 

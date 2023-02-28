@@ -32,28 +32,28 @@ object DataProviderTest : Spek({
         context("when transactions exist with given hash and timestamp") {
             val fromTransaction = mock<Transaction>()
 
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getValidOrInvalidTransaction(fromUid)).thenReturn(fromTransaction)
             }
 
             it("starts loading transactions from that transaction") {
-                dataProvider.transactions(fromUid, limit).test().assertOf {
+                dataProvider.transactions(fromUid, null, limit).test().assertOf {
                     verify(storage).getValidOrInvalidTransaction(fromUid)
 
-                    verify(storage).getFullTransactionInfo(fromTransaction, limit)
+                    verify(storage).getFullTransactionInfo(fromTransaction, null, limit)
                 }
             }
         }
 
         context("when transactions does not exist with given hash and timestamp") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getValidOrInvalidTransaction(fromUid)).thenReturn(null)
             }
 
             it("do not fetch transactions with `fromHash` and `fromTimestamp`") {
-                dataProvider.transactions(fromUid, limit).test().assertOf {
+                dataProvider.transactions(fromUid, null, limit).test().assertOf {
                     verify(storage).getValidOrInvalidTransaction(fromUid)
-                    verify(storage, never()).getFullTransactionInfo(null, limit)
+                    verify(storage, never()).getFullTransactionInfo(null, null, limit)
                 }
             }
         }
@@ -64,7 +64,7 @@ object DataProviderTest : Spek({
             dataProvider.transactions(null, null).test().assertOf {
                 verify(storage, never()).getTransaction(any())
 
-                verify(storage).getFullTransactionInfo(null, null)
+                verify(storage).getFullTransactionInfo(null, null, null)
             }
         }
     }

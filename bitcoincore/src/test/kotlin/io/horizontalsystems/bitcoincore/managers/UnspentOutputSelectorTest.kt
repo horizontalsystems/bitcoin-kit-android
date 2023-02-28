@@ -32,7 +32,7 @@ object UnspentOutputSelectorTest : Spek({
 
             lateinit var unspentOutputs: List<UnspentOutput>
 
-            beforeEach {
+            beforeEachTest {
                 val outputs = listOf(
                         TransactionOutput().apply { value = 1000; scriptType = ScriptType.P2PKH },
                         TransactionOutput().apply { value = 2000; scriptType = ScriptType.P2PKH },
@@ -92,7 +92,7 @@ object UnspentOutputSelectorTest : Spek({
 
             val unspentOutputs = listOf(utxo1, utxo2, utxo3, utxo4, utxo5)
 
-            beforeEach {
+            beforeEachTest {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
                 whenever(calculator.transactionSize(any(), any(), any())).thenReturn(123123)
             }
@@ -126,7 +126,7 @@ object UnspentOutputSelectorTest : Spek({
                     UnspentOutput(outputs[3], publicKey, transaction, block)
             )
 
-            beforeEach {
+            beforeEachTest {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(unspentOutputs)
                 whenever(txSizeCalculator.inputSize(any())).thenReturn(10)
                 whenever(txSizeCalculator.outputSize(any())).thenReturn(2)

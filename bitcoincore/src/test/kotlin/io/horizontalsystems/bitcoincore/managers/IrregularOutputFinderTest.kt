@@ -33,7 +33,7 @@ object IrregularOutputFinderTest : Spek({
 
     describe("#getBloomFilterElements") {
 
-        beforeEach {
+        beforeEachTest {
             whenever(storage.getOutputsForBloomFilter(block.height - 100, irregularScriptTypes)).thenReturn(listOf(output))
         }
 

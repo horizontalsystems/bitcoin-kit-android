@@ -44,13 +44,13 @@ object BlockchainTest : Spek({
     }
 
     describe("#connect") {
-        beforeEach {
+        beforeEachTest {
             whenever(merkleBlock.blockHash).thenReturn(byteArrayOf(1, 2, 3))
             whenever(merkleBlock.header).thenReturn(blockHeader)
         }
 
         context("when block exists") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getBlock(merkleBlock.blockHash)).thenReturn(block)
             }
 
@@ -67,12 +67,12 @@ object BlockchainTest : Spek({
         }
 
         context("when block doesn't exist") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.getBlock(merkleBlock.blockHash)).thenReturn(null)
             }
 
             context("when block is not in chain") {
-                beforeEach {
+                beforeEachTest {
                     whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash)).thenReturn(null)
                 }
 
@@ -88,7 +88,7 @@ object BlockchainTest : Spek({
             }
 
             context("when block is in chain") {
-                beforeEach {
+                beforeEachTest {
                     whenever(storage.getBlock(merkleBlock.header.previousBlockHeaderHash)).thenReturn(block)
                 }
 
@@ -128,7 +128,7 @@ object BlockchainTest : Spek({
 
         val height = 1
 
-        beforeEach {
+        beforeEachTest {
             connectedBlock = blockchain.forceAdd(merkleBlock, height)
         }
 
@@ -148,7 +148,7 @@ object BlockchainTest : Spek({
             val blocksInChain = sortedMapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3")
             val newBlocks = sortedMapOf(4 to "NewBlock4", 5 to "NewBlock5", 6 to "NewBlock6")
 
-            beforeEach {
+            beforeEachTest {
                 mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
@@ -163,7 +163,7 @@ object BlockchainTest : Spek({
             val blocksInChain = sortedMapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3")
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3", 4 to "NewBlock4")
 
-            beforeEach {
+            beforeEachTest {
                 mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
@@ -186,7 +186,7 @@ object BlockchainTest : Spek({
             val blocksInChain = sortedMapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3", 4 to "InChain4")
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3")
 
-            beforeEach {
+            beforeEachTest {
                 mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
@@ -203,7 +203,7 @@ object BlockchainTest : Spek({
             val blocksInChain = sortedMapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3")
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3")
 
-            beforeEach {
+            beforeEachTest {
                 mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
@@ -220,7 +220,7 @@ object BlockchainTest : Spek({
             val blocksInChain = sortedMapOf(1 to "InChain1", 2 to "InChain2", 3 to "InChain3")
             val newBlocks = sortedMapOf<Int, String>()
 
-            beforeEach {
+            beforeEachTest {
                 MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 
@@ -237,7 +237,7 @@ object BlockchainTest : Spek({
             val blocksInChain = sortedMapOf<Int, String>()
             val newBlocks = sortedMapOf(2 to "NewBlock2", 3 to "NewBlock3", 4 to "NewBlock4")
 
-            beforeEach {
+            beforeEachTest {
                 mockedBlocks = MockedBlocks(storage, blockHeader).create(blocksInChain, newBlocks)
             }
 

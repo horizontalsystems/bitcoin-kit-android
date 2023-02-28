@@ -1,10 +1,12 @@
 package io.horizontalsystems.bitcoincash.blocks
 
+import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
 import io.horizontalsystems.bitcoincore.models.Block
 
 class BitcoinCashBlockValidatorHelper(storage: IStorage) : BlockValidatorHelper(storage) {
+    private val blockMedianTimeHelper: BlockMedianTimeHelper = BlockMedianTimeHelper(storage)
 
     //  Get median of last 3 blocks based on timestamp
     fun getSuitableBlock(blocks: MutableList<Block>): Block {
@@ -28,5 +30,9 @@ class BitcoinCashBlockValidatorHelper(storage: IStorage) : BlockValidatorHelper(
         val tmp = this[index1]
         this[index1] = this[index2]
         this[index2] = tmp
+    }
+
+    fun medianTimePast(block: Block): Long {
+        return blockMedianTimeHelper.medianTimePast(block) ?: block.height.toLong()
     }
 }

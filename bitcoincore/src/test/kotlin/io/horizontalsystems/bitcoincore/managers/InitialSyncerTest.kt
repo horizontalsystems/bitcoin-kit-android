@@ -39,7 +39,7 @@
 //    describe("#sync") {
 //
 //        context("when already synced") {
-//            beforeEach {
+//            beforeEachTest {
 //                whenever(stateManager.restored).thenReturn(true)
 //
 //                initialSyncer.sync()
@@ -62,12 +62,12 @@
 //            val blockHash1 = mock(BlockHash::class.java)
 //            val blockHash2 = mock(BlockHash::class.java)
 //
-//            beforeEach {
+//            beforeEachTest {
 //                whenever(stateManager.restored).thenReturn(false)
 //            }
 //
 //            context("when blockDiscovery fails to fetch block hashes") {
-//                beforeEach {
+//                beforeEachTest {
 //                    whenever(blockDiscovery.discoverBlockHashes(0, true)).thenReturn(null)
 //                    whenever(blockDiscovery.discoverBlockHashes(0, false)).thenReturn(null)
 //
@@ -93,7 +93,7 @@
 //            }
 //
 //            context("when blockDiscovery succeeds") {
-//                beforeEach {
+//                beforeEachTest {
 //                    // account 1
 //                    whenever(blockDiscovery.discoverBlockHashes(0, true)).thenReturn(Single.just(Pair(listOf(publicKey1), listOf(blockHash1))))
 //                    whenever(blockDiscovery.discoverBlockHashes(0, false)).thenReturn(Single.just(Pair(listOf(publicKey2), listOf(blockHash2))))

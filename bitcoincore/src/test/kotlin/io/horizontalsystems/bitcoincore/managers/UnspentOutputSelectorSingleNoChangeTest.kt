@@ -28,7 +28,7 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
         }
 
         context("when there is no spendable utxo") {
-            beforeEach {
+            beforeEachTest {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf())
             }
 
@@ -49,7 +49,7 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
                 on { value } doReturn outputValue
             }
 
-            beforeEach {
+            beforeEachTest {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf(unspentOutput))
                 whenever(unspentOutput.output).thenReturn(transactionOutput)
                 whenever(transactionSizeCalculator.transactionSize(any(), any(), any())).thenReturn(transactionSize)
@@ -70,7 +70,7 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
                 on { failedToSpend } doReturn true
             }
 
-            beforeEach {
+            beforeEachTest {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf(unspentOutput))
                 whenever(unspentOutput.output).thenReturn(transactionOutput)
             }
@@ -98,7 +98,7 @@ object UnspentOutputSelectorSingleNoChangeTest : Spek({
                 on { output } doReturn transactionOutput
             }
 
-            beforeEach {
+            beforeEachTest {
                 whenever(unspentOutputProvider.getSpendableUtxo()).thenReturn(listOf(unspentOutput))
                 whenever(transactionSizeCalculator.transactionSize(any(), any(), any())).thenReturn(transactionSize)
             }

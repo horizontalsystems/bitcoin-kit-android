@@ -52,7 +52,7 @@ object UnspentOutputProviderTest : Spek({
 
     describe("#getSpendableUtxo") {
         context("when transaction is outgoing") {
-            beforeEach {
+            beforeEachTest {
                 transaction.isOutgoing = true
                 unspentOutput = UnspentOutput(output, pubKey, transaction, null)
 
@@ -66,12 +66,12 @@ object UnspentOutputProviderTest : Spek({
         }
 
         context("when transaction is not outgoing") {
-            beforeEach {
+            beforeEachTest {
                 transaction.isOutgoing = false
             }
 
             context("when transaction is not included in block") {
-                beforeEach {
+                beforeEachTest {
                     unspentOutput = UnspentOutput(output, pubKey, transaction, null)
 
                     whenever(storage.getUnspentOutputs()).thenReturn(listOf(unspentOutput))
@@ -88,7 +88,7 @@ object UnspentOutputProviderTest : Spek({
                     Fixtures.block1
                 }
 
-                beforeEach {
+                beforeEachTest {
                     block.height = lastBlockHeight + 1
                     unspentOutput = UnspentOutput(output, pubKey, transaction, block)
 
@@ -116,7 +116,7 @@ object UnspentOutputProviderTest : Spek({
     }
 
     describe("#balance") {
-        beforeEach {
+        beforeEachTest {
             transaction.isOutgoing = true
         }
 

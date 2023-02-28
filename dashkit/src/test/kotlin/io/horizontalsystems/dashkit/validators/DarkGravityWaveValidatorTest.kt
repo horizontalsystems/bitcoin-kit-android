@@ -42,7 +42,7 @@ class DarkGravityWaveValidatorTest : Spek({
                 on { height } doReturn candidateHeight
             }
 
-            beforeEach {
+            beforeEachTest {
                 var lastBlock = candidate
 
                 repeat(heightInterval) { i ->
@@ -77,7 +77,7 @@ class DarkGravityWaveValidatorTest : Spek({
                 on { height } doReturn 25
             }
 
-            beforeEach {
+            beforeEachTest {
                 whenever(blockHelper.getPrevious(previousBlock, 1)).thenReturn(null)
             }
 

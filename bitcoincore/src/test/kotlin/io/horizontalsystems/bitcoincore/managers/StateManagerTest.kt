@@ -32,7 +32,7 @@ object StateManagerTest : Spek({
         }
 
         context("when already restored") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.initialRestored).thenReturn(true)
             }
 
@@ -43,7 +43,7 @@ object StateManagerTest : Spek({
         }
 
         context("when not restored yet") {
-            beforeEach {
+            beforeEachTest {
                 whenever(storage.initialRestored).thenReturn(false)
             }
 

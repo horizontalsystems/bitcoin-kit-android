@@ -47,7 +47,7 @@ object TransactionSyncerTest : Spek({
             val transactions = listOf(fullTransaction)
 
             context("when need to update bloom filter") {
-                beforeEach {
+                beforeEachTest {
                     whenever(transactionProcessor.processReceived(eq(transactions), eq(false)))
                             .thenThrow(BloomFilterManager.BloomFilterExpired)
                 }

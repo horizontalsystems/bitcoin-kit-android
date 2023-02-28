@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.transactions.builder
 
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.whenever
+import io.horizontalsystems.bitcoincore.core.AccountWallet
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.PublicKey
@@ -13,7 +14,6 @@ import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.hdwalletkit.HDKey
-import io.horizontalsystems.hdwalletkit.HDWallet
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.assertThrows
 import org.mockito.Mockito.anyBoolean
@@ -32,7 +32,7 @@ object InputSignerTest : Spek({
     val transaction = mock(Transaction::class.java)
 
     val network = mock(Network::class.java)
-    val hdWallet = mock(HDWallet::class.java)
+    val hdWallet = mock(AccountWallet::class.java)
     val privateKey = mock(HDKey::class.java)
 
     val derEncodedSignature = "abc".hexToByteArray()
@@ -50,7 +50,7 @@ object InputSignerTest : Spek({
     }
 
     describe("when no private key") {
-        beforeEach {
+        beforeEachTest {
             whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(null)
         }
 
@@ -65,7 +65,7 @@ object InputSignerTest : Spek({
         val lockingScript = "76a914e4de5d630c5cacd7af96418a8f35c411c8ff3c0688ac".hexToByteArray()
         val expectedSignature = derEncodedSignature.toHexString() + "01"
 
-        beforeEach {
+        beforeEachTest {
             whenever(hdWallet.privateKey(any(), any(), anyBoolean())).thenReturn(privateKey)
 
             whenever(transactionOutput.lockingScript).thenReturn(lockingScript)
