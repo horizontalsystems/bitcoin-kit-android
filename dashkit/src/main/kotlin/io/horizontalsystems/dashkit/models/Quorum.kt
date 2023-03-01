@@ -14,6 +14,7 @@ class Quorum() : Comparable<Quorum> {
     var version = 0
     var type = 0
     var quorumHash = byteArrayOf()
+    var quorumIndex: Int? = null
     var signers = byteArrayOf()
     var validMembers = byteArrayOf()
     var quorumPublicKey = byteArrayOf()
@@ -25,6 +26,10 @@ class Quorum() : Comparable<Quorum> {
         version = input.readUnsignedShort()
         type = input.read()
         quorumHash = input.readBytes(32)
+
+        if (version >= 2) {
+            quorumIndex = input.readUnsignedShort()
+        }
 
         val signersSize = input.readVarInt().toInt()
 
@@ -42,6 +47,12 @@ class Quorum() : Comparable<Quorum> {
                 .writeUnsignedShort(version)
                 .writeByte(type)
                 .write(quorumHash)
+
+        quorumIndex?.let {
+            hashPayload.writeUnsignedShort(it)
+        }
+
+        hashPayload
                 .writeVarInt(signersSize.toLong())
                 .write(signers)
                 .writeVarInt(validMembersSize.toLong())
@@ -50,9 +61,8 @@ class Quorum() : Comparable<Quorum> {
                 .write(quorumVvecHash)
                 .write(quorumSig)
                 .write(sig)
-                .toByteArray()
 
-        hash = HashUtils.doubleSha256(hashPayload)
+        hash = HashUtils.doubleSha256(hashPayload.toByteArray())
     }
 
     override fun compareTo(other: Quorum): Int {
