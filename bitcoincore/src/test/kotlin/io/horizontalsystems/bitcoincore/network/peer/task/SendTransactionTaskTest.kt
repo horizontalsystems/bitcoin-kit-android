@@ -38,13 +38,13 @@ object SendTransactionTaskTest : Spek({
             val message = mock<GetDataMessage>()
             val transaction = mock<Transaction>()
 
-            beforeEach {
+            beforeEachTest {
                 whenever(fullTransaction.header).thenReturn(transaction)
                 whenever(transaction.hash).thenReturn(txHash)
             }
 
             describe("when requested this transaction") {
-                beforeEach {
+                beforeEachTest {
                     val inventoryItem = mock<InventoryItem>()
                     whenever(message.inventory).thenReturn(listOf(inventoryItem))
                     whenever(inventoryItem.type).thenReturn(InventoryItem.MSG_TX)
@@ -68,7 +68,7 @@ object SendTransactionTaskTest : Spek({
             }
 
             describe("when requested another transaction") {
-                beforeEach {
+                beforeEachTest {
                     val inventoryItem = mock<InventoryItem>()
                     whenever(message.inventory).thenReturn(listOf(inventoryItem))
                     whenever(inventoryItem.type).thenReturn(InventoryItem.MSG_TX)

@@ -1,5 +1,6 @@
 package io.horizontalsystems.dashkit.messages
 
+import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
 import org.junit.jupiter.api.Assertions
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -10,11 +11,11 @@ class MasternodeListDiffMessageParserTest : Spek({
 
     describe("#parseMessage") {
         it("parses successfully") {
-            val resource = javaClass.classLoader.getResource("messages/mnlistdiff.bin")
-            val payload = File(resource.path).readBytes()
+            val resource = MasternodeListDiffMessageParserTest::class.java.getResource("messages/mnlistdiff.bin")
+            val payload = File(resource!!.path).readBytes()
 
             Assertions.assertDoesNotThrow {
-                messageParser.parseMessage(payload)
+                messageParser.parseMessage(BitcoinInputMarkable(payload))
             }
         }
     }

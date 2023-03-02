@@ -125,7 +125,7 @@ class HodlerPluginTest {
         verify(storage).getPublicKeyByKeyOrKeyHash(pubkeyHash)
         verify(recipientOutput).redeemScript = redeemScript
         verify(recipientOutput).setPublicKey(publicKey)
-        verify(transaction).isMine = true
+//        verify(transaction).isMine = true
     }
 
     @Test

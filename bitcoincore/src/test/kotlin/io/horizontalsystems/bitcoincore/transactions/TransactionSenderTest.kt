@@ -30,7 +30,7 @@ object TransactionSenderTest : Spek({
     describe("#canSendTransaction") {
 
         context("when 0 synced peers") {
-            beforeEach {
+            beforeEachTest {
                 whenever(peerManager.peersCount).thenReturn(2)
                 whenever(initialBlockDownload.syncedPeers).thenReturn(CopyOnWriteArrayList())
             }
@@ -46,7 +46,7 @@ object TransactionSenderTest : Spek({
         }
 
         context("when 2 synced peers and 0 ready peers") {
-            beforeEach {
+            beforeEachTest {
                 val syncedPeers = CopyOnWriteArrayList<Peer>().apply {
                     add(peer1)
                     add(peer2)
@@ -68,7 +68,7 @@ object TransactionSenderTest : Spek({
         }
 
         context("when 1 ready and 1 synced peers") {
-            beforeEach {
+            beforeEachTest {
                 val syncedPeers = CopyOnWriteArrayList<Peer>().apply {
                     add(peer1)
                 }
@@ -89,7 +89,7 @@ object TransactionSenderTest : Spek({
         }
 
         context("when 1 ready and 2 synced peers") {
-            beforeEach {
+            beforeEachTest {
                 val readyPeer = mock<Peer> {
                     on { host } doReturn "0.0.0.1"
                     on { ready } doReturn true

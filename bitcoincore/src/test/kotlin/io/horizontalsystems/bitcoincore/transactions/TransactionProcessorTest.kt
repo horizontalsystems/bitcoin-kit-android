@@ -89,7 +89,7 @@ object TransactionProcessorTest : Spek({
             processor.processCreated(fullTransaction)
 
             Mockito.verify(extractor).extractOutputs(fullTransaction)
-            Mockito.verify(outputsCache).hasOutputs(fullTransaction.inputs)
+            Mockito.verify(outputsCache).add(fullTransaction.outputs)
             // Mockito.verify(blockchainDataListener).onTransactionsUpdate(check {
             //     Assert.assertArrayEquals(transaction.hash, it.firstOrNull()?.hash)
             // }, eq(listOf()), any())
@@ -109,10 +109,10 @@ object TransactionProcessorTest : Spek({
         it("testProcessTransactions_SeveralMempoolTransactions") {
             val transactions = transactions()
 
-            for (transaction in transactions) {
-                transaction.header.isMine = true
-                transaction.header.timestamp = 0
-                transaction.header.order = 0
+            for (tx in transactions) {
+                tx.header.isMine = true
+                tx.header.timestamp = 0
+                tx.header.order = 0
             }
 
             transactions[1].header.status = Transaction.Status.NEW
@@ -132,10 +132,10 @@ object TransactionProcessorTest : Spek({
 
             val block = Fixtures.block1
 
-            for (transaction in transactions) {
-                transaction.header.isMine = true
-                transaction.header.timestamp = 0
-                transaction.header.order = 0
+            for (tx in transactions) {
+                tx.header.isMine = true
+                tx.header.timestamp = 0
+                tx.header.order = 0
             }
 
             processor.processReceived(listOf(transactions[3], transactions[1], transactions[2], transactions[0]), false)
