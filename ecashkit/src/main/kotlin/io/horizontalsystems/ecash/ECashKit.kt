@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoincash
+package io.horizontalsystems.ecash
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
