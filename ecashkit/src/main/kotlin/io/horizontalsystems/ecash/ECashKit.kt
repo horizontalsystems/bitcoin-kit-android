@@ -55,7 +55,7 @@ class ECashKit : AbstractKit {
         networkType: NetworkType = NetworkType.MainNet,
         peerSize: Int = 10,
         syncMode: SyncMode = SyncMode.Api(),
-        confirmationsThreshold: Int = 6
+        confirmationsThreshold: Int = 1
     ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     constructor(
@@ -65,7 +65,7 @@ class ECashKit : AbstractKit {
         networkType: NetworkType = NetworkType.MainNet,
         peerSize: Int = 10,
         syncMode: SyncMode = SyncMode.Api(),
-        confirmationsThreshold: Int = 6
+        confirmationsThreshold: Int = 1
     ) : this(context, HDExtendedKey(seed, Purpose.BIP44), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     /**
@@ -76,7 +76,7 @@ class ECashKit : AbstractKit {
      * @param networkType The network type. The default is MainNet.
      * @param peerSize The # of peer-nodes required. The default is 10 peers.
      * @param syncMode How the kit syncs with the blockchain. The default is SyncMode.Api().
-     * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 6 confirmations.
+     * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 1 confirmation.
      */
     constructor(
         context: Context,
@@ -85,7 +85,7 @@ class ECashKit : AbstractKit {
         networkType: NetworkType,
         peerSize: Int = 10,
         syncMode: SyncMode = SyncMode.Api(),
-        confirmationsThreshold: Int = 6
+        confirmationsThreshold: Int = 1
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val storage = Storage(database)
