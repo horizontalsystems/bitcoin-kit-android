@@ -31,6 +31,7 @@ class Peer(
     var connected = false
     var connectionTime: Long = 1000
     var tasks = mutableListOf<PeerTask>()
+    var subVersion = ""
 
     private var connectStartTime: Long? = null
     private val peerConnection = PeerConnection(host, network, this, executorService, networkMessageParser, networkMessageSerializer)
@@ -129,6 +130,7 @@ class Peer(
         validatePeerVersion(message)
 
         announcedLastBlockHeight = message.lastBlock
+        subVersion = message.subVersion
 
         peerConnection.sendMessage(VerAckMessage())
     } catch (e: Error.UnsuitablePeerVersion) {

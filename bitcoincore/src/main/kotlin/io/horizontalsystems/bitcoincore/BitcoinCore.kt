@@ -623,6 +623,7 @@ class BitcoinCore(
             peerStatus["Status"] = if (peer.synced) "Synced" else "Not Synced"
             peerStatus["Host"] = peer.host
             peerStatus["Best Block"] = peer.announcedLastBlockHeight
+            peerStatus["User Agent"] = peer.subVersion
 
             peer.tasks.let { peerTasks ->
                 if (peerTasks.isEmpty()) {
