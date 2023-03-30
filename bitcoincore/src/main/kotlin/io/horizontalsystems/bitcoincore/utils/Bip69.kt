@@ -16,8 +16,8 @@ object Bip69 {
             return@Comparator valueCompareResult
         }
 
-        val keyHash1 = o1.keyHash ?: return@Comparator after
-        val keyHash2 = o2.keyHash ?: return@Comparator before
+        val keyHash1 = o1.lockingScriptPayload ?: return@Comparator after
+        val keyHash2 = o2.lockingScriptPayload ?: return@Comparator before
 
         //when amounts are equal, sort by hash
         val hashCompareResult = compareByteArrays(keyHash1, keyHash2)
@@ -45,7 +45,7 @@ object Bip69 {
 
         while (pos < b1.size && pos < b2.size) {
             val result = (b1[pos].toInt() and 0xff).compareTo(b2[pos].toInt() and 0xff)
-            if (result == equal){
+            if (result == equal) {
                 pos++
             } else {
                 return result

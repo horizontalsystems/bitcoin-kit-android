@@ -9,7 +9,6 @@ import io.horizontalsystems.bitcoincore.storage.WitnessConverter
 import io.horizontalsystems.bitcoincore.transactions.extractors.ITransactionOutputProvider
 import io.horizontalsystems.bitcoincore.transactions.extractors.MyOutputsCache
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionMetadataExtractor
-import java.util.ArrayList
 
 object Migration_12_13 : Migration(12, 13) {
 
@@ -113,7 +112,7 @@ object Migration_12_13 : Migration(12, 13) {
                 __scriptTypeConverter.fromInt(_tmp_1)?.let {
                     _item.scriptType = it
                 }
-                _item.keyHash = _cursor.getBlob(_cursorIndexOfKeyHash)
+                _item.lockingScriptPayload = _cursor.getBlob(_cursorIndexOfKeyHash)
                 _item.address = _cursor.getString(_cursorIndexOfAddress)
                 _item.failedToSpend = _cursor.getInt(_cursorIndexOfFailedToSpend) != 0
                 _item.pluginId = if (_cursor.isNull(_cursorIndexOfPluginId)) {
@@ -154,7 +153,7 @@ object Migration_12_13 : Migration(12, 13) {
                     _cursor.getLong(_cursorIndexOfSequence)
                 )
                 _item.transactionHash = _cursor.getBlob(_cursorIndexOfTransactionHash)
-                _item.keyHash = _cursor.getBlob(_cursorIndexOfKeyHash)
+                _item.lockingScriptPayload = _cursor.getBlob(_cursorIndexOfKeyHash)
                 _item.address = _cursor.getString(_cursorIndexOfAddress)
                 _item.witness = __witnessConverter.toWitness(_cursor.getString(_cursorIndexOfWitness))
                 _result.add(_item)

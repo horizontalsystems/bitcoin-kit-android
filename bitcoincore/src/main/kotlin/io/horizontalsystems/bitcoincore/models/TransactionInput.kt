@@ -20,24 +20,28 @@ import io.horizontalsystems.bitcoincore.storage.WitnessConverter
  *
  */
 
-@Entity(primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
-        foreignKeys = [ForeignKey(
-                entity = Transaction::class,
-                parentColumns = ["hash"],
-                childColumns = ["transactionHash"],
-                onUpdate = ForeignKey.CASCADE,
-                onDelete = ForeignKey.CASCADE,
-                deferred = true)
-        ])
+@Entity(
+    primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
+    foreignKeys = [ForeignKey(
+        entity = Transaction::class,
+        parentColumns = ["hash"],
+        childColumns = ["transactionHash"],
+        onUpdate = ForeignKey.CASCADE,
+        onDelete = ForeignKey.CASCADE,
+        deferred = true
+    )
+    ]
+)
 
 class TransactionInput(
-        val previousOutputTxHash: ByteArray,
-        val previousOutputIndex: Long,
-        var sigScript: ByteArray = byteArrayOf(),
-        var sequence: Long = 0xfffffffe) {
+    val previousOutputTxHash: ByteArray,
+    val previousOutputIndex: Long,
+    var sigScript: ByteArray = byteArrayOf(),
+    var sequence: Long = 0xfffffffe
+) {
 
     var transactionHash = byteArrayOf()
-    var keyHash: ByteArray? = null
+    var lockingScriptPayload: ByteArray? = null
     var address: String? = ""
 
     @TypeConverters(WitnessConverter::class)

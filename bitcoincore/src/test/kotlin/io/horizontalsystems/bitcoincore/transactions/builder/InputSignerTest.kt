@@ -94,7 +94,7 @@ object InputSignerTest : Spek({
 
         it("signs P2WPKH") {
             whenever(transactionOutput.scriptType).thenReturn(ScriptType.P2WPKH)
-            whenever(transactionOutput.keyHash).thenReturn(byteArrayOf(1, 2, 3))
+            whenever(transactionOutput.lockingScriptPayload).thenReturn(byteArrayOf(1, 2, 3))
 
             val resultSignature = inputSigner.sigScriptData(transaction, listOf(inputToSign), listOf(transactionOutput), 0)
 

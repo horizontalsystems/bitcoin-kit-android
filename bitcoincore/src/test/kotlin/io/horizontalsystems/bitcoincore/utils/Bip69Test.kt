@@ -9,17 +9,17 @@ import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
 import java.util.*
 
-class Bip69Test: Spek({
+class Bip69Test : Spek({
 
     describe("sort two outputs") {
 
         it("sort by amount") {
             val outputWithBigAmount = TransactionOutput().apply {
-                keyHash = "76a9144a5fba237213a062f6f57978f796390bdcf8d01588ac".toByteArray()
+                lockingScriptPayload = "76a9144a5fba237213a062f6f57978f796390bdcf8d01588ac".toByteArray()
                 value = 140
             }
             val outputWithSmallAmount = TransactionOutput().apply {
-                keyHash = "76a9145be32612930b8323add2212a4ec03c1562084f8488ac".toByteArray()
+                lockingScriptPayload = "76a9145be32612930b8323add2212a4ec03c1562084f8488ac".toByteArray()
                 value = 12
             }
 
@@ -31,11 +31,11 @@ class Bip69Test: Spek({
 
         it("amount are equal, sort by hashes") {
             val outputHashA = TransactionOutput().apply {
-                keyHash = "76a9144a5fba237213a062f6f57978f796390bdcf8d01588ac".toByteArray()
+                lockingScriptPayload = "76a9144a5fba237213a062f6f57978f796390bdcf8d01588ac".toByteArray()
                 value = 12
             }
             val outputHashB = TransactionOutput().apply {
-                keyHash = "76a9145be32612930b8323add2212a4ec03c1562084f8488ac".toByteArray()
+                lockingScriptPayload = "76a9145be32612930b8323add2212a4ec03c1562084f8488ac".toByteArray()
                 value = 12
             }
 
@@ -47,11 +47,11 @@ class Bip69Test: Spek({
 
         it("amount are equal, sort by hashes with different length") {
             val outputHashA = TransactionOutput().apply {
-                keyHash = "76a9144a5fba237213a062f6f57978f796390bdcf8d01588ac".toByteArray()
+                lockingScriptPayload = "76a9144a5fba237213a062f6f57978f796390bdcf8d01588ac".toByteArray()
                 value = 12
             }
             val outputHashB = TransactionOutput().apply {
-                keyHash = "76a9144a5fba237213a062f6f57978f7".toByteArray()
+                lockingScriptPayload = "76a9144a5fba237213a062f6f57978f7".toByteArray()
                 value = 12
             }
 
@@ -63,11 +63,11 @@ class Bip69Test: Spek({
 
         it("sort by hashes") {
             val outputHashA = TransactionOutput().apply {
-                keyHash = "3d8ed454f4fcc03ba35568aa37528748e56c0142".toByteArray()
+                lockingScriptPayload = "3d8ed454f4fcc03ba35568aa37528748e56c0142".toByteArray()
                 value = 12
             }
             val outputHashB = TransactionOutput().apply {
-                keyHash = "e191794cbc83dfaabe399af396904dd22b721ce2".toByteArray()
+                lockingScriptPayload = "e191794cbc83dfaabe399af396904dd22b721ce2".toByteArray()
                 value = 12
             }
 

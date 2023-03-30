@@ -158,10 +158,20 @@ class BitcoinKit : AbstractKit {
 
         val coreBuilder = BitcoinCoreBuilder()
 
-        bitcoinCore = coreBuilder.setContext(context).setExtendedKey(extendedKey).setNetwork(network).setPaymentAddressParser(paymentAddressParser)
-            .setPeerSize(peerSize).setSyncMode(syncMode).setConfirmationThreshold(confirmationsThreshold).setStorage(storage)
-            .setInitialSyncApi(initialSyncApi).setBlockValidator(blockValidatorSet).setHandleAddrMessage(false)
-            .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage))).build()
+        bitcoinCore = coreBuilder
+            .setContext(context)
+            .setExtendedKey(extendedKey)
+            .setNetwork(network)
+            .setPaymentAddressParser(paymentAddressParser)
+            .setPeerSize(peerSize)
+            .setSyncMode(syncMode)
+            .setConfirmationThreshold(confirmationsThreshold)
+            .setStorage(storage)
+            .setInitialSyncApi(initialSyncApi)
+            .setBlockValidator(blockValidatorSet)
+            .setHandleAddrMessage(false)
+            .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
+            .build()
 
         //  extending bitcoinCore
 
