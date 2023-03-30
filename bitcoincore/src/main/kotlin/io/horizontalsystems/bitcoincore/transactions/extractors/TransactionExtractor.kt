@@ -18,7 +18,7 @@ class TransactionExtractor(
 ) {
 
     fun extractOutputs(transaction: FullTransaction) {
-        var nullDataOutput : TransactionOutput? = null
+        var nullDataOutput: TransactionOutput? = null
         for (output in transaction.outputs) {
             val payload: ByteArray
             val scriptType: ScriptType
@@ -44,7 +44,7 @@ class TransactionExtractor(
             } else continue
 
             output.scriptType = scriptType
-            output.keyHash = payload
+            output.lockingScriptPayload = payload
 
             // Set public key if exist
             getPublicKey(output)?.let {
@@ -63,7 +63,7 @@ class TransactionExtractor(
             val previousOutput = storage.getPreviousOutput(input)
             if (previousOutput != null) {
                 input.address = previousOutput.address
-                input.keyHash = previousOutput.keyHash
+                input.lockingScriptPayload = previousOutput.lockingScriptPayload
                 continue
             }
 
@@ -89,8 +89,9 @@ class TransactionExtractor(
             }
             //  P2WPKHSH 0x16 00 14 {20-byte-key-hash}
             else if (sigScript.size == 23 && sigScript[0] == 0x16.toByte() &&
-                    (sigScript[1] == 0.toByte() || sigScript[1] in 0x50..0x61) &&
-                    sigScript[2] == 0x14.toByte()) {
+                (sigScript[1] == 0.toByte() || sigScript[1] in 0x50..0x61) &&
+                sigScript[2] == 0x14.toByte()
+            ) {
                 payload = sigScript.drop(1).toByteArray()
                 scriptType = ScriptType.P2WPKHSH
             } else continue
@@ -98,7 +99,7 @@ class TransactionExtractor(
             try {
                 val keyHash = Utils.sha256Hash160(payload)
                 val address = addressConverter.convert(keyHash, scriptType)
-                input.keyHash = address.hash
+                input.lockingScriptPayload = address.hash
                 input.address = address.string
 
             } catch (e: Exception) {
@@ -108,7 +109,7 @@ class TransactionExtractor(
 
     fun extractAddress(transaction: FullTransaction) {
         for (output in transaction.outputs) {
-            val outKeyHash = output.keyHash ?: continue
+            val outKeyHash = output.lockingScriptPayload ?: continue
             val scriptType = output.scriptType
 
             val pubkeyHash = when (scriptType) {
@@ -125,14 +126,14 @@ class TransactionExtractor(
     }
 
     private fun getPublicKey(output: TransactionOutput): PublicKey? {
-        var keyHash = output.keyHash ?: return null
+        var keyHash = output.lockingScriptPayload ?: return null
 
         if (output.scriptType == ScriptType.P2WPKH) {
             keyHash = keyHash.drop(2).toByteArray()
         } else if (output.scriptType == ScriptType.P2SH) {
             storage.getPublicKeyByScriptHashForP2PWKH(keyHash)?.let {
                 output.scriptType = ScriptType.P2WPKHSH
-                output.keyHash = it.publicKeyHash
+                output.lockingScriptPayload = it.publicKeyHash
                 return it
             }
         }

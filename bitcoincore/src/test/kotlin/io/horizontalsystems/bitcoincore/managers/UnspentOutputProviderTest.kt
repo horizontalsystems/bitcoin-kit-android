@@ -23,17 +23,18 @@ object UnspentOutputProviderTest : Spek({
     val storage = mock(IStorage::class.java)
     val pluginManager = mock<PluginManager>()
 
-    val output = TransactionOutput(value = 1, index = 0, script = byteArrayOf(), type = ScriptType.P2PKH, keyHash = "000010000".hexToByteArray())
+    val output =
+        TransactionOutput(value = 1, index = 0, script = byteArrayOf(), type = ScriptType.P2PKH, lockingScriptPayload = "000010000".hexToByteArray())
     val pubKey = Fixtures.publicKey
     val lastBlockHeight = 550368
     val blockHeader = BlockHeader(
-            version = 1,
-            previousBlockHeaderHash = "00000000864b744c5025331036aa4a16e9ed1cbb362908c625272150fa059b29".toReversedByteArray(),
-            merkleRoot = "70d6379650ac87eaa4ac1de27c21217b81a034a53abf156c422a538150bd80f4".toReversedByteArray(),
-            timestamp = 1337966314,
-            bits = 486604799,
-            nonce = 2391008772,
-            hash = byteArrayOf(1)
+        version = 1,
+        previousBlockHeaderHash = "00000000864b744c5025331036aa4a16e9ed1cbb362908c625272150fa059b29".toReversedByteArray(),
+        merkleRoot = "70d6379650ac87eaa4ac1de27c21217b81a034a53abf156c422a538150bd80f4".toReversedByteArray(),
+        timestamp = 1337966314,
+        bits = 486604799,
+        nonce = 2391008772,
+        hash = byteArrayOf(1)
     )
 
     val lastBlock = Block(header = blockHeader, height = lastBlockHeight)
@@ -122,8 +123,8 @@ object UnspentOutputProviderTest : Spek({
 
         it("returns sum of unspentOutputs") {
             val unspentOutputs = listOf(
-                    UnspentOutput(output = output, publicKey = pubKey, transaction = transaction, block = null),
-                    UnspentOutput(output = output, publicKey = pubKey, transaction = transaction, block = null)
+                UnspentOutput(output = output, publicKey = pubKey, transaction = transaction, block = null),
+                UnspentOutput(output = output, publicKey = pubKey, transaction = transaction, block = null)
             )
 
             whenever(storage.getUnspentOutputs()).thenReturn(unspentOutputs)

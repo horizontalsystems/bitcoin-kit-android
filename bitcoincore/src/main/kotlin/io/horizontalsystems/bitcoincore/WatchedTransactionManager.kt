@@ -37,7 +37,7 @@ class WatchedTransactionManager : IBloomFilterProvider {
 
             when (filter) {
                 is TransactionFilter.P2SHOutput -> {
-                    transaction.outputs.find { it.keyHash?.contentEquals(filter.scriptHash) == true }?.let { output ->
+                    transaction.outputs.find { it.lockingScriptPayload?.contentEquals(filter.scriptHash) == true }?.let { output ->
                         logger.info("Transaction received ${transaction.header.hash.toReversedHex()} for filter: $filter")
 
                         listener.onTransactionSeenP2SH(transaction, output.index)
@@ -45,7 +45,8 @@ class WatchedTransactionManager : IBloomFilterProvider {
                 }
                 is TransactionFilter.Outpoint -> {
                     val inputs = transaction.inputs
-                    val i = inputs.indexOfFirst { it.previousOutputTxHash.contentEquals(filter.transactionHash) && it.previousOutputIndex == filter.index }
+                    val i =
+                        inputs.indexOfFirst { it.previousOutputTxHash.contentEquals(filter.transactionHash) && it.previousOutputIndex == filter.index }
                     inputs.getOrNull(i)?.let {
                         logger.info("Transaction received ${transaction.header.hash.toReversedHex()} for filter: $filter")
 
@@ -58,7 +59,7 @@ class WatchedTransactionManager : IBloomFilterProvider {
 }
 
 sealed class TransactionFilter {
-    abstract fun getBloomFilterElement() : ByteArray
+    abstract fun getBloomFilterElement(): ByteArray
 
     class P2SHOutput(val scriptHash: ByteArray) : TransactionFilter() {
         override fun getBloomFilterElement(): ByteArray {

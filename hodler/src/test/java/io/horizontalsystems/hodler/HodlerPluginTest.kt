@@ -83,7 +83,10 @@ class HodlerPluginTest {
 
         verify(addressConverter).convert(redeemScriptHash, ScriptType.P2SH)
         verify(mutableTransaction).recipientAddress = shAddress
-        verify(mutableTransaction).addPluginData(HodlerPlugin.id, ("02" + "0700" + "14" + "8c005bb22d520f6a108b108242efcbe5c19315f5").hexToByteArray())
+        verify(mutableTransaction).addPluginData(
+            HodlerPlugin.id,
+            ("02" + "0700" + "14" + "8c005bb22d520f6a108b108242efcbe5c19315f5").hexToByteArray()
+        )
     }
 
     val fullTransaction = mock<FullTransaction>()
@@ -110,7 +113,7 @@ class HodlerPluginTest {
         whenever(chunkLockTimeInterval.data).thenReturn("0700".hexToByteArray())
         whenever(chunkPubkeyHash.data).thenReturn(pubkeyHash)
         whenever(fullTransaction.outputs).thenReturn(listOf(recipientOutput))
-        whenever(recipientOutput.keyHash).thenReturn(redeemScriptHash)
+        whenever(recipientOutput.lockingScriptPayload).thenReturn(redeemScriptHash)
         whenever(addressConverter.convert(pubkeyHash, ScriptType.P2PKH)).thenReturn(originalAddress)
         whenever(originalAddress.string).thenReturn(originalAddressString)
         whenever(storage.getPublicKeyByKeyOrKeyHash(pubkeyHash)).thenReturn(publicKey)

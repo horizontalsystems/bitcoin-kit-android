@@ -16,9 +16,9 @@ import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
 
 class HodlerPlugin(
-        private val addressConverter: IAddressConverter,
-        private val storage: IStorage,
-        private val blockMedianTimeHelper: BlockMedianTimeHelper
+    private val addressConverter: IAddressConverter,
+    private val storage: IStorage,
+    private val blockMedianTimeHelper: BlockMedianTimeHelper
 ) : IPlugin {
 
     companion object {
@@ -54,7 +54,7 @@ class HodlerPlugin(
         val redeemScriptHash = Utils.sha256Hash160(redeemScript)
 
         transaction.outputs.find {
-            it.keyHash?.contentEquals(redeemScriptHash) ?: false
+            it.lockingScriptPayload?.contentEquals(redeemScriptHash) ?: false
         }?.let { output ->
             val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).string
 
@@ -104,7 +104,10 @@ class HodlerPlugin(
     }
 
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {
-        return OpCodes.push(lockTimeInterval.sequenceNumberAs3BytesLE) + byteArrayOf(OP_CHECKSEQUENCEVERIFY.toByte(), OP_DROP.toByte()) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
+        return OpCodes.push(lockTimeInterval.sequenceNumberAs3BytesLE) + byteArrayOf(
+            OP_CHECKSEQUENCEVERIFY.toByte(),
+            OP_DROP.toByte()
+        ) + OpCodes.p2pkhStart + OpCodes.push(pubkeyHash) + OpCodes.p2pkhEnd
     }
 
     private fun lockTimeIntervalFrom(output: TransactionOutput): LockTimeInterval {
