@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoinkit.MainNet
 import io.horizontalsystems.bitcoinkit.TestNet
 import io.horizontalsystems.dashkit.MainNetDash
 import io.horizontalsystems.dashkit.TestNetDash
+import io.horizontalsystems.ecash.MainNetECash
 import io.horizontalsystems.litecoinkit.MainNetLitecoin
 import io.horizontalsystems.litecoinkit.TestNetLitecoin
 import java.io.*
@@ -35,6 +36,9 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         // Litecoin
         it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
         it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
+
+        // Ecash
+        it.add(CheckpointSyncer(MainNetECash(), 147, 147, this))
     }
 
     fun build(checkpoint: Block) {
@@ -102,7 +106,8 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
             is TestNetDash -> "dashkit"
             is MainNetLitecoin,
             is TestNetLitecoin -> "litecoinkit"
-            else -> throw Exception("Invalid network")
+            is MainNetECash -> "ecashkit"
+            else -> throw Exception("Invalid network: ${network.javaClass.name}")
         }
     }
 }
