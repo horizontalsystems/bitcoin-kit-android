@@ -6,7 +6,6 @@ import kotlin.experimental.or
 
 class MainNetECash : Network() {
 
-    override val syncableFromApi = false
     override var port: Int = 8333
 
     override var magic: Long = 0xe8f3e1e3L
