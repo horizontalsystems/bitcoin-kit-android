@@ -19,7 +19,7 @@ import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
 import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.BlockchainComApi
+import io.horizontalsystems.bitcoincore.managers.KeyHashRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -93,8 +93,7 @@ class ECashKit : AbstractKit {
 
         network = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncApi =
-                    BlockchainComApi("", "")
+                initialSyncApi = ChronikApi()
                 MainNetECash()
             }
             NetworkType.TestNet -> {
@@ -147,6 +146,7 @@ class ECashKit : AbstractKit {
         bitcoinCore.prependAddressConverter(bech32)
 
         bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
+        bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter())
     }
 
     companion object {
