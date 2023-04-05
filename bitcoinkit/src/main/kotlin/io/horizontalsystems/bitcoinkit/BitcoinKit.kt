@@ -96,7 +96,7 @@ class BitcoinKit : AbstractKit {
         syncMode: SyncMode = SyncMode.Api(),
         confirmationsThreshold: Int = 6,
         purpose: Purpose = Purpose.BIP44
-    ) : this(context, HDExtendedKey(seed, purpose), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
+    ) : this(context, HDExtendedKey(seed, purpose), purpose, walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     /**
      * @constructor Creates and initializes the BitcoinKit
@@ -111,13 +111,13 @@ class BitcoinKit : AbstractKit {
     constructor(
         context: Context,
         extendedKey: HDExtendedKey,
+        purpose: Purpose,
         walletId: String,
         networkType: NetworkType = NetworkType.MainNet,
         peerSize: Int = 10,
         syncMode: SyncMode = SyncMode.Api(),
         confirmationsThreshold: Int = 6
     ) {
-        val purpose = extendedKey.info.purpose
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, purpose))
         val storage = Storage(database)
         val initialSyncApi: IInitialSyncApi
@@ -161,6 +161,7 @@ class BitcoinKit : AbstractKit {
         bitcoinCore = coreBuilder
             .setContext(context)
             .setExtendedKey(extendedKey)
+            .setPurpose(purpose)
             .setNetwork(network)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)
@@ -191,6 +192,9 @@ class BitcoinKit : AbstractKit {
             }
             Purpose.BIP84 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
+            }
+            Purpose.BIP86 -> {
+                bitcoinCore.addRestoreKeyConverter(Bip86RestoreKeyConverter(bech32AddressConverter))
             }
         }
     }

@@ -79,6 +79,19 @@ class Bip84RestoreKeyConverter(private val addressConverter: IAddressConverter) 
     }
 }
 
+class Bip86RestoreKeyConverter(private val addressConverter: IAddressConverter) : IRestoreKeyConverter {
+
+    override fun keysForApiRestore(publicKey: PublicKey): List<String> {
+        val segwitAddress = addressConverter.convert(publicKey, ScriptType.P2TR).stringValue
+
+        return listOf(segwitAddress)
+    }
+
+    override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
+        return listOf(publicKey.publicKeyHash)
+    }
+}
+
 class KeyHashRestoreKeyConverter : IRestoreKeyConverter {
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {
         return listOf(publicKey.publicKeyHash.toHexString())

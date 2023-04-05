@@ -48,6 +48,7 @@ val Purpose.scriptType: ScriptType
         Purpose.BIP44 -> ScriptType.P2PKH
         Purpose.BIP49 -> ScriptType.P2WPKHSH
         Purpose.BIP84 -> ScriptType.P2WPKH
+        Purpose.BIP86 -> ScriptType.P2TR
     }
 
 val Purpose.description: String
@@ -55,4 +56,5 @@ val Purpose.description: String
         Purpose.BIP44 -> "bip44"
         Purpose.BIP49 -> "bip49"
         Purpose.BIP84 -> "bip84"
+        Purpose.BIP86 -> "bip86"
     }

@@ -56,7 +56,7 @@ class MainViewModel : ViewModel(), LitecoinKit.Listener {
 
         val xPubKey = HDExtendedKey("xpub6DXbiKGUNNcEws72vL94X3JAvVgGZusM1hhmiJAznMND1EjgdpCRp2oTLQnZeTwkLV92L5MzaPcpAmNhaXya7Yr9FGXbKGMu91Qys2QpfJn")
 
-        bitcoinKit = LitecoinKit(App.instance, xPubKey, walletId, LitecoinKit.NetworkType.MainNet)
+        bitcoinKit = LitecoinKit(App.instance, xPubKey, Purpose.BIP44, walletId, LitecoinKit.NetworkType.MainNet)
 
         bitcoinKit.listener = this
 
