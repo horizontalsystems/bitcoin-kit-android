@@ -19,8 +19,8 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
 
         val bytes = Arrays.copyOfRange(data, 1, data.size)
         val addressType = when (data[0].toInt() and 0xFF) {
-            addressScriptVersion -> AddressType.P2SH
-            addressVersion -> AddressType.P2PKH
+            addressScriptVersion -> AddressType.ScriptHash
+            addressVersion -> AddressType.PubKeyHash
             else -> throw AddressFormatException("Wrong address prefix")
         }
 
@@ -28,32 +28,32 @@ class Base58AddressConverter(private val addressVersion: Int, private val addres
 
     }
 
-    override fun convert(bytes: ByteArray, scriptType: ScriptType): Address {
+    override fun convert(lockingScriptPayload: ByteArray, scriptType: ScriptType): Address {
         val addressType: AddressType
         val addressVersion: Int
 
         when (scriptType) {
             ScriptType.P2PK,
             ScriptType.P2PKH -> {
-                addressType = AddressType.P2PKH
+                addressType = AddressType.PubKeyHash
                 addressVersion = this.addressVersion
             }
             ScriptType.P2SH,
             ScriptType.P2WPKHSH -> {
-                addressType = AddressType.P2SH
+                addressType = AddressType.ScriptHash
                 addressVersion = addressScriptVersion
             }
 
             else -> throw AddressFormatException("Unknown Address Type")
         }
 
-        val addressBytes = byteArrayOf(addressVersion.toByte()) + bytes
+        val addressBytes = byteArrayOf(addressVersion.toByte()) + lockingScriptPayload
         val doubleSHA256 = Utils.doubleDigest(addressBytes)
         val addrChecksum = Arrays.copyOfRange(doubleSHA256, 0, 4)
 
         val addressString = Base58.encode(addressBytes + addrChecksum)
 
-        return LegacyAddress(addressString, bytes, addressType)
+        return LegacyAddress(addressString, lockingScriptPayload, addressType)
     }
 
     override fun convert(publicKey: PublicKey, scriptType: ScriptType): Address {

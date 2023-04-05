@@ -36,7 +36,7 @@ class HodlerPlugin(
             }
         }
 
-        val pubkeyHash = mutableTransaction.recipientAddress.hash
+        val pubkeyHash = mutableTransaction.recipientAddress.lockingScriptPayload
         val redeemScriptHash = Utils.sha256Hash160(redeemScript(lockTimeInterval, pubkeyHash))
         val newAddress = addressConverter.convert(redeemScriptHash, ScriptType.P2SH)
 
@@ -56,7 +56,7 @@ class HodlerPlugin(
         transaction.outputs.find {
             it.lockingScriptPayload?.contentEquals(redeemScriptHash) ?: false
         }?.let { output ->
-            val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).string
+            val addressString = addressConverter.convert(pubkeyHash, ScriptType.P2PKH).stringValue
 
             output.pluginId = id
             output.pluginData = HodlerOutputData(lockTimeInterval, addressString).serialize()
@@ -93,7 +93,7 @@ class HodlerPlugin(
             val redeemScript = redeemScript(lockTimeInterval, publicKey.publicKeyHash)
             val redeemScriptHash = Utils.sha256Hash160(redeemScript)
 
-            addressConverter.convert(redeemScriptHash, ScriptType.P2SH).string
+            addressConverter.convert(redeemScriptHash, ScriptType.P2SH).stringValue
         }
     }
 

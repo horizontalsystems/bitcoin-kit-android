@@ -10,7 +10,7 @@ interface IAddressConverter {
     fun convert(addressString: String): Address
 
     @Throws
-    fun convert(bytes: ByteArray, scriptType: ScriptType = ScriptType.P2PKH): Address
+    fun convert(lockingScriptPayload: ByteArray, scriptType: ScriptType = ScriptType.P2PKH): Address
 
     @Throws
     fun convert(publicKey: PublicKey, scriptType: ScriptType = ScriptType.P2PKH): Address
@@ -42,12 +42,12 @@ class AddressConverterChain : IAddressConverter {
         throw exception
     }
 
-    override fun convert(bytes: ByteArray, scriptType: ScriptType): Address {
+    override fun convert(lockingScriptPayload: ByteArray, scriptType: ScriptType): Address {
         val exceptions = mutableListOf<Exception>()
 
         for (converter in concreteConverters) {
             try {
-                return converter.convert(bytes, scriptType)
+                return converter.convert(lockingScriptPayload, scriptType)
             } catch (e: Exception) {
                 exceptions.add(e)
             }

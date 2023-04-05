@@ -99,8 +99,8 @@ class TransactionExtractor(
             try {
                 val keyHash = Utils.sha256Hash160(payload)
                 val address = addressConverter.convert(keyHash, scriptType)
-                input.lockingScriptPayload = address.hash
-                input.address = address.string
+                input.lockingScriptPayload = address.lockingScriptPayload
+                input.address = address.stringValue
 
             } catch (e: Exception) {
             }
@@ -119,7 +119,7 @@ class TransactionExtractor(
             }
 
             try {
-                output.address = addressConverter.convert(pubkeyHash, scriptType).string
+                output.address = addressConverter.convert(pubkeyHash, scriptType).stringValue
             } catch (e: Exception) {
             }
         }

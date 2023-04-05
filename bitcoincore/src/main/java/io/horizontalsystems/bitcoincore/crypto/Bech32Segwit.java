@@ -53,21 +53,27 @@ public class Bech32Segwit extends Bech32 {
     }
 
     /** Verify a checksum. */
-    private static boolean verifyChecksum(final String prefix, final byte[] values) {
+    private static Encoding verifyChecksum(final String prefix, final byte[] values) {
         byte[] prefixExpanded = expandPrefix(prefix);
         byte[] combined = new byte[prefixExpanded.length + values.length];
         System.arraycopy(prefixExpanded, 0, combined, 0, prefixExpanded.length);
         System.arraycopy(values, 0, combined, prefixExpanded.length, values.length);
-        return polymod(combined) == 1;
+        int check = polymod(combined);
+        for (Encoding encoding : Encoding.values()) {
+            if (check == encoding.checksumConstant) {
+                return encoding;
+            }
+        }
+        return null;
     }
 
     /** Create a checksum. */
-    private static byte[] createChecksum(final String prefix, final byte[] values) {
+    private static byte[] createChecksum(final String prefix, Encoding encoding, final byte[] values) {
         byte[] prefixExpanded = expandPrefix(prefix);
         byte[] enc = new byte[prefixExpanded.length + values.length + 6];
         System.arraycopy(prefixExpanded, 0, enc, 0, prefixExpanded.length);
         System.arraycopy(values, 0, enc, prefixExpanded.length, values.length);
-        int mod = polymod(enc) ^ 1;
+        int mod = polymod(enc) ^ encoding.checksumConstant;
         byte[] ret = new byte[6];
         for (int i = 0; i < 6; ++i) {
             ret[i] = (byte) ((mod >>> (5 * (5 - i))) & 31);
@@ -77,15 +83,15 @@ public class Bech32Segwit extends Bech32 {
 
     /** Encode a Bech32 string. */
     public static String encode(final Bech32Data bech32) throws AddressFormatException {
-        return encode(bech32.hrp, bech32.data);
+        return encode(bech32.hrp, bech32.encoding, bech32.data);
     }
 
     /** Encode a Bech32 string. */
-    public static String encode(String prefix, final byte[] values) throws AddressFormatException {
+    public static String encode(String prefix, Encoding encoding, final byte[] values) throws AddressFormatException {
         if (prefix.length() < 1) throw new AddressFormatException("Human-readable part is too short");
         if (prefix.length() > 83) throw new AddressFormatException("Human-readable part is too long");
         prefix = prefix.toLowerCase(Locale.ROOT);
-        byte[] checksum = createChecksum(prefix, values);
+        byte[] checksum = createChecksum(prefix, encoding, values);
         byte[] combined = new byte[values.length + checksum.length];
         System.arraycopy(values, 0, combined, 0, values.length);
         System.arraycopy(checksum, 0, combined, values.length, checksum.length);
@@ -120,8 +126,11 @@ public class Bech32Segwit extends Bech32 {
             values[i] = CHARSET_REV[c];
         }
         String prefix = str.substring(0, pos).toLowerCase(Locale.ROOT);
-        if (!verifyChecksum(prefix, values)) throw new AddressFormatException("Invalid checksum");
-        return new Bech32Data(prefix, Arrays.copyOfRange(values, 0, values.length - 6));
+        Encoding encoding = verifyChecksum(prefix, values);
+        if (encoding == null) {
+            throw new AddressFormatException("Invalid checksum");
+        }
+        return new Bech32Data(prefix, Arrays.copyOfRange(values, 0, values.length - 6), encoding);
     }
 
     /** General power-of-2 base conversion */

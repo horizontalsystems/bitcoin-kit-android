@@ -553,7 +553,7 @@ class BitcoinCore(
         sortType: TransactionDataSortType
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator?.create(address.string, value, feeRate, senderPay, sortType, mapOf()) ?: throw CoreError.ReadOnlyCore
+        return transactionCreator?.create(address.stringValue, value, feeRate, senderPay, sortType, mapOf()) ?: throw CoreError.ReadOnlyCore
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
@@ -561,7 +561,7 @@ class BitcoinCore(
     }
 
     fun receiveAddress(): String {
-        return addressConverter.convert(publicKeyManager.receivePublicKey(), purpose.scriptType).string
+        return addressConverter.convert(publicKeyManager.receivePublicKey(), purpose.scriptType).stringValue
     }
 
     fun receivePublicKey(): PublicKey {
@@ -592,7 +592,7 @@ class BitcoinCore(
 //                        ScriptType.P2PKH else
 //                        ScriptType.P2WPKH
 
-                val legacy = addressConverter.convert(pubKey.publicKeyHash, ScriptType.P2PKH).string
+                val legacy = addressConverter.convert(pubKey.publicKeyHash, ScriptType.P2PKH).stringValue
 //                    val wpkh = addressConverter.convert(pubKey.scriptHashP2WPKH, ScriptType.P2SH).string
 //                    val bechAddress = try {
 //                        addressConverter.convert(OpCodes.push(0) + OpCodes.push(pubKey.publicKeyHash), scriptType).string
