@@ -1,59 +1,83 @@
 package io.horizontalsystems.bitcoincore.models
 
-import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 enum class AddressType {
-    P2PKH,  // Pay to public key hash
-    P2SH,   // Pay to script hash
-    WITNESS // Pay to witness hash
+    PubKeyHash,
+    ScriptHash
 }
 
-abstract class Address {
-    lateinit var type: AddressType
-    lateinit var hash: ByteArray
-    lateinit var string: String
-
+interface Address {
     val scriptType: ScriptType
-        get() = when (type) {
-            AddressType.P2PKH -> ScriptType.P2PKH
-            AddressType.P2SH -> ScriptType.P2SH
-            AddressType.WITNESS ->
-                if (hash.size == 20) ScriptType.P2WPKH else ScriptType.P2WSH
-        }
-
-    open val lockingScript: ByteArray
-        get() = when (type) {
-            AddressType.P2PKH -> OpCodes.p2pkhStart + OpCodes.push(hash) + OpCodes.p2pkhEnd
-            AddressType.P2SH -> OpCodes.p2pshStart + OpCodes.push(hash) + OpCodes.p2pshEnd
-            else -> throw AddressFormatException("Unknown Address Type")
-        }
+    val lockingScriptPayload: ByteArray
+    val stringValue: String
+    val lockingScript: ByteArray
 }
 
-class LegacyAddress(addressString: String, bytes: ByteArray, type: AddressType) : Address() {
-    init {
-        this.type = type
-        this.hash = bytes
-        this.string = addressString
-    }
-}
+class LegacyAddress(
+    override val stringValue: String,
+    override val lockingScriptPayload: ByteArray,
+    val type: AddressType
+) : Address {
 
-class SegWitAddress(addressString: String, bytes: ByteArray, type: AddressType, val version: Int) : Address() {
-    init {
-        this.type = type
-        this.hash = bytes
-        this.string = addressString
-    }
+    override val scriptType: ScriptType
+        get() = when (type) {
+            AddressType.PubKeyHash -> ScriptType.P2PKH
+            AddressType.ScriptHash -> ScriptType.P2SH
+        }
 
     override val lockingScript: ByteArray
-        get() = OpCodes.push(version) + OpCodes.push(hash)
+        get() = when (type) {
+            AddressType.PubKeyHash -> OpCodes.p2pkhStart + OpCodes.push(lockingScriptPayload) + OpCodes.p2pkhEnd
+            AddressType.ScriptHash -> OpCodes.p2pshStart + OpCodes.push(lockingScriptPayload) + OpCodes.p2pshEnd
+        }
 }
 
-class CashAddress(addressString: String, bytes: ByteArray, type: AddressType) : Address() {
-    init {
-        this.type = type
-        this.hash = bytes
-        this.string = addressString
-    }
+class SegWitV0Address(
+    override val stringValue: String,
+    override val lockingScriptPayload: ByteArray,
+    val type: AddressType
+) : Address {
+
+    override val scriptType: ScriptType
+        get() = when (type) {
+            AddressType.PubKeyHash -> ScriptType.P2WPKH
+            AddressType.ScriptHash -> ScriptType.P2WSH
+        }
+
+    override val lockingScript: ByteArray
+        get() = OpCodes.push(0) + OpCodes.push(lockingScriptPayload)
+}
+
+class TaprootAddress(
+    override val stringValue: String,
+    override val lockingScriptPayload: ByteArray,
+    val version: Int
+) : Address {
+
+    override val scriptType: ScriptType = ScriptType.P2TR
+
+    override val lockingScript: ByteArray
+        get() = OpCodes.push(version) + OpCodes.push(lockingScriptPayload)
+}
+
+class CashAddress(
+    override val stringValue: String,
+    override val lockingScriptPayload: ByteArray,
+    val version: Int,
+    val type: AddressType
+) : Address {
+
+    override val scriptType: ScriptType
+        get() = when (type) {
+            AddressType.PubKeyHash -> ScriptType.P2PKH
+            AddressType.ScriptHash -> ScriptType.P2SH
+        }
+
+    override val lockingScript: ByteArray
+        get() = when (type) {
+            AddressType.PubKeyHash -> OpCodes.p2pkhStart + OpCodes.push(lockingScriptPayload) + OpCodes.p2pkhEnd
+            AddressType.ScriptHash -> OpCodes.p2pshStart + OpCodes.push(lockingScriptPayload) + OpCodes.p2pshEnd
+        }
 }

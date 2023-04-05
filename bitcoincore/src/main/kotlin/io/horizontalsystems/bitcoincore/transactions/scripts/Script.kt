@@ -11,6 +11,7 @@ enum class ScriptType(val value: Int) {
     P2WPKH(4),    // pay to witness pubkey hash
     P2WSH(5),     // pay to witness script hash
     P2WPKHSH(6),  // P2WPKH nested in P2SH
+    P2TR(8),
     NULL_DATA(7),
     UNKNOWN(0);
 

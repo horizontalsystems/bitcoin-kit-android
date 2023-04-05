@@ -30,6 +30,6 @@ class TransactionFeeCalculator(
     }
 
     private fun sampleAddress(): String {
-        return addressConverter.convert(publicKey = publicKeyManager.changePublicKey(), scriptType = changeScriptType).string
+        return addressConverter.convert(publicKey = publicKeyManager.changePublicKey(), scriptType = changeScriptType).stringValue
     }
 }
