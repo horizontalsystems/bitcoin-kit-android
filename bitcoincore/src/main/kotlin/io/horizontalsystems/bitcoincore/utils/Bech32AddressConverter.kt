@@ -5,8 +5,8 @@ import io.horizontalsystems.bitcoincore.crypto.Bech32Cash
 import io.horizontalsystems.bitcoincore.crypto.Bech32Segwit
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.hdwalletkit.ECKey
 
 abstract class Bech32AddressConverter(var hrp: String) : IAddressConverter
 
@@ -58,10 +58,11 @@ class SegwitAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(
 
     override fun convert(publicKey: PublicKey, scriptType: ScriptType) = when (scriptType) {
         ScriptType.P2WPKH, ScriptType.P2WSH -> {
-            convert(OpCodes.scriptWPKH(publicKey.publicKeyHash, versionByte = 0), scriptType)
+            convert(publicKey.publicKeyHash, scriptType)
         }
         ScriptType.P2TR -> {
-            convert(OpCodes.scriptWPKH(publicKey.publicKey, versionByte = 1), scriptType)
+            val pubKey = ECKey(publicKey.publicKey).tweakedOutputKey.pubKeyXCoord
+            convert(pubKey, scriptType)
         }
         else -> throw AddressFormatException("Unknown Address Type")
     }
