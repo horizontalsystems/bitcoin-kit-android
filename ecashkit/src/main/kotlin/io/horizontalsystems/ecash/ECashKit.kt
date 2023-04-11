@@ -141,12 +141,9 @@ class ECashKit : AbstractKit {
         //  extending bitcoinCore
 
         val bech32 = CashAddressConverter(network.addressSegwitHrp)
-        val base58 = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
-
         bitcoinCore.prependAddressConverter(bech32)
 
-        bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
-        bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter())
+        bitcoinCore.addRestoreKeyConverter(ECashRestoreKeyConverter())
     }
 
     companion object {

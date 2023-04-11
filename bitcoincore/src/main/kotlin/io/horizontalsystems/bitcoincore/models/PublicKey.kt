@@ -6,12 +6,14 @@ import androidx.room.Index
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.utils.Utils
+import io.horizontalsystems.hdwalletkit.ECKey
 
 @Entity(primaryKeys = ["path"],
         indices = [
             Index("publicKey"),
             Index("publicKeyHash"),
-            Index("scriptHashP2WPKH")
+            Index("scriptHashP2WPKH"),
+            Index("convertedForP2TR")
         ])
 
 class PublicKey() {
@@ -26,6 +28,7 @@ class PublicKey() {
     var publicKeyHash = byteArrayOf()
     var publicKey = byteArrayOf()
     var scriptHashP2WPKH = byteArrayOf()
+    var convertedForP2TR = byteArrayOf()
 
     fun used(storage: IStorage): Boolean {
         return storage.getOutputsOfPublicKey(this).isNotEmpty()
@@ -42,5 +45,6 @@ class PublicKey() {
         val version = 0
         val redeemScript = OpCodes.push(version) + OpCodes.push(this.publicKeyHash)
         this.scriptHashP2WPKH = Utils.sha256Hash160(redeemScript)
+        this.convertedForP2TR = ECKey(publicKey).tweakedOutputKey.pubKeyXCoord
     }
 }

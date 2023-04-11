@@ -35,8 +35,11 @@ class TransactionExtractor(
                 payload = lockingScript.copyOfRange(2, lockingScript.size - 1)
                 scriptType = ScriptType.P2SH
             } else if (isP2WPKH(lockingScript)) {
-                payload = lockingScript
+                payload = lockingScript.copyOfRange(2, lockingScript.size)
                 scriptType = ScriptType.P2WPKH
+            } else if (isP2TR(lockingScript)) {
+                payload = lockingScript.copyOfRange(2, lockingScript.size)
+                scriptType = ScriptType.P2TR
             } else if (isNullData(lockingScript)) {
                 payload = lockingScript
                 scriptType = ScriptType.NULL_DATA
@@ -109,13 +112,13 @@ class TransactionExtractor(
 
     fun extractAddress(transaction: FullTransaction) {
         for (output in transaction.outputs) {
-            val outKeyHash = output.lockingScriptPayload ?: continue
+            val payload = output.lockingScriptPayload ?: continue
             val scriptType = output.scriptType
 
             val pubkeyHash = when (scriptType) {
-                ScriptType.P2PK -> Utils.sha256Hash160(outKeyHash)
-                ScriptType.P2WPKHSH -> Utils.sha256Hash160(OpCodes.scriptWPKH(outKeyHash))
-                else -> outKeyHash
+                ScriptType.P2PK -> Utils.sha256Hash160(payload)
+                ScriptType.P2WPKHSH -> Utils.sha256Hash160(OpCodes.scriptWPKH(payload))
+                else -> payload
             }
 
             try {
@@ -126,19 +129,25 @@ class TransactionExtractor(
     }
 
     private fun getPublicKey(output: TransactionOutput): PublicKey? {
-        var keyHash = output.lockingScriptPayload ?: return null
+        val payload = output.lockingScriptPayload ?: return null
 
-        if (output.scriptType == ScriptType.P2WPKH) {
-            keyHash = keyHash.drop(2).toByteArray()
-        } else if (output.scriptType == ScriptType.P2SH) {
-            storage.getPublicKeyByScriptHashForP2PWKH(keyHash)?.let {
-                output.scriptType = ScriptType.P2WPKHSH
-                output.lockingScriptPayload = it.publicKeyHash
-                return it
+        return when (output.scriptType) {
+            ScriptType.P2PK,
+            ScriptType.P2PKH,
+            ScriptType.P2WPKH -> {
+                storage.getPublicKeyByKeyOrKeyHash(payload)
             }
+            ScriptType.P2SH -> {
+                storage.getPublicKeyByScriptHashForP2PWKH(payload)?.apply {
+                    output.scriptType = ScriptType.P2WPKHSH
+                    output.lockingScriptPayload = publicKeyHash
+                }
+            }
+            ScriptType.P2TR -> {
+                storage.getPublicKeyByHashP2TR(payload)
+            }
+            else -> null
         }
-
-        return storage.getPublicKeyByKeyOrKeyHash(keyHash)
     }
 
     //
@@ -170,11 +179,18 @@ class TransactionExtractor(
                 lockingScript[lockingScript.size - 1] == OP_EQUAL.toByte())
     }
 
-    // 22 bytes script: {version-byte 00/81-96} 14 {20-byte-key-hash}
+    // 22 bytes script: {version-byte 00} 14 {20-byte-key-hash}
     private fun isP2WPKH(lockingScript: ByteArray): Boolean {
         return (lockingScript.size == 22 &&
-                (lockingScript[0] == 0.toByte() || lockingScript[0] in 0x50..0x61) &&
+                lockingScript[0] == 0.toByte() &&
                 lockingScript[1] == 20.toByte())
+    }
+
+    // 34 bytes script: {version-byte 51} 20 {32-byte-public-key}
+    private fun isP2TR(lockingScript: ByteArray): Boolean {
+        return lockingScript.size == 34 &&
+                lockingScript[0] == 0x51.toByte() &&
+                lockingScript[1] == 32.toByte()
     }
 
     private fun isNullData(lockingScript: ByteArray): Boolean {

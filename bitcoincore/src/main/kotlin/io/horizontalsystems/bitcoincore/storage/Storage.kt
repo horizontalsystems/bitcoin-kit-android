@@ -431,6 +431,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     // PublicKey
 
+    override fun getPublicKeyByHashP2TR(hashP2TR: ByteArray): PublicKey? {
+       return store.publicKey.getByHashP2TR(hashP2TR)
+    }
+
     override fun getPublicKeyByScriptHashForP2PWKH(keyHash: ByteArray): PublicKey? {
         return store.publicKey.getByScriptHashWPKH(keyHash)
     }

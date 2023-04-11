@@ -8,12 +8,9 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import android.content.Context
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoincore.storage.migrations.Migration_10_11
-import io.horizontalsystems.bitcoincore.storage.migrations.Migration_11_12
-import io.horizontalsystems.bitcoincore.storage.migrations.Migration_12_13
-import io.horizontalsystems.bitcoincore.storage.migrations.Migration_13_14
+import io.horizontalsystems.bitcoincore.storage.migrations.*
 
-@Database(version = 14, exportSchema = false, entities = [
+@Database(version = 15, exportSchema = false, entities = [
     BlockchainState::class,
     PeerAddress::class,
     BlockHash::class,
@@ -50,6 +47,7 @@ abstract class CoreDatabase : RoomDatabase() {
             return Room.databaseBuilder(context, CoreDatabase::class.java, dbName)
                     .allowMainThreadQueries()
                     .addMigrations(
+                            Migration_14_15,
                             Migration_13_14,
                             Migration_12_13,
                             Migration_11_12,

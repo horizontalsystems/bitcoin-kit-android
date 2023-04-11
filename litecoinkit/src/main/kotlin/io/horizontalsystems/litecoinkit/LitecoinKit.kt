@@ -14,6 +14,7 @@ import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
@@ -151,10 +152,10 @@ class LitecoinKit : AbstractKit {
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
             }
             Purpose.BIP84 -> {
-                bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter())
+                bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter(ScriptType.P2WPKH))
             }
             Purpose.BIP86 -> {
-                bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter())
+                bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter(ScriptType.P2TR))
             }
         }
     }
