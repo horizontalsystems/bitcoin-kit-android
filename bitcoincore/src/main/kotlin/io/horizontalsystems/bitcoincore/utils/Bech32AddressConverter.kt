@@ -61,8 +61,7 @@ class SegwitAddressConverter(addressSegwitHrp: String) : Bech32AddressConverter(
             convert(publicKey.publicKeyHash, scriptType)
         }
         ScriptType.P2TR -> {
-            val pubKey = ECKey(publicKey.publicKey).tweakedOutputKey.pubKeyXCoord
-            convert(pubKey, scriptType)
+            convert(publicKey.convertedForP2TR, scriptType)
         }
         else -> throw AddressFormatException("Unknown Address Type")
     }

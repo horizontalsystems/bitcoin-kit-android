@@ -44,4 +44,6 @@ interface PublicKeyDao {
     @Query("SELECT * from PublicKey where publicKey = :keyHash or publicKeyHash =:keyHash limit 1")
     fun getByKeyOrKeyHash(keyHash: ByteArray): PublicKey?
 
+    @Query("SELECT * from PublicKey where convertedForP2TR = :hashP2TR limit 1")
+    fun getByHashP2TR(hashP2TR: ByteArray): PublicKey?
 }
