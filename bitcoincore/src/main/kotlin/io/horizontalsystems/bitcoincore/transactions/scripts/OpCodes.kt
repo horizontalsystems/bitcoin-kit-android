@@ -143,6 +143,7 @@ const val OP_INVALIDOPCODE = 0xff
 
 /** Sighash Types */
 object Sighash {
+    const val DEFAULT = 0  // https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki
     const val ALL: Byte = 1              // Sign all outputs
     const val NONE = 2             // Do not sign outputs (zero sequences)
     const val SINGLE = 3           // Sign output at the same index (zero sequences)
@@ -283,8 +284,8 @@ object OpCodes {
 
     fun push(value: Int) = when (value) {
         0 -> byteArrayOf(0)
-        in 1..16 -> byteArrayOf()
-        else -> byteArrayOf((value + 0x50).toByte())
+        in 1..16 -> byteArrayOf((value.toByte() + 0x50).toByte())
+        else -> byteArrayOf()
     }
 
     fun push(data: ByteArray): ByteArray {

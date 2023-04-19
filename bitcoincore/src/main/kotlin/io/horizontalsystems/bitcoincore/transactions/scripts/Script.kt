@@ -22,7 +22,7 @@ enum class ScriptType(val value: Int) {
     }
 
     val isWitness: Boolean
-        get() = this in arrayOf(P2WPKH, P2WSH, P2WPKHSH)
+        get() = this in arrayOf(P2WPKH, P2WSH, P2WPKHSH, P2TR)
 }
 
 class Script(bytes: ByteArray) {
