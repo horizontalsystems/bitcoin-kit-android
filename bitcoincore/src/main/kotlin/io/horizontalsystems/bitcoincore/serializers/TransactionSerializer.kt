@@ -112,7 +112,7 @@ object TransactionSerializer {
                     buffer.write(script)
                 }
                 else -> {
-                    buffer.write(OpCodes.push(OpCodes.p2pkhStart + OpCodes.push(previousOutput.lockingScriptPayload!!) + OpCodes.p2pkhEnd))
+                    buffer.write(OpCodes.push(OpCodes.p2pkhStart + OpCodes.push(inputToSign.previousOutputPublicKey.publicKeyHash) + OpCodes.p2pkhEnd))
                 }
             }
 
