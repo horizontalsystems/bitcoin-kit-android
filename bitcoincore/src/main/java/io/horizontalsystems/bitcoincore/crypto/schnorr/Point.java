@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoincore.crypto;
+package io.horizontalsystems.bitcoincore.crypto.schnorr;
 
 import java.math.BigInteger;
 import java.security.NoSuchAlgorithmException;
