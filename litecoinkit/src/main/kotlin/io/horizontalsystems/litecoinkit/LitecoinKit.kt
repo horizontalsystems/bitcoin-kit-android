@@ -127,6 +127,7 @@ class LitecoinKit : AbstractKit {
         bitcoinCore = coreBuilder
             .setContext(context)
             .setExtendedKey(extendedKey)
+            .setPurpose(purpose)
             .setNetwork(network)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)

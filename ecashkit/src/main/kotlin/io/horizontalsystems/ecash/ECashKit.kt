@@ -128,6 +128,7 @@ class ECashKit : AbstractKit {
         bitcoinCore = BitcoinCoreBuilder()
             .setContext(context)
             .setExtendedKey(extendedKey)
+            .setPurpose(Purpose.BIP44)
             .setNetwork(network)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)
