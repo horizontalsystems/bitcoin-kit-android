@@ -1,21 +1,24 @@
 package io.horizontalsystems.bitcoinkit.demo
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.transactions.builder.signSchnorr
 import io.horizontalsystems.bitcoinkit.BitcoinKit
-import io.horizontalsystems.hdwalletkit.HDExtendedKey
+import io.horizontalsystems.hdwalletkit.ECKey
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
-import io.horizontalsystems.litecoinkit.LitecoinKit
 import io.reactivex.disposables.CompositeDisposable
+import java.math.BigInteger
 
 class MainViewModel : ViewModel(), LitecoinKit.Listener {
 
@@ -67,6 +70,22 @@ class MainViewModel : ViewModel(), LitecoinKit.Listener {
         state.value = bitcoinKit.syncState
 
         started = false
+    }
+
+    private fun test(
+        testName: String,
+        key: ECKey,
+        message: ByteArray,
+        auxRand: ByteArray,
+        expected: ByteArray,
+        implementation: (ECKey, ByteArray, ByteArray) -> ByteArray?
+    ) {
+        val result = implementation(key, message, auxRand)
+        if (result != null && result.contentEquals(expected)) {
+            Log.e("e", "$testName PASSED")
+        } else {
+            Log.e("e", "$testName FAILED result: $result")
+        }
     }
 
     fun start() {

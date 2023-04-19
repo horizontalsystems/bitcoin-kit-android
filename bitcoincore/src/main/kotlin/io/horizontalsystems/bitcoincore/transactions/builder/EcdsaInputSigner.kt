@@ -7,9 +7,11 @@ import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.horizontalsystems.hdwalletkit.HDWallet
 
-class InputSigner(private val hdWallet: IPrivateWallet, val network: Network) {
+class EcdsaInputSigner(
+    private val hdWallet: IPrivateWallet,
+    private val network: Network
+) {
 
     fun sigScriptData(transaction: Transaction, inputsToSign: List<InputToSign>, outputs: List<TransactionOutput>, index: Int): List<ByteArray> {
 
@@ -21,7 +23,13 @@ class InputSigner(private val hdWallet: IPrivateWallet, val network: Network) {
             throw Error.NoPrivateKey()
         }
 
-        val txContent = TransactionSerializer.serializeForSignature(transaction, inputsToSign, outputs, index, prevOutput.scriptType.isWitness || network.sigHashForked) + byteArrayOf(network.sigHashValue, 0, 0, 0)
+        val txContent = TransactionSerializer.serializeForSignature(
+            transaction = transaction,
+            inputsToSign = inputsToSign,
+            outputs = outputs,
+            inputIndex = index,
+            isWitness = prevOutput.scriptType.isWitness || network.sigHashForked
+        ) + byteArrayOf(network.sigHashValue, 0, 0, 0)
         val signature = privateKey.createSignature(txContent) + network.sigHashValue
 
         return when (prevOutput.scriptType) {

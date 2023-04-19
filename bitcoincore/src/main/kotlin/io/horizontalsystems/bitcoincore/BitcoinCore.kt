@@ -278,7 +278,8 @@ class BitcoinCoreBuilder {
         var transactionCreator: TransactionCreator? = null
 
         if (privateWallet != null) {
-            val inputSigner = InputSigner(privateWallet, network)
+            val ecdsaInputSigner = EcdsaInputSigner(privateWallet, network)
+            val schnorrInputSigner = SchnorrInputSigner(privateWallet)
             val transactionSizeCalculatorInstance = TransactionSizeCalculator()
             val dustCalculatorInstance = DustCalculator(network.dustRelayTxFee, transactionSizeCalculatorInstance)
             val recipientSetter = RecipientSetter(addressConverter, pluginManager)
@@ -294,7 +295,7 @@ class BitcoinCoreBuilder {
                 transactionDataSorterFactory
             )
             val lockTimeSetter = LockTimeSetter(storage)
-            val signer = TransactionSigner(inputSigner)
+            val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
             val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
             transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, purpose.scriptType)
             val transactionSendTimer = TransactionSendTimer(60)

@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import io.horizontalsystems.bitcoincore.transactions.scripts.Sighash
 import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 object TransactionSerializer {
@@ -137,6 +138,59 @@ object TransactionSerializer {
         }
 
         buffer.writeUnsignedInt(transaction.lockTime)
+        return buffer.toByteArray()
+    }
+
+    fun serializeForTaprootSignature(
+        transaction: Transaction,
+        inputsToSign: List<InputToSign>,
+        outputs: List<TransactionOutput>,
+        inputIndex: Int
+    ): ByteArray {
+        val buffer = BitcoinOutput()
+            .writeByte(0)
+            .writeByte(Sighash.DEFAULT)
+            .writeInt(transaction.version)
+            .writeUnsignedInt(transaction.lockTime)
+
+        // sha_prevouts
+        val outpoints = BitcoinOutput()
+        for (inputToSign in inputsToSign) {
+            outpoints.write(InputSerializer.serializeOutpoint(inputToSign))
+        }
+        buffer.write(HashUtils.sha256(outpoints.toByteArray()))
+
+        // sha_amounts
+        val outputValues = BitcoinOutput()
+        for (inputToSign in inputsToSign) {
+            outputValues.writeLong(inputToSign.previousOutput.value)
+        }
+        buffer.write(HashUtils.sha256(outputValues.toByteArray()))
+
+        // sha_scriptpubkeys
+        val outputLockingScripts = BitcoinOutput()
+        for (inputToSign in inputsToSign) {
+            outputLockingScripts.write(OpCodes.push(inputToSign.previousOutput.lockingScript))
+        }
+        buffer.write(HashUtils.sha256(outputLockingScripts.toByteArray()))
+
+        // sha_sequences
+        val sequences = BitcoinOutput()
+        for (inputToSign in inputsToSign) {
+            sequences.writeInt32(inputToSign.input.sequence)
+        }
+        buffer.write(HashUtils.sha256(sequences.toByteArray()))
+
+        // sha_outputs
+        val hashOutputs = BitcoinOutput()
+        for (output in outputs) {
+            hashOutputs.write(OutputSerializer.serialize(output))
+        }
+        buffer.write(HashUtils.sha256(hashOutputs.toByteArray()))
+
+        buffer.writeByte(0) // spendType (no annex, no scriptPath)
+        buffer.writeInt(inputIndex)
+
         return buffer.toByteArray()
     }
 }
