@@ -9,7 +9,7 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
 
-class PluginManager : IRestoreKeyConverter {
+class PluginManager {
     private val plugins = mutableMapOf<Byte, IPlugin>()
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: Map<Byte, IPluginData>, skipChecking: Boolean) {
@@ -72,14 +72,6 @@ class PluginManager : IRestoreKeyConverter {
         }
     }
 
-    override fun keysForApiRestore(publicKey: PublicKey): List<String> {
-        return plugins.map { it.value.keysForApiRestore(publicKey) }.flatten().distinct()
-    }
-
-    override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
-        return listOf()
-    }
-
     fun validateAddress(address: Address, pluginData: Map<Byte, IPluginData>) {
         pluginData.forEach {
             val plugin = checkNotNull(plugins[it.key])
@@ -89,7 +81,7 @@ class PluginManager : IRestoreKeyConverter {
     }
 }
 
-interface IPlugin {
+interface IPlugin: IRestoreKeyConverter {
     val id: Byte
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: IPluginData, skipChecking: Boolean)
@@ -97,7 +89,6 @@ interface IPlugin {
     fun isSpendable(unspentOutput: UnspentOutput): Boolean
     fun getInputSequence(output: TransactionOutput): Long
     fun parsePluginData(output: TransactionOutput, txTimestamp: Long): IPluginOutputData
-    fun keysForApiRestore(publicKey: PublicKey): List<String>
     fun validateAddress(address: Address)
 }
 
