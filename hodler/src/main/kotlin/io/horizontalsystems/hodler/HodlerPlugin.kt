@@ -97,6 +97,10 @@ class HodlerPlugin(
         }
     }
 
+    override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
+        return listOf()
+    }
+
     override fun validateAddress(address: Address) {
         if (address.scriptType != ScriptType.P2PKH) {
             throw UnsupportedAddressType()

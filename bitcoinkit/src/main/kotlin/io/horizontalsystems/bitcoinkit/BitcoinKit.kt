@@ -158,6 +158,8 @@ class BitcoinKit : AbstractKit {
 
         val coreBuilder = BitcoinCoreBuilder()
 
+        val hodlerPlugin = HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage))
+
         bitcoinCore = coreBuilder
             .setContext(context)
             .setExtendedKey(extendedKey)
@@ -171,7 +173,7 @@ class BitcoinKit : AbstractKit {
             .setInitialSyncApi(initialSyncApi)
             .setBlockValidator(blockValidatorSet)
             .setHandleAddrMessage(false)
-            .addPlugin(HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage)))
+            .addPlugin(hodlerPlugin)
             .build()
 
         //  extending bitcoinCore
@@ -186,6 +188,7 @@ class BitcoinKit : AbstractKit {
                 bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58AddressConverter))
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
+                bitcoinCore.addRestoreKeyConverter(hodlerPlugin)
             }
             Purpose.BIP49 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))

@@ -149,8 +149,6 @@ class BitcoinCoreBuilder {
         val pluginManager = PluginManager()
         plugins.forEach { pluginManager.addPlugin(it) }
 
-        restoreKeyConverterChain.add(pluginManager)
-
         transactionInfoConverter.baseConverter = BaseTransactionInfoConverter(pluginManager)
 
         val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold, pluginManager)
