@@ -15,7 +15,7 @@ import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
 import io.reactivex.disposables.CompositeDisposable
 
-class MainViewModel : ViewModel(), LitecoinKit.Listener {
+class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     enum class State {
         STARTED, STOPPED
@@ -40,7 +40,7 @@ class MainViewModel : ViewModel(), LitecoinKit.Listener {
             status.value = (if (value) State.STARTED else State.STOPPED)
         }
 
-    private lateinit var bitcoinKit: LitecoinKit
+    private lateinit var bitcoinKit: BitcoinKit
 
     private val walletId = "MyWallet"
     private val networkType = BitcoinKit.NetworkType.MainNet
@@ -52,9 +52,7 @@ class MainViewModel : ViewModel(), LitecoinKit.Listener {
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
         val passphrase = ""
 
-        val xPubKey = HDExtendedKey("xpub6DXbiKGUNNcEws72vL94X3JAvVgGZusM1hhmiJAznMND1EjgdpCRp2oTLQnZeTwkLV92L5MzaPcpAmNhaXya7Yr9FGXbKGMu91Qys2QpfJn")
-
-        bitcoinKit = LitecoinKit(App.instance, xPubKey, Purpose.BIP44, walletId, LitecoinKit.NetworkType.MainNet)
+        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, purpose = purpose)
 
         bitcoinKit.listener = this
 
