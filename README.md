@@ -96,7 +96,7 @@ If you restore with a public extended key, then you only will be able to watch t
 
 ### Starting and Stopping
 
-*BitcoinKit* require to be started with `start` command. It will be in synced state as long as it is possible. You can call `stop` to stop it
+*BitcoinKit* requires to be started with `start` command. It will be in synced state as long as it is possible. You can call `stop` to stop it
 
 ```kotlin
 bitcoinKit.start()
@@ -155,7 +155,7 @@ bitcoinKit.transactions().subscribe { transactionInfos ->
 ```
 
 - `fromUid` and `limit` parameters can be used for pagination. 
-- `type` parameter enables to filter transactions by coins flow. You can pass *incoming* OR *outgoing* to get filtered transations
+- `type` parameter enables to filter transactions by coins flow. You can pass *incoming* OR *outgoing* to get filtered transactions
 
 
 #### TransactionInfo
@@ -357,7 +357,7 @@ Dash has some transactions marked `instant`. So, instead of `TransactionInfo` ob
 
 To lock funds we create P2SH output where redeem script has `OP_CSV` OpCode that ensures that the input has a proper Sequence Number(`nSequence`) field and that it enables a relative time-lock. 
 
-In [this](https://blockstream.info/tx/1cd11e80d04c82d098f19badb153ea12ec84cda408daaadc566cc129f967a435?input:1&expand) sample transaction the second input unlocks such an output. It has a signature, public key and the following redeem script in it's scriptSig:
+In [this](https://blockstream.info/tx/1cd11e80d04c82d098f19badb153ea12ec84cda408daaadc566cc129f967a435?input:1&expand) sample transaction the second input unlocks such an output. It has a signature, public key and the following redeem script in its scriptSig:
 
 `OP_PUSHBYTES_3 070040 OP_CSV OP_DROP OP_DUP OP_HASH160 OP_PUSHBYTES_20 853316620ed93e4ade18f8218f9aa15dc36c768e OP_EQUALVERIFY OP_CHECKSIG`
 
