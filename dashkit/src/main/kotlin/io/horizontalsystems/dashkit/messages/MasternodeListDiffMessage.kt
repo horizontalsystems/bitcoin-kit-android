@@ -9,16 +9,17 @@ import io.horizontalsystems.dashkit.models.Masternode
 import io.horizontalsystems.dashkit.models.Quorum
 
 class MasternodeListDiffMessage(
-        val baseBlockHash: ByteArray,
-        val blockHash: ByteArray,
-        val totalTransactions: Long,
-        val merkleHashes: List<ByteArray>,
-        val merkleFlags: ByteArray,
-        val cbTx: CoinbaseTransaction,
-        val deletedMNs: List<ByteArray>,
-        val mnList: List<Masternode>,
-        val deletedQuorums: List<Pair<Int, ByteArray>>,
-        val quorumList: List<Quorum>
+    val baseBlockHash: ByteArray,
+    val blockHash: ByteArray,
+    val totalTransactions: Long,
+    val merkleHashes: List<ByteArray>,
+    val merkleFlags: ByteArray,
+    val cbTx: CoinbaseTransaction,
+    val version: Int,
+    val deletedMNs: List<ByteArray>,
+    val mnList: List<Masternode>,
+    val deletedQuorums: List<Pair<Int, ByteArray>>,
+    val quorumList: List<Quorum>
 ) : IMessage {
 
     override fun toString(): String {
@@ -42,6 +43,7 @@ class MasternodeListDiffMessageParser : IMessageParser {
         val merkleFlagsCount = input.readVarInt()
         val merkleFlags = input.readBytes(merkleFlagsCount.toInt())
         val cbTx = CoinbaseTransaction(input)
+        val version = input.readUnsignedShort()
         val deletedMNsCount = input.readVarInt()
         val deletedMNs = mutableListOf<ByteArray>()
         repeat(deletedMNsCount.toInt()) {
@@ -64,6 +66,6 @@ class MasternodeListDiffMessageParser : IMessageParser {
             quorumList.add(Quorum(input))
         }
 
-        return MasternodeListDiffMessage(baseBlockHash, blockHash, totalTransactions, merkleHashes, merkleFlags, cbTx, deletedMNs, mnList, deletedQuorums, quorumList)
+        return MasternodeListDiffMessage(baseBlockHash, blockHash, totalTransactions, merkleHashes, merkleFlags, cbTx, version, deletedMNs, mnList, deletedQuorums, quorumList)
     }
 }

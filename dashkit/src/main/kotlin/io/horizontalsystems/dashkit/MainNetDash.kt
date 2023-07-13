@@ -4,7 +4,7 @@ import io.horizontalsystems.bitcoincore.network.Network
 
 class MainNetDash : Network() {
 
-    override val protocolVersion = 70215
+    override val protocolVersion = 70228
     override val noBloomVersion = 70201
 
     override var port: Int = 9999

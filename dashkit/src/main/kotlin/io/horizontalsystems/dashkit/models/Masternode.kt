@@ -8,7 +8,7 @@ import io.horizontalsystems.bitcoincore.utils.HashUtils
 
 @Entity
 class Masternode() : Comparable<Masternode> {
-
+    var nVersion = 0
     @PrimaryKey
     var proRegTxHash = byteArrayOf()
     var confirmedHash = byteArrayOf()
@@ -17,10 +17,14 @@ class Masternode() : Comparable<Masternode> {
     var pubKeyOperator = byteArrayOf()
     var keyIDVoting = byteArrayOf()
     var isValid = false
+    var type: Int? = null
+    var platformHTTPPort: Int? = null
+    var platformNodeID: ByteArray? = null
 
     var hash = byteArrayOf()
 
     constructor(input: BitcoinInputMarkable) : this() {
+        nVersion = input.readUnsignedShort()
         proRegTxHash = input.readBytes(32)
         confirmedHash = input.readBytes(32)
         ipAddress = input.readBytes(16)
@@ -29,17 +33,34 @@ class Masternode() : Comparable<Masternode> {
         keyIDVoting = input.readBytes(20)
         isValid = input.read() != 0
 
-        val hashPayload = BitcoinOutput()
-                .write(proRegTxHash)
-                .write(confirmedHash)
-                .write(ipAddress)
-                .writeUnsignedShort(port)
-                .write(pubKeyOperator)
-                .write(keyIDVoting)
-                .writeByte(if (isValid) 1 else 0)
-                .toByteArray()
+        if (nVersion >= 2) {
+            type = input.readUnsignedShort()
+            if (type == 1) {
+                platformHTTPPort = input.readUnsignedShort()
+                platformNodeID = input.readBytes(20)
+            }
+        }
 
-        hash = HashUtils.doubleSha256(hashPayload)
+        val payload = BitcoinOutput()
+            .write(proRegTxHash)
+            .write(confirmedHash)
+            .write(ipAddress)
+            .writeUnsignedShort(port)
+            .write(pubKeyOperator)
+            .write(keyIDVoting)
+            .writeByte(if (isValid) 1 else 0)
+
+        type?.let {
+            payload.writeUnsignedShort(it)
+        }
+        platformHTTPPort?.let {
+            payload.writeUnsignedShort(it)
+        }
+        platformNodeID?.let {
+            payload.write(it)
+        }
+
+        hash = HashUtils.doubleSha256(payload.toByteArray())
     }
 
     override fun compareTo(other: Masternode): Int {

@@ -27,7 +27,7 @@ class Quorum() : Comparable<Quorum> {
         type = input.read()
         quorumHash = input.readBytes(32)
 
-        if (version >= 2) {
+        if (version == 2 || version == 4) {
             quorumIndex = input.readUnsignedShort()
         }
 
