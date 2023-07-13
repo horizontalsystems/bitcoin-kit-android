@@ -1,10 +1,10 @@
 package io.horizontalsystems.dashkit.storage
 
-import androidx.room.*
 import android.content.Context
+import androidx.room.*
 import io.horizontalsystems.dashkit.models.*
 
-@Database(version = 3, exportSchema = false, entities = [
+@Database(version = 4, exportSchema = false, entities = [
     Masternode::class,
     Quorum::class,
     MasternodeListState::class,
