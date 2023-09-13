@@ -80,7 +80,8 @@ class PeerAddressManager(private val network: Network) : IPeerAddressManager {
 
         @Synchronized
         fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress? {
-            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.minBy { it.score }
+//            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.minBy { it.score }
+            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.sortedBy { it.score }.lastOrNull()
         }
 
         @Synchronized

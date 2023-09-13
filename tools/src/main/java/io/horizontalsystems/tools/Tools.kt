@@ -1,5 +1,6 @@
 package io.horizontalsystems.tools
 
+import android.content.Context
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.bitcoincore.utils.HashUtils
@@ -8,15 +9,14 @@ import java.util.logging.Logger
 
 fun main() {
     Logger.getLogger("").level = Level.SEVERE
-    syncCheckpoints()
+//    syncCheckpoints()
 }
 
-private fun syncCheckpoints() {
-    BuildCheckpoints().sync()
-    Thread.sleep(5000)
+fun syncCheckpoints(context: Context) {
+    BuildCheckpoints(context).sync()
 }
 
-private fun buildCustomCheckpoint() {
+private fun buildCustomCheckpoint(context: Context) {
     val checkpointBlock = Block(BlockHeader(
             version = 2,
             previousBlockHeaderHash = HashUtils.toBytesAsLE("00000000000000006bcf448b771c8f4db4e2ca653474e3b29504ec08422b3fba"),
@@ -27,5 +27,5 @@ private fun buildCustomCheckpoint() {
             hash = HashUtils.toBytesAsLE("00000000000000003decdbb5f3811eab3148fbc29d3610528eb3b50d9ee5723f")
     ), 296352)
 
-    BuildCheckpoints().build(checkpointBlock)
+    BuildCheckpoints(context).build(checkpointBlock)
 }

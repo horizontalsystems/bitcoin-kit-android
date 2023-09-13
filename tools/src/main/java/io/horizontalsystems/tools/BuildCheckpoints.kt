@@ -1,5 +1,6 @@
 package io.horizontalsystems.tools
 
+import android.content.Context
 import io.horizontalsystems.bitcoincash.MainNetBitcoinCash
 import io.horizontalsystems.bitcoincash.TestNetBitcoinCash
 import io.horizontalsystems.bitcoincore.extensions.toHexString
@@ -18,24 +19,24 @@ import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import kotlin.system.exitProcess
 
-class BuildCheckpoints : CheckpointSyncer.Listener {
+class BuildCheckpoints(private val context: Context) : CheckpointSyncer.Listener {
 
     private val syncers = mutableListOf<CheckpointSyncer>().also {
         // Bitcoin
-        it.add(CheckpointSyncer(MainNet(), 2016, 1, this))
-        it.add(CheckpointSyncer(TestNet(), 2016, 1, this))
-
-        // Bitcoin Cash
-        it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, 147, this))
-        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 147, this))
-
-        // Dash
-        it.add(CheckpointSyncer(MainNetDash(), 24, 24, this))
-        it.add(CheckpointSyncer(TestNetDash(), 24, 24, this))
-
-        // Litecoin
-        it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
-        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
+//        it.add(CheckpointSyncer(MainNet(), 2016, 1, this))
+//        it.add(CheckpointSyncer(TestNet(), 2016, 1, this))
+//
+//        // Bitcoin Cash
+//        it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, 147, this))
+//        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 147, this))
+//
+//        // Dash
+//        it.add(CheckpointSyncer(MainNetDash(), 24, 24, this))
+//        it.add(CheckpointSyncer(TestNetDash(), 24, 24, this))
+//
+//        // Litecoin
+//        it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
+//        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
 
         // Ecash
         it.add(CheckpointSyncer(MainNetECash(), 147, 147, this))
@@ -48,6 +49,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
     }
 
     fun sync() {
+        println("Files directory: ${context.filesDir}")
         syncers.forEach { it.start() }
     }
 
@@ -65,6 +67,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
     // Writing to file
 
     private fun writeCheckpoints(checkpointFile: String, checkpoints: List<Block>) {
+        // val file = File(context.filesDir, checkpointFile)
         val file = File(checkpointFile)
         val fileOutputStream: OutputStream = FileOutputStream(file)
         val outputStream: Writer = OutputStreamWriter(fileOutputStream, StandardCharsets.US_ASCII)

@@ -8,14 +8,15 @@ import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
 import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.bitcoincore.models.*
-import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
+import io.horizontalsystems.litecoinkit.LitecoinKit
+import io.horizontalsystems.tools.syncCheckpoints
 import io.reactivex.disposables.CompositeDisposable
 
-class MainViewModel : ViewModel(), BitcoinKit.Listener {
+class MainViewModel : ViewModel(), LitecoinKit.Listener {
 
     enum class State {
         STARTED, STOPPED
@@ -40,10 +41,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             status.value = (if (value) State.STARTED else State.STOPPED)
         }
 
-    private lateinit var bitcoinKit: BitcoinKit
+    private lateinit var bitcoinKit: LitecoinKit
 
     private val walletId = "MyWallet"
-    private val networkType = BitcoinKit.NetworkType.MainNet
+    private val networkType = LitecoinKit.NetworkType.MainNet
     private val syncMode = BitcoinCore.SyncMode.Api()
     private val purpose = Purpose.BIP44
 
@@ -52,7 +53,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         val words = "used ugly meat glad balance divorce inner artwork hire invest already piano".split(" ")
         val passphrase = ""
 
-        bitcoinKit = BitcoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, purpose = purpose)
+        bitcoinKit = LitecoinKit(App.instance, words, passphrase, walletId, networkType, syncMode = syncMode, purpose = purpose)
 
         bitcoinKit.listener = this
 
@@ -69,12 +70,13 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
         if (started) return
         started = true
 
-        bitcoinKit.start()
+        syncCheckpoints(App.instance)
+        // bitcoinKit.start()
     }
 
     fun clear() {
         bitcoinKit.stop()
-        BitcoinKit.clear(App.instance, networkType, walletId)
+        LitecoinKit.clear(App.instance, networkType, walletId)
 
         init()
     }
@@ -89,7 +91,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     //
-    // BitcoinKit Listener implementations
+    // LitecoinKit Listener implementations
     //
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) {
         setTransactionFilterType(transactionFilterType)
