@@ -11,7 +11,6 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import io.horizontalsystems.bitcoincore.BitcoinCore
-import kotlinx.android.synthetic.main.fragment_balance.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -27,6 +26,7 @@ class BalanceFragment : Fragment() {
     lateinit var startButton: Button
     lateinit var clearButton: Button
     lateinit var buttonDebug: Button
+    lateinit var buttonStatus: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,6 +113,7 @@ class BalanceFragment : Fragment() {
         startButton = view.findViewById(R.id.buttonStart)
         clearButton = view.findViewById(R.id.buttonClear)
         buttonDebug = view.findViewById(R.id.buttonDebug)
+        buttonStatus = view.findViewById(R.id.buttonStatus)
 
         startButton.setOnClickListener {
             viewModel.start()

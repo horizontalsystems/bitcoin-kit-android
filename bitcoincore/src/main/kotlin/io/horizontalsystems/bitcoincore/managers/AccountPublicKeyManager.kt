@@ -75,7 +75,7 @@ class AccountPublicKeyManager(
         val keys = mutableListOf<PublicKey>()
 
         if (keysCount < wallet.gapLimit) {
-            val lastIndex = publicKeys.maxBy { it.publicKey.index }?.publicKey?.index ?: -1
+            val lastIndex = publicKeys.maxByOrNull { it.publicKey.index }?.publicKey?.index ?: -1
 
             val newKeysStartIndex = lastIndex + 1
             val indices = newKeysStartIndex until (newKeysStartIndex + wallet.gapLimit - keysCount)
@@ -88,7 +88,7 @@ class AccountPublicKeyManager(
     }
 
     private fun gapKeysCount(publicKeys: List<PublicKeyWithUsedState>): Int {
-        return when (val lastUsedKey = publicKeys.filter { it.used }.maxBy { it.publicKey.index }) {
+        return when (val lastUsedKey = publicKeys.filter { it.used }.maxByOrNull { it.publicKey.index }) {
             null -> publicKeys.size
             else -> publicKeys.filter { it.publicKey.index > lastUsedKey.publicKey.index }.size
         }

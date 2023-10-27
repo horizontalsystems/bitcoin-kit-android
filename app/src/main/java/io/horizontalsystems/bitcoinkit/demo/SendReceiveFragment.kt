@@ -1,10 +1,7 @@
 package io.horizontalsystems.bitcoinkit.demo
 
-import androidx.lifecycle.Observer
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.text.Editable
-import android.text.SpannableStringBuilder
 import android.text.TextWatcher
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -12,15 +9,29 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.EditText
+import android.widget.RadioGroup
+import android.widget.Spinner
+import android.widget.TextView
 import android.widget.Toast
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import io.horizontalsystems.bitcoincore.exceptions.AddressFormatException
-import io.horizontalsystems.bitcoincore.managers.SendValueErrors
 import io.horizontalsystems.hodler.LockTimeInterval
-import kotlinx.android.synthetic.main.fragment_send_receive.*
 
 class SendReceiveFragment : Fragment() {
     private lateinit var viewModel: MainViewModel
+
+    lateinit var receiveAddressText: TextView
+    lateinit var receiveAddressButton: Button
+    lateinit var sendAmount: EditText
+    lateinit var sendAddress: EditText
+    lateinit var txFeeValue: TextView
+    lateinit var sendButton: Button
+    lateinit var maxButton: Button
+    lateinit var radioGroup: RadioGroup
+    lateinit var lockTimePeriodValue: Spinner
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_send_receive, container, false)
@@ -60,6 +71,16 @@ class SendReceiveFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        receiveAddressText = view.findViewById(R.id.receiveAddressText)
+        receiveAddressButton = view.findViewById(R.id.receiveAddressButton)
+        sendAmount = view.findViewById(R.id.sendAmount)
+        sendAddress = view.findViewById(R.id.sendAddress)
+        txFeeValue = view.findViewById(R.id.txFeeValue)
+        sendButton = view.findViewById(R.id.sendButton)
+        maxButton = view.findViewById(R.id.maxButton)
+        radioGroup = view.findViewById(R.id.radioGroup)
+        lockTimePeriodValue = view.findViewById(R.id.lockTimePeriodValue)
+
         receiveAddressButton.setOnClickListener {
             viewModel.onReceiveClick()
         }
@@ -71,7 +92,7 @@ class SendReceiveFragment : Fragment() {
         maxButton.setOnClickListener {
 
 
-                viewModel.onMaxClick()
+            viewModel.onMaxClick()
 
         }
 
