@@ -8,8 +8,6 @@ android {
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 29
-        versionCode 1
-        versionName "0.4.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -44,6 +42,7 @@ android {
             path 'cpp/CMakeLists.txt'
         }
     }
+    namespace 'io.horizontalsystems.dashkit'
 }
 
 dependencies {

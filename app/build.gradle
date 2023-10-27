@@ -23,8 +23,11 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
     packagingOptions {
-        pickFirst("META-INF/atomicfu.kotlin_module")
+        resources {
+            pickFirsts += ['META-INF/atomicfu.kotlin_module']
+        }
     }
+    namespace 'io.horizontalsystems.bitcoinkit.demo'
 }
 
 dependencies {
