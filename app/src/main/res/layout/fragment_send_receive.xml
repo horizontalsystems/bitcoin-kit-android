@@ -4,14 +4,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:scrollbars="vertical"
-    >
+    android:background="@android:color/white"
+    android:scrollbars="vertical">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
-        >
+        android:padding="8dp">
 
         <TextView
             android:id="@+id/receiveAddressText"
@@ -25,8 +24,7 @@
             android:textIsSelectable="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <Button
             android:id="@+id/receiveAddressButton"
@@ -36,8 +34,7 @@
             android:layout_marginEnd="20dp"
             android:text="Receive"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            />
+            app:layout_constraintTop_toTopOf="parent" />
 
         <View
             android:id="@+id/divider"
@@ -49,8 +46,7 @@
             android:background="?android:attr/listDivider"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/receiveAddressButton"
-            />
+            app:layout_constraintTop_toBottomOf="@+id/receiveAddressButton" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/sendAddressLayout"
@@ -61,16 +57,14 @@
             android:layout_marginEnd="8dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/divider"
-            >
+            app:layout_constraintTop_toBottomOf="@+id/divider">
 
             <EditText
                 android:id="@+id/sendAddress"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Address"
-                android:inputType="text"
-                />
+                android:inputType="text" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -82,16 +76,14 @@
             android:layout_marginTop="8dp"
             app:layout_constraintEnd_toStartOf="@+id/maxButton"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/sendAddressLayout"
-            >
+            app:layout_constraintTop_toBottomOf="@+id/sendAddressLayout">
 
             <EditText
                 android:id="@+id/sendAmount"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:hint="Amount (Satoshi)"
-                android:inputType="numberDecimal"
-                />
+                android:inputType="numberDecimal" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -105,8 +97,7 @@
             app:layout_constraintBottom_toBottomOf="@+id/sendAmountLayout"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/sendAmountLayout"
-            app:layout_constraintTop_toTopOf="@+id/sendAmountLayout"
-            />
+            app:layout_constraintTop_toTopOf="@+id/sendAmountLayout" />
 
         <TextView
             android:id="@+id/txFeeTitle"
@@ -116,8 +107,7 @@
             android:layout_marginTop="10dp"
             android:text="Fee (Satoshi):"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/maxButton"
-            />
+            app:layout_constraintTop_toBottomOf="@+id/maxButton" />
 
         <TextView
             android:id="@+id/txFeeValue"
@@ -126,8 +116,7 @@
             android:layout_marginStart="8dp"
             app:layout_constraintStart_toEndOf="@+id/txFeeTitle"
             app:layout_constraintTop_toTopOf="@+id/txFeeTitle"
-            tools:text="328"
-            />
+            tools:text="328" />
 
         <TextView
             android:id="@+id/feePriorityTitle"
@@ -139,8 +128,7 @@
             app:layout_constraintEnd_toStartOf="@+id/radioGroup"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/txFeeTitle"
-            />
+            app:layout_constraintTop_toBottomOf="@+id/txFeeTitle" />
 
         <RadioGroup
             android:id="@+id/radioGroup"
@@ -152,8 +140,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.5"
             app:layout_constraintStart_toEndOf="@+id/feePriorityTitle"
-            app:layout_constraintTop_toTopOf="@+id/feePriorityTitle"
-            >
+            app:layout_constraintTop_toTopOf="@+id/feePriorityTitle">
 
             <RadioButton
                 android:id="@+id/radioLow"
@@ -161,8 +148,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
 
-                android:text="Low"
-                />
+                android:text="Low" />
 
             <RadioButton
                 android:id="@+id/radioMedium"
@@ -170,16 +156,14 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:checked="true"
-                android:text="Meduim"
-                />
+                android:text="Meduim" />
 
             <RadioButton
                 android:id="@+id/radioHigh"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="High"
-                />
+                android:text="High" />
 
         </RadioGroup>
 
@@ -191,8 +175,7 @@
             android:layout_marginTop="24dp"
             android:text="Lock for period"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/feePriorityTitle"
-            />
+            app:layout_constraintTop_toBottomOf="@+id/feePriorityTitle" />
 
         <Spinner
             android:id="@+id/lockTimePeriodValue"
@@ -201,8 +184,7 @@
             android:layout_marginEnd="8dp"
             app:layout_constraintBottom_toBottomOf="@+id/lockTimeIntervalTitle"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/lockTimeIntervalTitle"
-            />
+            app:layout_constraintTop_toTopOf="@+id/lockTimeIntervalTitle" />
 
         <Button
             android:id="@+id/sendButton"
@@ -214,8 +196,7 @@
             android:text="Send"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/lockTimePeriodValue"
-            />
+            app:layout_constraintTop_toBottomOf="@+id/lockTimePeriodValue" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

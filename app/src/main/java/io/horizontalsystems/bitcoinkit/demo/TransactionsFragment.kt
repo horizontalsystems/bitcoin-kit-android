@@ -21,7 +21,6 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
 import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.hodler.HodlerOutputData
 import io.horizontalsystems.hodler.HodlerPlugin
-import kotlinx.android.synthetic.main.fragment_transactions.*
 import java.text.DateFormat
 import java.util.*
 
@@ -30,6 +29,8 @@ class TransactionsFragment : Fragment(), ViewHolderTransaction.Listener {
     private lateinit var viewModel: MainViewModel
     private lateinit var transactionsRecyclerView: RecyclerView
     private val transactionsAdapter = TransactionsAdapter(this)
+
+    lateinit var tabs: TabLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +62,8 @@ class TransactionsFragment : Fragment(), ViewHolderTransaction.Listener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        tabs = view.findViewById(R.id.tabs)
 
         transactionsRecyclerView = view.findViewById(R.id.transactions)
         transactionsRecyclerView.adapter = transactionsAdapter

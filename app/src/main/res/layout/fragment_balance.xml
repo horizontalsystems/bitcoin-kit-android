@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/white"
     android:padding="8dp">
 
     <TextView
@@ -53,8 +54,7 @@
         android:text="Balance Unspendable:"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/balanceTitle"
-        />
+        app:layout_constraintTop_toBottomOf="@+id/balanceTitle" />
 
     <TextView
         android:id="@+id/balanceUnspendableValue"
@@ -64,8 +64,7 @@
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         app:layout_constraintStart_toEndOf="@+id/balanceUnspendableTitle"
         app:layout_constraintTop_toTopOf="@+id/balanceUnspendableTitle"
-        tools:text="100.0"
-        />
+        tools:text="100.0" />
 
     <TextView
         android:id="@+id/stateTitle"
