@@ -8,13 +8,15 @@ import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
 import io.horizontalsystems.bitcoincore.utils.Utils
 import io.horizontalsystems.hdwalletkit.ECKey
 
-@Entity(primaryKeys = ["path"],
-        indices = [
-            Index("publicKey"),
-            Index("publicKeyHash"),
-            Index("scriptHashP2WPKH"),
-            Index("convertedForP2TR")
-        ])
+@Entity(
+    primaryKeys = ["path"],
+    indices = [
+        Index("publicKey"),
+        Index("publicKeyHash"),
+        Index("scriptHashP2WPKH"),
+        Index("convertedForP2TR")
+    ]
+)
 
 class PublicKey() {
     var path: String = ""
@@ -46,5 +48,13 @@ class PublicKey() {
         val redeemScript = OpCodes.push(version) + OpCodes.push(this.publicKeyHash)
         this.scriptHashP2WPKH = Utils.sha256Hash160(redeemScript)
         this.convertedForP2TR = ECKey(publicKey).tweakedOutputKey.pubKeyXCoord
+    }
+
+    override fun equals(other: Any?): Boolean {
+        return other is PublicKey && other.path == path
+    }
+
+    override fun hashCode(): Int {
+        return path.hashCode()
     }
 }

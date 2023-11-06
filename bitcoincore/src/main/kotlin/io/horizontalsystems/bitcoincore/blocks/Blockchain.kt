@@ -6,11 +6,12 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
+import io.horizontalsystems.bitcoincore.storage.BlockHeader
 
 class Blockchain(
-        private val storage: IStorage,
-        private val blockValidator: IBlockValidator?,
-        private val dataListener: IBlockchainDataListener
+    private val storage: IStorage,
+    private val blockValidator: IBlockValidator?,
+    private val dataListener: IBlockchainDataListener
 ) {
 
     fun connect(merkleBlock: MerkleBlock): Block {
@@ -19,8 +20,7 @@ class Blockchain(
             return blockInDB
         }
 
-        val parentBlock = storage.getBlock(merkleBlock.header.previousBlockHeaderHash)
-                ?: throw BlockValidatorException.NoPreviousBlock()
+        val parentBlock = storage.getBlock(merkleBlock.header.previousBlockHeaderHash) ?: throw BlockValidatorException.NoPreviousBlock()
 
         val block = Block(merkleBlock.header, parentBlock)
         blockValidator?.validate(block, parentBlock)
@@ -43,16 +43,21 @@ class Blockchain(
         return addBlockAndNotify(Block(merkleBlock.header, height))
     }
 
-    fun handleFork() {
-        val firstStaleHeight = storage.getBlock(stale = true, sortedHeight = "ASC")
-                ?.height ?: return
+    fun insertLastBlock(header: BlockHeader, height: Int) {
+        if (storage.getBlock(header.hash) != null) {
+            return
+        }
 
-        val lastNotStaleHeight = storage.getBlock(stale = false, sortedHeight = "DESC")
-                ?.height ?: 0
+        addBlockAndNotify(Block(header, height))
+    }
+
+    fun handleFork() {
+        val firstStaleHeight = storage.getBlock(stale = true, sortedHeight = "ASC")?.height ?: return
+
+        val lastNotStaleHeight = storage.getBlock(stale = false, sortedHeight = "DESC")?.height ?: 0
 
         if (firstStaleHeight <= lastNotStaleHeight) {
-            val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height
-                    ?: firstStaleHeight
+            val lastStaleHeight = storage.getBlock(stale = true, sortedHeight = "DESC")?.height ?: firstStaleHeight
 
             if (lastStaleHeight > lastNotStaleHeight) {
                 val notStaleBlocks = storage.getBlocks(heightGreaterOrEqualTo = firstStaleHeight, stale = false)

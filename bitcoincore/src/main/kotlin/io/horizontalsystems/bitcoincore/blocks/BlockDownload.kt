@@ -6,15 +6,13 @@ import io.horizontalsystems.bitcoincore.models.InventoryItem
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
 import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.PeerManager
-import io.horizontalsystems.bitcoincore.network.peer.task.GetBlockHashesTask
 import io.horizontalsystems.bitcoincore.network.peer.task.GetMerkleBlocksTask
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executors
 import java.util.logging.Logger
-import kotlin.math.max
 
-class InitialBlockDownload(
+class BlockDownload(
     private var blockSyncer: BlockSyncer,
     private val peerManager: PeerManager,
     private val merkleBlockExtractor: MerkleBlockExtractor
@@ -43,7 +41,6 @@ class InitialBlockDownload(
     override fun handleInventoryItems(peer: Peer, inventoryItems: List<InventoryItem>) {
         if (peer.synced && inventoryItems.any { it.type == InventoryItem.MSG_BLOCK }) {
             peer.synced = false
-            peer.blockHashesSynced = false
             syncedPeers.remove(peer)
 
             assignNextSyncPeer()
@@ -52,15 +49,6 @@ class InitialBlockDownload(
 
     override fun handleCompletedTask(peer: Peer, task: PeerTask): Boolean {
         return when (task) {
-            is GetBlockHashesTask -> {
-                if (task.blockHashes.isEmpty()) {
-                    peer.blockHashesSynced = true
-                } else {
-                    blockSyncer.addBlockHashes(task.blockHashes)
-                }
-                true
-            }
-
             is GetMerkleBlocksTask -> {
                 blockSyncer.downloadIterationCompleted()
                 true
@@ -155,14 +143,9 @@ class InitialBlockDownload(
 
             val blockHashes = blockSyncer.getBlockHashes()
             if (blockHashes.isEmpty()) {
-                peer.synced = peer.blockHashesSynced
+                peer.synced = true
             } else {
                 peer.addTask(GetMerkleBlocksTask(blockHashes, this, merkleBlockExtractor, minMerkleBlocks, minTransactions, minReceiveBytes))
-            }
-
-            if (!peer.blockHashesSynced) {
-                val expectedHashesMinCount = max(peer.announcedLastBlockHeight - blockSyncer.localKnownBestBlockHeight, 0)
-                peer.addTask(GetBlockHashesTask(blockSyncer.getBlockLocatorHashes(peer.announcedLastBlockHeight), expectedHashesMinCount))
             }
 
             if (peer.synced) {
@@ -175,12 +158,7 @@ class InitialBlockDownload(
                 assignNextSyncPeer()
                 peerSyncListeners.forEach { it.onPeerSynced(peer) }
 
-                // Some peers fail to send InventoryMessage within expected time
-                // and become 'synced' in InitialBlockDownload without sending all of their blocks.
-                // In such case, we assume not all blocks are downloaded
-                if (blockSyncer.localDownloadedBestBlockHeight >= peer.announcedLastBlockHeight) {
-                    listener?.onBlockSyncFinished()
-                }
+                listener?.onBlockSyncFinished()
             }
         }
     }

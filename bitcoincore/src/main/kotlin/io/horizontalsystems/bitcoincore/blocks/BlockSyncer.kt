@@ -1,24 +1,21 @@
 package io.horizontalsystems.bitcoincore.blocks
 
-import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
 import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.MerkleBlock
-import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.transactions.BlockTransactionProcessor
 
 class BlockSyncer(
-        private val storage: IStorage,
-        private val blockchain: Blockchain,
-        private val transactionProcessor: BlockTransactionProcessor,
-        private val publicKeyManager: IPublicKeyManager,
-        private val checkpoint: Checkpoint,
-        private val state: State = State()
+    private val storage: IStorage,
+    private val blockchain: Blockchain,
+    private val transactionProcessor: BlockTransactionProcessor,
+    private val publicKeyManager: IPublicKeyManager,
+    private val checkpoint: Checkpoint,
+    private val state: State = State()
 ) {
 
     var listener: IBlockSyncListener? = null
@@ -104,9 +101,8 @@ class BlockSyncer(
     }
 
     fun handleMerkleBlock(merkleBlock: MerkleBlock, maxBlockHeight: Int) {
-        val height = merkleBlock.height
 
-        val block = when (height) {
+        val block = when (val height = merkleBlock.height) {
             null -> blockchain.connect(merkleBlock)
             else -> blockchain.forceAdd(merkleBlock, height)
         }
@@ -152,34 +148,5 @@ class BlockSyncer(
     }
 
     class State(var iterationHasPartialBlocks: Boolean = false)
-
-    companion object {
-        fun resolveCheckpoint(syncMode: BitcoinCore.SyncMode, network: Network, storage: IStorage): Checkpoint {
-            val lastBlock = storage.lastBlock()
-
-            val checkpoint = if (syncMode is BitcoinCore.SyncMode.Full) {
-                network.bip44Checkpoint
-            } else {
-                val lastCheckpoint = network.lastCheckpoint
-                if (lastBlock != null && lastBlock.height < lastCheckpoint.block.height) {
-                    // during app updating there may be case when the last block in DB is earlier than new checkpoint block
-                    // in this case we set the very first checkpoint block for bip44,
-                    // since it surely will be earlier than the last block in DB
-                    network.bip44Checkpoint
-                } else {
-                    lastCheckpoint
-                }
-            }
-
-            if (lastBlock == null) {
-                storage.saveBlock(checkpoint.block)
-                checkpoint.additionalBlocks.forEach { block ->
-                    storage.saveBlock(block)
-                }
-            }
-
-            return checkpoint
-        }
-    }
 
 }

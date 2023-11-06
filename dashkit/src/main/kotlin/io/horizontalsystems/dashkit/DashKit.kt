@@ -6,6 +6,12 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.apisync.BCoinApi
+import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
+import io.horizontalsystems.bitcoincore.apisync.InsightApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
@@ -13,6 +19,7 @@ import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.*
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.network.Network
@@ -110,25 +117,44 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     ) {
         val coreDatabase = CoreDatabase.getInstance(context, getDatabaseNameCore(networkType, walletId, syncMode))
         val dashDatabase = DashKitDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
-        val initialSyncUrl: String
 
         val coreStorage = Storage(coreDatabase)
         dashStorage = DashStorage(dashDatabase, coreStorage)
 
         network = when (networkType) {
+            NetworkType.MainNet -> MainNetDash()
+            NetworkType.TestNet -> TestNetDash()
+        }
+
+        val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, coreStorage)
+        val apiSyncStateManager = ApiSyncStateManager(coreStorage, network.syncableFromApi && syncMode !is SyncMode.Full)
+
+        val apiTransactionProvider = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncUrl = "https://insight.dash.org/insight-api"
-                MainNetDash()
+                val insightApiProvider = InsightApi( "https://insight.dash.org/insight-api")
+
+                if (syncMode is SyncMode.Blockchair) {
+                    val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                    val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+                    val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
+
+                    BiApiTransactionProvider(
+                        restoreProvider = insightApiProvider,
+                        syncProvider = blockchairProvider,
+                        syncStateManager = apiSyncStateManager
+                    )
+                } else {
+                    insightApiProvider
+                }
             }
+
             NetworkType.TestNet -> {
-                initialSyncUrl = "https://testnet-insight.dash.org/insight-api"
-                TestNetDash()
+                InsightApi("https://testnet-insight.dash.org/insight-api")
             }
         }
 
         val paymentAddressParser = PaymentAddressParser("dash", removeScheme = true)
         val instantTransactionManager = InstantTransactionManager(dashStorage, InstantSendFactory(), InstantTransactionState())
-        val initialSyncApi = InsightApi(initialSyncUrl)
 
         dashTransactionInfoConverter = DashTransactionInfoConverter(instantTransactionManager)
 
@@ -153,13 +179,15 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             .setExtendedKey(extendedKey)
             .setPurpose(Purpose.BIP44)
             .setNetwork(network)
+            .setCheckpoint(checkpoint)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)
             .setSyncMode(syncMode)
             .setConfirmationThreshold(confirmationsThreshold)
             .setStorage(coreStorage)
             .setBlockHeaderHasher(X11Hasher())
-            .setInitialSyncApi(initialSyncApi)
+            .setApiTransactionProvider(apiTransactionProvider)
+            .setApiSyncStateManager(apiSyncStateManager)
             .setTransactionInfoConverter(dashTransactionInfoConverter)
             .setBlockValidator(blockValidatorSet)
             .build()
@@ -190,7 +218,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             MasternodeSortedList(),
             quorumListManager
         )
-        val masternodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialBlockDownload)
+        val masternodeSyncer = MasternodeListSyncer(bitcoinCore, PeerTaskFactory(), masternodeListManager, bitcoinCore.initialDownload)
 
         bitcoinCore.addPeerTaskHandler(masternodeSyncer)
         bitcoinCore.addPeerSyncListener(masternodeSyncer)
@@ -284,7 +312,7 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
             "Dash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair(""))) {
                 try {
                     SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseNameCore(networkType, walletId, syncMode)))
                     SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))

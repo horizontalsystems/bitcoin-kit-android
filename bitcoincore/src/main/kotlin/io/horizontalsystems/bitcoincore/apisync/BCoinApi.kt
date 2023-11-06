@@ -1,15 +1,18 @@
-package io.horizontalsystems.bitcoincore.managers
+package io.horizontalsystems.bitcoincore.apisync
 
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonObject
-import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
+import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
+import io.horizontalsystems.bitcoincore.apisync.model.TransactionItem
+import io.horizontalsystems.bitcoincore.core.IApiTransactionProvider
+import io.horizontalsystems.bitcoincore.managers.ApiManager
 import java.util.logging.Logger
 
-class BCoinApi(host: String) : IInitialSyncApi {
+class BCoinApi(host: String) : IApiTransactionProvider {
     private val apiManager = ApiManager(host)
     private val logger = Logger.getLogger("BCoinApi")
 
-    override fun getTransactions(addresses: List<String>): List<TransactionItem> {
+    override fun transactions(addresses: List<String>, stopHeight: Int?): List<TransactionItem> {
         val requestData = JsonObject().apply {
             this["addresses"] = Json.array(*addresses.toTypedArray())
         }
@@ -28,15 +31,15 @@ class BCoinApi(host: String) : IInitialSyncApi {
             val blockHashJson = tx["block"] ?: continue
             val blockHash = if (blockHashJson.isString) blockHashJson.asString() else continue
 
-            val outputs = mutableListOf<TransactionOutputItem>()
+            val outputs = mutableListOf<AddressItem>()
             for (outputItem in tx["outputs"].asArray()) {
                 val outputJson = outputItem.asObject()
 
                 val scriptJson = outputJson["script"] ?: continue
-                val addressJson = outputJson["address"] ?: continue
+                val addressJson = outputJson["address"]
 
-                if (scriptJson.isString && addressJson.isString) {
-                    outputs.add(TransactionOutputItem(scriptJson.asString(), addressJson.asString()))
+                if (scriptJson.isString) {
+                    outputs.add(AddressItem(scriptJson.asString(), addressJson?.asString()))
                 }
             }
 

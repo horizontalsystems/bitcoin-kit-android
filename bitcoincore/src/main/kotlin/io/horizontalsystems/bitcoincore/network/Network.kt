@@ -15,6 +15,8 @@ abstract class Network {
     val serviceBloomFilter = 4L
     val zeroHashBytes = HashUtils.toBytesAsLE("0000000000000000000000000000000000000000000000000000000000000000")
 
+    open val blockchairChainId: String = "bitcoin" // change to abstract val
+
     abstract val maxBlockSize: Int
     abstract val dustRelayTxFee: Int
 

@@ -23,6 +23,9 @@ interface BlockDao {
     @Query("SELECT * FROM Block ORDER BY height DESC limit 1")
     fun getLastBlock(): Block?
 
+    @Query("SELECT * FROM Block WHERE hasTransactions = 1 ORDER BY height DESC limit 1")
+    fun getLastBlockWithTransactions(): Block?
+
     @Query("SELECT * FROM Block WHERE headerHash IN (:hashes)")
     fun getBlocks(hashes: List<ByteArray>): List<Block>
 

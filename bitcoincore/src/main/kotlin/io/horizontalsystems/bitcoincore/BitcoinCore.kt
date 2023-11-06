@@ -1,6 +1,20 @@
 package io.horizontalsystems.bitcoincore
 
 import android.content.Context
+import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApiSyncer
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairLastBlockProvider
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
+import io.horizontalsystems.bitcoincore.apisync.legacy.ApiSyncer
+import io.horizontalsystems.bitcoincore.apisync.legacy.BlockHashDiscoveryBatch
+import io.horizontalsystems.bitcoincore.apisync.legacy.BlockHashScanHelper
+import io.horizontalsystems.bitcoincore.apisync.legacy.BlockHashScanner
+import io.horizontalsystems.bitcoincore.apisync.legacy.IMultiAccountPublicKeyFetcher
+import io.horizontalsystems.bitcoincore.apisync.legacy.IPublicKeyFetcher
+import io.horizontalsystems.bitcoincore.apisync.legacy.MultiAccountPublicKeyFetcher
+import io.horizontalsystems.bitcoincore.apisync.legacy.PublicKeyFetcher
+import io.horizontalsystems.bitcoincore.apisync.legacy.WatchPublicKeyFetcher
 import io.horizontalsystems.bitcoincore.blocks.*
 import io.horizontalsystems.bitcoincore.blocks.validators.IBlockValidator
 import io.horizontalsystems.bitcoincore.core.*
@@ -42,10 +56,12 @@ class BitcoinCoreBuilder {
     private var network: Network? = null
     private var paymentAddressParser: PaymentAddressParser? = null
     private var storage: IStorage? = null
-    private var initialSyncApi: IInitialSyncApi? = null
+    private var apiTransactionProvider: IApiTransactionProvider? = null
     private var blockHeaderHasher: IHasher? = null
     private var transactionInfoConverter: ITransactionInfoConverter? = null
     private var blockValidator: IBlockValidator? = null
+    private var checkpoint: Checkpoint? = null
+    private var apiSyncStateManager: ApiSyncStateManager? = null
 
     // parameters with default values
     private var confirmationsThreshold = 6
@@ -84,7 +100,7 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setSyncMode(syncMode: BitcoinCore.SyncMode): BitcoinCoreBuilder {
+    fun setSyncMode(syncMode: SyncMode): BitcoinCoreBuilder {
         this.syncMode = syncMode
         return this
     }
@@ -108,8 +124,8 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setInitialSyncApi(initialSyncApi: IInitialSyncApi?): BitcoinCoreBuilder {
-        this.initialSyncApi = initialSyncApi
+    fun setApiTransactionProvider(apiTransactionProvider: IApiTransactionProvider?): BitcoinCoreBuilder {
+        this.apiTransactionProvider = apiTransactionProvider
         return this
     }
 
@@ -133,6 +149,16 @@ class BitcoinCoreBuilder {
         return this
     }
 
+    fun setCheckpoint(checkpoint: Checkpoint): BitcoinCoreBuilder {
+        this.checkpoint = checkpoint
+        return this
+    }
+
+    fun setApiSyncStateManager(apiSyncStateManager: ApiSyncStateManager): BitcoinCoreBuilder {
+        this.apiSyncStateManager = apiSyncStateManager
+        return this
+    }
+
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
         val extendedKey = checkNotNull(this.extendedKey)
@@ -140,7 +166,9 @@ class BitcoinCoreBuilder {
         val network = checkNotNull(this.network)
         val paymentAddressParser = checkNotNull(this.paymentAddressParser)
         val storage = checkNotNull(this.storage)
-        val initialSyncApi = checkNotNull(this.initialSyncApi)
+        val apiTransactionProvider = checkNotNull(this.apiTransactionProvider)
+        val checkpoint = checkNotNull(this.checkpoint)
+        val apiSyncStateManager = checkNotNull(this.apiSyncStateManager)
         val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
         val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter()
 
@@ -177,6 +205,7 @@ class BitcoinCoreBuilder {
                         bloomFilterProvider = this
                     }
                 }
+
                 HDExtendedKey.DerivedType.Account -> {
                     val wallet = AccountWallet(HDWalletAccount(extendedKey.key), gapLimit)
                     privateWallet = wallet
@@ -188,6 +217,7 @@ class BitcoinCoreBuilder {
                     }
 
                 }
+
                 HDExtendedKey.DerivedType.Bip32 -> {
                     throw IllegalStateException("Custom Bip32 Extended Keys are not supported")
                 }
@@ -204,6 +234,7 @@ class BitcoinCoreBuilder {
                     }
 
                 }
+
                 HDExtendedKey.DerivedType.Bip32, HDExtendedKey.DerivedType.Master -> {
                     throw IllegalStateException("Only Account Extended Public Keys are supported")
                 }
@@ -248,10 +279,9 @@ class BitcoinCoreBuilder {
         val networkMessageSerializer = NetworkMessageSerializer(network.magic)
 
         val blockchain = Blockchain(storage, blockValidator, dataProvider)
-        val checkpoint = BlockSyncer.resolveCheckpoint(syncMode, network, storage)
-
         val blockSyncer = BlockSyncer(storage, blockchain, blockTransactionProcessor, publicKeyManager, checkpoint)
-        val initialBlockDownload = InitialBlockDownload(blockSyncer, peerManager, MerkleBlockExtractor(network.maxBlockSize))
+
+
         val peerGroup = PeerGroup(
             peerHostManager,
             network,
@@ -265,8 +295,56 @@ class BitcoinCoreBuilder {
         )
         peerHostManager.listener = peerGroup
 
+        val blockHashScanner = BlockHashScanner(restoreKeyConverterChain, apiTransactionProvider, BlockHashScanHelper())
+
+
+        val apiSyncer: IApiSyncer
+        val initialDownload: IInitialDownload
+        val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
+
+        when (val syncMode = syncMode) {
+            is SyncMode.Blockchair -> {
+                val blockchairApi = if (apiTransactionProvider is BlockchairTransactionProvider) {
+                    apiTransactionProvider.blockchairApi
+                } else {
+                    BlockchairApi(syncMode.key, network.blockchairChainId)
+                }
+                val lastBlockProvider = BlockchairLastBlockProvider(blockchairApi)
+                apiSyncer = BlockchairApiSyncer(
+                    storage,
+                    restoreKeyConverterChain,
+                    apiTransactionProvider,
+                    lastBlockProvider,
+                    publicKeyManager,
+                    blockchain,
+                    apiSyncStateManager
+                )
+                initialDownload = BlockDownload(blockSyncer, peerManager, merkleBlockExtractor)
+            }
+
+            else -> {
+                val blockDiscovery = BlockHashDiscoveryBatch(blockHashScanner, publicKeyFetcher, checkpoint.block.height, gapLimit)
+                apiSyncer = ApiSyncer(
+                    storage,
+                    blockDiscovery,
+                    publicKeyManager,
+                    multiAccountPublicKeyFetcher,
+                    apiSyncStateManager
+                )
+                initialDownload = InitialBlockDownload(blockSyncer, peerManager, merkleBlockExtractor)
+            }
+        }
+
+
+        val syncManager = SyncManager(connectionManager, apiSyncer, peerGroup, apiSyncStateManager, blockSyncer.localDownloadedBestBlockHeight)
+        apiSyncer.listener = syncManager
+        connectionManager.listener = syncManager
+        blockSyncer.listener = syncManager
+        initialDownload.listener = syncManager
+        blockHashScanner.listener = syncManager
+
         val unspentOutputSelector = UnspentOutputSelectorChain()
-        val transactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)
+        val pendingTransactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)
         val transactionDataSorterFactory = TransactionDataSorterFactory()
 
         var dustCalculator: DustCalculator? = null
@@ -297,7 +375,13 @@ class BitcoinCoreBuilder {
             val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
             transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, purpose.scriptType)
             val transactionSendTimer = TransactionSendTimer(60)
-            val transactionSenderInstance = TransactionSender(transactionSyncer, peerManager, initialBlockDownload, storage, transactionSendTimer)
+            val transactionSenderInstance = TransactionSender(
+                pendingTransactionSyncer,
+                peerManager,
+                initialDownload,
+                storage,
+                transactionSendTimer
+            )
 
             dustCalculator = dustCalculatorInstance
             transactionSizeCalculator = transactionSizeCalculatorInstance
@@ -307,18 +391,6 @@ class BitcoinCoreBuilder {
 
             transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, bloomFilterManager)
         }
-
-        val blockHashFetcher = BlockHashFetcher(restoreKeyConverterChain, initialSyncApi, BlockHashFetcherHelper())
-        val blockDiscovery = BlockDiscoveryBatch(blockHashFetcher, publicKeyFetcher, checkpoint.block.height, gapLimit)
-        val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode is BitcoinCore.SyncMode.Api)
-        val initialSyncer = InitialSyncer(storage, blockDiscovery, publicKeyManager, multiAccountPublicKeyFetcher)
-
-        val syncManager = SyncManager(connectionManager, initialSyncer, peerGroup, apiSyncStateManager, blockSyncer.localDownloadedBestBlockHeight)
-        initialSyncer.listener = syncManager
-        connectionManager.listener = syncManager
-        blockSyncer.listener = syncManager
-        initialBlockDownload.listener = syncManager
-        blockHashFetcher.listener = syncManager
 
         val bitcoinCore = BitcoinCore(
             storage,
@@ -351,7 +423,7 @@ class BitcoinCoreBuilder {
         blockTransactionProcessor.transactionListener = watchedTransactionManager
 
         bitcoinCore.peerGroup = peerGroup
-        bitcoinCore.transactionSyncer = transactionSyncer
+        bitcoinCore.transactionSyncer = pendingTransactionSyncer
         bitcoinCore.networkMessageParser = networkMessageParser
         bitcoinCore.networkMessageSerializer = networkMessageSerializer
         bitcoinCore.unspentOutputSelector = unspentOutputSelector
@@ -390,13 +462,13 @@ class BitcoinCoreBuilder {
         bitcoinCore.addPeerGroupListener(bloomFilterLoader)
 
         // todo: now this part cannot be moved to another place since bitcoinCore requires initialBlockDownload to be set. find solution to do so
-        bitcoinCore.initialBlockDownload = initialBlockDownload
-        bitcoinCore.addPeerTaskHandler(initialBlockDownload)
-        bitcoinCore.addInventoryItemsHandler(initialBlockDownload)
-        bitcoinCore.addPeerGroupListener(initialBlockDownload)
+        bitcoinCore.initialDownload = initialDownload
+        bitcoinCore.addPeerTaskHandler(initialDownload)
+        bitcoinCore.addInventoryItemsHandler(initialDownload)
+        bitcoinCore.addPeerGroupListener(initialDownload)
 
 
-        val mempoolTransactions = MempoolTransactions(transactionSyncer, transactionSender)
+        val mempoolTransactions = MempoolTransactions(pendingTransactionSyncer, transactionSender)
         bitcoinCore.addPeerTaskHandler(mempoolTransactions)
         bitcoinCore.addInventoryItemsHandler(mempoolTransactions)
         bitcoinCore.addPeerGroupListener(mempoolTransactions)
@@ -445,7 +517,7 @@ class BitcoinCore(
     lateinit var transactionSyncer: TransactionSyncer
     lateinit var networkMessageParser: NetworkMessageParser
     lateinit var networkMessageSerializer: NetworkMessageSerializer
-    lateinit var initialBlockDownload: InitialBlockDownload
+    lateinit var initialDownload: IInitialDownload
     lateinit var unspentOutputSelector: UnspentOutputSelectorChain
     lateinit var watchedTransactionManager: WatchedTransactionManager
 
@@ -453,7 +525,7 @@ class BitcoinCore(
     val peerTaskHandlerChain = PeerTaskHandlerChain()
 
     fun addPeerSyncListener(peerSyncListener: IPeerSyncListener): BitcoinCore {
-        initialBlockDownload.addPeerSyncListener(peerSyncListener)
+        initialDownload.addPeerSyncListener(peerSyncListener)
         return this
     }
 
@@ -615,7 +687,7 @@ class BitcoinCore(
         val statusInfo = LinkedHashMap<String, Any>()
 
         statusInfo["Synced Until"] = lastBlockInfo?.timestamp?.let { Date(it * 1000) } ?: "N/A"
-        statusInfo["Syncing Peer"] = initialBlockDownload.syncPeer?.host ?: "N/A"
+        statusInfo["Syncing Peer"] = initialDownload.syncPeer?.host ?: "N/A"
         statusInfo["Derivation"] = purpose.description
         statusInfo["Sync State"] = syncState.toString()
         statusInfo["Last Block Height"] = lastBlockInfo?.height ?: "N/A"
@@ -752,7 +824,7 @@ class BitcoinCore(
     sealed class SyncMode {
         class Full : SyncMode()
         class Api : SyncMode()
-        class NewWallet : SyncMode()
+        class Blockchair(val key: String) : SyncMode()
     }
 
     sealed class StateError : Exception() {

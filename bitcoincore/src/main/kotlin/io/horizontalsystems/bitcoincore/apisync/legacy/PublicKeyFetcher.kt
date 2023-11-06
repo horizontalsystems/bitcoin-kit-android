@@ -1,4 +1,4 @@
-package io.horizontalsystems.bitcoincore.managers
+package io.horizontalsystems.bitcoincore.apisync.legacy
 
 import io.horizontalsystems.bitcoincore.core.AccountWallet
 import io.horizontalsystems.bitcoincore.core.Wallet

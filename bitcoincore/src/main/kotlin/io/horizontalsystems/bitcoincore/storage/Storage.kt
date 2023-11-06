@@ -4,10 +4,28 @@ import androidx.sqlite.db.SimpleSQLiteQuery
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toHexString
-import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.models.BlockHash
+import io.horizontalsystems.bitcoincore.models.BlockHashPublicKey
+import io.horizontalsystems.bitcoincore.models.BlockchainState
+import io.horizontalsystems.bitcoincore.models.InvalidTransaction
+import io.horizontalsystems.bitcoincore.models.PeerAddress
+import io.horizontalsystems.bitcoincore.models.PublicKey
+import io.horizontalsystems.bitcoincore.models.SentTransaction
+import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionFilterType
+import io.horizontalsystems.bitcoincore.models.TransactionInput
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import kotlin.math.max
 
 open class Storage(protected open val store: CoreDatabase) : IStorage {
+
+    override fun downloadedTransactionsBestBlockHeight(): Int {
+        val maxDownloadedHeight = store.block.getLastBlockWithTransactions()?.height ?: 0
+        val maxDiscoveredHeight = store.blockHash.getLastBlockHashByHeight()?.height ?: 0
+        return max(maxDownloadedHeight, maxDiscoveredHeight)
+    }
 
     // RestoreState
 
@@ -64,6 +82,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun addBlockHashes(hashes: List<BlockHash>) {
         store.blockHash.insertAll(hashes)
+    }
+
+    override fun addBockHashPublicKeys(blockHashPublicKeys: List<BlockHashPublicKey>) {
+        store.blockHash
     }
 
     override fun getLastBlockchainBlockHash(): BlockHash? {
@@ -181,11 +203,15 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
         return transactions.map { tx ->
             FullTransactionInfo(
-                    tx.block,
-                    if (tx.transaction.status == Transaction.Status.INVALID) InvalidTransaction(tx.transaction, tx.transaction.serializedTxInfo, tx.transaction.rawTransaction) else tx.transaction,
-                    inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
-                    outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) },
-                    metadata.first { it.transactionHash.contentEquals(tx.transaction.hash) }
+                tx.block,
+                if (tx.transaction.status == Transaction.Status.INVALID) InvalidTransaction(
+                    tx.transaction,
+                    tx.transaction.serializedTxInfo,
+                    tx.transaction.rawTransaction
+                ) else tx.transaction,
+                inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
+                outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) },
+                metadata.first { it.transactionHash.contentEquals(tx.transaction.hash) }
             )
         }
     }
@@ -432,7 +458,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
     // PublicKey
 
     override fun getPublicKeyByHashP2TR(hashP2TR: ByteArray): PublicKey? {
-       return store.publicKey.getByHashP2TR(hashP2TR)
+        return store.publicKey.getByHashP2TR(hashP2TR)
     }
 
     override fun getPublicKeyByScriptHashForP2PWKH(keyHash: ByteArray): PublicKey? {

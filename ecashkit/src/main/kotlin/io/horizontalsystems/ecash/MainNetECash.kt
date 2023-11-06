@@ -15,6 +15,7 @@ class MainNetECash : Network() {
     override var addressSegwitHrp: String = "ecash"
     override var addressScriptVersion: Int = 5
     override var coinType: Int = 899
+    override val blockchairChainId: String = "ecash"
 
     override val maxBlockSize = 32 * 1024 * 1024
     override val dustRelayTxFee = 1000 // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/master/src/policy/policy.h#L78
