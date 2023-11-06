@@ -11,19 +11,25 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
+import io.horizontalsystems.bitcoincore.apisync.BlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.BlockchainComApi
+import io.horizontalsystems.bitcoincore.apisync.HsBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
-import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
+import io.horizontalsystems.bitcoincore.core.IApiTransactionProvider
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
-import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.KeyHashRestoreKeyConverter
+import io.horizontalsystems.bitcoincore.managers.ApiSyncStateManager
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
-import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDExtendedKey
@@ -89,13 +95,33 @@ class ECashKit : AbstractKit {
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val storage = Storage(database)
-        val initialSyncApi: IInitialSyncApi
 
         network = when (networkType) {
+            NetworkType.MainNet -> MainNetECash()
+            NetworkType.TestNet -> TODO()
+        }
+
+        val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
+        val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
+
+        val apiTransactionProvider = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncApi = ChronikApi()
-                MainNetECash()
+                val chronikApiProvider = ChronikApi()
+                if (syncMode is SyncMode.Blockchair) {
+                    val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                    val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+                    val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
+
+                    BiApiTransactionProvider(
+                        restoreProvider = chronikApiProvider,
+                        syncProvider = blockchairProvider,
+                        syncStateManager = apiSyncStateManager
+                    )
+                } else {
+                    chronikApiProvider
+                }
             }
+
             NetworkType.TestNet -> {
                 TODO()
             }
@@ -130,12 +156,14 @@ class ECashKit : AbstractKit {
             .setExtendedKey(extendedKey)
             .setPurpose(Purpose.BIP44)
             .setNetwork(network)
+            .setCheckpoint(checkpoint)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)
             .setSyncMode(syncMode)
             .setConfirmationThreshold(confirmationsThreshold)
             .setStorage(storage)
-            .setInitialSyncApi(initialSyncApi)
+            .setApiTransactionProvider(apiTransactionProvider)
+            .setApiSyncStateManager(apiSyncStateManager)
             .setBlockValidator(blockValidatorSet)
             .build()
 
@@ -163,7 +191,7 @@ class ECashKit : AbstractKit {
             "ECash-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair(""))) {
                 try {
                     SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
                 } catch (ex: Exception) {

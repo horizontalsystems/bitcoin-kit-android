@@ -13,6 +13,7 @@ class TestNetLitecoin : Network() {
     override var addressSegwitHrp: String = "tltc"
     override var addressScriptVersion: Int = 0x32
     override var coinType: Int = 1
+    override val blockchairChainId: String = ""
 
     override val maxBlockSize = 1_000_000
     override val dustRelayTxFee = 3000 // https://github.com/bitcoin/bitcoin/blob/c536dfbcb00fb15963bf5d507b7017c241718bf6/src/policy/policy.h#L50

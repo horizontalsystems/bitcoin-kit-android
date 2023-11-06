@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
+import io.horizontalsystems.bitcoincore.apisync.legacy.BlockHashScanHelper
 import org.junit.Assert
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
@@ -7,7 +9,7 @@ import org.spekframework.spek2.style.specification.describe
 object BlockHashFetcherHelperTest : Spek({
 
     val fetcherHelper by memoized {
-        BlockHashFetcherHelper()
+        BlockHashScanHelper()
     }
 
     describe("#lastUsedIndex") {
@@ -18,8 +20,8 @@ object BlockHashFetcherHelperTest : Spek({
                     listOf("address1_0", "address1_1")
             )
             val outputs = listOf(
-                    TransactionOutputItem("asdasd", "asdasd"),
-                    TransactionOutputItem("tyrty", "sdfasdf")
+                    AddressItem("asdasd", "asdasd"),
+                    AddressItem("tyrty", "sdfasdf")
             )
 
             val result = fetcherHelper.lastUsedIndex(addresses, outputs)
@@ -33,8 +35,8 @@ object BlockHashFetcherHelperTest : Spek({
                     listOf("address1_0", "address1_1")
             )
             val outputs = listOf(
-                    TransactionOutputItem("asdasd", "address0_0"),
-                    TransactionOutputItem("tyrty", "sdfasdf")
+                    AddressItem("asdasd", "address0_0"),
+                    AddressItem("tyrty", "sdfasdf")
             )
 
             val result = fetcherHelper.lastUsedIndex(addresses, outputs)
@@ -48,8 +50,8 @@ object BlockHashFetcherHelperTest : Spek({
                     listOf("address1_0", "address1_1")
             )
             val outputs = listOf(
-                    TransactionOutputItem("asdasd", "address0_0"),
-                    TransactionOutputItem("ssfdaddress1_1aaqqw", "sdfasdf")
+                    AddressItem("asdasd", "address0_0"),
+                    AddressItem("ssfdaddress1_1aaqqw", "sdfasdf")
             )
 
             val result = fetcherHelper.lastUsedIndex(addresses, outputs)

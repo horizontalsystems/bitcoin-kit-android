@@ -4,7 +4,11 @@ import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonValue
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import java.io.*
+import java.io.BufferedOutputStream
+import java.io.BufferedWriter
+import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.TimeUnit
@@ -28,7 +32,7 @@ class ApiManager(private val host: String) {
                         setRequestProperty("Accept", "application/json")
                     }.getInputStream()
         } catch (exception: IOException) {
-            throw Exception("${exception.javaClass.simpleName}: $host")
+            throw ApiManagerException.Other("${exception.javaClass.simpleName}: $host")
         }
     }
 
@@ -53,7 +57,7 @@ class ApiManager(private val host: String) {
                 Json.parse(it.bufferedReader())
             }
         } catch (exception: IOException) {
-            throw Exception("${exception.javaClass.simpleName}: $host")
+            throw ApiManagerException.Other("${exception.javaClass.simpleName}: $host")
         }
     }
 
@@ -78,10 +82,22 @@ class ApiManager(private val host: String) {
                             }
                         }
 
-                        throw IOException("Unexpected Error:$response")
+                    if (response.code == 404) {
+                        throw ApiManagerException.Http404Exception
+                    } else {
+                        throw ApiManagerException.Other("Unexpected Error:$response")
                     }
-        } catch (e: Exception) {
-            throw Exception("${e.javaClass.simpleName}: $host, ${e.localizedMessage}")
+                }
+        } catch (e: ApiManagerException) {
+            throw e
+        }
+        catch (e: Exception) {
+            throw ApiManagerException.Other("${e.javaClass.simpleName}: $host, ${e.localizedMessage}")
         }
     }
+}
+
+sealed class ApiManagerException : Exception() {
+    object Http404Exception : ApiManagerException()
+    class Other(override val message: String) : ApiManagerException()
 }

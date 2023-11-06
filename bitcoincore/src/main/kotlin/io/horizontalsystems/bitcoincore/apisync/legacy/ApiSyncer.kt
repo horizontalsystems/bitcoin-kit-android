@@ -1,36 +1,38 @@
-package io.horizontalsystems.bitcoincore.managers
+package io.horizontalsystems.bitcoincore.apisync.legacy
 
+import io.horizontalsystems.bitcoincore.core.IApiSyncer
+import io.horizontalsystems.bitcoincore.core.IApiSyncerListener
 import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.managers.ApiSyncStateManager
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.schedulers.Schedulers
 import java.util.logging.Logger
 
-class InitialSyncer(
+class ApiSyncer(
     private val storage: IStorage,
-    private val blockDiscovery: IBlockDiscovery,
+    private val blockHashDiscovery: BlockHashDiscoveryBatch,
     private val publicKeyManager: IPublicKeyManager,
-    private val multiAccountPublicKeyFetcher: IMultiAccountPublicKeyFetcher?
-) {
+    private val multiAccountPublicKeyFetcher: IMultiAccountPublicKeyFetcher?,
+    private val apiSyncStateManager: ApiSyncStateManager
+): IApiSyncer {
 
-    interface Listener {
-        fun onSyncSuccess()
-        fun onSyncFailed(error: Throwable)
-    }
+    override val willSync: Boolean
+        get() = !apiSyncStateManager.restored
 
-    var listener: Listener? = null
+    override var listener: IApiSyncerListener? = null
 
-    private val logger = Logger.getLogger("InitialSyncer")
+    private val logger = Logger.getLogger("ApiSyncer")
     private val disposables = CompositeDisposable()
 
-    fun terminate() {
+    override fun terminate() {
         disposables.clear()
     }
 
-    fun sync() {
-        val disposable = blockDiscovery.discoverBlockHashes()
+    override fun sync() {
+        val disposable = blockHashDiscovery.discoverBlockHashes()
             .subscribeOn(Schedulers.io())
             .subscribe(
                 { (publicKeys, blockHashes) ->
@@ -63,6 +65,7 @@ class InitialSyncer(
     }
 
     private fun handleSuccess() {
+        apiSyncStateManager.restored = true
         listener?.onSyncSuccess()
     }
 

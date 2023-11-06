@@ -16,6 +16,7 @@ class MainNetDash : Network() {
     override var addressSegwitHrp: String = "bc"
     override var addressScriptVersion: Int = 16
     override var coinType: Int = 5
+    override val blockchairChainId: String = "dash"
 
     override val maxBlockSize = 1_000_000
     override val dustRelayTxFee = 1000 // https://github.com/dashpay/dash/blob/master/src/policy/policy.h#L36

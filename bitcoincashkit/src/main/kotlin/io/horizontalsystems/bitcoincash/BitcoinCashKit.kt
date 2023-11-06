@@ -11,16 +11,23 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
+import io.horizontalsystems.bitcoincore.apisync.BlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.BlockchainComApi
+import io.horizontalsystems.bitcoincore.apisync.HsBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
-import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
+import io.horizontalsystems.bitcoincore.managers.ApiSyncStateManager
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
-import io.horizontalsystems.bitcoincore.managers.BlockchainComApi
-import io.horizontalsystems.bitcoincore.managers.InsightApi
+import io.horizontalsystems.bitcoincore.managers.BlockchairCashRestoreKeyConverter
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -44,6 +51,7 @@ class BitcoinCashKit : AbstractKit {
                         MainNetBitcoinCash.CoinType.Type145 -> "mainNet-145"
                     }
                 }
+
                 is TestNet -> "testNet"
             }
     }
@@ -101,17 +109,41 @@ class BitcoinCashKit : AbstractKit {
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val storage = Storage(database)
-        val initialSyncApi: IInitialSyncApi
 
         network = when (networkType) {
+            is NetworkType.MainNet -> MainNetBitcoinCash(networkType.coinType)
+            NetworkType.TestNet -> TestNetBitcoinCash()
+        }
+
+        val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
+        val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
+
+        val hsBlockHashFetcher = HsBlockHashFetcher("https://api.blocksdecoded.com/v1/blockchains/bitcoin-cash")
+        val apiTransactionProvider = when (networkType) {
             is NetworkType.MainNet -> {
-                initialSyncApi =
-                    BlockchainComApi("https://api.haskoin.com/bch/blockchain", "https://api.blocksdecoded.com/v1/blockchains/bitcoin-cash")
-                MainNetBitcoinCash(networkType.coinType)
+                val blockchainComProvider = BlockchainComApi("https://api.haskoin.com/bch/blockchain", hsBlockHashFetcher)
+
+                if (syncMode is SyncMode.Blockchair) {
+                    val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                    val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+                    val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
+                    val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
+
+                    BiApiTransactionProvider(
+                        restoreProvider = blockchainComProvider,
+                        syncProvider = blockchairProvider,
+                        syncStateManager = apiSyncStateManager
+                    )
+                } else {
+                    blockchainComProvider
+                }
             }
+
             NetworkType.TestNet -> {
-                initialSyncApi = InsightApi("https://explorer.api.bitcoin.com/tbch/v1")
-                TestNetBitcoinCash()
+                BlockchainComApi(
+                    transactionApiUrl = "https://api.haskoin.com/bchtest/blockchain",
+                    blockHashFetcher = hsBlockHashFetcher
+                )
             }
         }
 
@@ -144,23 +176,29 @@ class BitcoinCashKit : AbstractKit {
             .setExtendedKey(extendedKey)
             .setPurpose(Purpose.BIP44)
             .setNetwork(network)
+            .setCheckpoint(checkpoint)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)
             .setSyncMode(syncMode)
             .setConfirmationThreshold(confirmationsThreshold)
             .setStorage(storage)
-            .setInitialSyncApi(initialSyncApi)
+            .setApiTransactionProvider(apiTransactionProvider)
+            .setApiSyncStateManager(apiSyncStateManager)
             .setBlockValidator(blockValidatorSet)
             .build()
 
         //  extending bitcoinCore
 
         val bech32 = CashAddressConverter(network.addressSegwitHrp)
-        val base58 = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
-
         bitcoinCore.prependAddressConverter(bech32)
 
-        bitcoinCore.addRestoreKeyConverter(Bip44RestoreKeyConverter(base58))
+        val restoreKeyConverter = if (syncMode is SyncMode.Blockchair) {
+            BlockchairCashRestoreKeyConverter(bech32, network.addressSegwitHrp)
+        } else {
+            val base58 = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
+            Bip44RestoreKeyConverter(base58)
+        }
+        bitcoinCore.addRestoreKeyConverter(restoreKeyConverter)
     }
 
     companion object {
@@ -179,7 +217,7 @@ class BitcoinCashKit : AbstractKit {
             "BitcoinCash-${networkType.description}-$walletId-${syncMode.javaClass.simpleName}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair(""))) {
                 try {
                     SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
                 } catch (ex: Exception) {

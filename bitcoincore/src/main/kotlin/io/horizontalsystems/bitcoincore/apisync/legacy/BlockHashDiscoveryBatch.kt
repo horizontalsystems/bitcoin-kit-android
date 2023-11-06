@@ -1,17 +1,16 @@
-package io.horizontalsystems.bitcoincore.managers
+package io.horizontalsystems.bitcoincore.apisync.legacy
 
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.reactivex.Single
 
-class BlockDiscoveryBatch(
-    private val blockHashFetcher: BlockHashFetcher,
+class BlockHashDiscoveryBatch(
+    private val blockHashScanner: BlockHashScanner,
     private val publicKeyFetcher: IPublicKeyFetcher,
     private val maxHeight: Int,
     private val gapLimit: Int
-) : IBlockDiscovery {
-
-    override fun discoverBlockHashes(): Single<Pair<List<PublicKey>, List<BlockHash>>> {
+) {
+    fun discoverBlockHashes(): Single<Pair<List<PublicKey>, List<BlockHash>>> {
         return Single.create { emitter ->
             try {
                 emitter.onSuccess(fetchRecursive())
@@ -36,7 +35,7 @@ class BlockDiscoveryBatch(
         val externalPublicKeys = externalBatchInfo.publicKeys + externalNewKeys
         val internalPublicKeys = internalBatchInfo.publicKeys + internalNewKeys
 
-        val fetchResponse = blockHashFetcher.getBlockHashes(externalNewKeys, internalNewKeys)
+        val fetchResponse = blockHashScanner.getBlockHashes(externalNewKeys, internalNewKeys)
         val resultBlockHashes = blockHashes + fetchResponse.blockHashes.filter { it.height <= maxHeight }
 
         return when {

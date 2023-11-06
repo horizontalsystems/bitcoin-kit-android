@@ -2,17 +2,18 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
+import io.horizontalsystems.bitcoincore.apisync.legacy.ApiSyncer
 import io.horizontalsystems.bitcoincore.core.*
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import kotlin.math.max
 
 class SyncManager(
-        private val connectionManager: ConnectionManager,
-        private val initialSyncer: InitialSyncer,
-        private val peerGroup: PeerGroup,
-        private val apiSyncStateManager: ApiSyncStateManager,
-        bestBlockHeight: Int
-) : InitialSyncer.Listener, IConnectionManagerListener, IBlockSyncListener, IApiSyncListener {
+    private val connectionManager: ConnectionManager,
+    private val apiSyncer: IApiSyncer,
+    private val peerGroup: PeerGroup,
+    private val apiSyncStateManager: ApiSyncStateManager,
+    bestBlockHeight: Int
+) : IApiSyncerListener, IConnectionManagerListener, IBlockSyncListener {
 
     var listener: IKitStateListener? = null
 
@@ -44,7 +45,7 @@ class SyncManager(
 
     private fun startInitialSync() {
         syncState = KitState.ApiSyncing(0)
-        initialSyncer.sync()
+        apiSyncer.sync()
     }
 
     private fun startPeerGroup() {
@@ -65,7 +66,7 @@ class SyncManager(
     fun stop() {
         when (syncState) {
             is KitState.ApiSyncing -> {
-                initialSyncer.terminate()
+                apiSyncer.terminate()
             }
             is KitState.Syncing, is KitState.Synced -> {
                 peerGroup.stop()
@@ -89,21 +90,16 @@ class SyncManager(
     }
 
     //
-    // InitialSyncer Listener
+    // IApiSyncerListener
     //
 
     override fun onSyncSuccess() {
-        apiSyncStateManager.restored = true
         startPeerGroup()
     }
 
     override fun onSyncFailed(error: Throwable) {
         syncState = KitState.NotSynced(error)
     }
-
-    //
-    // IApiSyncListener
-    //
 
     override fun onTransactionsFound(count: Int) {
         foundTransactionsCount += count

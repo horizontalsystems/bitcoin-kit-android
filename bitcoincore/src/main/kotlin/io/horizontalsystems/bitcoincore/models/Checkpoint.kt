@@ -1,7 +1,10 @@
 package io.horizontalsystems.bitcoincore.models
 
+import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.io.BitcoinInputMarkable
+import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import java.io.BufferedReader
 import java.io.InputStreamReader
@@ -34,7 +37,8 @@ class Checkpoint(fileName: String) {
             val height = input.readInt()
             val hash = input.readBytes(32)
 
-            return Block(BlockHeader(
+            return Block(
+                BlockHeader(
                     version = version,
                     previousBlockHeaderHash = prevHash,
                     merkleRoot = merkleHash,
@@ -42,7 +46,37 @@ class Checkpoint(fileName: String) {
                     bits = bits,
                     nonce = nonce,
                     hash = hash
-            ), height)
+                ), height
+            )
+        }
+    }
+
+    companion object {
+        fun resolveCheckpoint(syncMode: BitcoinCore.SyncMode, network: Network, storage: IStorage): Checkpoint {
+            val lastBlock = storage.lastBlock()
+
+            val checkpoint = if (syncMode is BitcoinCore.SyncMode.Full) {
+                network.bip44Checkpoint
+            } else {
+                val lastCheckpoint = network.lastCheckpoint
+                if (lastBlock != null && lastBlock.height < lastCheckpoint.block.height) {
+                    // during app updating there may be case when the last block in DB is earlier than new checkpoint block
+                    // in this case we set the very first checkpoint block for bip44,
+                    // since it surely will be earlier than the last block in DB
+                    network.bip44Checkpoint
+                } else {
+                    lastCheckpoint
+                }
+            }
+
+            if (lastBlock == null) {
+                storage.saveBlock(checkpoint.block)
+                checkpoint.additionalBlocks.forEach { block ->
+                    storage.saveBlock(block)
+                }
+            }
+
+            return checkpoint
         }
     }
 

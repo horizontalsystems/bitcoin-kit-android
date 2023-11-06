@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions
 
 import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
+import io.horizontalsystems.bitcoincore.core.IInitialDownload
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.models.SentTransaction
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
@@ -14,7 +15,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 class TransactionSender(
         private val transactionSyncer: TransactionSyncer,
         private val peerManager: PeerManager,
-        private val initialBlockDownload: InitialBlockDownload,
+        private val initialBlockDownload: IInitialDownload,
         private val storage: IStorage,
         private val timer: TransactionSendTimer,
         private val maxRetriesCount: Int = 3,

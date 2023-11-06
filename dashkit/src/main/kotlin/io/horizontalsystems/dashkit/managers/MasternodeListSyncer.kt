@@ -2,7 +2,7 @@ package io.horizontalsystems.dashkit.managers
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.blocks.IPeerSyncListener
-import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
+import io.horizontalsystems.bitcoincore.core.IInitialDownload
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
 import io.horizontalsystems.bitcoincore.network.peer.Peer
@@ -13,11 +13,11 @@ import io.horizontalsystems.dashkit.tasks.RequestMasternodeListDiffTask
 import java.util.concurrent.Executors
 
 class MasternodeListSyncer(
-        private val bitcoinCore: BitcoinCore,
-        private val peerTaskFactory: PeerTaskFactory,
-        private val masternodeListManager: MasternodeListManager,
-        private val initialBlockDownload: InitialBlockDownload)
-    : IPeerTaskHandler, IPeerSyncListener, PeerGroup.Listener {
+    private val bitcoinCore: BitcoinCore,
+    private val peerTaskFactory: PeerTaskFactory,
+    private val masternodeListManager: MasternodeListManager,
+    private val initialBlockDownload: IInitialDownload
+) : IPeerTaskHandler, IPeerSyncListener, PeerGroup.Listener {
 
     @Volatile
     private var workingPeer: Peer? = null
@@ -65,6 +65,7 @@ class MasternodeListSyncer(
                 }
                 true
             }
+
             else -> false
         }
     }

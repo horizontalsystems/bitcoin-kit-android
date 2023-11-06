@@ -1,14 +1,17 @@
-package io.horizontalsystems.bitcoincore.managers
+package io.horizontalsystems.bitcoincore.apisync
 
-import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
+import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
+import io.horizontalsystems.bitcoincore.apisync.model.TransactionItem
+import io.horizontalsystems.bitcoincore.core.IApiTransactionProvider
+import io.horizontalsystems.bitcoincore.managers.ApiManager
 import java.util.logging.Logger
 
-class InsightApi(host: String) : IInitialSyncApi {
+class InsightApi(host: String) : IApiTransactionProvider {
     private val maxAddressSize = 100
     private val apiManager = ApiManager(host)
     private val logger = Logger.getLogger("InsightApi")
 
-    override fun getTransactions(addresses: List<String>): List<TransactionItem> {
+    override fun transactions(addresses: List<String>, stopHeight: Int?): List<TransactionItem> {
         logger.info("Request transactions for ${addresses.size} addresses: [${addresses.first()}, ...]")
 
         val transactions = mutableListOf<TransactionItem>()
@@ -33,7 +36,7 @@ class InsightApi(host: String) : IInitialSyncApi {
 
             val blockHash = tx["blockhash"] ?: continue
             val blockheight = tx["blockheight"] ?: continue
-            val outputs = mutableListOf<TransactionOutputItem>()
+            val addressItems = mutableListOf<AddressItem>()
 
             for (outputItem in tx["vout"].asArray()) {
                 val outputJson = outputItem.asObject()
@@ -42,10 +45,10 @@ class InsightApi(host: String) : IInitialSyncApi {
                 val script = (scriptJson["hex"] ?: continue).asString()
                 val addresses = (scriptJson["addresses"] ?: continue).asArray()
 
-                outputs.add(TransactionOutputItem(script, addresses[0].asString()))
+                addressItems.add(AddressItem(script, addresses[0].asString()))
             }
 
-            txs.add(TransactionItem(blockHash.asString(), blockheight.asInt(), outputs))
+            txs.add(TransactionItem(blockHash.asString(), blockheight.asInt(), addressItems))
         }
 
         if (totalItems > to) {

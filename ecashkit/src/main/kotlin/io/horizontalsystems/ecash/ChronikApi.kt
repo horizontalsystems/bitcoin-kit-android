@@ -1,16 +1,16 @@
 package io.horizontalsystems.ecash
 
 import chronik.Chronik
-import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
+import io.horizontalsystems.bitcoincore.core.IApiTransactionProvider
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.ApiManager
-import io.horizontalsystems.bitcoincore.managers.TransactionItem
-import io.horizontalsystems.bitcoincore.managers.TransactionOutputItem
+import io.horizontalsystems.bitcoincore.apisync.model.TransactionItem
+import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
 
-class ChronikApi : IInitialSyncApi {
+class ChronikApi : IApiTransactionProvider {
     private val apiManager = ApiManager("https://chronik.fabien.cash")
 
-    override fun getTransactions(addresses: List<String>): List<TransactionItem> {
+    override fun transactions(addresses: List<String>, stopHeight: Int?): List<TransactionItem> {
         val transactionItems = mutableListOf<TransactionItem>()
 
         for (address in addresses) {
@@ -26,12 +26,12 @@ class ChronikApi : IInitialSyncApi {
                             TransactionItem(
                                 blockHash = it.block.hash.toByteArray().toReversedHex(),
                                 blockHeight = it.block.height,
-                                txOutputs = it.outputsList.map { txOutput ->
-                                    TransactionOutputItem(
+                                addressItems = it.outputsList.map { txOutput ->
+                                    AddressItem(
                                         script = txOutput.outputScript.toByteArray().toReversedHex(),
                                         address = ""
                                     )
-                                }
+                                }.toMutableList()
                             )
                         }
                     )

@@ -6,10 +6,18 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.apisync.BCoinApi
+import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
+import io.horizontalsystems.bitcoincore.apisync.BlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.BlockchainComApi
+import io.horizontalsystems.bitcoincore.apisync.HsBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
 import io.horizontalsystems.bitcoincore.blocks.BlockMedianTimeHelper
 import io.horizontalsystems.bitcoincore.blocks.validators.*
-import io.horizontalsystems.bitcoincore.core.IInitialSyncApi
 import io.horizontalsystems.bitcoincore.managers.*
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
@@ -120,20 +128,42 @@ class BitcoinKit : AbstractKit {
     ) {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode, purpose))
         val storage = Storage(database)
-        val initialSyncApi: IInitialSyncApi
 
         network = when (networkType) {
+            NetworkType.MainNet -> MainNet()
+            NetworkType.TestNet -> TestNet()
+            NetworkType.RegTest -> RegTest()
+        }
+
+        val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
+        val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
+
+        val apiTransactionProvider = when (networkType) {
             NetworkType.MainNet -> {
-                initialSyncApi = BlockchainComApi("https://blockchain.info", "https://api.blocksdecoded.com/v1/blockchains/bitcoin")
-                MainNet()
+                val hsBlockHashFetcher = HsBlockHashFetcher("https://api.blocksdecoded.com/v1/blockchains/bitcoin")
+                val blockchainComProvider = BlockchainComApi("https://blockchain.info", hsBlockHashFetcher)
+                if (syncMode is SyncMode.Blockchair) {
+                    val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                    val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+                    val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
+                    val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
+
+                    BiApiTransactionProvider(
+                        restoreProvider = blockchainComProvider,
+                        syncProvider = blockchairProvider,
+                        syncStateManager = apiSyncStateManager
+                    )
+                } else {
+                    blockchainComProvider
+                }
             }
+
             NetworkType.TestNet -> {
-                initialSyncApi = BCoinApi("https://btc-testnet.blocksdecoded.com/api")
-                TestNet()
+                BCoinApi("https://btc-testnet.blocksdecoded.com/api")
             }
+
             NetworkType.RegTest -> {
-                initialSyncApi = InsightApi("")
-                RegTest()
+                null
             }
         }
 
@@ -165,12 +195,14 @@ class BitcoinKit : AbstractKit {
             .setExtendedKey(extendedKey)
             .setPurpose(purpose)
             .setNetwork(network)
+            .setCheckpoint(checkpoint)
             .setPaymentAddressParser(paymentAddressParser)
             .setPeerSize(peerSize)
             .setSyncMode(syncMode)
             .setConfirmationThreshold(confirmationsThreshold)
             .setStorage(storage)
-            .setInitialSyncApi(initialSyncApi)
+            .setApiTransactionProvider(apiTransactionProvider)
+            .setApiSyncStateManager(apiSyncStateManager)
             .setBlockValidator(blockValidatorSet)
             .setHandleAddrMessage(false)
             .addPlugin(hodlerPlugin)
@@ -190,12 +222,15 @@ class BitcoinKit : AbstractKit {
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
                 bitcoinCore.addRestoreKeyConverter(hodlerPlugin)
             }
+
             Purpose.BIP49 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip49RestoreKeyConverter(base58AddressConverter))
             }
+
             Purpose.BIP84 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(bech32AddressConverter))
             }
+
             Purpose.BIP86 -> {
                 bitcoinCore.addRestoreKeyConverter(Bip86RestoreKeyConverter(bech32AddressConverter))
             }
@@ -227,7 +262,7 @@ class BitcoinKit : AbstractKit {
          * @param walletId The string wallet ID of the BitcoinKit.
          */
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.NewWallet())) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair(""))) {
                 for (purpose in Purpose.values()) try {
                     SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, purpose)))
                 } catch (ex: Exception) {

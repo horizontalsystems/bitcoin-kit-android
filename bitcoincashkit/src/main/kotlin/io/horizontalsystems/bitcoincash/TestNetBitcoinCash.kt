@@ -15,6 +15,7 @@ class TestNetBitcoinCash : Network() {
     override var addressSegwitHrp: String = "bchtest"
     override var addressScriptVersion: Int = 196
     override var coinType: Int = 1
+    override val blockchairChainId: String = ""
 
     override val maxBlockSize = 32 * 1024 * 1024
     override val dustRelayTxFee = 1000 // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/master/src/policy/policy.h#L78
