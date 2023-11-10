@@ -1,8 +1,23 @@
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+    id 'maven-publish'
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.release
+            }
+        }
+    }
+}
 
 android {
-    compileSdkVersion 34
+    namespace 'io.horizontalsystems.hodler'
+    compileSdk 34
 
     defaultConfig {
         minSdkVersion 23
@@ -24,12 +39,11 @@ android {
         test.java.srcDirs += 'src/test/kotlin'
     }
 
-    kotlinOptions { jvmTarget = '17' }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    namespace 'io.horizontalsystems.hodler'
+    kotlinOptions { jvmTarget = '17' }
 }
 
 dependencies {

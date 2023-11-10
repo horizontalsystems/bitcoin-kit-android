@@ -1,8 +1,12 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
 
 android {
+    namespace 'io.horizontalsystems.bitcoinkit.demo'
     compileSdk 34
+
     defaultConfig {
         applicationId "io.horizontalsystems.bitcoinkit.demo"
         minSdkVersion 23
@@ -17,17 +21,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    kotlinOptions { jvmTarget = '17' }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    kotlinOptions { jvmTarget = '17' }
     packagingOptions {
         resources {
             pickFirsts += ['META-INF/atomicfu.kotlin_module']
         }
     }
-    namespace 'io.horizontalsystems.bitcoinkit.demo'
 }
 
 dependencies {
