@@ -188,7 +188,8 @@ class BitcoinKit : AbstractKit {
 
         val coreBuilder = BitcoinCoreBuilder()
 
-        val hodlerPlugin = HodlerPlugin(coreBuilder.addressConverter, storage, BlockMedianTimeHelper(storage))
+        val blockMedianTimeHelper = BlockMedianTimeHelper(storage, approximate = syncMode is SyncMode.Blockchair)
+        val hodlerPlugin = HodlerPlugin(coreBuilder.addressConverter, storage, blockMedianTimeHelper)
 
         bitcoinCore = coreBuilder
             .setContext(context)
