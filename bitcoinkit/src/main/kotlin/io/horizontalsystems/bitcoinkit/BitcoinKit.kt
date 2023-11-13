@@ -141,11 +141,11 @@ class BitcoinKit : AbstractKit {
         val apiTransactionProvider = when (networkType) {
             NetworkType.MainNet -> {
                 val hsBlockHashFetcher = HsBlockHashFetcher("https://api.blocksdecoded.com/v1/blockchains/bitcoin")
-                val blockchainComProvider = BlockchainComApi("https://blockchain.info", hsBlockHashFetcher)
                 if (syncMode is SyncMode.Blockchair) {
                     val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
                     val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
                     val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
+                    val blockchainComProvider = BlockchainComApi("https://blockchain.info", blockHashFetcher)
                     val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
 
                     BiApiTransactionProvider(
@@ -154,7 +154,7 @@ class BitcoinKit : AbstractKit {
                         syncStateManager = apiSyncStateManager
                     )
                 } else {
-                    blockchainComProvider
+                    BlockchainComApi("https://blockchain.info", hsBlockHashFetcher)
                 }
             }
 
