@@ -1,32 +1,27 @@
 package io.horizontalsystems.bitcoincore.apisync.blockchair
 
-import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
-import io.horizontalsystems.bitcoincore.managers.ApiManager
-import io.horizontalsystems.bitcoincore.managers.ApiManagerException
 import io.horizontalsystems.bitcoincore.apisync.model.BlockHeaderItem
 import io.horizontalsystems.bitcoincore.apisync.model.TransactionItem
+import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
+import io.horizontalsystems.bitcoincore.managers.ApiManager
+import io.horizontalsystems.bitcoincore.managers.ApiManagerException
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
-
-
-data class Transaction(
-    val hash: String,
-    val blockId: Int?,
-    val time: Long,
-    val balanceChange: Long,
-    val address: String
-)
 
 class BlockchairApi(
     private val secretKey: String,
     private val chainId: String,
 ) {
     private val apiManager = ApiManager("https://api.blockchair.com/")
+    private val limit = 10000
+    private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
-    private val limit = 1000 //TODO
+    init {
+        dateFormat.timeZone = TimeZone.getTimeZone("GMT")
+    }
 
     fun transactions(addresses: List<String>, stopHeight: Int?): List<TransactionItem> {
         val transactionItemsMap = mutableMapOf<String, TransactionItem>()
@@ -54,7 +49,7 @@ class BlockchairApi(
                 }
             }
         }
-        return listOf()
+        return transactionItemsMap.values.toList()
     }
 
     fun blockHashes(heights: List<Int>): Map<Int, String> {
@@ -76,7 +71,8 @@ class BlockchairApi(
 
         val height = data["best_block_height"].asInt()
         val hash = data["best_block_hash"].asString()
-        val timestamp = dateStringToTimestamp(data["best_block_time"].asString())
+        val date = data["best_block_time"].asString()
+        val timestamp = dateStringToTimestamp(date)
 
         return BlockHeaderItem(hash.hexToByteArray(), height, timestamp!!)
     }
@@ -104,7 +100,6 @@ class BlockchairApi(
                 Transaction(
                     hash = txObject["hash"].asString(),
                     blockId = txObject["block_id"]?.asInt(),
-                    time = dateStringToTimestamp(txObject.getString("time", "")) ?: 0,
                     balanceChange = txObject["balance_change"].asLong(),
                     address = txObject["address"].asString()
                 )
@@ -130,10 +125,8 @@ class BlockchairApi(
     }
 
     private fun dateStringToTimestamp(date: String): Long? {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
-        dateFormat.timeZone = TimeZone.getTimeZone("GMT")
         return try {
-            dateFormat.parse(date)?.time
+            dateFormat.parse(date)?.time?.let {  it / 1000 }
         } catch (e: ParseException) {
             null
         }
@@ -158,5 +151,12 @@ class BlockchairApi(
             return emptyMap()
         }
     }
+
+    private data class Transaction(
+        val hash: String,
+        val blockId: Int?,
+        val balanceChange: Long,
+        val address: String
+    )
 
 }

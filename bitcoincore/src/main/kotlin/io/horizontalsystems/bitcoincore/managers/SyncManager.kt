@@ -2,8 +2,12 @@ package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
-import io.horizontalsystems.bitcoincore.apisync.legacy.ApiSyncer
-import io.horizontalsystems.bitcoincore.core.*
+import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
+import io.horizontalsystems.bitcoincore.core.IApiSyncer
+import io.horizontalsystems.bitcoincore.core.IApiSyncerListener
+import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
+import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
+import io.horizontalsystems.bitcoincore.core.IKitStateListener
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import kotlin.math.max
 
@@ -11,7 +15,7 @@ class SyncManager(
     private val connectionManager: ConnectionManager,
     private val apiSyncer: IApiSyncer,
     private val peerGroup: PeerGroup,
-    private val apiSyncStateManager: ApiSyncStateManager,
+    private val syncMode: SyncMode,
     bestBlockHeight: Int
 ) : IApiSyncerListener, IConnectionManagerListener, IBlockSyncListener {
 
@@ -21,7 +25,7 @@ class SyncManager(
         private set(value) {
             if (value != field) {
                 field = value
-                
+
                 listener?.onKitStateUpdate(field)
             }
         }
@@ -36,10 +40,10 @@ class SyncManager(
     private var foundTransactionsCount = 0
 
     private fun startSync() {
-        if (apiSyncStateManager.restored) {
-            startPeerGroup()
-        } else {
+        if (apiSyncer.willSync) {
             startInitialSync()
+        } else {
+            startPeerGroup()
         }
     }
 
@@ -54,7 +58,16 @@ class SyncManager(
     }
 
     fun start() {
-        if (syncState !is KitState.NotSynced) return
+        if (syncMode is SyncMode.Blockchair) {
+            when (syncState) {
+                is KitState.ApiSyncing,
+                is KitState.Syncing -> return
+
+                else -> Unit
+            }
+        } else {
+            if (syncState !is KitState.NotSynced) return
+        }
 
         if (connectionManager.isConnected) {
             startSync()
@@ -68,9 +81,11 @@ class SyncManager(
             is KitState.ApiSyncing -> {
                 apiSyncer.terminate()
             }
+
             is KitState.Syncing, is KitState.Synced -> {
                 peerGroup.stop()
             }
+
             else -> Unit
         }
         syncState = KitState.NotSynced(BitcoinCore.StateError.NotStarted())
@@ -94,7 +109,17 @@ class SyncManager(
     //
 
     override fun onSyncSuccess() {
-        startPeerGroup()
+        if (peerGroup.running) {
+            if (foundTransactionsCount > 0) {
+                foundTransactionsCount = 0
+                syncState = KitState.Syncing(0.0)
+                peerGroup.refresh()
+            } else {
+                syncState = KitState.Synced
+            }
+        } else {
+            startPeerGroup()
+        }
     }
 
     override fun onSyncFailed(error: Throwable) {

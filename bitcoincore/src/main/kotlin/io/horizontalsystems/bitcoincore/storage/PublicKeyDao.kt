@@ -16,24 +16,27 @@ interface PublicKeyDao {
     fun getAll(): List<PublicKey>
 
     @Query("""
-        SELECT k.*, COUNT(o.publicKeyPath) c FROM PublicKey AS k 
+        SELECT k.*, COUNT(o.publicKeyPath) c1, COUNT(bhp.publicKeyPath) c2  FROM PublicKey AS k 
         LEFT JOIN TransactionOutput o ON o.publicKeyPath = k.path 
+        LEFT JOIN BlockHashPublicKey bhp on bhp.publicKeyPath = k.path
         GROUP BY k.path 
-        HAVING c > 0
+        HAVING c1 > 0 OR c2 > 0
         """)
     fun getAllUsed(): List<PublicKey>
 
     @Query("""
-        SELECT k.*, COUNT(o.publicKeyPath) c FROM PublicKey AS k 
+        SELECT k.*, COUNT(o.publicKeyPath) c1, COUNT(bhp.publicKeyPath) c2 FROM PublicKey AS k 
         LEFT JOIN TransactionOutput o ON o.publicKeyPath = k.path 
+        LEFT JOIN BlockHashPublicKey bhp on bhp.publicKeyPath = k.path
         GROUP BY k.path 
-        HAVING c = 0
+        HAVING c1 = 0 AND c2 = 0
         """)
     fun getAllUnused(): List<PublicKey>
 
     @Query("""
-        SELECT k.*, COUNT(o.publicKeyPath) usedCount FROM PublicKey AS k 
+        SELECT k.*, (COUNT(o.publicKeyPath) + COUNT(bhp.publicKeyPath)) usedCount FROM PublicKey AS k 
         LEFT JOIN TransactionOutput o ON o.publicKeyPath = k.path 
+        LEFT JOIN BlockHashPublicKey bhp on bhp.publicKeyPath = k.path
         GROUP BY k.path 
         """)
     fun getAllWithUsedState(): List<PublicKeyWithUsedState>
