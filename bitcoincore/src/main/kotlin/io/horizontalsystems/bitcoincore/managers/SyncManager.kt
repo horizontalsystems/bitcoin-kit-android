@@ -8,6 +8,7 @@ import io.horizontalsystems.bitcoincore.core.IApiSyncerListener
 import io.horizontalsystems.bitcoincore.core.IBlockSyncListener
 import io.horizontalsystems.bitcoincore.core.IConnectionManagerListener
 import io.horizontalsystems.bitcoincore.core.IKitStateListener
+import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import kotlin.math.max
 
@@ -15,6 +16,7 @@ class SyncManager(
     private val connectionManager: ConnectionManager,
     private val apiSyncer: IApiSyncer,
     private val peerGroup: PeerGroup,
+    private val storage: IStorage,
     private val syncMode: SyncMode,
     bestBlockHeight: Int
 ) : IApiSyncerListener, IConnectionManagerListener, IBlockSyncListener {
@@ -38,6 +40,7 @@ class SyncManager(
     private var initialBestBlockHeight = bestBlockHeight
     private var currentBestBlockHeight = bestBlockHeight
     private var foundTransactionsCount = 0
+    private var forceAddedBlocksTotal: Int = 0
 
     private fun startSync() {
         if (apiSyncer.willSync) {
@@ -109,6 +112,8 @@ class SyncManager(
     //
 
     override fun onSyncSuccess() {
+        forceAddedBlocksTotal = storage.getApiBlockHashesCount()
+
         if (peerGroup.running) {
             if (foundTransactionsCount > 0) {
                 foundTransactionsCount = 0
@@ -152,6 +157,25 @@ class SyncManager(
             KitState.Synced
         } else {
             KitState.Syncing(progress)
+        }
+    }
+
+    override fun onBlockForceAdded() {
+        if (syncMode !is SyncMode.Blockchair) {
+            syncState = KitState.Syncing(0.0)
+            return
+        }
+
+        val forceAddedBlocks = forceAddedBlocksTotal - storage.getApiBlockHashesCount()
+        syncState = when {
+            forceAddedBlocks >= forceAddedBlocksTotal -> {
+                apiSyncer.syncLastBlock()
+                KitState.Synced
+            }
+
+            else -> {
+                KitState.Syncing(forceAddedBlocks / forceAddedBlocksTotal.toDouble())
+            }
         }
     }
 

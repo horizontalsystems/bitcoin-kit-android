@@ -7,7 +7,6 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.apisync.BCoinApi
-import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
 import io.horizontalsystems.bitcoincore.apisync.BlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.BlockchainComApi
 import io.horizontalsystems.bitcoincore.apisync.HsBlockHashFetcher
@@ -145,14 +144,14 @@ class BitcoinKit : AbstractKit {
                     val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
                     val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
                     val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
-                    val blockchainComProvider = BlockchainComApi("https://blockchain.info", blockHashFetcher)
+//                    val blockchainComProvider = BlockchainComApi("https://blockchain.info", blockHashFetcher)
                     val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
-
-                    BiApiTransactionProvider(
-                        restoreProvider = blockchainComProvider,
-                        syncProvider = blockchairProvider,
-                        syncStateManager = apiSyncStateManager
-                    )
+//                    BiApiTransactionProvider(
+//                        restoreProvider = blockchainComProvider,
+//                        syncProvider = blockchairProvider,
+//                        syncStateManager = apiSyncStateManager
+//                    )
+                    blockchairProvider
                 } else {
                     BlockchainComApi("https://blockchain.info", hsBlockHashFetcher)
                 }

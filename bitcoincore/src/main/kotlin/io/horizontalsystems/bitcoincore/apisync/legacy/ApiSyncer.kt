@@ -17,7 +17,7 @@ class ApiSyncer(
     private val publicKeyManager: IPublicKeyManager,
     private val multiAccountPublicKeyFetcher: IMultiAccountPublicKeyFetcher?,
     private val apiSyncStateManager: ApiSyncStateManager
-): IApiSyncer {
+) : IApiSyncer {
 
     override val willSync: Boolean
         get() = !apiSyncStateManager.restored
@@ -46,6 +46,8 @@ class ApiSyncer(
 
         disposables.add(disposable)
     }
+
+    override fun syncLastBlock() {}
 
     private fun handle(keys: List<PublicKey>, blockHashes: List<BlockHash>) {
         publicKeyManager.addKeys(keys)

@@ -62,8 +62,8 @@ class BlockSyncer(
         prepareForDownload()
     }
 
-    fun getBlockHashes(): List<BlockHash> {
-        return storage.getBlockHashesSortedBySequenceAndHeight(limit = 500)
+    fun getBlockHashes(limit: Int): List<BlockHash> {
+        return storage.getBlockHashesSortedBySequenceAndHeight(limit)
     }
 
     fun getBlockLocatorHashes(peerLastBlockHeight: Int): List<ByteArray> {
@@ -119,7 +119,11 @@ class BlockSyncer(
             storage.deleteBlockHash(block.headerHash)
         }
 
-        listener?.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
+        if (merkleBlock.height != null) {
+            listener?.onBlockForceAdded()
+        } else {
+            listener?.onCurrentBestBlockHeightUpdate(block.height, maxBlockHeight)
+        }
     }
 
     fun shouldRequest(blockHash: ByteArray): Boolean {

@@ -72,6 +72,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.blockHash.getLastBlockHash()
     }
 
+    override fun getApiBlockHashesCount(): Int {
+        return store.blockHash.getApiBlockHashesCount()
+    }
+
     override fun getBlockchainBlockHashes(): List<BlockHash> {
         return store.blockHash.getBlockchainBlockHashes()
     }

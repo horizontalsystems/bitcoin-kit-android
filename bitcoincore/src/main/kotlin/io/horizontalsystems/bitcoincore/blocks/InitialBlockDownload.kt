@@ -153,7 +153,7 @@ class InitialBlockDownload(
                 return
             }
 
-            val blockHashes = blockSyncer.getBlockHashes()
+            val blockHashes = blockSyncer.getBlockHashes(limit = 500)
             if (blockHashes.isEmpty()) {
                 peer.synced = peer.blockHashesSynced
             } else {

@@ -36,7 +36,17 @@ class BlockchairApiSyncer(
     override val willSync: Boolean = true
 
     override fun sync() {
-        syncSingle()
+        scanSingle()
+            .subscribeOn(Schedulers.io())
+            .subscribe({}, {
+                handleError(it)
+            }).let {
+                disposables.add(it)
+            }
+    }
+
+    override fun syncLastBlock() {
+        syncLastBlockSingle()
             .subscribeOn(Schedulers.io())
             .subscribe({}, {
                 handleError(it)
@@ -49,22 +59,12 @@ class BlockchairApiSyncer(
         disposables.clear()
     }
 
-    private fun syncSingle(): Single<Unit> = Single.create {
-        scan()
-        syncLastBlock()
-    }
-
-    private fun handleSuccess() {
-        apiSyncStateManager.restored = true
-        listener?.onSyncSuccess()
-    }
-
     private fun handleError(error: Throwable) {
         logger.severe("Error: ${error.message}")
         listener?.onSyncFailed(error)
     }
 
-    private fun syncLastBlock() {
+    private fun syncLastBlockSingle(): Single<Unit> = Single.create {
         val blockHeaderItem = lastBlockProvider.lastBlockHeader()
         val header = BlockHeader(
             version = 0,
@@ -79,11 +79,13 @@ class BlockchairApiSyncer(
         blockchain.insertLastBlock(header, blockHeaderItem.height)
     }
 
-    private fun scan() {
+    private fun scanSingle(): Single<Unit> = Single.create {
         val allKeys = storage.getPublicKeys()
         val stopHeight = storage.downloadedTransactionsBestBlockHeight()
         fetchRecursive(allKeys, allKeys, stopHeight)
-        handleSuccess()
+
+        apiSyncStateManager.restored = true
+        listener?.onSyncSuccess()
     }
 
     private fun fetchRecursive(
