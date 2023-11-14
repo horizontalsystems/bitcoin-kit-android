@@ -126,14 +126,15 @@ class BitcoinCashKit : AbstractKit {
                     val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
                     val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
                     val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
-                    val blockchainComProvider = BlockchainComApi("https://api.haskoin.com/bch/blockchain", blockHashFetcher)
+//                    val blockchainComProvider = BlockchainComApi("https://api.haskoin.com/bch/blockchain", blockHashFetcher)
                     val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
 
-                    BiApiTransactionProvider(
-                        restoreProvider = blockchainComProvider,
-                        syncProvider = blockchairProvider,
-                        syncStateManager = apiSyncStateManager
-                    )
+//                    BiApiTransactionProvider(
+//                        restoreProvider = blockchainComProvider,
+//                        syncProvider = blockchairProvider,
+//                        syncStateManager = apiSyncStateManager
+//                    )
+                    blockchairProvider
                 } else {
                     BlockchainComApi("https://api.haskoin.com/bch/blockchain", hsBlockHashFetcher)
                 }

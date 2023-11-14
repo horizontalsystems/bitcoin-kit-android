@@ -50,6 +50,7 @@ interface IStorage {
     fun getBlockHashHeaderHashes(except: List<ByteArray>): List<ByteArray>
     fun getLastBlockHash(): BlockHash?
 
+    fun getApiBlockHashesCount(): Int
     fun getBlockchainBlockHashes(): List<BlockHash>
     fun getLastBlockchainBlockHash(): BlockHash?
     fun deleteBlockchainBlockHashes()
@@ -221,6 +222,7 @@ interface IApiSyncer {
     val willSync: Boolean
 
     fun sync()
+    fun syncLastBlock()
     fun terminate()
 }
 
@@ -233,6 +235,7 @@ interface IApiSyncerListener {
 interface IBlockSyncListener {
     fun onBlockSyncFinished()
     fun onCurrentBestBlockHeightUpdate(height: Int, maxBlockHeight: Int)
+    fun onBlockForceAdded()
 }
 
 interface IPrivateWallet {
