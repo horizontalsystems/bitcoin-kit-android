@@ -124,19 +124,19 @@ class BlockchairApiSyncer(
                     blockHashPublicKeys.add(BlockHashPublicKey(hash, publicKeyFromScript.path))
                 }
             }
+        }
 
-            storage.addBlockHashes(blockHashes)
-            storage.addBockHashPublicKeys(blockHashPublicKeys)
-            listener?.onTransactionsFound(transactionItems.size)
+        storage.addBlockHashes(blockHashes)
+        storage.addBockHashPublicKeys(blockHashPublicKeys)
+        listener?.onTransactionsFound(transactionItems.size)
 
-            publicKeyManager.fillGap()
+        publicKeyManager.fillGap()
 
-            val _allKeys = storage.getPublicKeys()
-            val newKeys = _allKeys.minus(allKeys.toSet())
+        val _allKeys = storage.getPublicKeys()
+        val newKeys = _allKeys.minus(allKeys.toSet())
 
-            if (newKeys.isNotEmpty()) {
-                fetchRecursive(newKeys, _allKeys, stopHeight)
-            }
+        if (newKeys.isNotEmpty()) {
+            fetchRecursive(newKeys, _allKeys, stopHeight)
         }
     }
 }

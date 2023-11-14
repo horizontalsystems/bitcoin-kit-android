@@ -85,7 +85,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
     }
 
     override fun addBockHashPublicKeys(blockHashPublicKeys: List<BlockHashPublicKey>) {
-        store.blockHash
+        store.blockHashPublicKey.insertAll(blockHashPublicKeys)
     }
 
     override fun getLastBlockchainBlockHash(): BlockHash? {
