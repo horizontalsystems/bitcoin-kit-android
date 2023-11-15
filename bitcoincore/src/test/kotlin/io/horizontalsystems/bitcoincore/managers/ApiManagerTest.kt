@@ -36,7 +36,7 @@ class ApiManagerTest {
 
         whenever(url.openConnection()).thenReturn(urlConnection)
 
-        apiManager = ApiManager("https://ipfs.horizontalsystems.xyz")
+        apiManager = ApiManager("https://ipfs.blocksdecoded.com")
     }
 
     @Test

@@ -128,7 +128,7 @@ class BitcoinKit : AbstractKit {
                 MainNet()
             }
             NetworkType.TestNet -> {
-                initialSyncApi = BCoinApi("https://btc-testnet.horizontalsystems.xyz/api")
+                initialSyncApi = BCoinApi("https://btc-testnet.blocksdecoded.com/api")
                 TestNet()
             }
             NetworkType.RegTest -> {
