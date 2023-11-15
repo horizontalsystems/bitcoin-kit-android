@@ -14,6 +14,7 @@ class BlockMedianTimeHelper(
         get() =
             storage.lastBlock()?.let { lastBlock ->
                 if (approximate) {
+                    // The median time is 6 blocks earlier which is approximately equal to 1 hour.
                     lastBlock.timestamp - 3600
                 } else {
                     medianTimePast(lastBlock)

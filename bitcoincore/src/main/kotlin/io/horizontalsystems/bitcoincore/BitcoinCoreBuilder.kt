@@ -1,6 +1,10 @@
 package io.horizontalsystems.bitcoincore
 
 import android.content.Context
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApiSyncer
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairLastBlockProvider
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
 import io.horizontalsystems.bitcoincore.apisync.legacy.ApiSyncer
 import io.horizontalsystems.bitcoincore.apisync.legacy.BlockHashDiscoveryBatch
 import io.horizontalsystems.bitcoincore.apisync.legacy.BlockHashScanHelper
@@ -10,6 +14,7 @@ import io.horizontalsystems.bitcoincore.apisync.legacy.IPublicKeyFetcher
 import io.horizontalsystems.bitcoincore.apisync.legacy.MultiAccountPublicKeyFetcher
 import io.horizontalsystems.bitcoincore.apisync.legacy.PublicKeyFetcher
 import io.horizontalsystems.bitcoincore.apisync.legacy.WatchPublicKeyFetcher
+import io.horizontalsystems.bitcoincore.blocks.BlockDownload
 import io.horizontalsystems.bitcoincore.blocks.BlockSyncer
 import io.horizontalsystems.bitcoincore.blocks.Blockchain
 import io.horizontalsystems.bitcoincore.blocks.BloomFilterLoader
@@ -20,8 +25,10 @@ import io.horizontalsystems.bitcoincore.core.AccountWallet
 import io.horizontalsystems.bitcoincore.core.BaseTransactionInfoConverter
 import io.horizontalsystems.bitcoincore.core.DataProvider
 import io.horizontalsystems.bitcoincore.core.DoubleSha256Hasher
+import io.horizontalsystems.bitcoincore.core.IApiSyncer
 import io.horizontalsystems.bitcoincore.core.IApiTransactionProvider
 import io.horizontalsystems.bitcoincore.core.IHasher
+import io.horizontalsystems.bitcoincore.core.IInitialDownload
 import io.horizontalsystems.bitcoincore.core.IPlugin
 import io.horizontalsystems.bitcoincore.core.IPrivateWallet
 import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
@@ -47,6 +54,7 @@ import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorChain
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
+import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.AddrMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.FilterLoadMessageSerializer
@@ -106,3 +114,442 @@ import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.HDWalletAccount
 import io.horizontalsystems.hdwalletkit.HDWalletAccountWatch
 
+class BitcoinCoreBuilder {
+
+    val addressConverter = AddressConverterChain()
+
+    // required parameters
+    private var context: Context? = null
+    private var extendedKey: HDExtendedKey? = null
+    private var purpose: HDWallet.Purpose? = null
+    private var network: Network? = null
+    private var paymentAddressParser: PaymentAddressParser? = null
+    private var storage: IStorage? = null
+    private var apiTransactionProvider: IApiTransactionProvider? = null
+    private var blockHeaderHasher: IHasher? = null
+    private var transactionInfoConverter: ITransactionInfoConverter? = null
+    private var blockValidator: IBlockValidator? = null
+    private var checkpoint: Checkpoint? = null
+    private var apiSyncStateManager: ApiSyncStateManager? = null
+
+    // parameters with default values
+    private var confirmationsThreshold = 6
+    private var syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api()
+    private var peerSize = 10
+    private val plugins = mutableListOf<IPlugin>()
+    private var handleAddrMessage = true
+
+    fun setContext(context: Context): BitcoinCoreBuilder {
+        this.context = context
+        return this
+    }
+
+    fun setExtendedKey(extendedKey: HDExtendedKey): BitcoinCoreBuilder {
+        this.extendedKey = extendedKey
+        return this
+    }
+
+    fun setPurpose(purpose: HDWallet.Purpose): BitcoinCoreBuilder {
+        this.purpose = purpose
+        return this
+    }
+
+    fun setNetwork(network: Network): BitcoinCoreBuilder {
+        this.network = network
+        return this
+    }
+
+    fun setPaymentAddressParser(paymentAddressParser: PaymentAddressParser): BitcoinCoreBuilder {
+        this.paymentAddressParser = paymentAddressParser
+        return this
+    }
+
+    fun setConfirmationThreshold(confirmationsThreshold: Int): BitcoinCoreBuilder {
+        this.confirmationsThreshold = confirmationsThreshold
+        return this
+    }
+
+    fun setSyncMode(syncMode: BitcoinCore.SyncMode): BitcoinCoreBuilder {
+        this.syncMode = syncMode
+        return this
+    }
+
+    fun setPeerSize(peerSize: Int): BitcoinCoreBuilder {
+        if (peerSize < TransactionSender.minConnectedPeerSize) {
+            throw Error("Peer size cannot be less than ${TransactionSender.minConnectedPeerSize}")
+        }
+
+        this.peerSize = peerSize
+        return this
+    }
+
+    fun setStorage(storage: IStorage): BitcoinCoreBuilder {
+        this.storage = storage
+        return this
+    }
+
+    fun setBlockHeaderHasher(blockHeaderHasher: IHasher): BitcoinCoreBuilder {
+        this.blockHeaderHasher = blockHeaderHasher
+        return this
+    }
+
+    fun setApiTransactionProvider(apiTransactionProvider: IApiTransactionProvider?): BitcoinCoreBuilder {
+        this.apiTransactionProvider = apiTransactionProvider
+        return this
+    }
+
+    fun setTransactionInfoConverter(transactionInfoConverter: ITransactionInfoConverter): BitcoinCoreBuilder {
+        this.transactionInfoConverter = transactionInfoConverter
+        return this
+    }
+
+    fun setBlockValidator(blockValidator: IBlockValidator): BitcoinCoreBuilder {
+        this.blockValidator = blockValidator
+        return this
+    }
+
+    fun setHandleAddrMessage(handle: Boolean): BitcoinCoreBuilder {
+        handleAddrMessage = handle
+        return this
+    }
+
+    fun addPlugin(plugin: IPlugin): BitcoinCoreBuilder {
+        plugins.add(plugin)
+        return this
+    }
+
+    fun setCheckpoint(checkpoint: Checkpoint): BitcoinCoreBuilder {
+        this.checkpoint = checkpoint
+        return this
+    }
+
+    fun setApiSyncStateManager(apiSyncStateManager: ApiSyncStateManager): BitcoinCoreBuilder {
+        this.apiSyncStateManager = apiSyncStateManager
+        return this
+    }
+
+    fun build(): BitcoinCore {
+        val context = checkNotNull(this.context)
+        val extendedKey = checkNotNull(this.extendedKey)
+        val purpose = checkNotNull(this.purpose)
+        val network = checkNotNull(this.network)
+        val paymentAddressParser = checkNotNull(this.paymentAddressParser)
+        val storage = checkNotNull(this.storage)
+        val apiTransactionProvider = checkNotNull(this.apiTransactionProvider)
+        val checkpoint = checkNotNull(this.checkpoint)
+        val apiSyncStateManager = checkNotNull(this.apiSyncStateManager)
+        val blockHeaderHasher = this.blockHeaderHasher ?: DoubleSha256Hasher()
+        val transactionInfoConverter = this.transactionInfoConverter ?: TransactionInfoConverter()
+
+        val restoreKeyConverterChain = RestoreKeyConverterChain()
+
+        val pluginManager = PluginManager()
+        plugins.forEach { pluginManager.addPlugin(it) }
+
+        transactionInfoConverter.baseConverter = BaseTransactionInfoConverter(pluginManager)
+
+        val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold, pluginManager)
+
+        val dataProvider = DataProvider(storage, unspentOutputProvider, transactionInfoConverter)
+
+        val connectionManager = ConnectionManager(context)
+
+        var privateWallet: IPrivateWallet? = null
+        val publicKeyFetcher: IPublicKeyFetcher
+        var multiAccountPublicKeyFetcher: IMultiAccountPublicKeyFetcher? = null
+        val publicKeyManager: IPublicKeyManager
+        val bloomFilterProvider: IBloomFilterProvider
+        val gapLimit = 20
+
+        if (!extendedKey.isPublic) {
+            when (extendedKey.derivedType) {
+                HDExtendedKey.DerivedType.Master -> {
+                    val wallet = Wallet(HDWallet(extendedKey.key, network.coinType, purpose), gapLimit)
+                    privateWallet = wallet
+                    val fetcher = MultiAccountPublicKeyFetcher(wallet)
+                    publicKeyFetcher = fetcher
+                    multiAccountPublicKeyFetcher = fetcher
+                    PublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
+                        publicKeyManager = this
+                        bloomFilterProvider = this
+                    }
+                }
+
+                HDExtendedKey.DerivedType.Account -> {
+                    val wallet = AccountWallet(HDWalletAccount(extendedKey.key), gapLimit)
+                    privateWallet = wallet
+                    val fetcher = PublicKeyFetcher(wallet)
+                    publicKeyFetcher = fetcher
+                    AccountPublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
+                        publicKeyManager = this
+                        bloomFilterProvider = this
+                    }
+
+                }
+
+                HDExtendedKey.DerivedType.Bip32 -> {
+                    throw IllegalStateException("Custom Bip32 Extended Keys are not supported")
+                }
+            }
+        } else {
+            when (extendedKey.derivedType) {
+                HDExtendedKey.DerivedType.Account -> {
+                    val wallet = WatchAccountWallet(HDWalletAccountWatch(extendedKey.key), gapLimit)
+                    val fetcher = WatchPublicKeyFetcher(wallet)
+                    publicKeyFetcher = fetcher
+                    AccountPublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
+                        publicKeyManager = this
+                        bloomFilterProvider = this
+                    }
+
+                }
+
+                HDExtendedKey.DerivedType.Bip32, HDExtendedKey.DerivedType.Master -> {
+                    throw IllegalStateException("Only Account Extended Public Keys are supported")
+                }
+            }
+        }
+
+        val pendingOutpointsProvider = PendingOutpointsProvider(storage)
+
+        val irregularOutputFinder = IrregularOutputFinder(storage)
+        val metadataExtractor = TransactionMetadataExtractor(
+            MyOutputsCache.create(storage),
+            TransactionOutputProvider(storage)
+        )
+        val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager, metadataExtractor)
+
+        val conflictsResolver = TransactionConflictsResolver(storage)
+        val pendingTransactionProcessor = PendingTransactionProcessor(
+            storage,
+            transactionExtractor,
+            publicKeyManager,
+            irregularOutputFinder,
+            dataProvider,
+            conflictsResolver
+        )
+        val invalidator = TransactionInvalidator(storage, transactionInfoConverter, dataProvider)
+        val blockTransactionProcessor = BlockTransactionProcessor(
+            storage,
+            transactionExtractor,
+            publicKeyManager,
+            irregularOutputFinder,
+            dataProvider,
+            conflictsResolver,
+            invalidator
+        )
+
+        val peerHostManager = PeerAddressManager(network, storage)
+        val bloomFilterManager = BloomFilterManager()
+
+        val peerManager = PeerManager()
+
+        val networkMessageParser = NetworkMessageParser(network.magic)
+        val networkMessageSerializer = NetworkMessageSerializer(network.magic)
+
+        val blockchain = Blockchain(storage, blockValidator, dataProvider)
+        val blockSyncer = BlockSyncer(storage, blockchain, blockTransactionProcessor, publicKeyManager, checkpoint)
+
+
+        val peerGroup = PeerGroup(
+            peerHostManager,
+            network,
+            peerManager,
+            peerSize,
+            networkMessageParser,
+            networkMessageSerializer,
+            connectionManager,
+            blockSyncer.localDownloadedBestBlockHeight,
+            handleAddrMessage
+        )
+        peerHostManager.listener = peerGroup
+
+        val blockHashScanner = BlockHashScanner(restoreKeyConverterChain, apiTransactionProvider, BlockHashScanHelper())
+
+        val apiSyncer: IApiSyncer
+        val initialDownload: IInitialDownload
+        val merkleBlockExtractor = MerkleBlockExtractor(network.maxBlockSize)
+
+        when (val syncMode = syncMode) {
+            is BitcoinCore.SyncMode.Blockchair -> {
+                val blockchairApi = if (apiTransactionProvider is BlockchairTransactionProvider) {
+                    apiTransactionProvider.blockchairApi
+                } else {
+                    BlockchairApi(syncMode.key, network.blockchairChainId)
+                }
+                val lastBlockProvider = BlockchairLastBlockProvider(blockchairApi)
+                apiSyncer = BlockchairApiSyncer(
+                    storage,
+                    restoreKeyConverterChain,
+                    apiTransactionProvider,
+                    lastBlockProvider,
+                    publicKeyManager,
+                    blockchain,
+                    apiSyncStateManager
+                )
+                initialDownload = BlockDownload(blockSyncer, peerManager, merkleBlockExtractor)
+            }
+
+            else -> {
+                val blockDiscovery = BlockHashDiscoveryBatch(blockHashScanner, publicKeyFetcher, checkpoint.block.height, gapLimit)
+                apiSyncer = ApiSyncer(
+                    storage,
+                    blockDiscovery,
+                    publicKeyManager,
+                    multiAccountPublicKeyFetcher,
+                    apiSyncStateManager
+                )
+                initialDownload = InitialBlockDownload(blockSyncer, peerManager, merkleBlockExtractor)
+            }
+        }
+
+        val syncManager = SyncManager(connectionManager, apiSyncer, peerGroup, storage, syncMode, blockSyncer.localDownloadedBestBlockHeight)
+        apiSyncer.listener = syncManager
+        connectionManager.listener = syncManager
+        blockSyncer.listener = syncManager
+        initialDownload.listener = syncManager
+        blockHashScanner.listener = syncManager
+
+        val unspentOutputSelector = UnspentOutputSelectorChain()
+        val pendingTransactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)
+        val transactionDataSorterFactory = TransactionDataSorterFactory()
+
+        var dustCalculator: DustCalculator? = null
+        var transactionSizeCalculator: TransactionSizeCalculator? = null
+        var transactionFeeCalculator: TransactionFeeCalculator? = null
+        var transactionSender: TransactionSender? = null
+        var transactionCreator: TransactionCreator? = null
+
+        if (privateWallet != null) {
+            val ecdsaInputSigner = EcdsaInputSigner(privateWallet, network)
+            val schnorrInputSigner = SchnorrInputSigner(privateWallet)
+            val transactionSizeCalculatorInstance = TransactionSizeCalculator()
+            val dustCalculatorInstance = DustCalculator(network.dustRelayTxFee, transactionSizeCalculatorInstance)
+            val recipientSetter = RecipientSetter(addressConverter, pluginManager)
+            val outputSetter = OutputSetter(transactionDataSorterFactory)
+            val inputSetter = InputSetter(
+                unspentOutputSelector,
+                publicKeyManager,
+                addressConverter,
+                purpose.scriptType,
+                transactionSizeCalculatorInstance,
+                pluginManager,
+                dustCalculatorInstance,
+                transactionDataSorterFactory
+            )
+            val lockTimeSetter = LockTimeSetter(storage)
+            val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
+            val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
+            transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, purpose.scriptType)
+            val transactionSendTimer = TransactionSendTimer(60)
+            val transactionSenderInstance = TransactionSender(
+                pendingTransactionSyncer,
+                peerManager,
+                initialDownload,
+                storage,
+                transactionSendTimer
+            )
+
+            dustCalculator = dustCalculatorInstance
+            transactionSizeCalculator = transactionSizeCalculatorInstance
+            transactionSender = transactionSenderInstance
+
+            transactionSendTimer.listener = transactionSender
+
+            transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, bloomFilterManager)
+        }
+
+        val bitcoinCore = BitcoinCore(
+            storage,
+            dataProvider,
+            publicKeyManager,
+            addressConverter,
+            restoreKeyConverterChain,
+            transactionCreator,
+            transactionFeeCalculator,
+            paymentAddressParser,
+            syncManager,
+            purpose,
+            peerManager,
+            dustCalculator,
+            pluginManager,
+            connectionManager
+        )
+
+        dataProvider.listener = bitcoinCore
+        syncManager.listener = bitcoinCore
+
+        val watchedTransactionManager = WatchedTransactionManager()
+        bloomFilterManager.addBloomFilterProvider(watchedTransactionManager)
+        bloomFilterManager.addBloomFilterProvider(bloomFilterProvider)
+        bloomFilterManager.addBloomFilterProvider(pendingOutpointsProvider)
+        bloomFilterManager.addBloomFilterProvider(irregularOutputFinder)
+
+        bitcoinCore.watchedTransactionManager = watchedTransactionManager
+        pendingTransactionProcessor.transactionListener = watchedTransactionManager
+        blockTransactionProcessor.transactionListener = watchedTransactionManager
+
+        bitcoinCore.peerGroup = peerGroup
+        bitcoinCore.transactionSyncer = pendingTransactionSyncer
+        bitcoinCore.networkMessageParser = networkMessageParser
+        bitcoinCore.networkMessageSerializer = networkMessageSerializer
+        bitcoinCore.unspentOutputSelector = unspentOutputSelector
+
+        peerGroup.peerTaskHandler = bitcoinCore.peerTaskHandlerChain
+        peerGroup.inventoryItemsHandler = bitcoinCore.inventoryItemsHandlerChain
+
+        bitcoinCore.prependAddressConverter(Base58AddressConverter(network.addressVersion, network.addressScriptVersion))
+
+        // this part can be moved to another place
+
+        bitcoinCore.addMessageParser(AddrMessageParser())
+            .addMessageParser(MerkleBlockMessageParser(BlockHeaderParser(blockHeaderHasher)))
+            .addMessageParser(InvMessageParser())
+            .addMessageParser(GetDataMessageParser())
+            .addMessageParser(PingMessageParser())
+            .addMessageParser(PongMessageParser())
+            .addMessageParser(TransactionMessageParser())
+            .addMessageParser(VerAckMessageParser())
+            .addMessageParser(VersionMessageParser())
+            .addMessageParser(RejectMessageParser())
+
+        bitcoinCore.addMessageSerializer(FilterLoadMessageSerializer())
+            .addMessageSerializer(GetBlocksMessageSerializer())
+            .addMessageSerializer(InvMessageSerializer())
+            .addMessageSerializer(GetDataMessageSerializer())
+            .addMessageSerializer(MempoolMessageSerializer())
+            .addMessageSerializer(PingMessageSerializer())
+            .addMessageSerializer(PongMessageSerializer())
+            .addMessageSerializer(TransactionMessageSerializer())
+            .addMessageSerializer(VerAckMessageSerializer())
+            .addMessageSerializer(VersionMessageSerializer())
+
+        val bloomFilterLoader = BloomFilterLoader(bloomFilterManager, peerManager)
+        bloomFilterManager.listener = bloomFilterLoader
+        bitcoinCore.addPeerGroupListener(bloomFilterLoader)
+
+        // todo: now this part cannot be moved to another place since bitcoinCore requires initialBlockDownload to be set. find solution to do so
+        bitcoinCore.initialDownload = initialDownload
+        bitcoinCore.addPeerTaskHandler(initialDownload)
+        bitcoinCore.addInventoryItemsHandler(initialDownload)
+        bitcoinCore.addPeerGroupListener(initialDownload)
+
+
+        val mempoolTransactions = MempoolTransactions(pendingTransactionSyncer, transactionSender)
+        bitcoinCore.addPeerTaskHandler(mempoolTransactions)
+        bitcoinCore.addInventoryItemsHandler(mempoolTransactions)
+        bitcoinCore.addPeerGroupListener(mempoolTransactions)
+
+        transactionSender?.let {
+            bitcoinCore.addPeerSyncListener(SendTransactionsOnPeersSynced(transactionSender))
+            bitcoinCore.addPeerTaskHandler(transactionSender)
+        }
+
+        transactionSizeCalculator?.let {
+            bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(transactionSizeCalculator, unspentOutputProvider))
+            bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(transactionSizeCalculator, unspentOutputProvider))
+        }
+
+        return bitcoinCore
+    }
+}

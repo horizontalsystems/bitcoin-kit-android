@@ -15,7 +15,7 @@ class BlockchairApi(
     private val secretKey: String,
     private val chainId: String,
 ) {
-    private val apiManager = ApiManager("https://api.blockchair.com/")
+    private val apiManager = ApiManager("https://api.blockchair.com")
     private val limit = 10000
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
