@@ -118,12 +118,9 @@ class BlockchairApiSyncer(
             }
 
             transactionItem.addressItems.forEach { addressItem ->
-                val publicKeyFromAddress = publicKeyMap[addressItem.address]
-                val publicKeyFromScript = publicKeyMap[addressItem.script]
-                if (publicKeyFromAddress != null) {
-                    blockHashPublicKeys.add(BlockHashPublicKey(hash, publicKeyFromAddress.path))
-                } else if (publicKeyFromScript != null) {
-                    blockHashPublicKeys.add(BlockHashPublicKey(hash, publicKeyFromScript.path))
+                val publicKey = publicKeyMap[addressItem.address] ?: publicKeyMap[addressItem.script]
+                if (publicKey != null) {
+                    blockHashPublicKeys.add(BlockHashPublicKey(hash, publicKey.path))
                 }
             }
         }
