@@ -27,7 +27,7 @@ class BlockDownload(
     override var syncPeer: Peer? = null
     private var selectNewPeer = false
     private val peersQueue = Executors.newSingleThreadExecutor()
-    private val logger = Logger.getLogger("IBD")
+    private val logger = Logger.getLogger("BlockDownload")
 
     private var minMerkleBlocks = 500.0
     private var minTransactions = 50_000.0
@@ -68,6 +68,16 @@ class BlockDownload(
     }
 
     override fun onStop() = Unit
+
+    override fun onRefresh() {
+        if (syncPeer == null) {
+            peerManager.connected().forEach { peer ->
+                peer.synced = false
+            }
+
+            assignNextSyncPeer()
+        }
+    }
 
     override fun onPeerCreate(peer: Peer) {
         peer.localBestBlockHeight = blockSyncer.localDownloadedBestBlockHeight
