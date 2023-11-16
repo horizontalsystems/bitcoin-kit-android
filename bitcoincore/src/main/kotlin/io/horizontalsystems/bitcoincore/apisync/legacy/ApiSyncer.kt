@@ -34,6 +34,7 @@ class ApiSyncer(
     override fun sync() {
         val disposable = blockHashDiscovery.discoverBlockHashes()
             .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
             .subscribe(
                 { (publicKeys, blockHashes) ->
                     val sortedUniqueBlockHashes = blockHashes.distinctBy { it.height }.sortedBy { it.height }
