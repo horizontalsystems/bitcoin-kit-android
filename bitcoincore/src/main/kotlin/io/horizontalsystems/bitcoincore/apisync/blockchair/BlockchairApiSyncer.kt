@@ -38,6 +38,7 @@ class BlockchairApiSyncer(
     override fun sync() {
         scanSingle()
             .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
             .subscribe({}, {
                 handleError(it)
             }).let {
@@ -48,6 +49,7 @@ class BlockchairApiSyncer(
     override fun syncLastBlock() {
         syncLastBlockSingle()
             .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.io())
             .subscribe({}, {
                 handleError(it)
             }).let {
