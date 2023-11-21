@@ -10,7 +10,7 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 class BlockHashScanner(
     private val restoreKeyConverter: IRestoreKeyConverter,
     private val transactionProvider: IApiTransactionProvider,
-    private val helper: BlockHashScanHelper
+    private val helper: IBlockHashScanHelper
 ) {
 
     var listener: IApiSyncerListener? = null

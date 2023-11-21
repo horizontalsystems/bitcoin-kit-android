@@ -13,6 +13,7 @@ import io.horizontalsystems.bitcoincore.apisync.legacy.IMultiAccountPublicKeyFet
 import io.horizontalsystems.bitcoincore.apisync.legacy.IPublicKeyFetcher
 import io.horizontalsystems.bitcoincore.apisync.legacy.MultiAccountPublicKeyFetcher
 import io.horizontalsystems.bitcoincore.apisync.legacy.PublicKeyFetcher
+import io.horizontalsystems.bitcoincore.apisync.legacy.WatchAddressBlockHashScanHelper
 import io.horizontalsystems.bitcoincore.apisync.legacy.WatchPublicKeyFetcher
 import io.horizontalsystems.bitcoincore.blocks.BlockDownload
 import io.horizontalsystems.bitcoincore.blocks.BlockSyncer
@@ -55,6 +56,7 @@ import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorChain
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorSingleNoChange
 import io.horizontalsystems.bitcoincore.models.Checkpoint
+import io.horizontalsystems.bitcoincore.models.WatchAddressPublicKey
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.AddrMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.FilterLoadMessageSerializer
@@ -106,6 +108,7 @@ import io.horizontalsystems.bitcoincore.transactions.extractors.MyOutputsCache
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionMetadataExtractor
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionOutputProvider
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
@@ -121,6 +124,7 @@ class BitcoinCoreBuilder {
     // required parameters
     private var context: Context? = null
     private var extendedKey: HDExtendedKey? = null
+    private var watchAddressPublicKey: WatchAddressPublicKey? = null
     private var purpose: HDWallet.Purpose? = null
     private var network: Network? = null
     private var paymentAddressParser: PaymentAddressParser? = null
@@ -144,8 +148,13 @@ class BitcoinCoreBuilder {
         return this
     }
 
-    fun setExtendedKey(extendedKey: HDExtendedKey): BitcoinCoreBuilder {
+    fun setExtendedKey(extendedKey: HDExtendedKey?): BitcoinCoreBuilder {
         this.extendedKey = extendedKey
+        return this
+    }
+
+    fun setWatchAddressPublicKey(publicKey: WatchAddressPublicKey?): BitcoinCoreBuilder {
+        this.watchAddressPublicKey = publicKey
         return this
     }
 
@@ -230,7 +239,8 @@ class BitcoinCoreBuilder {
 
     fun build(): BitcoinCore {
         val context = checkNotNull(this.context)
-        val extendedKey = checkNotNull(this.extendedKey)
+        val extendedKey = this.extendedKey
+        val watchAddressPublicKey = this.watchAddressPublicKey
         val purpose = checkNotNull(this.purpose)
         val network = checkNotNull(this.network)
         val paymentAddressParser = checkNotNull(this.paymentAddressParser)
@@ -261,58 +271,71 @@ class BitcoinCoreBuilder {
         val bloomFilterProvider: IBloomFilterProvider
         val gapLimit = 20
 
-        if (!extendedKey.isPublic) {
-            when (extendedKey.derivedType) {
-                HDExtendedKey.DerivedType.Master -> {
-                    val wallet = Wallet(HDWallet(extendedKey.key, network.coinType, purpose), gapLimit)
-                    privateWallet = wallet
-                    val fetcher = MultiAccountPublicKeyFetcher(wallet)
-                    publicKeyFetcher = fetcher
-                    multiAccountPublicKeyFetcher = fetcher
-                    PublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
-                        publicKeyManager = this
-                        bloomFilterProvider = this
+        if (watchAddressPublicKey != null) {
+            storage.savePublicKeys(listOf(watchAddressPublicKey))
+
+            WatchAddressPublicKeyManager(watchAddressPublicKey, restoreKeyConverterChain).let {
+                publicKeyFetcher = it
+                publicKeyManager = it
+                bloomFilterProvider = it
+            }
+        } else if (extendedKey != null) {
+            if (!extendedKey.isPublic) {
+                when (extendedKey.derivedType) {
+                    HDExtendedKey.DerivedType.Master -> {
+                        val wallet = Wallet(HDWallet(extendedKey.key, network.coinType, purpose), gapLimit)
+                        privateWallet = wallet
+                        val fetcher = MultiAccountPublicKeyFetcher(wallet)
+                        publicKeyFetcher = fetcher
+                        multiAccountPublicKeyFetcher = fetcher
+                        PublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
+                            publicKeyManager = this
+                            bloomFilterProvider = this
+                        }
+                    }
+
+                    HDExtendedKey.DerivedType.Account -> {
+                        val wallet = AccountWallet(HDWalletAccount(extendedKey.key), gapLimit)
+                        privateWallet = wallet
+                        val fetcher = PublicKeyFetcher(wallet)
+                        publicKeyFetcher = fetcher
+                        AccountPublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
+                            publicKeyManager = this
+                            bloomFilterProvider = this
+                        }
+
+                    }
+
+                    HDExtendedKey.DerivedType.Bip32 -> {
+                        throw IllegalStateException("Custom Bip32 Extended Keys are not supported")
                     }
                 }
+            } else {
+                when (extendedKey.derivedType) {
+                    HDExtendedKey.DerivedType.Account -> {
+                        val wallet = WatchAccountWallet(HDWalletAccountWatch(extendedKey.key), gapLimit)
+                        val fetcher = WatchPublicKeyFetcher(wallet)
+                        publicKeyFetcher = fetcher
+                        AccountPublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
+                            publicKeyManager = this
+                            bloomFilterProvider = this
+                        }
 
-                HDExtendedKey.DerivedType.Account -> {
-                    val wallet = AccountWallet(HDWalletAccount(extendedKey.key), gapLimit)
-                    privateWallet = wallet
-                    val fetcher = PublicKeyFetcher(wallet)
-                    publicKeyFetcher = fetcher
-                    AccountPublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
-                        publicKeyManager = this
-                        bloomFilterProvider = this
                     }
 
-                }
-
-                HDExtendedKey.DerivedType.Bip32 -> {
-                    throw IllegalStateException("Custom Bip32 Extended Keys are not supported")
+                    HDExtendedKey.DerivedType.Bip32, HDExtendedKey.DerivedType.Master -> {
+                        throw IllegalStateException("Only Account Extended Public Keys are supported")
+                    }
                 }
             }
         } else {
-            when (extendedKey.derivedType) {
-                HDExtendedKey.DerivedType.Account -> {
-                    val wallet = WatchAccountWallet(HDWalletAccountWatch(extendedKey.key), gapLimit)
-                    val fetcher = WatchPublicKeyFetcher(wallet)
-                    publicKeyFetcher = fetcher
-                    AccountPublicKeyManager.create(storage, wallet, restoreKeyConverterChain).apply {
-                        publicKeyManager = this
-                        bloomFilterProvider = this
-                    }
-
-                }
-
-                HDExtendedKey.DerivedType.Bip32, HDExtendedKey.DerivedType.Master -> {
-                    throw IllegalStateException("Only Account Extended Public Keys are supported")
-                }
-            }
+            throw IllegalStateException("Both extendedKey and watchAddressPublicKey are NULL!")
         }
 
         val pendingOutpointsProvider = PendingOutpointsProvider(storage)
 
-        val irregularOutputFinder = IrregularOutputFinder(storage)
+        val additionalScriptTypes = if (watchAddressPublicKey != null) listOf(ScriptType.P2PKH) else emptyList()
+        val irregularOutputFinder = IrregularOutputFinder(storage, additionalScriptTypes)
         val metadataExtractor = TransactionMetadataExtractor(
             MyOutputsCache.create(storage),
             TransactionOutputProvider(storage)
@@ -364,7 +387,8 @@ class BitcoinCoreBuilder {
         )
         peerHostManager.listener = peerGroup
 
-        val blockHashScanner = BlockHashScanner(restoreKeyConverterChain, apiTransactionProvider, BlockHashScanHelper())
+        val blockHashScanHelper = if (watchAddressPublicKey == null) BlockHashScanHelper() else WatchAddressBlockHashScanHelper()
+        val blockHashScanner = BlockHashScanner(restoreKeyConverterChain, apiTransactionProvider, blockHashScanHelper)
 
         val apiSyncer: IApiSyncer
         val initialDownload: IInitialDownload

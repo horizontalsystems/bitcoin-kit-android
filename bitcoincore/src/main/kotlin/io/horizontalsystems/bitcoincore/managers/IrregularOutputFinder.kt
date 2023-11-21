@@ -9,9 +9,12 @@ interface IIrregularOutputFinder {
     fun hasIrregularOutput(outputs: List<TransactionOutput>): Boolean
 }
 
-class IrregularOutputFinder(private val storage: IStorage) : IIrregularOutputFinder, IBloomFilterProvider {
+class IrregularOutputFinder(
+    private val storage: IStorage,
+    additionalScriptTypes: List<ScriptType>
+) : IIrregularOutputFinder, IBloomFilterProvider {
 
-    private val irregularScriptTypes = listOf(ScriptType.P2WPKHSH, ScriptType.P2WPKH, ScriptType.P2PK, ScriptType.P2TR)
+    private val irregularScriptTypes = listOf(ScriptType.P2WPKHSH, ScriptType.P2WPKH, ScriptType.P2PK, ScriptType.P2TR) + additionalScriptTypes
 
     // IIrregularOutputFinder
 

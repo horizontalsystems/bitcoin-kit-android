@@ -111,16 +111,13 @@ class KeyHashRestoreKeyConverter(
 }
 
 class BlockchairCashRestoreKeyConverter(
-    private val addressConverter: IAddressConverter,
-    prefix: String
+    private val addressConverter: IAddressConverter
 ) : IRestoreKeyConverter {
-
-    private val prefixCount = prefix.length
 
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {
         val legacyAddress = addressConverter.convert(publicKey, ScriptType.P2PKH).stringValue
 
-        return listOf(legacyAddress.takeLast(legacyAddress.length - prefixCount))
+        return listOf(legacyAddress.split(":").last())
     }
 
     override fun bloomFilterElements(publicKey: PublicKey): List<ByteArray> {
