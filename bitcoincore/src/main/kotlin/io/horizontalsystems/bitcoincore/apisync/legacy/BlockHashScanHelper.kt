@@ -2,9 +2,13 @@ package io.horizontalsystems.bitcoincore.apisync.legacy
 
 import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
 
-class BlockHashScanHelper {
+interface IBlockHashScanHelper {
+    fun lastUsedIndex(addresses: List<List<String>>, addressItems: List<AddressItem>): Int
+}
 
-    fun lastUsedIndex(addresses: List<List<String>>, addressItems: List<AddressItem>): Int {
+class BlockHashScanHelper : IBlockHashScanHelper {
+
+    override fun lastUsedIndex(addresses: List<List<String>>, addressItems: List<AddressItem>): Int {
         val searchAddressStrings = addressItems.map { it.address }
         val searchScriptStrings = addressItems.map { it.script }
 
@@ -18,5 +22,11 @@ class BlockHashScanHelper {
 
         return -1
     }
+
+}
+
+class WatchAddressBlockHashScanHelper : IBlockHashScanHelper {
+
+    override fun lastUsedIndex(addresses: List<List<String>>, addressItems: List<AddressItem>): Int = -1
 
 }

@@ -12,9 +12,6 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
-import io.horizontalsystems.bitcoincore.apisync.BlockHashFetcher
-import io.horizontalsystems.bitcoincore.apisync.BlockchainComApi
-import io.horizontalsystems.bitcoincore.apisync.HsBlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
@@ -23,13 +20,16 @@ import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorChain
 import io.horizontalsystems.bitcoincore.blocks.validators.BlockValidatorSet
 import io.horizontalsystems.bitcoincore.blocks.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.bitcoincore.blocks.validators.ProofOfWorkValidator
-import io.horizontalsystems.bitcoincore.core.IApiTransactionProvider
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.managers.ApiSyncStateManager
+import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.Checkpoint
+import io.horizontalsystems.bitcoincore.models.WatchAddressPublicKey
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
+import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
+import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.CashAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
 import io.horizontalsystems.hdwalletkit.HDExtendedKey
@@ -58,20 +58,20 @@ class ECashKit : AbstractKit {
         words: List<String>,
         passphrase: String,
         walletId: String,
-        networkType: NetworkType = NetworkType.MainNet,
-        peerSize: Int = 10,
-        syncMode: SyncMode = SyncMode.Api(),
-        confirmationsThreshold: Int = 1
+        networkType: NetworkType = defaultNetworkType,
+        peerSize: Int = defaultPeerSize,
+        syncMode: SyncMode = defaultSyncMode,
+        confirmationsThreshold: Int = defaultConfirmationsThreshold
     ) : this(context, Mnemonic().toSeed(words, passphrase), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     constructor(
         context: Context,
         seed: ByteArray,
         walletId: String,
-        networkType: NetworkType = NetworkType.MainNet,
-        peerSize: Int = 10,
-        syncMode: SyncMode = SyncMode.Api(),
-        confirmationsThreshold: Int = 1
+        networkType: NetworkType = defaultNetworkType,
+        peerSize: Int = defaultPeerSize,
+        syncMode: SyncMode = defaultSyncMode,
+        confirmationsThreshold: Int = defaultConfirmationsThreshold
     ) : this(context, HDExtendedKey(seed, Purpose.BIP44), walletId, networkType, peerSize, syncMode, confirmationsThreshold)
 
     /**
@@ -88,47 +88,125 @@ class ECashKit : AbstractKit {
         context: Context,
         extendedKey: HDExtendedKey,
         walletId: String,
-        networkType: NetworkType,
-        peerSize: Int = 10,
-        syncMode: SyncMode = SyncMode.Api(),
-        confirmationsThreshold: Int = 1
+        networkType: NetworkType = defaultNetworkType,
+        peerSize: Int = defaultPeerSize,
+        syncMode: SyncMode = defaultSyncMode,
+        confirmationsThreshold: Int = defaultConfirmationsThreshold
     ) {
+        network = network(networkType)
+
+        bitcoinCore = bitcoinCore(
+            context = context,
+            extendedKey = extendedKey,
+            watchAddressPublicKey = null,
+            networkType = networkType,
+            network = network,
+            walletId = walletId,
+            syncMode = syncMode,
+            peerSize = peerSize,
+            confirmationsThreshold = confirmationsThreshold
+        )
+    }
+
+    /**
+     * @constructor Creates and initializes the BitcoinKit
+     * @param context The Android context
+     * @param watchAddress address for watching in read-only mode
+     * @param walletId an arbitrary ID of type String.
+     * @param networkType The network type. The default is MainNet.
+     * @param peerSize The # of peer-nodes required. The default is 10 peers.
+     * @param syncMode How the kit syncs with the blockchain. The default is SyncMode.Api().
+     * @param confirmationsThreshold How many confirmations required to be considered confirmed. The default is 6 confirmations.
+     */
+    constructor(
+        context: Context,
+        watchAddress: String,
+        walletId: String,
+        networkType: NetworkType = defaultNetworkType,
+        peerSize: Int = defaultPeerSize,
+        syncMode: SyncMode = defaultSyncMode,
+        confirmationsThreshold: Int = defaultConfirmationsThreshold
+    ) {
+        network = network(networkType)
+
+        val address = parseAddress(watchAddress, network)
+        val watchAddressPublicKey = WatchAddressPublicKey(address.lockingScriptPayload, address.scriptType)
+
+        bitcoinCore = bitcoinCore(
+            context = context,
+            extendedKey = null,
+            watchAddressPublicKey = watchAddressPublicKey,
+            networkType = networkType,
+            network = network,
+            walletId = walletId,
+            syncMode = syncMode,
+            peerSize = peerSize,
+            confirmationsThreshold = confirmationsThreshold
+        )
+    }
+
+    private fun bitcoinCore(
+        context: Context,
+        extendedKey: HDExtendedKey?,
+        watchAddressPublicKey: WatchAddressPublicKey?,
+        networkType: NetworkType,
+        network: Network,
+        walletId: String,
+        syncMode: SyncMode,
+        peerSize: Int,
+        confirmationsThreshold: Int
+    ): BitcoinCore {
         val database = CoreDatabase.getInstance(context, getDatabaseName(networkType, walletId, syncMode))
         val storage = Storage(database)
 
-        network = when (networkType) {
-            NetworkType.MainNet -> MainNetECash()
-            NetworkType.TestNet -> TODO()
-        }
-
         val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
         val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
-
-        val apiTransactionProvider = when (networkType) {
-            NetworkType.MainNet -> {
-                val chronikApiProvider = ChronikApi()
-                if (syncMode is SyncMode.Blockchair) {
-                    val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
-                    val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
-                    val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
-
-                    BiApiTransactionProvider(
-                        restoreProvider = chronikApiProvider,
-                        syncProvider = blockchairProvider,
-                        syncStateManager = apiSyncStateManager
-                    )
-                } else {
-                    chronikApiProvider
-                }
-            }
-
-            NetworkType.TestNet -> {
-                TODO()
-            }
-        }
-
+        val apiTransactionProvider = apiTransactionProvider(networkType, syncMode, apiSyncStateManager)
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
+        val blockValidatorSet = blockValidatorSet(networkType, storage)
 
+        val bitcoinCore = BitcoinCoreBuilder()
+            .setContext(context)
+            .setExtendedKey(extendedKey)
+            .setWatchAddressPublicKey(watchAddressPublicKey)
+            .setPurpose(Purpose.BIP44)
+            .setNetwork(network)
+            .setCheckpoint(checkpoint)
+            .setPaymentAddressParser(paymentAddressParser)
+            .setPeerSize(peerSize)
+            .setSyncMode(syncMode)
+            .setConfirmationThreshold(confirmationsThreshold)
+            .setStorage(storage)
+            .setApiTransactionProvider(apiTransactionProvider)
+            .setApiSyncStateManager(apiSyncStateManager)
+            .setBlockValidator(blockValidatorSet)
+            .build()
+
+        //  extending bitcoinCore
+
+        bitcoinCore.prependAddressConverter(CashAddressConverter(network.addressSegwitHrp))
+        bitcoinCore.addRestoreKeyConverter(ECashRestoreKeyConverter())
+
+        return bitcoinCore
+    }
+
+    private fun parseAddress(address: String, network: Network): Address {
+        val addressConverter = AddressConverterChain().apply {
+            prependConverter(CashAddressConverter(network.addressSegwitHrp))
+            prependConverter(Base58AddressConverter(network.addressVersion, network.addressScriptVersion))
+        }
+        return addressConverter.convert(address)
+    }
+
+    private fun network(networkType: NetworkType) = when (networkType) {
+        NetworkType.MainNet -> MainNetECash()
+        NetworkType.TestNet -> TODO()
+    }
+
+    private fun blockValidatorSet(
+        networkType: NetworkType,
+        storage: Storage
+    ): BlockValidatorSet {
         val blockValidatorSet = BlockValidatorSet()
         blockValidatorSet.addBlockValidator(ProofOfWorkValidator())
 
@@ -150,29 +228,34 @@ class ECashKit : AbstractKit {
         }
 
         blockValidatorSet.addBlockValidator(blockValidatorChain)
+        return blockValidatorSet
+    }
 
-        bitcoinCore = BitcoinCoreBuilder()
-            .setContext(context)
-            .setExtendedKey(extendedKey)
-            .setPurpose(Purpose.BIP44)
-            .setNetwork(network)
-            .setCheckpoint(checkpoint)
-            .setPaymentAddressParser(paymentAddressParser)
-            .setPeerSize(peerSize)
-            .setSyncMode(syncMode)
-            .setConfirmationThreshold(confirmationsThreshold)
-            .setStorage(storage)
-            .setApiTransactionProvider(apiTransactionProvider)
-            .setApiSyncStateManager(apiSyncStateManager)
-            .setBlockValidator(blockValidatorSet)
-            .build()
+    private fun apiTransactionProvider(
+        networkType: NetworkType,
+        syncMode: SyncMode,
+        apiSyncStateManager: ApiSyncStateManager
+    ) = when (networkType) {
+        NetworkType.MainNet -> {
+            val chronikApiProvider = ChronikApi()
+            if (syncMode is SyncMode.Blockchair) {
+                val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+                val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
 
-        //  extending bitcoinCore
+                BiApiTransactionProvider(
+                    restoreProvider = chronikApiProvider,
+                    syncProvider = blockchairProvider,
+                    syncStateManager = apiSyncStateManager
+                )
+            } else {
+                chronikApiProvider
+            }
+        }
 
-        val bech32 = CashAddressConverter(network.addressSegwitHrp)
-        bitcoinCore.prependAddressConverter(bech32)
-
-        bitcoinCore.addRestoreKeyConverter(ECashRestoreKeyConverter())
+        NetworkType.TestNet -> {
+            TODO()
+        }
     }
 
     companion object {
@@ -183,6 +266,12 @@ class ECashKit : AbstractKit {
 
         const val svForkHeight = 556767                         // 2018 November 14
         const val bchnChainForkHeight = 661648                  // 2020 November 15, 14:13 GMT
+
+        val defaultNetworkType: NetworkType = NetworkType.MainNet
+        val defaultSyncMode: SyncMode = SyncMode.Api()
+        const val defaultPeerSize: Int = 10
+        const val defaultConfirmationsThreshold: Int = 1
+
 
         val abcForkBlockHash = "0000000000000000004626ff6e3b936941d341c5932ece4357eeccac44e6d56c".toReversedByteArray()
         val bchaChainForkBlockHash = "000000000000000004284c9d8b2c8ff731efeaec6be50729bdc9bd07f910757d".toReversedByteArray()

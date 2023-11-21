@@ -18,7 +18,7 @@ import io.horizontalsystems.hdwalletkit.ECKey
     ]
 )
 
-class PublicKey() {
+open class PublicKey() {
     var path: String = ""
 
     var account = 0

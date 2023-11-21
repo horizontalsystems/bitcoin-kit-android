@@ -2,9 +2,8 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
-import java.util.*
+import java.util.Stack
 
 fun List<FullTransaction>.inTopologicalOrder(): List<FullTransaction> {
 
@@ -57,4 +56,21 @@ val Purpose.description: String
         Purpose.BIP49 -> "bip49"
         Purpose.BIP84 -> "bip84"
         Purpose.BIP86 -> "bip86"
+    }
+
+val ScriptType.purpose: Purpose?
+    get() = when (this) {
+        ScriptType.P2PKH -> Purpose.BIP44
+
+        ScriptType.P2SH,
+        ScriptType.P2WPKHSH -> Purpose.BIP49
+
+        ScriptType.P2WSH,
+        ScriptType.P2WPKH -> Purpose.BIP84
+
+        ScriptType.P2TR -> Purpose.BIP86
+
+        ScriptType.NULL_DATA,
+        ScriptType.UNKNOWN,
+        ScriptType.P2PK -> null
     }
