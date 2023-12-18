@@ -24,6 +24,7 @@ import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.UsedAddress
 import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.IMessageSerializer
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
@@ -201,6 +202,15 @@ class BitcoinCore(
 
     fun receiveAddress(): String {
         return addressConverter.convert(publicKeyManager.receivePublicKey(), purpose.scriptType).stringValue
+    }
+
+    fun usedAddresses(): List<UsedAddress> {
+        return publicKeyManager.usedPublicKeys().map {
+            UsedAddress(
+                index = it.index,
+                address = addressConverter.convert(it, purpose.scriptType).stringValue
+            )
+        }.sortedBy { it.index }
     }
 
     fun receivePublicKey(): PublicKey {
