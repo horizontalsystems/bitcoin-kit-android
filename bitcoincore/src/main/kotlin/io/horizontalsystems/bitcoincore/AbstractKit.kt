@@ -89,6 +89,10 @@ abstract class AbstractKit {
         return bitcoinCore.receiveAddress()
     }
 
+    fun usedAddresses(): List<UsedAddress> {
+        return bitcoinCore.usedAddresses()
+    }
+
     fun receivePublicKey(): PublicKey {
         return bitcoinCore.receivePublicKey()
     }
