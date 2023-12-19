@@ -205,7 +205,7 @@ class BitcoinCore(
     }
 
     fun usedAddresses(): List<UsedAddress> {
-        return publicKeyManager.usedPublicKeys().map {
+        return publicKeyManager.usedExternalPublicKeys().map {
             UsedAddress(
                 index = it.index,
                 address = addressConverter.convert(it, purpose.scriptType).stringValue

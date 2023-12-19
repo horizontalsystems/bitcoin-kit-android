@@ -20,7 +20,7 @@ class WatchAddressPublicKeyManager(
 
     override fun receivePublicKey() = publicKey
 
-    override fun usedPublicKeys(): List<PublicKey> = listOf(publicKey)
+    override fun usedExternalPublicKeys(): List<PublicKey> = listOf(publicKey)
 
     override fun fillGap() {
         bloomFilterManager?.regenerateBloomFilter()

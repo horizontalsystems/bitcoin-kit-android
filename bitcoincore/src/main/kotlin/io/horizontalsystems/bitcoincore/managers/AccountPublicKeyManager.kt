@@ -29,7 +29,7 @@ class AccountPublicKeyManager(
         return getPublicKey(external = true)
     }
 
-    override fun usedPublicKeys(): List<PublicKey> {
+    override fun usedExternalPublicKeys(): List<PublicKey> {
         return storage.getPublicKeysWithUsedState().filter { it.publicKey.external && it.used }.map { it.publicKey }
     }
 
