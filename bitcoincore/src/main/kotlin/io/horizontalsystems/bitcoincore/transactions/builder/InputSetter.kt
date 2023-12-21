@@ -61,18 +61,26 @@ class InputSetter(
             throw TransactionBuilder.BuilderException.NotSupportedScriptType()
         }
 
+        setInputs(mutableTransaction, listOf(unspentOutput), feeRate)
+    }
+
+    fun setInputs(mutableTransaction: MutableTransaction, unspentOutputs: List<UnspentOutput>, feeRate: Int) {
         // Calculate fee
         val transactionSize =
-            transactionSizeCalculator.transactionSize(listOf(unspentOutput.output), listOf(mutableTransaction.recipientAddress.scriptType), 0)
+            transactionSizeCalculator.transactionSize(unspentOutputs.map { it.output }, listOf(mutableTransaction.recipientAddress.scriptType), mutableTransaction.getPluginDataOutputSize())
+
         val fee = transactionSize * feeRate
 
-        if (unspentOutput.output.value < fee) {
+        val value = unspentOutputs.sumOf { it.output.value }
+        if (value < fee) {
             throw TransactionBuilder.BuilderException.FeeMoreThanValue()
         }
 
         // Add to mutable transaction
-        mutableTransaction.addInput(inputToSign(unspentOutput))
-        mutableTransaction.recipientValue = unspentOutput.output.value - fee
+        unspentOutputs.forEach {unspentOutput ->
+            mutableTransaction.addInput(inputToSign(unspentOutput))
+        }
+        mutableTransaction.recipientValue = value - fee
     }
 
     private fun inputToSign(unspentOutput: UnspentOutput): InputToSign {

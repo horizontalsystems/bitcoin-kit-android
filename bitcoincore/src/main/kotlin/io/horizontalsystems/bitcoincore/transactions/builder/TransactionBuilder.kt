@@ -40,6 +40,20 @@ class TransactionBuilder(
         return mutableTransaction.build()
     }
 
+    fun buildTransaction(unspentOutputs: List<UnspentOutput>, toAddress: String, feeRate: Int, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
+        val mutableTransaction = MutableTransaction(false)
+
+        val value = unspentOutputs.sumOf { it.output.value }
+        recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false)
+        inputSetter.setInputs(mutableTransaction, unspentOutputs, feeRate)
+        lockTimeSetter.setLockTime(mutableTransaction)
+
+        outputSetter.setOutputs(mutableTransaction, sortType)
+        signer.sign(mutableTransaction)
+
+        return mutableTransaction.build()
+    }
+
     open class BuilderException : Exception() {
         class FeeMoreThanValue : BuilderException()
         class NotSupportedScriptType : BuilderException()

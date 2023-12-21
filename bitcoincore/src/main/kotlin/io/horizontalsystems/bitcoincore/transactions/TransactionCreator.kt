@@ -21,6 +21,19 @@ class TransactionCreator(
     }
 
     @Throws
+    fun create(
+        address: String,
+        unspentOutputs: List<UnspentOutput>,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        pluginData: Map<Byte, IPluginData>,
+    ): FullTransaction {
+        return create {
+            builder.buildTransaction(unspentOutputs, address, feeRate, sortType, pluginData)
+        }
+    }
+
+    @Throws
     fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
         return create {
             builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType)
