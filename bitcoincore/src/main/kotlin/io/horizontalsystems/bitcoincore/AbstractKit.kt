@@ -1,7 +1,12 @@
 package io.horizontalsystems.bitcoincore
 
 import io.horizontalsystems.bitcoincore.core.IPluginData
-import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
+import io.horizontalsystems.bitcoincore.models.PublicKey
+import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
+import io.horizontalsystems.bitcoincore.models.TransactionFilterType
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.UsedAddress
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
@@ -47,6 +52,8 @@ abstract class AbstractKit {
         bitcoinCore.onEnterBackground()
     }
 
+    fun getSpendableUtxo() = bitcoinCore.getSpendableUtxo()
+
     fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
         return bitcoinCore.transactions(fromUid, type, limit)
     }
@@ -55,8 +62,27 @@ abstract class AbstractKit {
         return bitcoinCore.getTransaction(hash)
     }
 
+    fun fee(
+        unspentOutputs: List<UnspentOutput>,
+        address: String? = null,
+        feeRate: Int,
+        pluginData: Map<Byte, IPluginData>
+    ): Long {
+        return bitcoinCore.fee(unspentOutputs, address, feeRate, pluginData)
+    }
+
     fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData> = mapOf()): Long {
         return bitcoinCore.fee(value, address, senderPay, feeRate, pluginData)
+    }
+
+    fun send(
+        address: String,
+        unspentOutputs: List<UnspentOutput>,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        pluginData: Map<Byte, IPluginData>
+    ): FullTransaction {
+        return bitcoinCore.send(address, unspentOutputs, feeRate, sortType, pluginData)
     }
 
     fun send(
