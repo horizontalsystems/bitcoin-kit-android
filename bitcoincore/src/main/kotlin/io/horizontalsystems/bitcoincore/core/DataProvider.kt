@@ -4,7 +4,12 @@ import io.horizontalsystems.bitcoincore.blocks.IBlockchainDataListener
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
-import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.models.BalanceInfo
+import io.horizontalsystems.bitcoincore.models.Block
+import io.horizontalsystems.bitcoincore.models.BlockInfo
+import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionFilterType
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
@@ -98,6 +103,8 @@ class DataProvider(
             transactionInfoConverter.transactionInfo(it)
         }
     }
+
+    fun getSpendableUtxo() = unspentOutputProvider.getSpendableUtxo()
 
     private fun blockInfo(block: Block) = BlockInfo(
             block.headerHash.toReversedHex(),

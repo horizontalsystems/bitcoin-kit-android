@@ -464,7 +464,14 @@ class BitcoinCoreBuilder {
             val lockTimeSetter = LockTimeSetter(storage)
             val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
             val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
-            transactionFeeCalculator = TransactionFeeCalculator(recipientSetter, inputSetter, addressConverter, publicKeyManager, purpose.scriptType)
+            transactionFeeCalculator = TransactionFeeCalculator(
+                recipientSetter,
+                inputSetter,
+                addressConverter,
+                publicKeyManager,
+                purpose.scriptType,
+                transactionSizeCalculatorInstance
+            )
             val transactionSendTimer = TransactionSendTimer(60)
             val transactionSenderInstance = TransactionSender(
                 pendingTransactionSyncer,

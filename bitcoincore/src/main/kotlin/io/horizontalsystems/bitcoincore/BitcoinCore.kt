@@ -173,6 +173,32 @@ class BitcoinCore(
         return transactionFeeCalculator?.fee(value, feeRate, senderPay, address, pluginData) ?: throw CoreError.ReadOnlyCore
     }
 
+    fun fee(
+        unspentOutputs: List<UnspentOutput>,
+        address: String? = null,
+        feeRate: Int,
+        pluginData: Map<Byte, IPluginData>
+    ): Long {
+        return transactionFeeCalculator?.fee(
+            unspentOutputs,
+            feeRate,
+            address,
+            pluginData
+        ) ?: throw CoreError.ReadOnlyCore
+    }
+
+    fun getSpendableUtxo() = dataProvider.getSpendableUtxo()
+
+    fun send(
+        address: String,
+        unspentOutputs: List<UnspentOutput>,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        pluginData: Map<Byte, IPluginData>
+    ): FullTransaction {
+        return transactionCreator?.create(address, unspentOutputs, feeRate, sortType, pluginData) ?: throw CoreError.ReadOnlyCore
+    }
+
     fun send(
         address: String,
         value: Long,
