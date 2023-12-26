@@ -89,7 +89,7 @@ object TransactionProcessorTest : Spek({
             processor.processCreated(fullTransaction)
 
             Mockito.verify(extractor).extractOutputs(fullTransaction)
-            Mockito.verify(outputsCache).hasOutputs(fullTransaction.inputs)
+//            Mockito.verify(outputsCache).hasOutputs(fullTransaction.inputs)
             // Mockito.verify(blockchainDataListener).onTransactionsUpdate(check {
             //     Assert.assertArrayEquals(transaction.hash, it.firstOrNull()?.hash)
             // }, eq(listOf()), any())

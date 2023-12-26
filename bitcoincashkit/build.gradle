@@ -72,6 +72,6 @@ dependencies {
 
     // Android Instrumentation Test
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
-    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.19.1'
+    androidTestImplementation 'com.linkedin.dexmaker:dexmaker-mockito-inline:2.28.3'
     androidTestImplementation 'com.nhaarman:mockito-kotlin-kt1.1:1.6.0'
 }
