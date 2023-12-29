@@ -85,6 +85,8 @@ dependencies {
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
     testImplementation "org.powermock:powermock-api-mockito2:2.0.7"
     testImplementation "org.powermock:powermock-module-junit4:2.0.7"
+    testImplementation 'org.mockito:mockito-inline:4.4.0'
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 
     // Spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:2.0.9"

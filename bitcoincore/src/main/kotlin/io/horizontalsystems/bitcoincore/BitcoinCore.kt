@@ -19,6 +19,7 @@ import io.horizontalsystems.bitcoincore.managers.SyncManager
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorChain
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
+import io.horizontalsystems.bitcoincore.models.BitcoinSendInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
@@ -49,6 +50,7 @@ import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.reactivex.Single
 import java.util.Date
 import java.util.concurrent.Executor
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 class BitcoinCore(
@@ -141,6 +143,8 @@ class BitcoinCore(
     val watchAccount: Boolean
         get() = transactionCreator == null
 
+    var unspentOutputs: List<UnspentOutput> = unspentOutputSelector.all
+
     //
     // API methods
     //
@@ -169,34 +173,21 @@ class BitcoinCore(
         return dataProvider.transactions(fromUid, type, limit)
     }
 
-    fun fee(value: Long, address: String? = null, senderPay: Boolean = true, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
-        return transactionFeeCalculator?.fee(value, feeRate, senderPay, address, pluginData) ?: throw CoreError.ReadOnlyCore
-    }
-
-    fun fee(
-        unspentOutputs: List<UnspentOutput>,
+    fun sendInfo(
+        value: Long,
         address: String? = null,
+        senderPay: Boolean = true,
         feeRate: Int,
         pluginData: Map<Byte, IPluginData>
-    ): Long {
-        return transactionFeeCalculator?.fee(
-            unspentOutputs,
-            feeRate,
-            address,
-            pluginData
+    ): BitcoinSendInfo {
+        return transactionFeeCalculator?.sendInfo(
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            toAddress = address,
+            unspentOutputs = null,
+            pluginData = pluginData
         ) ?: throw CoreError.ReadOnlyCore
-    }
-
-    fun getSpendableUtxo() = dataProvider.getSpendableUtxo()
-
-    fun send(
-        address: String,
-        unspentOutputs: List<UnspentOutput>,
-        feeRate: Int,
-        sortType: TransactionDataSortType,
-        pluginData: Map<Byte, IPluginData>
-    ): FullTransaction {
-        return transactionCreator?.create(address, unspentOutputs, feeRate, sortType, pluginData) ?: throw CoreError.ReadOnlyCore
     }
 
     fun send(
@@ -205,9 +196,18 @@ class BitcoinCore(
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>
     ): FullTransaction {
-        return transactionCreator?.create(address, value, feeRate, senderPay, sortType, pluginData) ?: throw CoreError.ReadOnlyCore
+        return transactionCreator?.create(
+            toAddress = address,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData
+        ) ?: throw CoreError.ReadOnlyCore
     }
 
     fun send(
@@ -216,10 +216,19 @@ class BitcoinCore(
         value: Long,
         senderPay: Boolean = true,
         feeRate: Int,
-        sortType: TransactionDataSortType
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
-        return transactionCreator?.create(address.stringValue, value, feeRate, senderPay, sortType, mapOf()) ?: throw CoreError.ReadOnlyCore
+        return transactionCreator?.create(
+            toAddress = address.stringValue,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = unspentOutputs,
+            pluginData = mapOf()
+        ) ?: throw CoreError.ReadOnlyCore
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
@@ -230,8 +239,8 @@ class BitcoinCore(
         return addressConverter.convert(publicKeyManager.receivePublicKey(), purpose.scriptType).stringValue
     }
 
-    fun usedAddresses(): List<UsedAddress> {
-        return publicKeyManager.usedExternalPublicKeys().map {
+    fun usedAddresses(change: Boolean): List<UsedAddress> {
+        return publicKeyManager.usedExternalPublicKeys(change).map {
             UsedAddress(
                 index = it.index,
                 address = addressConverter.convert(it, purpose.scriptType).stringValue
@@ -360,10 +369,23 @@ class BitcoinCore(
         watchedTransactionManager.add(filter, listener)
     }
 
-    fun maximumSpendableValue(address: String?, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
-        return transactionFeeCalculator?.let { transactionFeeCalculator ->
-            balance.spendable - transactionFeeCalculator.fee(balance.spendable, feeRate, false, address, pluginData)
-        } ?: throw CoreError.ReadOnlyCore
+    fun maximumSpendableValue(
+        address: String?,
+        feeRate: Int,
+        pluginData: Map<Byte, IPluginData>
+    ): Long {
+        if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
+
+        val sendAllFee = transactionFeeCalculator.sendInfo(
+            value = balance.spendable,
+            feeRate = feeRate,
+            senderPay = false,
+            toAddress = address,
+            unspentOutputs = null,
+            pluginData = pluginData
+        ).fee
+
+        return max(0L, balance.spendable - sendAllFee)
     }
 
     fun minimumSpendableValue(address: String?): Int {

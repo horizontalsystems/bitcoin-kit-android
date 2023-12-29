@@ -252,7 +252,7 @@ interface IAccountWallet {
 interface IPublicKeyManager {
     fun changePublicKey(): PublicKey
     fun receivePublicKey(): PublicKey
-    fun usedExternalPublicKeys(): List<PublicKey>
+    fun usedExternalPublicKeys(change: Boolean): List<PublicKey>
     fun fillGap()
     fun addKeys(keys: List<PublicKey>)
     fun gapShifts(): Boolean

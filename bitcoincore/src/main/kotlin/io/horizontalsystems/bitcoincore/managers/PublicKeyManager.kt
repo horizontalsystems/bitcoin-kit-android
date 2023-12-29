@@ -36,8 +36,8 @@ class PublicKeyManager(
         return getPublicKey(external = false)
     }
 
-    override fun usedExternalPublicKeys(): List<PublicKey> {
-        return storage.getPublicKeysWithUsedState().filter { it.publicKey.external && it.used }.map { it.publicKey }
+    override fun usedExternalPublicKeys(change: Boolean): List<PublicKey> {
+        return storage.getPublicKeysWithUsedState().filter { it.publicKey.external == !change && it.used }.map { it.publicKey }
     }
 
     override fun getPublicKeyByPath(path: String): PublicKey {
