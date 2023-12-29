@@ -434,7 +434,7 @@ class BitcoinCoreBuilder {
         initialDownload.listener = syncManager
         blockHashScanner.listener = syncManager
 
-        val unspentOutputSelector = UnspentOutputSelectorChain()
+        val unspentOutputSelector = UnspentOutputSelectorChain(unspentOutputProvider)
         val pendingTransactionSyncer = TransactionSyncer(storage, pendingTransactionProcessor, invalidator, publicKeyManager)
         val transactionDataSorterFactory = TransactionDataSorterFactory()
 
@@ -470,7 +470,6 @@ class BitcoinCoreBuilder {
                 addressConverter,
                 publicKeyManager,
                 purpose.scriptType,
-                transactionSizeCalculatorInstance
             )
             val transactionSendTimer = TransactionSendTimer(60)
             val transactionSenderInstance = TransactionSender(
@@ -576,9 +575,21 @@ class BitcoinCoreBuilder {
             bitcoinCore.addPeerTaskHandler(transactionSender)
         }
 
-        transactionSizeCalculator?.let {
-            bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(transactionSizeCalculator, unspentOutputProvider))
-            bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(transactionSizeCalculator, unspentOutputProvider))
+        if (transactionSizeCalculator != null && dustCalculator != null) {
+            bitcoinCore.prependUnspentOutputSelector(
+                UnspentOutputSelector(
+                    transactionSizeCalculator,
+                    dustCalculator,
+                    unspentOutputProvider
+                )
+            )
+            bitcoinCore.prependUnspentOutputSelector(
+                UnspentOutputSelectorSingleNoChange(
+                    transactionSizeCalculator,
+                    dustCalculator,
+                    unspentOutputProvider
+                )
+            )
         }
 
         return bitcoinCore

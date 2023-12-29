@@ -1,81 +1,64 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import io.horizontalsystems.bitcoincore.DustCalculator
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
-class UnspentOutputSelector(private val calculator: TransactionSizeCalculator, private val unspentOutputProvider: IUnspentOutputProvider, private val outputsLimit: Int? = null) : IUnspentOutputSelector {
+class UnspentOutputSelector(
+    private val calculator: TransactionSizeCalculator,
+    private val dustCalculator: DustCalculator,
+    private val unspentOutputProvider: IUnspentOutputProvider,
+    private val outputsLimit: Int? = null
+) : IUnspentOutputSelector {
 
-    override fun select(value: Long, feeRate: Int, outputType: ScriptType, changeType: ScriptType, senderPay: Boolean, dust: Int, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
-        if (value <= dust) {
+    val all: List<UnspentOutput>
+        get() = unspentOutputProvider.getSpendableUtxo()
+
+    @Throws(SendValueErrors::class)
+    override fun select(
+        value: Long,
+        feeRate: Int,
+        outputScriptType: ScriptType,
+        changeType: ScriptType,
+        senderPay: Boolean,
+        pluginDataOutputSize: Int
+    ): SelectedUnspentOutputInfo {
+        val sortedOutputs =
+            unspentOutputProvider.getSpendableUtxo().sortedWith(compareByDescending<UnspentOutput> {
+                it.output.failedToSpend
+            }.thenBy {
+                it.output.value
+            })
+
+        // check if value is not dust. recipientValue may be less, but not more
+        if (value < dustCalculator.dust(outputScriptType)) {
             throw SendValueErrors.Dust
         }
 
-        val unspentOutputs = unspentOutputProvider.getSpendableUtxo()
+        val params = UnspentOutputQueue.Parameters(
+            value = value,
+            senderPay = senderPay,
+            fee = feeRate,
+            outputsLimit = outputsLimit,
+            outputScriptType = outputScriptType,
+            changeType = changeType,
+            pluginDataOutputSize = pluginDataOutputSize
+        )
+        val queue = UnspentOutputQueue(params, calculator, dustCalculator)
 
-        if (unspentOutputs.isEmpty()) {
-            throw SendValueErrors.EmptyOutputs
-        }
-
-        val sortedOutputs = unspentOutputs.sortedWith(compareByDescending<UnspentOutput> {
-            it.output.failedToSpend
-        }.thenBy {
-            it.output.value
-        })
-
-        val selectedOutputs = mutableListOf<UnspentOutput>()
-        var totalValue = 0L
-        var recipientValue = 0L
-        var sentValue = 0L
-        var fee: Long
-
+        // select unspentOutputs with the least value until we get the needed value
+        var lastError: Error? = null
         for (unspentOutput in sortedOutputs) {
-            selectedOutputs.add(unspentOutput)
-            totalValue += unspentOutput.output.value
+            queue.push(unspentOutput)
 
-            outputsLimit?.let {
-                if (selectedOutputs.size > it) {
-                    val outputToExclude = selectedOutputs.first()
-                    selectedOutputs.removeAt(0)
-                    totalValue -= outputToExclude.output.value
-                }
-            }
-
-            fee = calculator.transactionSize(selectedOutputs.map { it.output }, listOf(outputType), pluginDataOutputSize) * feeRate
-
-            recipientValue = if (senderPay) value else value - fee
-            sentValue = if (senderPay) value + fee else value
-
-            if (sentValue <= totalValue) {      // totalValue is enough
-                if (recipientValue >= dust) {   // receivedValue won't be dust
-                    break
-                } else {
-                    // Here senderPay is false, because otherwise "dust" exception would throw far above.
-                    // Adding more UTXOs will make fee even greater, making recipientValue even less and dust anyway
-                    throw SendValueErrors.Dust
-                }
+            try {
+                return queue.calculate()
+            } catch (error: Error) {
+                lastError = error
             }
         }
-
-        // if all outputs are selected and total value less than needed throw error
-        if (totalValue < sentValue) {
-            throw SendValueErrors.InsufficientUnspentOutputs
-        }
-
-        val changeOutputHavingTransactionFee = calculator.transactionSize(selectedOutputs.map { it.output }, listOf(outputType, changeType), pluginDataOutputSize) * feeRate
-        val withChangeRecipientValue = if (senderPay) value else value - changeOutputHavingTransactionFee
-        val withChangeSentValue = if (senderPay) value + changeOutputHavingTransactionFee else value
-        // if selected UTXOs total value >= recipientValue(toOutput value) + fee(for transaction with change output) + dust(minimum changeOutput value)
-        if (totalValue >= withChangeRecipientValue + changeOutputHavingTransactionFee + dust) {
-            // totalValue is too much, we must have change output
-            if (withChangeRecipientValue <= dust) {
-                throw SendValueErrors.Dust
-            }
-
-            return SelectedUnspentOutputInfo(selectedOutputs, withChangeRecipientValue, totalValue - withChangeSentValue)
-        }
-
-        // No change needed
-        return SelectedUnspentOutputInfo(selectedOutputs, recipientValue, null)
+        throw lastError ?: SendValueErrors.InsufficientUnspentOutputs
     }
+
 }

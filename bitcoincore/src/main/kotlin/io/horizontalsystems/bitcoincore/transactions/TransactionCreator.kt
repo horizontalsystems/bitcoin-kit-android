@@ -8,33 +8,42 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 
 class TransactionCreator(
-        private val builder: TransactionBuilder,
-        private val processor: PendingTransactionProcessor,
-        private val transactionSender: TransactionSender,
-        private val bloomFilterManager: BloomFilterManager) {
+    private val builder: TransactionBuilder,
+    private val processor: PendingTransactionProcessor,
+    private val transactionSender: TransactionSender,
+    private val bloomFilterManager: BloomFilterManager
+) {
 
     @Throws
-    fun create(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, pluginData: Map<Byte, IPluginData>): FullTransaction {
+    fun create(
+        toAddress: String,
+        value: Long,
+        feeRate: Int,
+        senderPay: Boolean,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>
+    ): FullTransaction {
         return create {
-            builder.buildTransaction(toAddress, value, feeRate, senderPay, sortType, pluginData)
+            builder.buildTransaction(
+                toAddress = toAddress,
+                value = value,
+                feeRate = feeRate,
+                senderPay = senderPay,
+                sortType = sortType,
+                unspentOutputs = unspentOutputs,
+                pluginData = pluginData
+            )
         }
     }
 
     @Throws
     fun create(
-        address: String,
-        unspentOutputs: List<UnspentOutput>,
+        unspentOutput: UnspentOutput,
+        toAddress: String,
         feeRate: Int,
-        sortType: TransactionDataSortType,
-        pluginData: Map<Byte, IPluginData>,
+        sortType: TransactionDataSortType
     ): FullTransaction {
-        return create {
-            builder.buildTransaction(unspentOutputs, address, feeRate, sortType, pluginData)
-        }
-    }
-
-    @Throws
-    fun create(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
         return create {
             builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType)
         }
