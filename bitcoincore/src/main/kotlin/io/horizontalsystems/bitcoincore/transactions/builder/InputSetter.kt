@@ -118,26 +118,6 @@ class InputSetter(
         )
     }
 
-    @Throws(SendValueErrors::class)
-    fun setInputs(
-        mutableTransaction: MutableTransaction,
-        feeRate: Int,
-        senderPay: Boolean,
-        sortType: TransactionDataSortType
-    ): List<UnspentOutput> {
-        val value = mutableTransaction.recipientValue
-        val unspentOutputInfo = unspentOutputSelector.select(
-            value,
-            feeRate,
-            mutableTransaction.recipientAddress.scriptType,
-            changeScriptType,  // Assuming changeScriptType is defined somewhere
-            senderPay,
-            mutableTransaction.getPluginDataOutputSize()
-        )
-
-        return unspentOutputInfo.outputs
-    }
-
     private fun inputToSign(unspentOutput: UnspentOutput): InputToSign {
         val previousOutput = unspentOutput.output
         val transactionInput =
