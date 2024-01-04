@@ -76,8 +76,8 @@ class InputSetter(
                 params,
                 transactionSizeCalculator,
                 dustCalculator,
-                unspentOutputs
             )
+            queue.set(unspentOutputs)
             unspentOutputInfo = queue.calculate()
         } else {
             val value = mutableTransaction.recipientValue
