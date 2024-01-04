@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore.managers
 
-import android.util.Log
 import io.horizontalsystems.bitcoincore.DustCalculator
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
@@ -60,8 +59,8 @@ class UnspentOutputSelectorSingleNoChange(
                 if (info.changeValue == null) {
                     return info
                 }
-            } catch (error: Error) {
-                Log.e("UnspentOutputSelectorSingleNoChange", "select error: ", error)
+            } catch (error: SendValueErrors) {
+                //  ignore
             }
         }
 

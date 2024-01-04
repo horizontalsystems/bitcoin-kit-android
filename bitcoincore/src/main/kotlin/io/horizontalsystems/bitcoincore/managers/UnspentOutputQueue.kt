@@ -9,25 +9,20 @@ class UnspentOutputQueue(
     private val parameters: Parameters,
     private val sizeCalculator: TransactionSizeCalculator,
     dustCalculator: DustCalculator,
-    outputs: List<UnspentOutput> = emptyList()
 ) {
 
     private var selectedOutputs: MutableList<UnspentOutput> = mutableListOf()
     private var totalValue: Long = 0L
 
     val recipientOutputDust = dustCalculator.dust(parameters.outputScriptType)
-    val changeOutputDust = dustCalculator.dust(parameters.changeType)
-
-    init {
-        outputs.forEach {
-            push(it)
-        }
-    }
 
     fun push(output: UnspentOutput) {
         selectedOutputs.add(output)
         totalValue += output.output.value
+        enforceOutputsLimit()
+    }
 
+    private fun enforceOutputsLimit() {
         val limit = parameters.outputsLimit
         if (limit != null && limit > 0 && selectedOutputs.size > limit) {
             totalValue -= selectedOutputs.firstOrNull()?.output?.value ?: 0
@@ -43,45 +38,47 @@ class UnspentOutputQueue(
     }
 
     @Throws(SendValueErrors::class)
-    private fun values(value: Long, total: Long, fee: Long): Pair<Long, Long> {
-        val receiveValue = if (parameters.senderPay) value else value - fee
-        val sentValue = if (parameters.senderPay) value + fee else value
-
-        if (totalValue < sentValue) {
-            throw SendValueErrors.InsufficientUnspentOutputs
-        }
-
-        if (receiveValue <= recipientOutputDust) {
-            throw SendValueErrors.Dust
-        }
-
-        val remainder = total - receiveValue - fee
-        return Pair(receiveValue, remainder)
-    }
-
-    @Throws(SendValueErrors::class)
     fun calculate(): SelectedUnspentOutputInfo {
         if (selectedOutputs.isEmpty()) {
             throw SendValueErrors.EmptyOutputs
         }
 
-        val feeWithoutChange = sizeCalculator.transactionSize(
+        val feeWithoutChange = calculateFeeWithoutChange()
+        val (receiveValue, remainder) = calculateSendValues(feeWithoutChange)
+
+        val changeFee = sizeCalculator.outputSize(parameters.changeType) * parameters.fee
+        val actualRemainder = remainder - changeFee
+
+        return if (actualRemainder <= recipientOutputDust) {
+            SelectedUnspentOutputInfo(selectedOutputs, receiveValue, null)
+        } else {
+            SelectedUnspentOutputInfo(selectedOutputs, receiveValue, actualRemainder)
+        }
+    }
+
+    private fun calculateFeeWithoutChange(): Long =
+        sizeCalculator.transactionSize(
             previousOutputs = selectedOutputs.map { it.output },
             outputs = listOf(parameters.outputScriptType),
             pluginDataOutputSize = parameters.pluginDataOutputSize
         ) * parameters.fee
 
-        val sendValues = values(parameters.value, totalValue, feeWithoutChange)
+    @Throws(SendValueErrors::class)
+    private fun calculateSendValues(feeWithoutChange: Long): Pair<Long, Long> {
+        val sentValue = if (parameters.senderPay) parameters.value + feeWithoutChange else parameters.value
 
-        val changeFee = sizeCalculator.outputSize(parameters.changeType) * parameters.fee
-        val remainder = sendValues.second - changeFee
-
-        return if (remainder <= recipientOutputDust) {
-            SelectedUnspentOutputInfo(selectedOutputs, sendValues.first, null)
-        } else {
-            SelectedUnspentOutputInfo(selectedOutputs, sendValues.first, remainder)
+        if (totalValue < sentValue) {
+            throw SendValueErrors.InsufficientUnspentOutputs
         }
+
+        val receiveValue = if (parameters.senderPay) parameters.value else parameters.value - feeWithoutChange
+        if (receiveValue <= recipientOutputDust) {
+            throw SendValueErrors.Dust
+        }
+
+        return Pair(receiveValue, totalValue - receiveValue - feeWithoutChange)
     }
+
 
     data class Parameters(
         val value: Long,

@@ -48,13 +48,13 @@ class UnspentOutputSelector(
         val queue = UnspentOutputQueue(params, calculator, dustCalculator)
 
         // select unspentOutputs with the least value until we get the needed value
-        var lastError: Error? = null
+        var lastError: SendValueErrors? = null
         for (unspentOutput in sortedOutputs) {
             queue.push(unspentOutput)
 
             try {
                 return queue.calculate()
-            } catch (error: Error) {
+            } catch (error: SendValueErrors) {
                 lastError = error
             }
         }
