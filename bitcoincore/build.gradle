@@ -80,12 +80,13 @@ dependencies {
     api 'com.github.horizontalsystems:hd-wallet-kit-android:a74b51f'
 
     // Test helpers
-    testImplementation 'junit:junit:4.13'
+    testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.junit.jupiter:junit-jupiter:5.6.1'
     testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:2.2.0"
     testImplementation "org.powermock:powermock-api-mockito2:2.0.7"
     testImplementation "org.powermock:powermock-module-junit4:2.0.7"
     testImplementation 'org.mockito:mockito-inline:4.4.0'
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
 
     // Spek
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:2.0.9"
