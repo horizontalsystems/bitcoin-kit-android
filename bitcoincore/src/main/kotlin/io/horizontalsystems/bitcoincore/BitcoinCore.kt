@@ -143,7 +143,8 @@ class BitcoinCore(
     val watchAccount: Boolean
         get() = transactionCreator == null
 
-    var unspentOutputs: List<UnspentOutput> = unspentOutputSelector.all
+    val unspentOutputs: List<UnspentOutput>
+        get() = unspentOutputSelector.all
 
     //
     // API methods
