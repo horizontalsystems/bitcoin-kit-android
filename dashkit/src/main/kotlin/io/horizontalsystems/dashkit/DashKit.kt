@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
+import io.horizontalsystems.bitcoincore.DustCalculator
 import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
 import io.horizontalsystems.bitcoincore.apisync.InsightApi
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
@@ -275,9 +276,10 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         bitcoinCore.addPeerTaskHandler(instantSend)
 
         val calculator = TransactionSizeCalculator()
+        val dustCalculator = DustCalculator(network.dustRelayTxFee, calculator)
         val confirmedUnspentOutputProvider = ConfirmedUnspentOutputProvider(coreStorage, confirmationsThreshold)
-        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(calculator, confirmedUnspentOutputProvider))
-        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, confirmedUnspentOutputProvider))
+        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelector(calculator, dustCalculator, confirmedUnspentOutputProvider))
+        bitcoinCore.prependUnspentOutputSelector(UnspentOutputSelectorSingleNoChange(calculator, dustCalculator, confirmedUnspentOutputProvider))
     }
 
     private fun apiTransactionProvider(
