@@ -11,6 +11,7 @@ import io.horizontalsystems.bitcoincore.models.UsedAddress
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.reactivex.Single
 
@@ -69,6 +70,7 @@ abstract class AbstractKit {
         address: String? = null,
         senderPay: Boolean = true,
         feeRate: Int,
+        unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData> = mapOf()
     ): BitcoinSendInfo {
         return bitcoinCore.sendInfo(
@@ -76,6 +78,7 @@ abstract class AbstractKit {
             address = address,
             senderPay = senderPay,
             feeRate = feeRate,
+            unspentOutputs = unspentOutputs,
             pluginData = pluginData
         )
     }
@@ -86,7 +89,7 @@ abstract class AbstractKit {
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
-        unspentOutputs: List<UnspentOutput>? = null,
+        unspentOutputs: List<UnspentOutputInfo>? = null,
         pluginData: Map<Byte, IPluginData> = mapOf()
     ): FullTransaction {
         return bitcoinCore.send(address, value, senderPay, feeRate, sortType, unspentOutputs, pluginData)
@@ -110,7 +113,7 @@ abstract class AbstractKit {
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
-        unspentOutputs: List<UnspentOutput>? = null,
+        unspentOutputs: List<UnspentOutputInfo>? = null,
     ): FullTransaction {
         return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, unspentOutputs)
     }
@@ -170,8 +173,8 @@ abstract class AbstractKit {
         bitcoinCore.watchTransaction(filter, listener)
     }
 
-    fun maximumSpendableValue(address: String?, feeRate: Int, pluginData: Map<Byte, IPluginData>): Long {
-        return bitcoinCore.maximumSpendableValue(address, feeRate, pluginData)
+    fun maximumSpendableValue(address: String?, feeRate: Int, unspentOutputs: List<UnspentOutputInfo>?, pluginData: Map<Byte, IPluginData>): Long {
+        return bitcoinCore.maximumSpendableValue(address, feeRate, unspentOutputs, pluginData)
     }
 
     fun minimumSpendableValue(address: String?): Int {

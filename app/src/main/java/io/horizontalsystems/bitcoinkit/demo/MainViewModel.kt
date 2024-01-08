@@ -181,7 +181,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
     fun onMaxClick() {
         try {
-            amountLiveData.value = bitcoinKit.maximumSpendableValue(address, feePriority.feeRate, getPluginData())
+            amountLiveData.value = bitcoinKit.maximumSpendableValue(address, feePriority.feeRate, null, getPluginData())
         } catch (e: Exception) {
             amountLiveData.value = 0
             errorLiveData.value = when (e) {
@@ -205,7 +205,7 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     }
 
     private fun fee(value: Long, address: String? = null): BitcoinSendInfo {
-        return bitcoinKit.sendInfo(value, address, feeRate = feePriority.feeRate, pluginData = getPluginData())
+        return bitcoinKit.sendInfo(value, address, feeRate = feePriority.feeRate, unspentOutputs = null, pluginData = getPluginData())
     }
 
     private fun getPluginData(): MutableMap<Byte, IPluginData> {

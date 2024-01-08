@@ -38,6 +38,7 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.network.peer.PeerTaskHandlerChain
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
 import io.horizontalsystems.bitcoincore.transactions.TransactionCreator
 import io.horizontalsystems.bitcoincore.transactions.TransactionFeeCalculator
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
@@ -143,8 +144,10 @@ class BitcoinCore(
     val watchAccount: Boolean
         get() = transactionCreator == null
 
-    val unspentOutputs: List<UnspentOutput>
-        get() = unspentOutputSelector.all
+    val unspentOutputs: List<UnspentOutputInfo>
+        get() = unspentOutputSelector.all.map {
+            UnspentOutputInfo.fromUnspentOutput(it)
+        }
 
     //
     // API methods
@@ -179,14 +182,20 @@ class BitcoinCore(
         address: String? = null,
         senderPay: Boolean = true,
         feeRate: Int,
+        unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>
     ): BitcoinSendInfo {
+        val outputs = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
         return transactionFeeCalculator?.sendInfo(
             value = value,
             feeRate = feeRate,
             senderPay = senderPay,
             toAddress = address,
-            unspentOutputs = null,
+            unspentOutputs = outputs,
             pluginData = pluginData
         ) ?: throw CoreError.ReadOnlyCore
     }
@@ -197,16 +206,21 @@ class BitcoinCore(
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
-        unspentOutputs: List<UnspentOutput>?,
+        unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>
     ): FullTransaction {
+        val outputs = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
         return transactionCreator?.create(
             toAddress = address,
             value = value,
             feeRate = feeRate,
             senderPay = senderPay,
             sortType = sortType,
-            unspentOutputs = unspentOutputs,
+            unspentOutputs = outputs,
             pluginData = pluginData
         ) ?: throw CoreError.ReadOnlyCore
     }
@@ -218,16 +232,21 @@ class BitcoinCore(
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
-        unspentOutputs: List<UnspentOutput>?,
+        unspentOutputs: List<UnspentOutputInfo>?,
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
+        val outputs = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
         return transactionCreator?.create(
             toAddress = address.stringValue,
             value = value,
             feeRate = feeRate,
             senderPay = senderPay,
             sortType = sortType,
-            unspentOutputs = unspentOutputs,
+            unspentOutputs = outputs,
             pluginData = mapOf()
         ) ?: throw CoreError.ReadOnlyCore
     }
@@ -373,20 +392,29 @@ class BitcoinCore(
     fun maximumSpendableValue(
         address: String?,
         feeRate: Int,
+        unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>
     ): Long {
         if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
 
+        val outputs = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
+
+        val spendableBalance = outputs?.sumOf { it.output.value } ?: balance.spendable
+
         val sendAllFee = transactionFeeCalculator.sendInfo(
-            value = balance.spendable,
+            value = spendableBalance,
             feeRate = feeRate,
             senderPay = false,
             toAddress = address,
-            unspentOutputs = null,
+            unspentOutputs = outputs,
             pluginData = pluginData
         ).fee
 
-        return max(0L, balance.spendable - sendAllFee)
+        return max(0L, spendableBalance - sendAllFee)
     }
 
     fun minimumSpendableValue(address: String?): Int {
