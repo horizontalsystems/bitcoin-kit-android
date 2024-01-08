@@ -82,6 +82,26 @@ class UnspentOutput(
         @Embedded val transaction: Transaction,
         @Embedded val block: Block?)
 
+class UnspentOutputInfo(
+    val outputIndex: Int,
+    val transactionHash: ByteArray,
+    val timestamp: Long,
+    val address: String?,
+    val value: Long
+) {
+    companion object {
+        fun fromUnspentOutput(unspentOutput: UnspentOutput): UnspentOutputInfo {
+            return UnspentOutputInfo(
+                unspentOutput.output.index,
+                unspentOutput.output.transactionHash,
+                unspentOutput.transaction.timestamp,
+                unspentOutput.output.address,
+                unspentOutput.output.value,
+            )
+        }
+    }
+}
+
 class FullTransactionInfo(
         val block: Block?,
         val header: Transaction,
