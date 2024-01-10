@@ -56,7 +56,7 @@ class BlockchairApi(
         val hashesMap = mutableMapOf<Int, String>()
 
         for (chunk in heights.chunked(10)) {
-            val map = fetchBlockHashes(heights)
+            val map = fetchBlockHashes(chunk)
             hashesMap += map
         }
 
