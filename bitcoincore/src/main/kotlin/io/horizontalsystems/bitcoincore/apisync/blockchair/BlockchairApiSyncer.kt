@@ -46,17 +46,6 @@ class BlockchairApiSyncer(
             }
     }
 
-    override fun syncLastBlock() {
-        Single.create<Unit> { fetchLastBlock() }
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
-            .subscribe({}, {
-                handleError(it)
-            }).let {
-                disposables.add(it)
-            }
-    }
-
     override fun terminate() {
         disposables.clear()
     }

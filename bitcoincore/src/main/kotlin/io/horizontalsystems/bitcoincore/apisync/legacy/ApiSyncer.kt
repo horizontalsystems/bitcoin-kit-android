@@ -48,8 +48,6 @@ class ApiSyncer(
         disposables.add(disposable)
     }
 
-    override fun syncLastBlock() {}
-
     private fun handle(keys: List<PublicKey>, blockHashes: List<BlockHash>) {
         publicKeyManager.addKeys(keys)
 
