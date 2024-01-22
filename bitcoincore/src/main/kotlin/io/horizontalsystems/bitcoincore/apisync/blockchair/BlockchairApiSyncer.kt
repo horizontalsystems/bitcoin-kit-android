@@ -46,17 +46,6 @@ class BlockchairApiSyncer(
             }
     }
 
-    override fun syncLastBlock() {
-        syncLastBlockSingle()
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
-            .subscribe({}, {
-                handleError(it)
-            }).let {
-                disposables.add(it)
-            }
-    }
-
     override fun terminate() {
         disposables.clear()
     }
@@ -66,7 +55,7 @@ class BlockchairApiSyncer(
         listener?.onSyncFailed(error)
     }
 
-    private fun syncLastBlockSingle(): Single<Unit> = Single.create {
+    private fun fetchLastBlock() {
         val blockHeaderItem = lastBlockProvider.lastBlockHeader()
         val header = BlockHeader(
             version = 0,
@@ -85,6 +74,7 @@ class BlockchairApiSyncer(
         val allKeys = storage.getPublicKeys()
         val stopHeight = storage.downloadedTransactionsBestBlockHeight()
         fetchRecursive(allKeys, allKeys, stopHeight)
+        fetchLastBlock()
 
         apiSyncStateManager.restored = true
         listener?.onSyncSuccess()
