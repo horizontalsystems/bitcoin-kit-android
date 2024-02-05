@@ -90,9 +90,10 @@ abstract class AbstractKit {
         feeRate: Int,
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>? = null,
-        pluginData: Map<Byte, IPluginData> = mapOf()
+        pluginData: Map<Byte, IPluginData> = mapOf(),
+        rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, unspentOutputs, pluginData)
+        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
     }
 
     fun send(
@@ -101,9 +102,10 @@ abstract class AbstractKit {
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
-        pluginData: Map<Byte, IPluginData> = mapOf()
+        pluginData: Map<Byte, IPluginData> = mapOf(),
+        rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, null, pluginData)
+        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, null, pluginData, rbfEnabled)
     }
 
     fun send(
@@ -114,8 +116,9 @@ abstract class AbstractKit {
         feeRate: Int,
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>? = null,
+        rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, unspentOutputs)
+        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, unspentOutputs, rbfEnabled)
     }
 
     fun send(
@@ -125,12 +128,13 @@ abstract class AbstractKit {
         senderPay: Boolean = true,
         feeRate: Int,
         sortType: TransactionDataSortType,
+        rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, null)
+        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, null, rbfEnabled)
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
-        return bitcoinCore.redeem(unspentOutput, address, feeRate, sortType)
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
+        return bitcoinCore.redeem(unspentOutput, address, feeRate, sortType, rbfEnabled)
     }
 
     fun receiveAddress(): String {

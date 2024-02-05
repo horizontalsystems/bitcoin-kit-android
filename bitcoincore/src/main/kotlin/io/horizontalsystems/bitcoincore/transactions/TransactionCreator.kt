@@ -22,7 +22,8 @@ class TransactionCreator(
         senderPay: Boolean,
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutput>?,
-        pluginData: Map<Byte, IPluginData>
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
     ): FullTransaction {
         return create {
             builder.buildTransaction(
@@ -32,7 +33,8 @@ class TransactionCreator(
                 senderPay = senderPay,
                 sortType = sortType,
                 unspentOutputs = unspentOutputs,
-                pluginData = pluginData
+                pluginData = pluginData,
+                rbfEnabled = rbfEnabled
             )
         }
     }
@@ -42,10 +44,11 @@ class TransactionCreator(
         unspentOutput: UnspentOutput,
         toAddress: String,
         feeRate: Int,
-        sortType: TransactionDataSortType
+        sortType: TransactionDataSortType,
+        rbfEnabled: Boolean
     ): FullTransaction {
         return create {
-            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType)
+            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType, rbfEnabled)
         }
     }
 

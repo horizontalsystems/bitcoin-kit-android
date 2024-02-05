@@ -7,18 +7,27 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 class TransactionBuilder(
-        private val recipientSetter: IRecipientSetter,
-        private val outputSetter: OutputSetter,
-        private val inputSetter: InputSetter,
-        private val signer: TransactionSigner,
-        private val lockTimeSetter: LockTimeSetter
+    private val recipientSetter: IRecipientSetter,
+    private val outputSetter: OutputSetter,
+    private val inputSetter: InputSetter,
+    private val signer: TransactionSigner,
+    private val lockTimeSetter: LockTimeSetter
 ) {
 
-    fun buildTransaction(toAddress: String, value: Long, feeRate: Int, senderPay: Boolean, sortType: TransactionDataSortType, unspentOutputs: List<UnspentOutput>?, pluginData: Map<Byte, IPluginData>): FullTransaction {
+    fun buildTransaction(
+        toAddress: String,
+        value: Long,
+        feeRate: Int,
+        senderPay: Boolean,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
+    ): FullTransaction {
         val mutableTransaction = MutableTransaction()
 
         recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false)
-        inputSetter.setInputs(mutableTransaction, feeRate, senderPay, unspentOutputs, sortType)
+        inputSetter.setInputs(mutableTransaction, feeRate, senderPay, unspentOutputs, sortType, rbfEnabled)
         lockTimeSetter.setLockTime(mutableTransaction)
 
         outputSetter.setOutputs(mutableTransaction, sortType)
@@ -27,11 +36,17 @@ class TransactionBuilder(
         return mutableTransaction.build()
     }
 
-    fun buildTransaction(unspentOutput: UnspentOutput, toAddress: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
+    fun buildTransaction(
+        unspentOutput: UnspentOutput,
+        toAddress: String,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        rbfEnabled: Boolean
+    ): FullTransaction {
         val mutableTransaction = MutableTransaction(false)
 
         recipientSetter.setRecipient(mutableTransaction, toAddress, unspentOutput.output.value, mapOf(), false)
-        inputSetter.setInputs(mutableTransaction, unspentOutput, feeRate)
+        inputSetter.setInputs(mutableTransaction, unspentOutput, feeRate, rbfEnabled)
         lockTimeSetter.setLockTime(mutableTransaction)
 
         outputSetter.setOutputs(mutableTransaction, sortType)

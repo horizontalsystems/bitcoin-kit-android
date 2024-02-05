@@ -30,7 +30,8 @@ class InputSetter(
     fun setInputs(
         mutableTransaction: MutableTransaction,
         unspentOutput: UnspentOutput,
-        feeRate: Int
+        feeRate: Int,
+        rbfEnabled: Boolean
     ) {
         if (unspentOutput.output.scriptType != ScriptType.P2SH) {
             throw TransactionBuilder.BuilderException.NotSupportedScriptType()
@@ -49,7 +50,7 @@ class InputSetter(
         if (value < fee) {
             throw TransactionBuilder.BuilderException.FeeMoreThanValue()
         }
-        mutableTransaction.addInput(inputToSign(unspentOutput))
+        mutableTransaction.addInput(inputToSign(unspentOutput, rbfEnabled))
         mutableTransaction.recipientValue = value - fee
     }
 
@@ -59,7 +60,8 @@ class InputSetter(
         feeRate: Int,
         senderPay: Boolean,
         unspentOutputs: List<UnspentOutput>?,
-        sortType: TransactionDataSortType
+        sortType: TransactionDataSortType,
+        rbfEnabled: Boolean
     ): OutputInfo {
         val unspentOutputInfo: SelectedUnspentOutputInfo
         if (unspentOutputs != null) {
@@ -95,7 +97,7 @@ class InputSetter(
             transactionDataSorterFactory.sorter(sortType).sortUnspents(unspentOutputInfo.outputs)
 
         for (unspentOutput in sortedUnspentOutputs) {
-            mutableTransaction.addInput(inputToSign(unspentOutput))
+            mutableTransaction.addInput(inputToSign(unspentOutput, rbfEnabled))
         }
 
         mutableTransaction.recipientValue = unspentOutputInfo.recipientValue
@@ -118,10 +120,14 @@ class InputSetter(
         )
     }
 
-    private fun inputToSign(unspentOutput: UnspentOutput): InputToSign {
+    private fun inputToSign(unspentOutput: UnspentOutput, rbfEnabled: Boolean): InputToSign {
         val previousOutput = unspentOutput.output
-        val transactionInput =
-            TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong())
+        val sequence = if (rbfEnabled) {
+            0x00
+        } else {
+            0xfffffffe
+        }
+        val transactionInput = TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong(), sequence = sequence)
 
         return InputToSign(transactionInput, previousOutput, unspentOutput.publicKey)
     }

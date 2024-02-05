@@ -42,7 +42,8 @@ class TransactionFeeCalculator(
             feeRate = feeRate,
             senderPay = senderPay,
             unspentOutputs = unspentOutputs,
-            sortType = TransactionDataSortType.None
+            sortType = TransactionDataSortType.None,
+            rbfEnabled = false
         )
 
         val inputsTotalValue = mutableTransaction.inputsToSign.sumOf { it.previousOutput.value }

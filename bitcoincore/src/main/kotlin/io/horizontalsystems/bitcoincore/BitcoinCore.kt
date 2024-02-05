@@ -207,7 +207,8 @@ class BitcoinCore(
         feeRate: Int,
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>?,
-        pluginData: Map<Byte, IPluginData>
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean
     ): FullTransaction {
         val outputs = unspentOutputs?.mapNotNull {
             unspentOutputSelector.all.firstOrNull { unspentOutput ->
@@ -221,7 +222,8 @@ class BitcoinCore(
             senderPay = senderPay,
             sortType = sortType,
             unspentOutputs = outputs,
-            pluginData = pluginData
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -233,6 +235,7 @@ class BitcoinCore(
         feeRate: Int,
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>?,
+        rbfEnabled: Boolean
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
         val outputs = unspentOutputs?.mapNotNull {
@@ -247,12 +250,13 @@ class BitcoinCore(
             senderPay = senderPay,
             sortType = sortType,
             unspentOutputs = outputs,
-            pluginData = mapOf()
+            pluginData = mapOf(),
+            rbfEnabled = rbfEnabled
         ) ?: throw CoreError.ReadOnlyCore
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType): FullTransaction {
-        return transactionCreator?.create(unspentOutput, address, feeRate, sortType) ?: throw CoreError.ReadOnlyCore
+    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
+        return transactionCreator?.create(unspentOutput, address, feeRate, sortType, rbfEnabled) ?: throw CoreError.ReadOnlyCore
     }
 
     fun receiveAddress(): String {
