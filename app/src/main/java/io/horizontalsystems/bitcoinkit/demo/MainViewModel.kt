@@ -159,7 +159,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                         amount!!,
                         feeRate = feePriority.feeRate,
                         sortType = TransactionDataSortType.Shuffle,
-                        pluginData = getPluginData()
+                        pluginData = getPluginData(),
+                        rbfEnabled = true
                     )
 
                     amountLiveData.value = null
