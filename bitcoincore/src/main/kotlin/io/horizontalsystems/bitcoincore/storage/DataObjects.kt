@@ -62,25 +62,17 @@ class PublicKeyWithUsedState(
         get() = usedCount > 0
 }
 
-class PreviousOutput(
-        val publicKeyPath: String?,
-        val value: Long,
-        val index: Int,
-
-        // PreviousOutput is intended to be used with TransactionInput.
-        // Here we use outputTransactionHash, since the TransactionInput has field `transactionHash` field
-        val outputTransactionHash: ByteArray
+class InputWithPreviousOutput(
+    val input: TransactionInput,
+    val previousOutput: TransactionOutput?
 )
 
-class InputWithPreviousOutput(
-        @Embedded val input: TransactionInput,
-        @Embedded val previousOutput: PreviousOutput?)
-
 class UnspentOutput(
-        @Embedded val output: TransactionOutput,
-        @Embedded val publicKey: PublicKey,
-        @Embedded val transaction: Transaction,
-        @Embedded val block: Block?)
+    @Embedded val output: TransactionOutput,
+    @Embedded val publicKey: PublicKey,
+    @Embedded val transaction: Transaction,
+    @Embedded val block: Block?
+)
 
 class UnspentOutputInfo(
     val outputIndex: Int,

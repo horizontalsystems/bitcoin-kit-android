@@ -14,7 +14,7 @@ class TransactionInvalidator(
 ) {
 
     fun invalidate(transaction: Transaction) {
-        val invalidTransactionsFullInfo = getDescendantTransactionsFullInfo(transaction.hash)
+        val invalidTransactionsFullInfo = storage.getDescendantTransactionsFullInfo(transaction.hash)
 
         if (invalidTransactionsFullInfo.isEmpty()) return
 
@@ -30,20 +30,6 @@ class TransactionInvalidator(
 
         storage.moveTransactionToInvalidTransactions(invalidTransactions)
         listener.onTransactionsUpdate(listOf(), invalidTransactions, null)
-    }
-
-    private fun getDescendantTransactionsFullInfo(txHash: ByteArray): List<FullTransactionInfo> {
-        val fullTransactionInfo = storage.getFullTransactionInfo(txHash) ?: return listOf()
-        val list = mutableListOf(fullTransactionInfo)
-
-        val inputs = storage.getTransactionInputsByPrevOutputTxHash(fullTransactionInfo.header.hash)
-
-        inputs.forEach { input ->
-            val descendantTxs = getDescendantTransactionsFullInfo(input.transactionHash)
-            list.addAll(descendantTxs)
-        }
-
-        return list
     }
 
 }

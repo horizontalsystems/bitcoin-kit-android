@@ -5,21 +5,35 @@ import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
-class UnspentOutputProvider(private val storage: IStorage, private val confirmationsThreshold: Int = 6, val pluginManager: PluginManager) : IUnspentOutputProvider {
+class UnspentOutputProvider(
+    private val storage: IStorage,
+    private val confirmationsThreshold: Int = 6,
+    val pluginManager: PluginManager
+) : IUnspentOutputProvider {
+
     override fun getSpendableUtxo(): List<UnspentOutput> {
-        return getConfirmedUtxo().filter {
+        return allUtxo().filter {
             pluginManager.isSpendable(it)
         }
     }
 
     fun getBalance(): BalanceInfo {
-        val spendable = getSpendableUtxo().map { it.output.value }.sum()
-        val unspendable = getUnspendableUtxo().map { it.output.value }.sum()
+        val spendable = getSpendableUtxo().sumOf { it.output.value }
+        val unspendable = getUnspendableUtxo().sumOf { it.output.value }
 
         return BalanceInfo(spendable, unspendable)
     }
 
-    private fun getConfirmedUtxo(): List<UnspentOutput> {
+    fun getConfirmedUtxo(): List<UnspentOutput> {
+        val lastBlockHeight = storage.lastBlock()?.height ?: 0
+
+        return storage.getUnspentOutputs().filter {
+            val block = it.block ?: return@filter false
+            return@filter block.height <= lastBlockHeight - confirmationsThreshold + 1
+        }
+    }
+
+    private fun allUtxo(): List<UnspentOutput> {
         val unspentOutputs = storage.getUnspentOutputs()
 
         if (confirmationsThreshold == 0) return unspentOutputs
@@ -27,10 +41,14 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
         val lastBlockHeight = storage.lastBlock()?.height ?: 0
 
         return unspentOutputs.filter {
+            // If a transaction is an outgoing transaction, then it can be used
+            // even if it's not included in a block yet
             if (it.transaction.isOutgoing) {
                 return@filter true
             }
 
+            // If a transaction is an incoming transaction, then it can be used
+            // only if it's included in a block and has enough number of confirmations
             val block = it.block ?: return@filter false
             if (block.height <= lastBlockHeight - confirmationsThreshold + 1) {
                 return@filter true
@@ -41,7 +59,7 @@ class UnspentOutputProvider(private val storage: IStorage, private val confirmat
     }
 
     private fun getUnspendableUtxo(): List<UnspentOutput> {
-        return getConfirmedUtxo().filter {
+        return allUtxo().filter {
             !pluginManager.isSpendable(it)
         }
     }

@@ -77,6 +77,22 @@ class TransactionOutput() {
         publicKey?.let { setPublicKey(it) }
     }
 
+    constructor(output: TransactionOutput) : this() {
+         value = output.value
+         lockingScript = output.lockingScript
+         redeemScript = output.redeemScript
+         index = output.index
+         transactionHash = output.transactionHash
+         publicKeyPath = output.publicKeyPath
+         changeOutput = output.changeOutput
+         scriptType = output.scriptType
+         lockingScriptPayload = output.lockingScriptPayload
+         address = output.address
+         failedToSpend = output.failedToSpend
+         pluginId = output.pluginId
+         pluginData = output.pluginData
+    }
+
     fun setPublicKey(publicKey: PublicKey) {
         this.publicKeyPath = publicKey.path
         this.changeOutput = !publicKey.external

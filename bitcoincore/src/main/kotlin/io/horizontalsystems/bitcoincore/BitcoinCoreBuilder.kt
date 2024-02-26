@@ -84,6 +84,7 @@ import io.horizontalsystems.bitcoincore.network.peer.MempoolTransactions
 import io.horizontalsystems.bitcoincore.network.peer.PeerAddressManager
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import io.horizontalsystems.bitcoincore.network.peer.PeerManager
+import io.horizontalsystems.bitcoincore.rbf.ReplacementTransactionBuilder
 import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser
 import io.horizontalsystems.bitcoincore.transactions.BlockTransactionProcessor
 import io.horizontalsystems.bitcoincore.transactions.PendingTransactionProcessor
@@ -443,6 +444,7 @@ class BitcoinCoreBuilder {
         var transactionFeeCalculator: TransactionFeeCalculator? = null
         var transactionSender: TransactionSender? = null
         var transactionCreator: TransactionCreator? = null
+        var replacementTransactionBuilder: ReplacementTransactionBuilder? = null
 
         if (privateWallet != null) {
             val ecdsaInputSigner = EcdsaInputSigner(privateWallet, network)
@@ -462,8 +464,7 @@ class BitcoinCoreBuilder {
                 transactionDataSorterFactory
             )
             val lockTimeSetter = LockTimeSetter(storage)
-            val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
-            val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, signer, lockTimeSetter)
+            val transactionBuilder = TransactionBuilder(recipientSetter, outputSetter, inputSetter, lockTimeSetter)
             transactionFeeCalculator = TransactionFeeCalculator(
                 recipientSetter,
                 inputSetter,
@@ -485,8 +486,11 @@ class BitcoinCoreBuilder {
             transactionSender = transactionSenderInstance
 
             transactionSendTimer.listener = transactionSender
-
-            transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, bloomFilterManager)
+            val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
+            transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, signer, bloomFilterManager)
+            replacementTransactionBuilder = ReplacementTransactionBuilder(
+                storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager
+            )
         }
 
         val bitcoinCore = BitcoinCore(
@@ -497,6 +501,7 @@ class BitcoinCoreBuilder {
             restoreKeyConverterChain,
             transactionCreator,
             transactionFeeCalculator,
+            replacementTransactionBuilder,
             paymentAddressParser,
             syncManager,
             purpose,

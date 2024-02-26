@@ -17,6 +17,7 @@ import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.RestoreKeyConverterChain
 import io.horizontalsystems.bitcoincore.managers.SyncManager
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputSelectorChain
+import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BitcoinSendInfo
@@ -36,6 +37,9 @@ import io.horizontalsystems.bitcoincore.network.peer.InventoryItemsHandlerChain
 import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.network.peer.PeerTaskHandlerChain
+import io.horizontalsystems.bitcoincore.rbf.ReplacementTransaction
+import io.horizontalsystems.bitcoincore.rbf.ReplacementTransactionBuilder
+import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
@@ -62,6 +66,7 @@ class BitcoinCore(
     private val restoreKeyConverterChain: RestoreKeyConverterChain,
     private val transactionCreator: TransactionCreator?,
     private val transactionFeeCalculator: TransactionFeeCalculator?,
+    private val replacementTransactionBuilder: ReplacementTransactionBuilder?,
     private val paymentAddressParser: PaymentAddressParser,
     private val syncManager: SyncManager,
     private val purpose: Purpose,
@@ -263,6 +268,10 @@ class BitcoinCore(
         return addressConverter.convert(publicKeyManager.receivePublicKey(), purpose.scriptType).stringValue
     }
 
+    fun changeAddress(): Address {
+        return addressConverter.convert(publicKeyManager.changePublicKey(), purpose.scriptType)
+    }
+
     fun usedAddresses(change: Boolean): List<UsedAddress> {
         return publicKeyManager.usedExternalPublicKeys(change).map {
             UsedAddress(
@@ -437,6 +446,27 @@ class BitcoinCore(
 
     fun getTransaction(hash: String): TransactionInfo? {
         return dataProvider.getTransaction(hash)
+    }
+
+    fun replacementTransaction(transactionHash: String, minFee: Long, type: ReplacementType): ReplacementTransaction {
+        val replacementTransactionBuilder = this.replacementTransactionBuilder ?: throw CoreError.ReadOnlyCore
+
+        val (mutableTransaction, fullInfo, descendantTransactionHashes) =
+            replacementTransactionBuilder.replacementTransaction(transactionHash, minFee, type)
+        val info = dataProvider.transactionInfo(fullInfo)
+        return ReplacementTransaction(mutableTransaction, info, descendantTransactionHashes)
+    }
+
+    fun send(replacementTransaction: ReplacementTransaction): FullTransaction {
+        val transactionCreator = this.transactionCreator ?: throw CoreError.ReadOnlyCore
+
+        return transactionCreator.create(replacementTransaction.mutableTransaction)
+    }
+
+    fun replacementTransactionInfo(transactionHash: String): Pair<TransactionInfo, LongRange>? {
+        val (fullInfo, feeRange) = this.replacementTransactionBuilder?.replacementInfo(transactionHash) ?: return null
+
+        return Pair(dataProvider.transactionInfo(fullInfo), feeRange)
     }
 
     sealed class KitState {
