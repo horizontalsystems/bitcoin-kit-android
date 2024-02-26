@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.storage
 
 import androidx.room.*
 import io.horizontalsystems.bitcoincore.models.TransactionInput
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
 
 @Dao
 interface TransactionInputDao {
@@ -26,18 +27,27 @@ interface TransactionInputDao {
     @Query("select * from TransactionInput where transactionHash IN (:hashes)")
     fun getTransactionInputs(hashes: List<ByteArray>): List<TransactionInput>
 
-    @Query("""
-        SELECT 
-            inputs.*, 
-            outputs.publicKeyPath, 
-            outputs.value, 
-            outputs.`index`, 
-            outputs.transactionHash as outputTransactionHash
-         FROM TransactionInput as inputs
-         LEFT JOIN TransactionOutput AS outputs ON outputs.transactionHash = inputs.previousOutputTxHash AND outputs.`index` = inputs.previousOutputIndex
-         WHERE inputs.transactionHash IN(:txHashes)
-    """)
-    fun getInputsWithPrevouts(txHashes: List<ByteArray>): List<InputWithPreviousOutput>
+//    @Query(
+//        """
+//        SELECT
+//            inputs.*,
+//            outputs.*
+//         FROM TransactionInput as inputs
+//         LEFT JOIN TransactionOutput AS outputs ON outputs.transactionHash = inputs.previousOutputTxHash AND outputs.`index` = inputs.previousOutputIndex
+//         WHERE inputs.transactionHash IN(:txHashes)
+//    """
+//    )
+//    fun getInputsWithPrevouts(txHashes: List<ByteArray>): List<InputWithPreviousOutput>
+
+    @Query("select * from TransactionOutput where transactionHash=:transactionHash AND `index`=:index limit 1")
+    fun output(transactionHash: ByteArray, index: Long): TransactionOutput?
+
+    @Transaction
+    fun getInputsWithPrevouts(txHashes: List<ByteArray>) =
+        getTransactionInputs(txHashes).map { input ->
+            val prevOutput = output(input.previousOutputTxHash, input.previousOutputIndex)
+            InputWithPreviousOutput(input, prevOutput)
+        }
 
     @Query("SELECT * FROM TransactionInput WHERE previousOutputTxHash = :txHash")
     fun getInputsByPrevOutputTxHash(txHash: ByteArray): List<TransactionInput>

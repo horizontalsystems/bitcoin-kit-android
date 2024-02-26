@@ -33,7 +33,11 @@ class TransactionSizeCalculator {
     )
 
     fun outputSize(scripType: ScriptType): Int {
-        return 8 + 1 + getLockingScriptSize(scripType)
+        return outputSize(lockingScriptSize = getLockingScriptSize(scripType))
+    }
+
+    fun outputSize(lockingScriptSize: Int): Int {
+        return 8 + 1 + lockingScriptSize
     }
 
     fun inputSize(scriptType: ScriptType): Int {
@@ -70,6 +74,23 @@ class TransactionSizeCalculator {
         }
 
         return 32 + 4 + 1 + scriptSigLength + 4 // PreviousOutputHex + InputIndex + sigLength + scriptSig + sequence
+    }
+
+    fun transactionSize(previousOutputs: List<TransactionOutput>, outputs: List<TransactionOutput>): Long {
+        val txIsWitness = previousOutputs.any { it.scriptType.isWitness }
+        val txWeight = if (txIsWitness) witnessTx else legacyTx
+        val inputWeight = previousOutputs.sumOf { inputSize(it) * 4 + if (txIsWitness) witnessSize(it.scriptType) else 0 }
+
+        var outputWeight = 0
+        for (output in outputs) {
+            when (output.scriptType) {
+                ScriptType.NULL_DATA -> outputWeight += outputSize(lockingScriptSize = output.lockingScript.size) * 4
+                ScriptType.UNKNOWN -> throw IllegalStateException("Unknown output script type")
+                else -> outputSize(outputSize(output.scriptType)) * 4
+            }
+        }
+
+        return toBytes(txWeight + inputWeight + outputWeight).toLong()
     }
 
     fun transactionSize(previousOutputs: List<TransactionOutput>, outputs: List<ScriptType>, pluginDataOutputSize: Int): Long {

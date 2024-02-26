@@ -5,12 +5,15 @@ import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoincore.transactions.builder.TransactionSigner
 
 class TransactionCreator(
     private val builder: TransactionBuilder,
     private val processor: PendingTransactionProcessor,
     private val transactionSender: TransactionSender,
+    private val transactionSigner: TransactionSigner,
     private val bloomFilterManager: BloomFilterManager
 ) {
 
@@ -25,18 +28,18 @@ class TransactionCreator(
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean
     ): FullTransaction {
-        return create {
-            builder.buildTransaction(
-                toAddress = toAddress,
-                value = value,
-                feeRate = feeRate,
-                senderPay = senderPay,
-                sortType = sortType,
-                unspentOutputs = unspentOutputs,
-                pluginData = pluginData,
-                rbfEnabled = rbfEnabled
-            )
-        }
+        val mutableTransaction = builder.buildTransaction(
+            toAddress = toAddress,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled
+        )
+
+        return create(mutableTransaction)
     }
 
     @Throws
@@ -47,15 +50,22 @@ class TransactionCreator(
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean
     ): FullTransaction {
-        return create {
-            builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType, rbfEnabled)
-        }
+        val mutableTransaction = builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType, rbfEnabled)
+
+        return create(mutableTransaction)
     }
 
-    private fun create(transactionBuilderFunction: () -> FullTransaction): FullTransaction {
-        transactionSender.canSendTransaction()
+    fun create(mutableTransaction: MutableTransaction): FullTransaction {
+        transactionSigner.sign(mutableTransaction)
 
-        val transaction = transactionBuilderFunction.invoke()
+        val fullTransaction = mutableTransaction.build()
+        processAndSend(fullTransaction)
+
+        return fullTransaction
+    }
+
+    private fun processAndSend(transaction: FullTransaction): FullTransaction {
+        transactionSender.canSendTransaction()
 
         try {
             processor.processCreated(transaction)

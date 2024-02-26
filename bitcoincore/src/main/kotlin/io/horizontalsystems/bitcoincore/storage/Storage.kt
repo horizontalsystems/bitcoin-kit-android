@@ -375,6 +375,20 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getInvalidTransaction(hash)
     }
 
+    override fun getDescendantTransactionsFullInfo(txHash: ByteArray): List<FullTransactionInfo> {
+        val fullTransactionInfo = getFullTransactionInfo(txHash) ?: return listOf()
+        val list = mutableListOf(fullTransactionInfo)
+
+        val inputs = getTransactionInputsByPrevOutputTxHash(fullTransactionInfo.header.hash)
+
+        inputs.forEach { input ->
+            val descendantTxs = getDescendantTransactionsFullInfo(input.transactionHash)
+            list.addAll(descendantTxs)
+        }
+
+        return list
+    }
+
     override fun moveTransactionToInvalidTransactions(invalidTransactions: List<InvalidTransaction>) {
         store.runInTransaction {
             invalidTransactions.forEach { invalidTransaction ->
@@ -383,7 +397,7 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
                 val inputs = store.input.getInputsWithPrevouts(listOf(invalidTransaction.hash))
                 inputs.forEach { input ->
                     input.previousOutput?.let {
-                        store.output.markFailedToSpend(it.outputTransactionHash, it.index)
+                        store.output.markFailedToSpend(it.transactionHash, it.index)
                     }
                 }
 

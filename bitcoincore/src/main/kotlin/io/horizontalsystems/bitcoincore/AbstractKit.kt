@@ -9,6 +9,8 @@ import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.models.UsedAddress
 import io.horizontalsystems.bitcoincore.network.Network
+import io.horizontalsystems.bitcoincore.rbf.ReplacementTransaction
+import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
@@ -188,4 +190,22 @@ abstract class AbstractKit {
     fun getRawTransaction(transactionHash: String): String? {
         return bitcoinCore.getRawTransaction(transactionHash)
     }
+
+    fun speedUpTransaction(transactionHash: String, minFee: Long): ReplacementTransaction {
+        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.SpeedUp)
+    }
+
+    fun cancelTransaction(transactionHash: String, minFee: Long): ReplacementTransaction {
+        val changeAddress = bitcoinCore.changeAddress()
+        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.Cancel(changeAddress))
+    }
+
+    fun send(replacementTransaction: ReplacementTransaction): FullTransaction {
+        return bitcoinCore.send(replacementTransaction)
+    }
+
+    fun replacementTransactionInfo(transactionHash: String): Pair<TransactionInfo, LongRange>? {
+        return bitcoinCore.replacementTransactionInfo(transactionHash)
+    }
+
 }

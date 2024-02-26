@@ -18,19 +18,23 @@ open class TransactionInfo {
     var timestamp: Long = 0
     var status: TransactionStatus = TransactionStatus.NEW
     var conflictingTxHash: String? = null
+    var rbfEnabled: Boolean = false
 
-    constructor(uid: String,
-                transactionHash: String,
-                transactionIndex: Int,
-                inputs: List<TransactionInputInfo>,
-                outputs: List<TransactionOutputInfo>,
-                amount: Long,
-                type: TransactionType,
-                fee: Long?,
-                blockHeight: Int?,
-                timestamp: Long,
-                status: TransactionStatus,
-                conflictingTxHash: String? = null) {
+    constructor(
+        uid: String,
+        transactionHash: String,
+        transactionIndex: Int,
+        inputs: List<TransactionInputInfo>,
+        outputs: List<TransactionOutputInfo>,
+        amount: Long,
+        type: TransactionType,
+        fee: Long?,
+        blockHeight: Int?,
+        timestamp: Long,
+        status: TransactionStatus,
+        conflictingTxHash: String? = null,
+        rbfEnabled: Boolean = false
+    ) {
         this.uid = uid
         this.transactionHash = transactionHash
         this.transactionIndex = transactionIndex
@@ -43,6 +47,7 @@ open class TransactionInfo {
         this.timestamp = timestamp
         this.status = status
         this.conflictingTxHash = conflictingTxHash
+        this.rbfEnabled = rbfEnabled
     }
 
     @Throws
@@ -61,6 +66,7 @@ open class TransactionInfo {
         status = TransactionStatus.getByCode(jsonObject.get("status").asInt())
                 ?: TransactionStatus.INVALID
         conflictingTxHash = jsonObject.get("conflictingTxHash")?.asString()
+        rbfEnabled = jsonObject.get("rbfEnabled")?.asBoolean() ?: false
     }
 
     private fun parseInputs(jsonArray: JsonArray): List<TransactionInputInfo> {

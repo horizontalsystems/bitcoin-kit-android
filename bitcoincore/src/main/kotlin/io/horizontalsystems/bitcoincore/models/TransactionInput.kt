@@ -21,7 +21,7 @@ import io.horizontalsystems.bitcoincore.storage.WitnessConverter
  */
 
 @Entity(
-    primaryKeys = ["previousOutputTxHash", "previousOutputIndex"],
+    primaryKeys = ["previousOutputTxHash", "previousOutputIndex", "sequence"],
     foreignKeys = [ForeignKey(
         entity = Transaction::class,
         parentColumns = ["hash"],
@@ -37,7 +37,7 @@ class TransactionInput(
     val previousOutputTxHash: ByteArray,
     val previousOutputIndex: Long,
     var sigScript: ByteArray = byteArrayOf(),
-    var sequence: Long = 0xfffffffe
+    var sequence: Long
 ) {
 
     var transactionHash = byteArrayOf()
@@ -47,3 +47,6 @@ class TransactionInput(
     @TypeConverters(WitnessConverter::class)
     var witness: List<ByteArray> = listOf()
 }
+
+val TransactionInput.rbfEnabled: Boolean
+    get() = sequence < 0xfffffffe

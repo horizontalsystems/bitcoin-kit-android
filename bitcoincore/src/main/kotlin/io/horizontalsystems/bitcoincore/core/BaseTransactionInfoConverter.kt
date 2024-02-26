@@ -44,6 +44,8 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             outputsInfo.add(outputInfo)
         }
 
+        val rbfEnabled = fullTransaction.inputs.any { it.input.rbfEnabled }
+
         return TransactionInfo(
             uid = transaction.uid,
             transactionHash = transaction.hash.toReversedHex(),
@@ -56,7 +58,8 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             blockHeight = fullTransaction.block?.height,
             timestamp = transaction.timestamp,
             status = TransactionStatus.getByCode(transaction.status) ?: TransactionStatus.NEW,
-            conflictingTxHash = transaction.conflictingTxHash?.toReversedHex()
+            conflictingTxHash = transaction.conflictingTxHash?.toReversedHex(),
+            rbfEnabled = rbfEnabled
         )
     }
 

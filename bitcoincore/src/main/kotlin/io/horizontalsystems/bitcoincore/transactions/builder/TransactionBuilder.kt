@@ -10,7 +10,6 @@ class TransactionBuilder(
     private val recipientSetter: IRecipientSetter,
     private val outputSetter: OutputSetter,
     private val inputSetter: InputSetter,
-    private val signer: TransactionSigner,
     private val lockTimeSetter: LockTimeSetter
 ) {
 
@@ -23,7 +22,7 @@ class TransactionBuilder(
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean
-    ): FullTransaction {
+    ): MutableTransaction {
         val mutableTransaction = MutableTransaction()
 
         recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false)
@@ -31,9 +30,8 @@ class TransactionBuilder(
         lockTimeSetter.setLockTime(mutableTransaction)
 
         outputSetter.setOutputs(mutableTransaction, sortType)
-        signer.sign(mutableTransaction)
 
-        return mutableTransaction.build()
+        return mutableTransaction
     }
 
     fun buildTransaction(
@@ -42,7 +40,7 @@ class TransactionBuilder(
         feeRate: Int,
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean
-    ): FullTransaction {
+    ): MutableTransaction {
         val mutableTransaction = MutableTransaction(false)
 
         recipientSetter.setRecipient(mutableTransaction, toAddress, unspentOutput.output.value, mapOf(), false)
@@ -50,9 +48,8 @@ class TransactionBuilder(
         lockTimeSetter.setLockTime(mutableTransaction)
 
         outputSetter.setOutputs(mutableTransaction, sortType)
-        signer.sign(mutableTransaction)
 
-        return mutableTransaction.build()
+        return mutableTransaction
     }
 
     open class BuilderException : Exception() {

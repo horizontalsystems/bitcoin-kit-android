@@ -109,6 +109,7 @@ interface IStorage {
     // InvalidTransaction
 
     fun getInvalidTransaction(hash: ByteArray): InvalidTransaction?
+    fun getDescendantTransactionsFullInfo(txHash: ByteArray): List<FullTransactionInfo>
     fun moveTransactionToInvalidTransactions(invalidTransactions: List<InvalidTransaction>)
     fun moveInvalidTransactionToTransactions(invalidTransaction: InvalidTransaction, toTransactions: FullTransaction)
     fun deleteAllInvalidTransactions()
