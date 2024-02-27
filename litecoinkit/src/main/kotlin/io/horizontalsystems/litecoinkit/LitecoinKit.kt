@@ -266,7 +266,7 @@ class LitecoinKit : AbstractKit {
             val bCoinApiProvider = BCoinApi("https://ltc.blocksdecoded.com/api")
 
             if (syncMode is SyncMode.Blockchair) {
-                val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                val blockchairApi = BlockchairApi(network.blockchairChainId)
                 val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
                 val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
 
@@ -301,7 +301,7 @@ class LitecoinKit : AbstractKit {
             "Litecoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${purpose.name}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair(""))) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair())) {
                 for (purpose in Purpose.values())
                     try {
                         SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode, purpose)))

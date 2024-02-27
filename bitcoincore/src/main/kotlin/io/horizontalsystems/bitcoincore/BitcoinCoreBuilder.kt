@@ -399,7 +399,7 @@ class BitcoinCoreBuilder {
                 val blockchairApi = if (apiTransactionProvider is BlockchairTransactionProvider) {
                     apiTransactionProvider.blockchairApi
                 } else {
-                    BlockchairApi(syncMode.key, network.blockchairChainId)
+                    BlockchairApi(network.blockchairChainId)
                 }
                 val lastBlockProvider = BlockchairLastBlockProvider(blockchairApi)
                 apiSyncer = BlockchairApiSyncer(

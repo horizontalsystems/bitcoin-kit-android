@@ -12,10 +12,9 @@ import java.util.Locale
 import java.util.TimeZone
 
 class BlockchairApi(
-    private val secretKey: String,
     private val chainId: String,
 ) {
-    private val apiManager = ApiManager("https://api.blockchair.com")
+    private val apiManager = ApiManager("https://api.blocksdecoded.com/v1/blockchair")
     private val limit = 10000
     private val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
 
@@ -64,7 +63,7 @@ class BlockchairApi(
     }
 
     fun lastBlockHeader(): BlockHeaderItem {
-        val params = "?limit=0&key=$secretKey"
+        val params = "?limit=0"
         val url = "$chainId/stats"
         val response = apiManager.doOkHttpGet(url + params).asObject()
         val data = response.get("data").asObject()
@@ -84,7 +83,7 @@ class BlockchairApi(
         receivedTransactionItems: List<Transaction> = emptyList()
     ): Pair<List<AddressItem>, List<Transaction>> {
         try {
-            val params = "?transaction_details=true&limit=$limit,0&offset=${receivedTransactionItems.size}&key=$secretKey"
+            val params = "?transaction_details=true&limit=$limit,0&offset=${receivedTransactionItems.size}"
             val url = "$chainId/dashboards/addresses/${addresses.joinToString(separator = ",")}"
             val response = apiManager.doOkHttpGet(url + params).asObject()
             val data = response.get("data").asObject()
@@ -134,7 +133,7 @@ class BlockchairApi(
 
     private fun fetchBlockHashes(heights: List<Int>): Map<Int, String> {
         try {
-            val params = "?limit=0&key=$secretKey"
+            val params = "?limit=0"
             val url = "$chainId/dashboards/blocks/${heights.joinToString(separator = ",")}"
             val response = apiManager.doOkHttpGet(url + params).asObject()
 
