@@ -260,7 +260,7 @@ class BitcoinCashKit : AbstractKit {
             is NetworkType.MainNet -> {
 
                 if (syncMode is SyncMode.Blockchair) {
-                    val blockchairApi = BlockchairApi(syncMode.key, network.blockchairChainId)
+                    val blockchairApi = BlockchairApi(network.blockchairChainId)
                     val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
                     val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
                     val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
@@ -305,7 +305,7 @@ class BitcoinCashKit : AbstractKit {
             "BitcoinCash-${networkType.description}-$walletId-${syncMode.javaClass.simpleName}"
 
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
-            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair(""))) {
+            for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair())) {
                 try {
                     SQLiteDatabase.deleteDatabase(context.getDatabasePath(getDatabaseName(networkType, walletId, syncMode)))
                 } catch (ex: Exception) {

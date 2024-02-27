@@ -478,7 +478,7 @@ class BitcoinCore(
     sealed class SyncMode {
         class Full : SyncMode()
         class Api : SyncMode()
-        class Blockchair(val key: String) : SyncMode()
+        class Blockchair : SyncMode()
     }
 
     sealed class StateError : Exception() {
