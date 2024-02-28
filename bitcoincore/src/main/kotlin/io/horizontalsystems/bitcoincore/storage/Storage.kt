@@ -15,6 +15,7 @@ import io.horizontalsystems.bitcoincore.models.SentTransaction
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInput
+import io.horizontalsystems.bitcoincore.models.TransactionMetadata
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import kotlin.math.max
@@ -273,6 +274,21 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.transaction.getByHash(hash)?.let { convertToFullTransaction(it) }
     }
 
+    override fun getFullTransactions(transactions: List<Transaction>): List<FullTransaction> {
+        val hashes = transactions.map { it.hash }
+        val inputsByTransaction = store.input.getTransactionInputs(hashes).groupBy { it.transactionHash }
+        val outputsByTransaction = store.output.getTransactionsOutputs(hashes).groupBy { it.transactionHash }
+        val metadataByTransaction = store.transactionMetadata.getTransactionMetadata(hashes).associateBy { it.transactionHash }
+
+        return transactions.map { transaction ->
+            val inputs = inputsByTransaction[transaction.hash] ?: listOf()
+            val outputs = outputsByTransaction[transaction.hash] ?: listOf()
+            FullTransaction(transaction, inputs, outputs, false).apply {
+                metadata = metadataByTransaction[transaction.hash] ?: TransactionMetadata(transaction.hash)
+            }
+        }
+    }
+
     override fun getValidOrInvalidTransaction(uid: String): Transaction? {
         return store.transaction.getValidOrInvalidByUid(uid)
     }
@@ -383,6 +399,20 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
         inputs.forEach { input ->
             val descendantTxs = getDescendantTransactionsFullInfo(input.transactionHash)
+            list.addAll(descendantTxs)
+        }
+
+        return list
+    }
+
+    override fun getDescendantTransactions(txHash: ByteArray): List<Transaction> {
+        val transaction = getTransaction(txHash) ?: return listOf()
+        val list = mutableListOf(transaction)
+
+        val inputs = getTransactionInputsByPrevOutputTxHash(txHash)
+
+        inputs.forEach { input ->
+            val descendantTxs = getDescendantTransactions(input.transactionHash)
             list.addAll(descendantTxs)
         }
 

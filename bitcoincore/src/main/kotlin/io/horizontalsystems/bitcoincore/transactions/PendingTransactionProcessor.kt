@@ -8,7 +8,6 @@ import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
@@ -19,11 +18,24 @@ class PendingTransactionProcessor(
     private val publicKeyManager: IPublicKeyManager,
     private val irregularOutputFinder: IIrregularOutputFinder,
     private val dataListener: IBlockchainDataListener,
-    private val conflictsResolver: TransactionConflictsResolver) {
+    private val conflictsResolver: TransactionConflictsResolver
+) {
 
     private val notMineTransactions = HashSet<ByteArray>()
 
     var transactionListener: WatchedTransactionManager? = null
+
+    private fun resolveConflicts(transaction: FullTransaction, updated: MutableList<Transaction>) {
+        val conflictingTransactions = conflictsResolver.getTransactionsConflictingWithPendingTransaction(transaction)
+
+        for (conflictingTransaction in conflictingTransactions) {
+            for (descendantTransaction in storage.getDescendantTransactions(conflictingTransaction.hash)) {
+                descendantTransaction.conflictingTxHash = transaction.header.hash
+                storage.updateTransaction(descendantTransaction)
+                updated.add(descendantTransaction)
+            }
+        }
+    }
 
     fun processCreated(transaction: FullTransaction) {
         if (storage.getTransaction(transaction.header.hash) != null) {
@@ -67,6 +79,8 @@ class PendingTransactionProcessor(
 
                 val existingTransaction = storage.getTransaction(transaction.header.hash)
                 if (existingTransaction != null) {
+                    resolveConflicts(transaction, updated)
+
                     if (existingTransaction.status == Transaction.Status.RELAYED) {
                         // if comes again from memPool we don't need to update it
                         continue
@@ -97,20 +111,9 @@ class PendingTransactionProcessor(
                     continue
                 }
 
-
-
-                val conflictingTransactions = conflictsResolver.getTransactionsConflictingWithPendingTransaction(transaction)
-                if (conflictingTransactions.isNotEmpty()) {
-                    // Ignore current transaction and mark former transactions as conflicting with current transaction
-                    conflictingTransactions.forEach { tx ->
-                        tx.conflictingTxHash = transaction.header.hash
-                        storage.updateTransaction(tx)
-                        updated.add(tx)
-                    }
-                } else {
-                    storage.addTransaction(transaction)
-                    inserted.add(transaction.header)
-                }
+                resolveConflicts(transaction, updated)
+                storage.addTransaction(transaction)
+                inserted.add(transaction.header)
 
                 if (!skipCheckBloomFilter) {
                     val checkDoubleSpend = !transaction.header.isOutgoing
