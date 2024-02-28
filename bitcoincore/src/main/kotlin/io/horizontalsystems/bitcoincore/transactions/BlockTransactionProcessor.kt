@@ -7,22 +7,29 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.inTopologicalOrder
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 
 class BlockTransactionProcessor(
-        private val storage: IStorage,
-        private val extractor: TransactionExtractor,
-        private val publicKeyManager: IPublicKeyManager,
-        private val irregularOutputFinder: IIrregularOutputFinder,
-        private val dataListener: IBlockchainDataListener,
-        private val conflictsResolver: TransactionConflictsResolver,
-        private val invalidator: TransactionInvalidator) {
+    private val storage: IStorage,
+    private val extractor: TransactionExtractor,
+    private val publicKeyManager: IPublicKeyManager,
+    private val irregularOutputFinder: IIrregularOutputFinder,
+    private val dataListener: IBlockchainDataListener,
+    private val conflictsResolver: TransactionConflictsResolver,
+    private val invalidator: TransactionInvalidator
+) {
 
     var transactionListener: WatchedTransactionManager? = null
+
+    private fun resolveConflicts(fullTransaction: FullTransaction) {
+        for (transaction in conflictsResolver.getTransactionsConflictingWithInBlockTransaction(fullTransaction)) {
+            transaction.conflictingTxHash = fullTransaction.header.hash
+            invalidator.invalidate(transaction)
+        }
+    }
 
     @Throws(BloomFilterManager.BloomFilterExpired::class)
     fun processReceived(transactions: List<FullTransaction>, block: Block, skipCheckBloomFilter: Boolean) {
@@ -40,6 +47,7 @@ class BlockTransactionProcessor(
                     extractor.extract(existingTransaction)
                     transactionListener?.onTransactionReceived(existingTransaction)
                     relay(existingTransaction.header, index, block)
+                    resolveConflicts(fullTransaction)
 
                     storage.updateTransaction(existingTransaction)
                     updated.add(existingTransaction.header)
@@ -61,11 +69,7 @@ class BlockTransactionProcessor(
                 }
 
                 relay(transaction, index, block)
-
-                conflictsResolver.getTransactionsConflictingWithInBlockTransaction(fullTransaction).forEach {
-                    it.conflictingTxHash = fullTransaction.header.hash
-                    invalidator.invalidate(it)
-                }
+                resolveConflicts(fullTransaction)
 
 
                 val invalidTransaction = storage.getInvalidTransaction(transaction.hash)

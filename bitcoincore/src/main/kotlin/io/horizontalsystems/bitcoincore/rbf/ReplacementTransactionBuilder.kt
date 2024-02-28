@@ -120,7 +120,7 @@ class ReplacementTransactionBuilder(
         val myExternalOutputs = myOutputs.filter { !it.changeOutput }.sortedBy { it.value }
 
         val sortedOutputs = myChangeOutputs + myExternalOutputs
-        val unusedUtxo = unspentOutputProvider.getSpendableUtxo().sortedBy { it.output.value }
+        val unusedUtxo = unspentOutputProvider.getConfirmedSpendableUtxo().sortedBy { it.output.value }
         var optimalReplacement: Triple</*inputs*/ List<UnspentOutput>, /*outputs*/ List<TransactionOutput>, /*fee*/ Long>? = null
 
         var utxoCount = 0
@@ -178,7 +178,7 @@ class ReplacementTransactionBuilder(
         fixedUtxo: List<TransactionOutput>,
         changeAddress: Address
     ): MutableTransaction? {
-        val unusedUtxo = unspentOutputProvider.getSpendableUtxo().sortedBy { it.output.value }
+        val unusedUtxo = unspentOutputProvider.getConfirmedSpendableUtxo().sortedBy { it.output.value }
         val originalInputsValue = fixedUtxo.sumOf { it.value }
 
         var optimalReplacement: Triple</*inputs*/ List<UnspentOutput>, /*outputs*/ List<TransactionOutput>, /*fee*/ Long>? = null
@@ -260,6 +260,7 @@ class ReplacementTransactionBuilder(
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
 
+        check(descendantTransactions.all { it.header.conflictingTxHash == null }) { "Already replaced"}
         check(absoluteFee <= minFee) { "Fee too low" }
 
         val mutableTransaction = when (type) {
@@ -295,7 +296,7 @@ class ReplacementTransactionBuilder(
 
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
-        val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedUtxo().sumOf { it.output.value }
+        val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo().sumOf { it.output.value }
         val myOutputs = originalFullInfo.outputs.filter { it.publicKeyPath != null && it.pluginId == null }
         val myOutputsTotalValue = myOutputs.sumOf { it.value }
 

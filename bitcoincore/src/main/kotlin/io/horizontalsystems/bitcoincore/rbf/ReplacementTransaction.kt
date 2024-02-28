@@ -6,5 +6,5 @@ import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 data class ReplacementTransaction(
     internal val mutableTransaction: MutableTransaction,
     val info: TransactionInfo,
-    val descendantTransactionHashes: List<String>
+    val replacedTransactionHashes: List<String>
 )

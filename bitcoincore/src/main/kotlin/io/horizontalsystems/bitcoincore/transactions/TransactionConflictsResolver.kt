@@ -19,7 +19,27 @@ class TransactionConflictsResolver(private val storage: IStorage) {
         // If any of conflicting transactions is already in a block, then current transaction is invalid and non of them is conflicting with it.
         if (conflictingTransactions.any { it.blockHash != null }) return listOf()
 
-        return conflictingTransactions
+        val conflictingFullTransactions = storage.getFullTransactions(conflictingTransactions)
+        return conflictingFullTransactions
+            // If an existing transaction has a conflicting input with higher sequence,
+            // then mempool transaction most probably has been received before
+            // and the existing transaction is a replacement transaction that is not relayed in mempool yet.
+            // Other cases are theoretically possible, but highly unlikely
+            .filter { !existingHasHigherSequence(mempoolTransaction = transaction, existingTransaction = it) }
+            .map { it.header }
+    }
+
+    private fun existingHasHigherSequence(mempoolTransaction: FullTransaction, existingTransaction: FullTransaction): Boolean {
+        existingTransaction.inputs.forEach { existingInput ->
+            val mempoolInput = mempoolTransaction.inputs.firstOrNull { mempoolInput ->
+                mempoolInput.previousOutputTxHash.contentEquals(existingInput.previousOutputTxHash)
+                        && mempoolInput.previousOutputIndex == existingInput.previousOutputIndex
+            }
+            if (mempoolInput != null && mempoolInput.sequence < existingInput.sequence)
+                return true
+        }
+
+        return false
     }
 
     fun getIncomingPendingTransactionsConflictingWith(transaction: FullTransaction): List<Transaction> {
@@ -28,13 +48,13 @@ class TransactionConflictsResolver(private val storage: IStorage) {
         if (incomingPendingTxHashes.isEmpty()) return listOf()
 
         val conflictingTransactionHashes = storage
-                .getTransactionInputs(incomingPendingTxHashes)
-                .filter { input ->
-                    transaction.inputs.any { it.previousOutputIndex == input.previousOutputIndex && it.previousOutputTxHash.contentEquals(input.previousOutputTxHash) }
-                }
-                .map {
-                    it.transactionHash
-                }
+            .getTransactionInputs(incomingPendingTxHashes)
+            .filter { input ->
+                transaction.inputs.any { it.previousOutputIndex == input.previousOutputIndex && it.previousOutputTxHash.contentEquals(input.previousOutputTxHash) }
+            }
+            .map {
+                it.transactionHash
+            }
 
         if (conflictingTransactionHashes.isEmpty()) return listOf()
 
