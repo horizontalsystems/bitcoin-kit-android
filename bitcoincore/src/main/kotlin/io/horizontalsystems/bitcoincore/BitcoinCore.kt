@@ -39,6 +39,7 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.network.peer.PeerTaskHandlerChain
 import io.horizontalsystems.bitcoincore.rbf.ReplacementTransaction
 import io.horizontalsystems.bitcoincore.rbf.ReplacementTransactionBuilder
+import io.horizontalsystems.bitcoincore.rbf.ReplacementTransactionInfo
 import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
@@ -268,8 +269,8 @@ class BitcoinCore(
         return addressConverter.convert(publicKeyManager.receivePublicKey(), purpose.scriptType).stringValue
     }
 
-    fun changeAddress(): Address {
-        return addressConverter.convert(publicKeyManager.changePublicKey(), purpose.scriptType)
+    fun address(publicKey: PublicKey): Address {
+        return addressConverter.convert(publicKey, purpose.scriptType)
     }
 
     fun usedAddresses(change: Boolean): List<UsedAddress> {
@@ -463,10 +464,8 @@ class BitcoinCore(
         return transactionCreator.create(replacementTransaction.mutableTransaction)
     }
 
-    fun replacementTransactionInfo(transactionHash: String): Pair<TransactionInfo, LongRange>? {
-        val (fullInfo, feeRange) = this.replacementTransactionBuilder?.replacementInfo(transactionHash) ?: return null
-
-        return Pair(dataProvider.transactionInfo(fullInfo), feeRange)
+    fun replacementTransactionInfo(transactionHash: String, type: ReplacementType): ReplacementTransactionInfo? {
+        return replacementTransactionBuilder?.replacementInfo(transactionHash, type)
     }
 
     sealed class KitState {

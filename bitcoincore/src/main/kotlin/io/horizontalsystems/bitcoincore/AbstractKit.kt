@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.models.UsedAddress
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.rbf.ReplacementTransaction
+import io.horizontalsystems.bitcoincore.rbf.ReplacementTransactionInfo
 import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
@@ -196,16 +197,24 @@ abstract class AbstractKit {
     }
 
     fun cancelTransaction(transactionHash: String, minFee: Long): ReplacementTransaction {
-        val changeAddress = bitcoinCore.changeAddress()
-        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.Cancel(changeAddress))
+        val publicKey = bitcoinCore.receivePublicKey()
+        val address = bitcoinCore.address(publicKey)
+        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.Cancel(address, publicKey))
     }
 
     fun send(replacementTransaction: ReplacementTransaction): FullTransaction {
         return bitcoinCore.send(replacementTransaction)
     }
 
-    fun replacementTransactionInfo(transactionHash: String): Pair<TransactionInfo, LongRange>? {
-        return bitcoinCore.replacementTransactionInfo(transactionHash)
+    fun speedUpTransactionInfo(transactionHash: String): ReplacementTransactionInfo? {
+        return bitcoinCore.replacementTransactionInfo(transactionHash, ReplacementType.SpeedUp)
+    }
+
+    fun cancelTransactionInfo(transactionHash: String): ReplacementTransactionInfo? {
+        val receivePublicKey = bitcoinCore.receivePublicKey()
+        val address = bitcoinCore.address(receivePublicKey)
+        val type = ReplacementType.Cancel(address, receivePublicKey)
+        return bitcoinCore.replacementTransactionInfo(transactionHash, type)
     }
 
 }
