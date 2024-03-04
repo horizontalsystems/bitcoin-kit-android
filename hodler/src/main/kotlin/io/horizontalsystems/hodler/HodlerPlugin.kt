@@ -11,9 +11,15 @@ import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
-import io.horizontalsystems.bitcoincore.transactions.scripts.*
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_1
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_CHECKSEQUENCEVERIFY
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_DROP
+import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
+import io.horizontalsystems.bitcoincore.transactions.scripts.Script
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
+import kotlin.math.min
 
 class HodlerPlugin(
     private val addressConverter: IAddressConverter,
@@ -105,6 +111,14 @@ class HodlerPlugin(
         if (address.scriptType != ScriptType.P2PKH) {
             throw UnsupportedAddressType()
         }
+    }
+
+    override fun incrementSequence(sequence: Long): Long {
+        val maxInc: Long = 0x7f800000
+        val currentInc = sequence and maxInc
+        val newInc = min(currentInc + (1 shl 23), maxInc)
+        val zeroIncSequence = (0xffffffff - maxInc) and sequence
+        return zeroIncSequence or newInc
     }
 
     private fun redeemScript(lockTimeInterval: LockTimeInterval, pubkeyHash: ByteArray): ByteArray {

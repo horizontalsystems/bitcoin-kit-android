@@ -8,3 +8,8 @@ data class ReplacementTransaction(
     val info: TransactionInfo,
     val replacedTransactionHashes: List<String>
 )
+
+data class ReplacementTransactionInfo(
+    val originalTransactionSize: Long,
+    val feeRange: LongRange
+)

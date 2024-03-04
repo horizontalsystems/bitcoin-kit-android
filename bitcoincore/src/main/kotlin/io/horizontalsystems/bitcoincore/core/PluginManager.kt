@@ -2,9 +2,9 @@ package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.models.Address
-import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
+import io.horizontalsystems.bitcoincore.storage.InputWithPreviousOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.scripts.Script
@@ -79,9 +79,16 @@ class PluginManager {
             plugin.validateAddress(address)
         }
     }
+
+    fun incrementedSequence(inputWithPreviousOutput: InputWithPreviousOutput): Long {
+        val plugin = inputWithPreviousOutput.previousOutput?.pluginId?.let { plugins[it] }
+        val sequence = inputWithPreviousOutput.input.sequence
+
+        return plugin?.incrementSequence(sequence) ?: (sequence + 1)
+    }
 }
 
-interface IPlugin: IRestoreKeyConverter {
+interface IPlugin : IRestoreKeyConverter {
     val id: Byte
 
     fun processOutputs(mutableTransaction: MutableTransaction, pluginData: IPluginData, skipChecking: Boolean)
@@ -90,6 +97,7 @@ interface IPlugin: IRestoreKeyConverter {
     fun getInputSequence(output: TransactionOutput): Long
     fun parsePluginData(output: TransactionOutput, txTimestamp: Long): IPluginOutputData
     fun validateAddress(address: Address)
+    fun incrementSequence(sequence: Long): Long
 }
 
 interface IPluginData

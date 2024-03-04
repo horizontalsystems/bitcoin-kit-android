@@ -21,6 +21,7 @@ import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionMetadataExtractor
 import io.horizontalsystems.bitcoincore.utils.ShuffleSorter
+import kotlin.math.min
 
 class ReplacementTransactionBuilder(
     private val storage: IStorage,
@@ -70,8 +71,14 @@ class ReplacementTransactionBuilder(
         return null
     }
 
-    private fun incrementedSequence(input: TransactionInput): Long {
-        return input.sequence + 1 // TODO: increment locked inputs sequence
+    private fun incrementedSequence(inputWithPreviousOutput: InputWithPreviousOutput): Long {
+        val input = inputWithPreviousOutput.input
+
+        if (inputWithPreviousOutput.previousOutput?.pluginId != null) {
+            return pluginManager.incrementedSequence(inputWithPreviousOutput)
+        }
+
+        return min(input.sequence + 1, 0xFFFFFFFF)
     }
 
     private fun inputToSign(previousOutput: TransactionOutput, publicKey: PublicKey, sequence: Long): InputToSign {
@@ -94,7 +101,7 @@ class ReplacementTransactionBuilder(
         originalInputs.map { inputWithPreviousOutput ->
             val previousOutput = inputWithPreviousOutput.previousOutput ?: throw BuildError.InvalidTransaction
             val publicKey = previousOutput.publicKeyPath?.let { publicKeyManager.getPublicKeyByPath(it) } ?: throw BuildError.InvalidTransaction
-            mutableTransaction.addInput(inputToSign(previousOutput = previousOutput, publicKey, incrementedSequence(inputWithPreviousOutput.input)))
+            mutableTransaction.addInput(inputToSign(previousOutput = previousOutput, publicKey, incrementedSequence(inputWithPreviousOutput)))
         }
     }
 
@@ -114,12 +121,16 @@ class ReplacementTransactionBuilder(
         fixedUtxo: List<TransactionOutput>
     ): MutableTransaction? {
         // If an output has a pluginId, it most probably has a time-locked value and it shouldn't be altered.
-        val fixedOutputs = originalFullInfo.outputs.filter { it.publicKeyPath == null || it.pluginId != null }
+        var fixedOutputs = originalFullInfo.outputs.filter { it.publicKeyPath == null || it.pluginId != null }
         val myOutputs = originalFullInfo.outputs.filter { it.publicKeyPath != null && it.pluginId == null }
         val myChangeOutputs = myOutputs.filter { it.changeOutput }.sortedBy { it.value }
         val myExternalOutputs = myOutputs.filter { !it.changeOutput }.sortedBy { it.value }
 
-        val sortedOutputs = myChangeOutputs + myExternalOutputs
+        var sortedOutputs = myChangeOutputs + myExternalOutputs
+        if (fixedOutputs.isEmpty() && sortedOutputs.isNotEmpty()) {
+            fixedOutputs = listOf(sortedOutputs.last())
+            sortedOutputs = sortedOutputs.dropLast(1)
+        }
         val unusedUtxo = unspentOutputProvider.getConfirmedSpendableUtxo().sortedBy { it.output.value }
         var optimalReplacement: Triple</*inputs*/ List<UnspentOutput>, /*outputs*/ List<TransactionOutput>, /*fee*/ Long>? = null
 
@@ -173,10 +184,10 @@ class ReplacementTransactionBuilder(
     private fun cancelReplacement(
         originalFullInfo: FullTransactionInfo,
         minFee: Long,
-        originalFee: Long,
         originalFeeRate: Int,
         fixedUtxo: List<TransactionOutput>,
-        changeAddress: Address
+        userAddress: Address,
+        publicKey: PublicKey
     ): MutableTransaction? {
         val unusedUtxo = unspentOutputProvider.getConfirmedSpendableUtxo().sortedBy { it.output.value }
         val originalInputsValue = fixedUtxo.sumOf { it.value }
@@ -186,15 +197,21 @@ class ReplacementTransactionBuilder(
         var utxoCount = 0
         val outputs = listOf(
             TransactionOutput(
-                value = originalInputsValue - originalFee,
+                value = originalInputsValue - minFee,
                 index = 0,
-                script = changeAddress.lockingScript,
-                type = changeAddress.scriptType,
-                address = changeAddress.stringValue,
-                lockingScriptPayload = changeAddress.lockingScriptPayload
+                script = userAddress.lockingScript,
+                type = userAddress.scriptType,
+                address = userAddress.stringValue,
+                lockingScriptPayload = userAddress.lockingScriptPayload,
+                publicKey = publicKey
             )
         )
         do {
+            if (originalInputsValue - minFee < dustCalculator.dust(userAddress.scriptType)) {
+                utxoCount++
+                continue
+            }
+
             val utxo = unusedUtxo.take(utxoCount)
 
             replacementTransaction(
@@ -239,7 +256,6 @@ class ReplacementTransactionBuilder(
         minFee: Long,
         type: ReplacementType
     ): Triple<MutableTransaction, FullTransactionInfo, List<String>> {
-        // TODO: Need to check that this transaction has not been replaced already
         val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray()) ?: throw BuildError.InvalidTransaction
         check(originalFullInfo.block == null) { "Transaction already in block" }
 
@@ -260,12 +276,19 @@ class ReplacementTransactionBuilder(
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
 
-        check(descendantTransactions.all { it.header.conflictingTxHash == null }) { "Already replaced"}
+        check(descendantTransactions.all { it.header.conflictingTxHash == null }) { "Already replaced" }
         check(absoluteFee <= minFee) { "Fee too low" }
 
         val mutableTransaction = when (type) {
             ReplacementType.SpeedUp -> speedUpReplacement(originalFullInfo, minFee, originalFeeRate, fixedUtxo)
-            is ReplacementType.Cancel -> cancelReplacement(originalFullInfo, minFee, originalFee, originalFeeRate, fixedUtxo, type.changeAddress)
+            is ReplacementType.Cancel -> cancelReplacement(
+                originalFullInfo,
+                minFee,
+                originalFeeRate,
+                fixedUtxo,
+                type.address,
+                type.publicKey
+            )
         }
 
         checkNotNull(mutableTransaction) { "Unable to replace" }
@@ -289,19 +312,61 @@ class ReplacementTransactionBuilder(
         )
     }
 
-    fun replacementInfo(transactionHash: String): Pair<FullTransactionInfo, LongRange>? {
+    fun replacementInfo(transactionHash: String, type: ReplacementType): ReplacementTransactionInfo? {
         val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray()) ?: return null
         check(originalFullInfo.block == null) { "Transaction already in block" }
         check(originalFullInfo.metadata.type != TransactionType.Incoming) { "Can replace only outgoing transaction" }
 
+        val originalFee = originalFullInfo.metadata.fee
+        checkNotNull(originalFee) { "No fee for original transaction" }
+
+        val fixedUtxo = originalFullInfo.inputs.mapNotNull { it.previousOutput }
+        check(originalFullInfo.inputs.size == fixedUtxo.size) { "No previous output" }
+
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
-        val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo().sumOf { it.output.value }
-        val myOutputs = originalFullInfo.outputs.filter { it.publicKeyPath != null && it.pluginId == null }
-        val myOutputsTotalValue = myOutputs.sumOf { it.value }
 
-        val feeRange = LongRange(absoluteFee, absoluteFee + myOutputsTotalValue + confirmedUtxoTotalValue)
-        return Pair(originalFullInfo, feeRange)
+        val originalSize: Long
+        val removableOutputsValue: Long
+
+        when (type) {
+            ReplacementType.SpeedUp -> {
+                var fixedOutputs = originalFullInfo.outputs.filter { it.publicKeyPath == null || it.pluginId != null }
+                val myOutputs = originalFullInfo.outputs.filter { it.publicKeyPath != null && it.pluginId == null }
+                val myChangeOutputs = myOutputs.filter { it.changeOutput }.sortedBy { it.value }
+                val myExternalOutputs = myOutputs.filter { !it.changeOutput }.sortedBy { it.value }
+
+                var sortedOutputs = myChangeOutputs + myExternalOutputs
+                if (fixedOutputs.isEmpty() && sortedOutputs.isNotEmpty()) {
+                    fixedOutputs = listOf(sortedOutputs.last())
+                    sortedOutputs = sortedOutputs.dropLast(1)
+                }
+
+                originalSize = sizeCalculator.transactionSize(fixedUtxo, fixedOutputs)
+                removableOutputsValue = sortedOutputs.sumOf { it.value }
+            }
+
+            is ReplacementType.Cancel -> {
+                val dustValue = dustCalculator.dust(type.address.scriptType).toLong()
+                val fixedOutputs = listOf(
+                    TransactionOutput(
+                        value = dustValue,
+                        index = 0,
+                        script = type.address.lockingScript,
+                        type = type.address.scriptType,
+                        address = type.address.stringValue,
+                        lockingScriptPayload = type.address.lockingScriptPayload
+                    )
+                )
+                originalSize = sizeCalculator.transactionSize(fixedUtxo, fixedOutputs)
+                removableOutputsValue = originalFullInfo.outputs.sumOf { it.value } - dustValue
+            }
+        }
+
+        val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo().sumOf { it.output.value }
+        val feeRange = LongRange(absoluteFee, originalFee + removableOutputsValue + confirmedUtxoTotalValue)
+
+        return ReplacementTransactionInfo(originalSize, feeRange)
     }
 
     sealed class BuildError : Throwable() {
