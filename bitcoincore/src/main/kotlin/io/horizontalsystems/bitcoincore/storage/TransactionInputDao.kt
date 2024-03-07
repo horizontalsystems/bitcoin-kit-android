@@ -27,18 +27,6 @@ interface TransactionInputDao {
     @Query("select * from TransactionInput where transactionHash IN (:hashes)")
     fun getTransactionInputs(hashes: List<ByteArray>): List<TransactionInput>
 
-//    @Query(
-//        """
-//        SELECT
-//            inputs.*,
-//            outputs.*
-//         FROM TransactionInput as inputs
-//         LEFT JOIN TransactionOutput AS outputs ON outputs.transactionHash = inputs.previousOutputTxHash AND outputs.`index` = inputs.previousOutputIndex
-//         WHERE inputs.transactionHash IN(:txHashes)
-//    """
-//    )
-//    fun getInputsWithPrevouts(txHashes: List<ByteArray>): List<InputWithPreviousOutput>
-
     @Query("select * from TransactionOutput where transactionHash=:transactionHash AND `index`=:index limit 1")
     fun output(transactionHash: ByteArray, index: Long): TransactionOutput?
 
