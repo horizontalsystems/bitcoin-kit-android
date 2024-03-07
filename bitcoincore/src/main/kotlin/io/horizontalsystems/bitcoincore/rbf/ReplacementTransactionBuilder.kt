@@ -99,8 +99,10 @@ class ReplacementTransactionBuilder(
         pluginManager.processInputs(mutableTransaction)
 
         originalInputs.map { inputWithPreviousOutput ->
-            val previousOutput = inputWithPreviousOutput.previousOutput ?: throw BuildError.InvalidTransaction
-            val publicKey = previousOutput.publicKeyPath?.let { publicKeyManager.getPublicKeyByPath(it) } ?: throw BuildError.InvalidTransaction
+            val previousOutput =
+                inputWithPreviousOutput.previousOutput ?: throw BuildError.InvalidTransaction("No previous output of original transaction")
+            val publicKey = previousOutput.publicKeyPath?.let { publicKeyManager.getPublicKeyByPath(it) }
+                ?: throw BuildError.InvalidTransaction("No public key of original transaction")
             mutableTransaction.addInput(inputToSign(previousOutput = previousOutput, publicKey, incrementedSequence(inputWithPreviousOutput)))
         }
     }
@@ -256,19 +258,20 @@ class ReplacementTransactionBuilder(
         minFee: Long,
         type: ReplacementType
     ): Triple<MutableTransaction, FullTransactionInfo, List<String>> {
-        val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray()) ?: throw BuildError.InvalidTransaction
-        check(originalFullInfo.block == null) { "Transaction already in block" }
+        val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray())
+            ?: throw BuildError.InvalidTransaction("No FullTransactionInfo")
+        check(originalFullInfo.block == null) { throw BuildError.InvalidTransaction("Transaction already in block") }
 
         val originalFee = originalFullInfo.metadata.fee
-        checkNotNull(originalFee) { "No fee for original transaction" }
+        checkNotNull(originalFee) { throw BuildError.InvalidTransaction("No fee for original transaction") }
 
-        check(originalFullInfo.metadata.type != TransactionType.Incoming) { "Can replace only outgoing transaction" }
+        check(originalFullInfo.metadata.type != TransactionType.Incoming) { throw BuildError.InvalidTransaction("Can replace only outgoing transaction") }
 
         val fixedUtxo = originalFullInfo.inputs.mapNotNull { it.previousOutput }
 
-        check(originalFullInfo.inputs.size == fixedUtxo.size) { "No previous output" }
+        check(originalFullInfo.inputs.size == fixedUtxo.size) { throw BuildError.NoPreviousOutput }
 
-        check(originalFullInfo.inputs.any { it.input.rbfEnabled }) { "Rbf not enabled" }
+        check(originalFullInfo.inputs.any { it.input.rbfEnabled }) { throw BuildError.RbfNotEnabled }
 
         val originalSize = sizeCalculator.transactionSize(previousOutputs = fixedUtxo, outputs = originalFullInfo.outputs)
 
@@ -276,8 +279,8 @@ class ReplacementTransactionBuilder(
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
 
-        check(descendantTransactions.all { it.header.conflictingTxHash == null }) { "Already replaced" }
-        check(absoluteFee <= minFee) { "Fee too low" }
+        check(descendantTransactions.all { it.header.conflictingTxHash == null }) { throw BuildError.InvalidTransaction("Already replaced") }
+        check(absoluteFee <= minFee) { throw BuildError.FeeTooLow }
 
         val mutableTransaction = when (type) {
             ReplacementType.SpeedUp -> speedUpReplacement(originalFullInfo, minFee, originalFeeRate, fixedUtxo)
@@ -291,7 +294,7 @@ class ReplacementTransactionBuilder(
             )
         }
 
-        checkNotNull(mutableTransaction) { "Unable to replace" }
+        checkNotNull(mutableTransaction) { throw BuildError.UnableToReplace }
 
         val fullTransaction = mutableTransaction.build()
         metadataExtractor.extract(fullTransaction)
@@ -314,14 +317,14 @@ class ReplacementTransactionBuilder(
 
     fun replacementInfo(transactionHash: String, type: ReplacementType): ReplacementTransactionInfo? {
         val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray()) ?: return null
-        check(originalFullInfo.block == null) { "Transaction already in block" }
-        check(originalFullInfo.metadata.type != TransactionType.Incoming) { "Can replace only outgoing transaction" }
+        check(originalFullInfo.block == null) { throw BuildError.InvalidTransaction("Transaction already in block") }
+        check(originalFullInfo.metadata.type != TransactionType.Incoming) { throw BuildError.InvalidTransaction("Can replace only outgoing transaction") }
 
         val originalFee = originalFullInfo.metadata.fee
-        checkNotNull(originalFee) { "No fee for original transaction" }
+        checkNotNull(originalFee) { throw BuildError.InvalidTransaction("No fee for original transaction") }
 
         val fixedUtxo = originalFullInfo.inputs.mapNotNull { it.previousOutput }
-        check(originalFullInfo.inputs.size == fixedUtxo.size) { "No previous output" }
+        check(originalFullInfo.inputs.size == fixedUtxo.size) { throw BuildError.NoPreviousOutput}
 
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
@@ -370,7 +373,7 @@ class ReplacementTransactionBuilder(
     }
 
     sealed class BuildError : Throwable() {
-        object InvalidTransaction : BuildError()
+        class InvalidTransaction(override val message: String) : BuildError()
         object NoPreviousOutput : BuildError()
         object FeeTooLow : BuildError()
         object RbfNotEnabled : BuildError()
