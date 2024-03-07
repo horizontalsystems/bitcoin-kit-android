@@ -276,15 +276,15 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
 
     override fun getFullTransactions(transactions: List<Transaction>): List<FullTransaction> {
         val hashes = transactions.map { it.hash }
-        val inputsByTransaction = store.input.getTransactionInputs(hashes).groupBy { it.transactionHash }
-        val outputsByTransaction = store.output.getTransactionsOutputs(hashes).groupBy { it.transactionHash }
-        val metadataByTransaction = store.transactionMetadata.getTransactionMetadata(hashes).associateBy { it.transactionHash }
+        val inputsByTransaction = store.input.getTransactionInputs(hashes).groupBy { it.transactionHash.toHexString() }
+        val outputsByTransaction = store.output.getTransactionsOutputs(hashes).groupBy { it.transactionHash.toHexString() }
+        val metadataByTransaction = store.transactionMetadata.getTransactionMetadata(hashes).associateBy { it.transactionHash.toHexString() }
 
         return transactions.map { transaction ->
-            val inputs = inputsByTransaction[transaction.hash] ?: listOf()
-            val outputs = outputsByTransaction[transaction.hash] ?: listOf()
+            val inputs = inputsByTransaction[transaction.hash.toHexString()] ?: listOf()
+            val outputs = outputsByTransaction[transaction.hash.toHexString()] ?: listOf()
             FullTransaction(transaction, inputs, outputs, false).apply {
-                metadata = metadataByTransaction[transaction.hash] ?: TransactionMetadata(transaction.hash)
+                metadata = metadataByTransaction[transaction.hash.toHexString()] ?: TransactionMetadata(transaction.hash)
             }
         }
     }
