@@ -6,6 +6,7 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
+import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.PublicKey
@@ -81,10 +82,10 @@ class ReplacementTransactionBuilder(
         return min(input.sequence + 1, 0xFFFFFFFF)
     }
 
-    private fun inputToSign(previousOutput: TransactionOutput, publicKey: PublicKey, sequence: Long): InputToSign {
+    private fun inputToSign(previousOutput: TransactionOutput, prevOutputPublicKey: PublicKey, sequence: Long): InputToSign {
         val transactionInput = TransactionInput(previousOutput.transactionHash, previousOutput.index.toLong(), sequence = sequence)
 
-        return InputToSign(transactionInput, previousOutput, publicKey)
+        return InputToSign(transactionInput, previousOutput, prevOutputPublicKey)
     }
 
     private fun setInputs(
@@ -93,7 +94,7 @@ class ReplacementTransactionBuilder(
         additionalInputs: List<UnspentOutput>
     ) {
         additionalInputs.map { utxo ->
-            mutableTransaction.addInput(inputToSign(previousOutput = utxo.output, publicKey = utxo.publicKey, sequence = 0x0))
+            mutableTransaction.addInput(inputToSign(previousOutput = utxo.output, prevOutputPublicKey = utxo.publicKey, sequence = 0x0))
         }
 
         pluginManager.processInputs(mutableTransaction)
@@ -101,9 +102,23 @@ class ReplacementTransactionBuilder(
         originalInputs.map { inputWithPreviousOutput ->
             val previousOutput =
                 inputWithPreviousOutput.previousOutput ?: throw BuildError.InvalidTransaction("No previous output of original transaction")
-            val publicKey = previousOutput.publicKeyPath?.let { publicKeyManager.getPublicKeyByPath(it) }
-                ?: throw BuildError.InvalidTransaction("No public key of original transaction")
-            mutableTransaction.addInput(inputToSign(previousOutput = previousOutput, publicKey, incrementedSequence(inputWithPreviousOutput)))
+            val prevOutputPublicKey = previousOutput.publicKeyPath?.let { path ->
+                val parts = path.split("/").map { it.toInt() }
+                if (parts.size != 3) throw PublicKeyManager.Error.InvalidPath
+                val account = parts[0]
+                val change = if (parts[1] == 0) 1 else 0 // change was incorrectly set in PublicKey
+                val index = parts[2]
+                val fixedPath = "$account/$change/$index"
+
+                publicKeyManager.getPublicKeyByPath(fixedPath)
+            } ?: throw BuildError.InvalidTransaction("No public key of original transaction")
+            mutableTransaction.addInput(
+                inputToSign(
+                    previousOutput = previousOutput,
+                    prevOutputPublicKey = prevOutputPublicKey,
+                    sequence = incrementedSequence(inputWithPreviousOutput)
+                )
+            )
         }
     }
 
@@ -324,7 +339,7 @@ class ReplacementTransactionBuilder(
         checkNotNull(originalFee) { throw BuildError.InvalidTransaction("No fee for original transaction") }
 
         val fixedUtxo = originalFullInfo.inputs.mapNotNull { it.previousOutput }
-        check(originalFullInfo.inputs.size == fixedUtxo.size) { throw BuildError.NoPreviousOutput}
+        check(originalFullInfo.inputs.size == fixedUtxo.size) { throw BuildError.NoPreviousOutput }
 
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
