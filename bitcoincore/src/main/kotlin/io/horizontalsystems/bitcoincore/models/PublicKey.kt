@@ -37,7 +37,7 @@ open class PublicKey() {
     }
 
     constructor(account: Int, index: Int, external: Boolean, publicKey: ByteArray, publicKeyHash: ByteArray) : this() {
-        this.path = "$account/${if (external) 1 else 0}/$index"
+        this.path = "$account/${if (external) 0 else 1}/$index"
         this.account = account
         this.index = index
         this.external = external
