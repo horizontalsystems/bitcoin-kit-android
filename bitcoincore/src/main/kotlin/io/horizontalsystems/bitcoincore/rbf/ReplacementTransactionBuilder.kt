@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.managers.PublicKeyManager
 import io.horizontalsystems.bitcoincore.managers.UnspentOutputProvider
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.PublicKey
@@ -102,23 +101,9 @@ class ReplacementTransactionBuilder(
         originalInputs.map { inputWithPreviousOutput ->
             val previousOutput =
                 inputWithPreviousOutput.previousOutput ?: throw BuildError.InvalidTransaction("No previous output of original transaction")
-            val prevOutputPublicKey = previousOutput.publicKeyPath?.let { path ->
-                val parts = path.split("/").map { it.toInt() }
-                if (parts.size != 3) throw PublicKeyManager.Error.InvalidPath
-                val account = parts[0]
-                val change = if (parts[1] == 0) 1 else 0 // change was incorrectly set in PublicKey
-                val index = parts[2]
-                val fixedPath = "$account/$change/$index"
-
-                publicKeyManager.getPublicKeyByPath(fixedPath)
-            } ?: throw BuildError.InvalidTransaction("No public key of original transaction")
-            mutableTransaction.addInput(
-                inputToSign(
-                    previousOutput = previousOutput,
-                    prevOutputPublicKey = prevOutputPublicKey,
-                    sequence = incrementedSequence(inputWithPreviousOutput)
-                )
-            )
+            val publicKey = previousOutput.publicKeyPath?.let { publicKeyManager.getPublicKeyByPath(it) }
+                ?: throw BuildError.InvalidTransaction("No public key of original transaction")
+            mutableTransaction.addInput(inputToSign(previousOutput = previousOutput, publicKey, incrementedSequence(inputWithPreviousOutput)))
         }
     }
 
