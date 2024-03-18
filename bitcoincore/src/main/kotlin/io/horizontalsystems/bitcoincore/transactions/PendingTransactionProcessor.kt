@@ -9,6 +9,7 @@ import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.managers.IIrregularOutputFinder
 import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
 
@@ -18,7 +19,8 @@ class PendingTransactionProcessor(
     private val publicKeyManager: IPublicKeyManager,
     private val irregularOutputFinder: IIrregularOutputFinder,
     private val dataListener: IBlockchainDataListener,
-    private val conflictsResolver: TransactionConflictsResolver
+    private val conflictsResolver: TransactionConflictsResolver,
+    private val ignorePendingIncoming: Boolean
 ) {
 
     private val notMineTransactions = HashSet<ByteArray>()
@@ -112,6 +114,9 @@ class PendingTransactionProcessor(
                 }
 
                 resolveConflicts(transaction, updated)
+                if (ignorePendingIncoming && transaction.metadata.type == TransactionType.Incoming) {
+                    continue
+                }
                 storage.addTransaction(transaction)
                 inserted.add(transaction.header)
 
