@@ -344,13 +344,15 @@ class BitcoinCoreBuilder {
         val transactionExtractor = TransactionExtractor(addressConverter, storage, pluginManager, metadataExtractor)
 
         val conflictsResolver = TransactionConflictsResolver(storage)
+        val ignorePendingIncoming = syncMode is BitcoinCore.SyncMode.Blockchair
         val pendingTransactionProcessor = PendingTransactionProcessor(
             storage,
             transactionExtractor,
             publicKeyManager,
             irregularOutputFinder,
             dataProvider,
-            conflictsResolver
+            conflictsResolver,
+            ignorePendingIncoming
         )
         val invalidator = TransactionInvalidator(storage, transactionInfoConverter, dataProvider)
         val blockTransactionProcessor = BlockTransactionProcessor(
