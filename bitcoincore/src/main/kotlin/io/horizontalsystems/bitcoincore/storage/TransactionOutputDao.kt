@@ -29,7 +29,7 @@ interface TransactionOutputDao {
           INNER JOIN PublicKey ON TransactionOutput.publicKeyPath = PublicKey.path
           INNER JOIN `Transaction` ON TransactionOutput.transactionHash = `Transaction`.hash
           LEFT JOIN Block ON `Transaction`.blockHash = Block.headerHash
-        WHERE TransactionOutput.scriptType != 0
+        WHERE TransactionOutput.scriptType != 0 AND `Transaction`.conflictingTxHash IS NULL
           AND NOT EXISTS (SELECT previousOutputIndex FROM TransactionInput where TransactionInput.previousOutputTxHash = TransactionOutput.transactionHash and TransactionInput.previousOutputIndex = TransactionOutput.`index`)
     """)
     fun getUnspents(): List<UnspentOutput>
