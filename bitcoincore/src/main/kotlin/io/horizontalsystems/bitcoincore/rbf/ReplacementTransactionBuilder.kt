@@ -329,7 +329,7 @@ class ReplacementTransactionBuilder(
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
 
-        val originalSize: Long
+        val replacementTxMinSize: Long
         val removableOutputsValue: Long
 
         when (type) {
@@ -345,7 +345,7 @@ class ReplacementTransactionBuilder(
                     sortedOutputs = sortedOutputs.dropLast(1)
                 }
 
-                originalSize = sizeCalculator.transactionSize(fixedUtxo, fixedOutputs)
+                replacementTxMinSize = sizeCalculator.transactionSize(fixedUtxo, fixedOutputs)
                 removableOutputsValue = sortedOutputs.sumOf { it.value }
             }
 
@@ -361,7 +361,7 @@ class ReplacementTransactionBuilder(
                         lockingScriptPayload = type.address.lockingScriptPayload
                     )
                 )
-                originalSize = sizeCalculator.transactionSize(fixedUtxo, fixedOutputs)
+                replacementTxMinSize = sizeCalculator.transactionSize(fixedUtxo, fixedOutputs)
                 removableOutputsValue = originalFullInfo.outputs.sumOf { it.value } - dustValue
             }
         }
@@ -369,7 +369,7 @@ class ReplacementTransactionBuilder(
         val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo().sumOf { it.output.value }
         val feeRange = LongRange(absoluteFee, originalFee + removableOutputsValue + confirmedUtxoTotalValue)
 
-        return ReplacementTransactionInfo(originalSize, feeRange)
+        return ReplacementTransactionInfo(replacementTxMinSize, feeRange)
     }
 
     sealed class BuildError : Throwable() {

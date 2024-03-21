@@ -10,6 +10,6 @@ data class ReplacementTransaction(
 )
 
 data class ReplacementTransactionInfo(
-    val originalTransactionSize: Long,
+    val replacementTransactionMinSize: Long,
     val feeRange: LongRange
 )
