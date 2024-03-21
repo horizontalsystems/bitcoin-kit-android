@@ -29,7 +29,8 @@ class TransactionSizeCalculator {
             ScriptType.P2SH to 23,
             ScriptType.P2WPKH to 22,
             ScriptType.P2WSH to 34,
-            ScriptType.P2WPKHSH to 23
+            ScriptType.P2WPKHSH to 23,
+            ScriptType.P2TR to 34
     )
 
     fun outputSize(scripType: ScriptType): Int {
@@ -83,10 +84,10 @@ class TransactionSizeCalculator {
 
         var outputWeight = 0
         for (output in outputs) {
-            when (output.scriptType) {
-                ScriptType.NULL_DATA -> outputWeight += outputSize(lockingScriptSize = output.lockingScript.size) * 4
+            outputWeight += when (output.scriptType) {
+                ScriptType.NULL_DATA -> outputSize(lockingScriptSize = output.lockingScript.size) * 4
                 ScriptType.UNKNOWN -> throw IllegalStateException("Unknown output script type")
-                else -> outputSize(outputSize(output.scriptType)) * 4
+                else -> outputSize(output.scriptType) * 4
             }
         }
 
