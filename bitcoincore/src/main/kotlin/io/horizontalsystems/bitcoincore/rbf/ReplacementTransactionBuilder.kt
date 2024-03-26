@@ -17,6 +17,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.InputWithPreviousOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.transactions.TransactionConflictsResolver
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionMetadataExtractor
@@ -31,6 +32,7 @@ class ReplacementTransactionBuilder(
     private val pluginManager: PluginManager,
     private val unspentOutputProvider: UnspentOutputProvider,
     private val publicKeyManager: IPublicKeyManager,
+    private val conflictsResolver: TransactionConflictsResolver
 ) {
 
     private fun replacementTransaction(
@@ -279,7 +281,13 @@ class ReplacementTransactionBuilder(
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
 
-        check(descendantTransactions.all { it.header.conflictingTxHash == null }) { throw BuildError.InvalidTransaction("Already replaced") }
+        check(
+            descendantTransactions.all { it.header.conflictingTxHash == null } &&
+                    !conflictsResolver.isTransactionReplaced(originalFullInfo.fullTransaction)
+        ) {
+            throw BuildError.InvalidTransaction("Already replaced")
+        }
+
         check(absoluteFee <= minFee) { throw BuildError.FeeTooLow }
 
         val mutableTransaction = when (type) {
@@ -328,6 +336,13 @@ class ReplacementTransactionBuilder(
 
         val descendantTransactions = storage.getDescendantTransactionsFullInfo(transactionHash.toReversedByteArray())
         val absoluteFee = descendantTransactions.sumOf { it.metadata.fee ?: 0 }
+
+        check(
+            descendantTransactions.all { it.header.conflictingTxHash == null } &&
+                    !conflictsResolver.isTransactionReplaced(originalFullInfo.fullTransaction)
+        ) {
+            return null
+        }
 
         val replacementTxMinSize: Long
         val removableOutputsValue: Long

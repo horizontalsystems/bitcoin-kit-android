@@ -20,6 +20,9 @@ open class TransactionInfo {
     var conflictingTxHash: String? = null
     var rbfEnabled: Boolean = false
 
+    val replaceable: Boolean
+        get() = rbfEnabled && blockHeight == null && conflictingTxHash == null
+
     constructor(
         uid: String,
         transactionHash: String,
