@@ -65,6 +65,20 @@ class TransactionConflictsResolver(private val storage: IStorage) {
         }
     }
 
+    // Checks if the transactions has a conflicting input with higher sequence
+    fun isTransactionReplaced(transaction: FullTransaction): Boolean {
+        val conflictingTransactions = getConflictingTransactionsForTransaction(transaction)
+
+        if (conflictingTransactions.isEmpty() || conflictingTransactions.any { it.blockHash == null }) {
+            return false
+        }
+
+        val conflictingFullTransactions = storage.getFullTransactions(conflictingTransactions)
+
+        return conflictingFullTransactions
+            .any { existingHasHigherSequence(mempoolTransaction = transaction, existingTransaction = it) }
+    }
+
     private fun getConflictingTransactionsForTransaction(transaction: FullTransaction): List<Transaction> {
         return transaction.inputs.mapNotNull { input ->
             val conflictingTxHash = storage.getTransactionInput(input.previousOutputTxHash, input.previousOutputIndex)?.transactionHash

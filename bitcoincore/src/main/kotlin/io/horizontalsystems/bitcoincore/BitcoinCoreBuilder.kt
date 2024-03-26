@@ -491,7 +491,7 @@ class BitcoinCoreBuilder {
             val signer = TransactionSigner(ecdsaInputSigner, schnorrInputSigner)
             transactionCreator = TransactionCreator(transactionBuilder, pendingTransactionProcessor, transactionSenderInstance, signer, bloomFilterManager)
             replacementTransactionBuilder = ReplacementTransactionBuilder(
-                storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager
+                storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager, conflictsResolver
             )
         }
 

@@ -104,8 +104,11 @@ class FullTransactionInfo(
 
     val rawTransaction: String
         get() {
-            val fullTransaction = FullTransaction(header, inputs.map { it.input }, outputs)
             return TransactionSerializer.serialize(fullTransaction).toHexString()
         }
+
+    val fullTransaction: FullTransaction
+        get() = FullTransaction(header, inputs.map { it.input }, outputs)
+
 }
 
