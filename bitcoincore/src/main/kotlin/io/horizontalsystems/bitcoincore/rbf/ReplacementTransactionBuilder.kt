@@ -19,6 +19,7 @@ import io.horizontalsystems.bitcoincore.storage.InputWithPreviousOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.TransactionConflictsResolver
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
+import io.horizontalsystems.bitcoincore.transactions.builder.LockTimeSetter
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionMetadataExtractor
 import io.horizontalsystems.bitcoincore.utils.ShuffleSorter
@@ -32,7 +33,8 @@ class ReplacementTransactionBuilder(
     private val pluginManager: PluginManager,
     private val unspentOutputProvider: UnspentOutputProvider,
     private val publicKeyManager: IPublicKeyManager,
-    private val conflictsResolver: TransactionConflictsResolver
+    private val conflictsResolver: TransactionConflictsResolver,
+    private val lockTimeSetter: LockTimeSetter
 ) {
 
     private fun replacementTransaction(
@@ -181,6 +183,7 @@ class ReplacementTransactionBuilder(
                 mutableTransaction = mutableTransaction,
                 outputs = fixedOutputs + outputs
             )
+            lockTimeSetter.setLockTime(mutableTransaction)
             mutableTransaction
         }
     }
