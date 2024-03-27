@@ -18,17 +18,20 @@ class UnspentOutputProvider(
         }
     }
 
-    private fun getUnspendableUtxo(): List<UnspentOutput> {
-        return allUtxo().filter {
-            !pluginManager.isSpendable(it) || it.transaction.status != Transaction.Status.RELAYED
-        }
+    private fun getUnspendableTimeLockedUtxo() = allUtxo().filter {
+        !pluginManager.isSpendable(it)
+    }
+
+    private fun getUnspendableNotRelayedUtxo() = allUtxo().filter {
+        it.transaction.status != Transaction.Status.RELAYED
     }
 
     fun getBalance(): BalanceInfo {
         val spendable = getSpendableUtxo().sumOf { it.output.value }
-        val unspendable = getUnspendableUtxo().sumOf { it.output.value }
+        val unspendableTimeLocked = getUnspendableTimeLockedUtxo().sumOf { it.output.value }
+        val unspendableNotRelayed = getUnspendableNotRelayedUtxo().sumOf { it.output.value }
 
-        return BalanceInfo(spendable, unspendable)
+        return BalanceInfo(spendable, unspendableTimeLocked, unspendableNotRelayed)
     }
 
     // Only confirmed spendable outputs
