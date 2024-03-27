@@ -385,9 +385,13 @@ class ReplacementTransactionBuilder(
         }
 
         val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo().sumOf { it.output.value }
-        val feeRange = LongRange(absoluteFee, originalFee + removableOutputsValue + confirmedUtxoTotalValue)
+        val maxFeeAmount = originalFee + removableOutputsValue + confirmedUtxoTotalValue
 
-        return ReplacementTransactionInfo(replacementTxMinSize, feeRange)
+        return if (absoluteFee > maxFeeAmount) {
+            null
+        } else {
+            ReplacementTransactionInfo(replacementTxMinSize, LongRange(absoluteFee, maxFeeAmount))
+        }
     }
 
     sealed class BuildError : Throwable() {
