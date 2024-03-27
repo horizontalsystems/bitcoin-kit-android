@@ -41,7 +41,7 @@ class BalanceFragment : Fragment() {
                 }
                 else -> {
                     balanceValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.spendable / 100_000_000.0)
-                    balanceUnspendableValue.text = NumberFormatHelper.cryptoAmountFormat.format(balance.unspendable / 100_000_000.0)
+                    balanceUnspendableValue.text = NumberFormatHelper.cryptoAmountFormat.format((balance.unspendableTimeLocked + balance.unspendableNotRelayed) / 100_000_000.0)
                 }
             }
         })

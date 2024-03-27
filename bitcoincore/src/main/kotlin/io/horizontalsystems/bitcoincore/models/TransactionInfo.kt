@@ -187,4 +187,4 @@ data class BlockInfo(
         val timestamp: Long
 )
 
-data class BalanceInfo(val spendable: Long, val unspendable: Long)
+data class BalanceInfo(val spendable: Long, val unspendableTimeLocked: Long, val unspendableNotRelayed: Long)
