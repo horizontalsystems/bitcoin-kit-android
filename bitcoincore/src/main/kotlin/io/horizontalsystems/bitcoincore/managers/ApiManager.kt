@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import android.util.Log
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonValue
 import okhttp3.OkHttpClient
@@ -40,6 +41,9 @@ class ApiManager(private val host: String) {
     fun post(resource: String, data: String): JsonValue {
         try {
             val path = "$host/$resource"
+
+            Log.e("e", "path: $path")
+            Log.e("e", "body: $data")
 
             logger.info("Fetching $path")
 

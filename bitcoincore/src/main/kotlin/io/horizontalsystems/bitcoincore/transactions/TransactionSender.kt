@@ -1,8 +1,11 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import io.horizontalsystems.bitcoincore.blocks.InitialBlockDownload
+import android.util.Log
+import io.horizontalsystems.bitcoincore.BitcoinCore
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.core.IInitialDownload
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.models.SentTransaction
 import io.horizontalsystems.bitcoincore.network.peer.IPeerTaskHandler
 import io.horizontalsystems.bitcoincore.network.peer.Peer
@@ -10,17 +13,20 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.network.peer.task.PeerTask
 import io.horizontalsystems.bitcoincore.network.peer.task.SendTransactionTask
+import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 
 class TransactionSender(
-        private val transactionSyncer: TransactionSyncer,
-        private val peerManager: PeerManager,
-        private val initialBlockDownload: IInitialDownload,
-        private val storage: IStorage,
-        private val timer: TransactionSendTimer,
-        private val maxRetriesCount: Int = 3,
-        private val retriesPeriod: Int = 60)
-    : IPeerTaskHandler, TransactionSendTimer.Listener {
+    private val transactionSyncer: TransactionSyncer,
+    private val peerManager: PeerManager,
+    private val initialBlockDownload: IInitialDownload,
+    private val storage: IStorage,
+    private val timer: TransactionSendTimer,
+    private val sendType: BitcoinCore.SendType,
+    private val transactionSerializer: TransactionSerializer,
+    private val maxRetriesCount: Int = 3,
+    private val retriesPeriod: Int = 60
+) : IPeerTaskHandler, TransactionSendTimer.Listener {
 
     fun sendPendingTransactions() {
         try {
@@ -68,13 +74,13 @@ class TransactionSender(
         }
 
         val freeSyncedPeer = initialBlockDownload.syncedPeers
-                .sortedBy { it.ready } // not ready first
-                .firstOrNull()
-                ?: return emptyList()
+            .sortedBy { it.ready } // not ready first
+            .firstOrNull()
+            ?: return emptyList()
 
         val readyPeers = peerManager.readyPears()
-                .filter { it != freeSyncedPeer }
-                .sortedBy { it.synced } // not synced first
+            .filter { it != freeSyncedPeer }
+            .sortedBy { it.synced } // not synced first
 
         if (readyPeers.size == 1) {
             return readyPeers
@@ -84,6 +90,33 @@ class TransactionSender(
     }
 
     private fun send(transactions: List<FullTransaction>) {
+        when (sendType) {
+            BitcoinCore.SendType.P2P -> {
+                sendViaP2P(transactions)
+            }
+
+            is BitcoinCore.SendType.API -> {
+                sendViaAPI(transactions, sendType.blockchairApi)
+            }
+        }
+    }
+
+    private fun sendViaAPI(transactions: List<FullTransaction>, blockchairApi: BlockchairApi) {
+        timer.startIfNotRunning()
+
+        transactions.forEach { transaction ->
+            try {
+                transactionSendStart(transaction)
+
+                val hex = transactionSerializer.serialize(transaction).toHexString()
+                blockchairApi.broadcastTransaction(hex)
+            } catch (error: Throwable) {
+                Log.e("e", "API send error", error)
+            }
+        }
+    }
+
+    private fun sendViaP2P(transactions: List<FullTransaction>) {
         val peers = getPeersToSend()
         if (peers.isEmpty()) {
             return
