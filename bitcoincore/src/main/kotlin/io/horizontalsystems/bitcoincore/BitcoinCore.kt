@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore
 
+import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.blocks.IPeerSyncListener
 import io.horizontalsystems.bitcoincore.core.DataProvider
 import io.horizontalsystems.bitcoincore.core.IConnectionManager
@@ -517,6 +518,11 @@ class BitcoinCore(
 
     sealed class CoreError : Exception() {
         object ReadOnlyCore : CoreError()
+    }
+
+    sealed class SendType {
+        object P2P: SendType()
+        class API(val blockchairApi: BlockchairApi): SendType()
     }
 
 }

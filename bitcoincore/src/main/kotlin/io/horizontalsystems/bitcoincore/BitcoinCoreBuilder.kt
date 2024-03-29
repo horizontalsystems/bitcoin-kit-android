@@ -86,6 +86,7 @@ import io.horizontalsystems.bitcoincore.network.peer.PeerGroup
 import io.horizontalsystems.bitcoincore.network.peer.PeerManager
 import io.horizontalsystems.bitcoincore.rbf.ReplacementTransactionBuilder
 import io.horizontalsystems.bitcoincore.serializers.BlockHeaderParser
+import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.transactions.BlockTransactionProcessor
 import io.horizontalsystems.bitcoincore.transactions.PendingTransactionProcessor
 import io.horizontalsystems.bitcoincore.transactions.SendTransactionsOnPeersSynced
@@ -143,6 +144,7 @@ class BitcoinCoreBuilder {
     private var peerSize = 10
     private val plugins = mutableListOf<IPlugin>()
     private var handleAddrMessage = true
+    private var sendType: BitcoinCore.SendType = BitcoinCore.SendType.P2P
 
     fun setContext(context: Context): BitcoinCoreBuilder {
         this.context = context
@@ -181,6 +183,11 @@ class BitcoinCoreBuilder {
 
     fun setSyncMode(syncMode: BitcoinCore.SyncMode): BitcoinCoreBuilder {
         this.syncMode = syncMode
+        return this
+    }
+
+    fun setSendType(sendType: BitcoinCore.SendType): BitcoinCoreBuilder {
+        this.sendType = sendType
         return this
     }
 
@@ -480,7 +487,9 @@ class BitcoinCoreBuilder {
                 peerManager,
                 initialDownload,
                 storage,
-                transactionSendTimer
+                transactionSendTimer,
+                sendType,
+                TransactionSerializer
             )
 
             dustCalculator = dustCalculatorInstance

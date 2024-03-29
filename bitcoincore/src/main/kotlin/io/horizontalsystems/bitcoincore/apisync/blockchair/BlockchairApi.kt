@@ -76,6 +76,10 @@ class BlockchairApi(
         return BlockHeaderItem(hash.hexToByteArray(), height, timestamp!!)
     }
 
+    fun broadcastTransaction(rawTransactionHex: String) {
+        apiManager.post("$chainId/push/transaction", "{ \"data\" : \"$rawTransactionHex\"}")
+    }
+
     private fun fetchTransactions(
         addresses: List<String>,
         stopHeight: Int? = null,
