@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore.apisync.blockchair
 
+import com.eclipsesource.json.Json
+import com.eclipsesource.json.JsonObject
 import io.horizontalsystems.bitcoincore.apisync.model.AddressItem
 import io.horizontalsystems.bitcoincore.apisync.model.BlockHeaderItem
 import io.horizontalsystems.bitcoincore.apisync.model.TransactionItem
@@ -77,7 +79,14 @@ class BlockchairApi(
     }
 
     fun broadcastTransaction(rawTransactionHex: String) {
-        apiManager.post("$chainId/push/transaction", "{ \"data\" : \"$rawTransactionHex\"}")
+        val apiManager = ApiManager("https://api.blockchair.com")
+        val url = "$chainId/push/transaction"
+
+        val body = JsonObject().apply {
+            this["data"] = Json.value(rawTransactionHex)
+        }.toString()
+
+        apiManager.post(url, body)
     }
 
     private fun fetchTransactions(
@@ -129,7 +138,7 @@ class BlockchairApi(
 
     private fun dateStringToTimestamp(date: String): Long? {
         return try {
-            dateFormat.parse(date)?.time?.let {  it / 1000 }
+            dateFormat.parse(date)?.time?.let { it / 1000 }
         } catch (e: ParseException) {
             null
         }
