@@ -1,6 +1,5 @@
 package io.horizontalsystems.bitcoincore.transactions
 
-import android.util.Log
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.core.IInitialDownload
@@ -102,16 +101,14 @@ class TransactionSender(
     }
 
     private fun sendViaAPI(transactions: List<FullTransaction>, blockchairApi: BlockchairApi) {
-        timer.startIfNotRunning()
-
         transactions.forEach { transaction ->
             try {
-                transactionSendStart(transaction)
-
                 val hex = transactionSerializer.serialize(transaction).toHexString()
                 blockchairApi.broadcastTransaction(hex)
+
+                transactionSyncer.handleRelayed(listOf(transaction))
             } catch (error: Throwable) {
-                Log.e("e", "API send error", error)
+                transactionSyncer.handleInvalid(transaction)
             }
         }
     }
@@ -172,6 +169,7 @@ class TransactionSender(
                 transactionSendSuccess(task.transaction)
                 true
             }
+
             else -> false
         }
     }
