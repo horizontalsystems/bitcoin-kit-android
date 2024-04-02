@@ -1,11 +1,10 @@
 package io.horizontalsystems.bitcoincore.managers
 
+import android.util.Log
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonValue
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.BufferedOutputStream
 import java.io.BufferedWriter
 import java.io.IOException
@@ -27,13 +26,13 @@ class ApiManager(private val host: String) {
 
         return try {
             URL(url)
-                    .openConnection()
-                    .apply {
-                        connectTimeout = 5000
-                        readTimeout = 60000
-                        setRequestProperty("Accept", "application/json")
-                        setRequestProperty("content-type", "application/json")
-                    }.getInputStream()
+                .openConnection()
+                .apply {
+                    connectTimeout = 5000
+                    readTimeout = 60000
+                    setRequestProperty("Accept", "application/json")
+                    setRequestProperty("content-type", "application/json")
+                }.getInputStream()
         } catch (exception: IOException) {
             throw ApiManagerException.Other("${exception.javaClass.simpleName}: $host")
         }
@@ -43,6 +42,8 @@ class ApiManager(private val host: String) {
     fun post(resource: String, data: String): JsonValue {
         try {
             val path = "$host/$resource"
+
+            Log.e("e", "path= $path, data= $data")
 
             logger.info("Fetching $path")
 
@@ -77,14 +78,14 @@ class ApiManager(private val host: String) {
                 }.build()
 
             httpClient.newCall(Request.Builder().url(url).build())
-                    .execute()
-                    .use { response ->
+                .execute()
+                .use { response ->
 
-                        if (response.isSuccessful) {
-                            response.body?.let {
-                                return Json.parse(it.string())
-                            }
+                    if (response.isSuccessful) {
+                        response.body?.let {
+                            return Json.parse(it.string())
                         }
+                    }
 
                     if (response.code == 404) {
                         throw ApiManagerException.Http404Exception
@@ -94,8 +95,7 @@ class ApiManager(private val host: String) {
                 }
         } catch (e: ApiManagerException) {
             throw e
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             throw ApiManagerException.Other("${e.javaClass.simpleName}: $host, ${e.localizedMessage}")
         }
     }

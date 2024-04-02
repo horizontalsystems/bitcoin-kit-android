@@ -79,7 +79,7 @@ class BlockchairApi(
     }
 
     fun broadcastTransaction(rawTransactionHex: String) {
-        val apiManager = ApiManager("https://api.blockchair.com")
+//        val apiManager = ApiManager("https://api.blockchair.com")
         val url = "$chainId/push/transaction"
 
         val body = JsonObject().apply {
