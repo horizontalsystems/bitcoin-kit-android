@@ -71,6 +71,7 @@ abstract class AbstractKit {
     fun sendInfo(
         value: Long,
         address: String? = null,
+        memo: String?,
         senderPay: Boolean = true,
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
@@ -79,6 +80,7 @@ abstract class AbstractKit {
         return bitcoinCore.sendInfo(
             value = value,
             address = address,
+            memo = memo,
             senderPay = senderPay,
             feeRate = feeRate,
             unspentOutputs = unspentOutputs,
@@ -88,6 +90,7 @@ abstract class AbstractKit {
 
     fun send(
         address: String,
+        memo: String?,
         value: Long,
         senderPay: Boolean = true,
         feeRate: Int,
@@ -96,11 +99,12 @@ abstract class AbstractKit {
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
+        return bitcoinCore.send(address, memo, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
     }
 
     fun send(
         address: String,
+        memo: String?,
         value: Long,
         senderPay: Boolean = true,
         feeRate: Int,
@@ -108,11 +112,12 @@ abstract class AbstractKit {
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(address, value, senderPay, feeRate, sortType, null, pluginData, rbfEnabled)
+        return bitcoinCore.send(address, memo, value, senderPay, feeRate, sortType, null, pluginData, rbfEnabled)
     }
 
     fun send(
         hash: ByteArray,
+        memo: String?,
         scriptType: ScriptType,
         value: Long,
         senderPay: Boolean = true,
@@ -121,11 +126,12 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutputInfo>? = null,
         rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, unspentOutputs, rbfEnabled)
+        return bitcoinCore.send(hash, memo, scriptType, value, senderPay, feeRate, sortType, unspentOutputs, rbfEnabled)
     }
 
     fun send(
         hash: ByteArray,
+        memo: String?,
         scriptType: ScriptType,
         value: Long,
         senderPay: Boolean = true,
@@ -133,11 +139,11 @@ abstract class AbstractKit {
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean,
     ): FullTransaction {
-        return bitcoinCore.send(hash, scriptType, value, senderPay, feeRate, sortType, null, rbfEnabled)
+        return bitcoinCore.send(hash, memo, scriptType, value, senderPay, feeRate, sortType, null, rbfEnabled)
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
-        return bitcoinCore.redeem(unspentOutput, address, feeRate, sortType, rbfEnabled)
+    fun redeem(unspentOutput: UnspentOutput, address: String, memo: String?, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
+        return bitcoinCore.redeem(unspentOutput, address, memo, feeRate, sortType, rbfEnabled)
     }
 
     fun receiveAddress(): String {
@@ -180,8 +186,8 @@ abstract class AbstractKit {
         bitcoinCore.watchTransaction(filter, listener)
     }
 
-    fun maximumSpendableValue(address: String?, feeRate: Int, unspentOutputs: List<UnspentOutputInfo>?, pluginData: Map<Byte, IPluginData>): Long {
-        return bitcoinCore.maximumSpendableValue(address, feeRate, unspentOutputs, pluginData)
+    fun maximumSpendableValue(address: String?, memo: String?, feeRate: Int, unspentOutputs: List<UnspentOutputInfo>?, pluginData: Map<Byte, IPluginData>): Long {
+        return bitcoinCore.maximumSpendableValue(address, memo, feeRate, unspentOutputs, pluginData)
     }
 
     fun minimumSpendableValue(address: String?): Int {

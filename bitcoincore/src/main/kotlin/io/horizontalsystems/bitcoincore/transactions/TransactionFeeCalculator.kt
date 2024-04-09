@@ -24,6 +24,7 @@ class TransactionFeeCalculator(
         feeRate: Int,
         senderPay: Boolean,
         toAddress: String?,
+        memo: String?,
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>
     ): BitcoinSendInfo {
@@ -34,7 +35,8 @@ class TransactionFeeCalculator(
             toAddress = toAddress ?: sampleAddress(),
             value = value,
             pluginData = pluginData,
-            skipChecking = true
+            skipChecking = true,
+            memo = memo
         )
 
         val outputInfo = inputSetter.setInputs(

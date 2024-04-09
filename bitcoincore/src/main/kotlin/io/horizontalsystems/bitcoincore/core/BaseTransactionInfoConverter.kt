@@ -1,8 +1,19 @@
 package io.horizontalsystems.bitcoincore.core
 
 import io.horizontalsystems.bitcoincore.extensions.toReversedHex
-import io.horizontalsystems.bitcoincore.models.*
+import io.horizontalsystems.bitcoincore.io.BitcoinInput
+import io.horizontalsystems.bitcoincore.models.InvalidTransaction
+import io.horizontalsystems.bitcoincore.models.Transaction
+import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.models.TransactionInputInfo
+import io.horizontalsystems.bitcoincore.models.TransactionMetadata
+import io.horizontalsystems.bitcoincore.models.TransactionOutput
+import io.horizontalsystems.bitcoincore.models.TransactionOutputInfo
+import io.horizontalsystems.bitcoincore.models.TransactionStatus
+import io.horizontalsystems.bitcoincore.models.rbfEnabled
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
+import java.io.ByteArrayInputStream
 
 class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
 
@@ -37,6 +48,7 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
                     changeOutput = output.changeOutput,
                     value = output.value,
                     address = output.address,
+                    memo = parseMemo(output),
                     pluginId = output.pluginId,
                     pluginDataString = output.pluginData,
                     pluginData = pluginManager.parsePluginData(output, transaction.timestamp))
@@ -61,6 +73,16 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
             conflictingTxHash = transaction.conflictingTxHash?.toReversedHex(),
             rbfEnabled = rbfEnabled
         )
+    }
+
+    private fun parseMemo(output: TransactionOutput): String? {
+        if (output.scriptType != ScriptType.NULL_DATA) return null
+        val payload = output.lockingScriptPayload ?: return null
+        if (payload.isEmpty()) return null
+
+        val input = BitcoinInput(ByteArrayInputStream(payload))
+        input.readByte() // op_return
+        return input.readString()
     }
 
     private fun getInvalidTransactionInfo(

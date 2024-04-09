@@ -13,6 +13,7 @@ class UnspentOutputSelectorSingleNoChange(
 
     override fun select(
         value: Long,
+        memo: String?,
         feeRate: Int,
         outputScriptType: ScriptType,
         changeType: ScriptType,
@@ -42,6 +43,7 @@ class UnspentOutputSelectorSingleNoChange(
         val params = UnspentOutputQueue.Parameters(
             value = value,
             senderPay = senderPay,
+            memo = memo,
             fee = feeRate,
             outputsLimit = null,
             outputScriptType = outputScriptType,

@@ -22,7 +22,8 @@ import io.horizontalsystems.dashkit.models.DashTransactionInfo
 import io.horizontalsystems.hodler.HodlerOutputData
 import io.horizontalsystems.hodler.HodlerPlugin
 import java.text.DateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class TransactionsFragment : Fragment(), ViewHolderTransaction.Listener {
 
@@ -165,6 +166,7 @@ class ViewHolderTransaction(val containerView: View, private val listener: Liste
             sb.append("\n  value: ${it.value}")
             sb.append("\n  mine: ${it.mine}")
             sb.append("\n  change: ${it.changeOutput}")
+            sb.append("\n  memo: ${it.memo}")
 
             if (it.pluginId == HodlerPlugin.id && it.pluginData != null) {
                 (it.pluginData as? HodlerOutputData)?.let { hodlerData ->

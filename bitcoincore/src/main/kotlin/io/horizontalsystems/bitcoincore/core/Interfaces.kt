@@ -195,7 +195,8 @@ interface IRecipientSetter {
         toAddress: String,
         value: Long,
         pluginData: Map<Byte, IPluginData>,
-        skipChecking: Boolean
+        skipChecking: Boolean,
+        memo: String?
     )
 }
 

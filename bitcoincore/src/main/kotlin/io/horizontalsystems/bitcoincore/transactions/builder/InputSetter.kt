@@ -42,6 +42,7 @@ class InputSetter(
             transactionSizeCalculator.transactionSize(
                 previousOutputs = listOf(unspentOutput.output),
                 outputs = listOf(mutableTransaction.recipientAddress.scriptType),
+                memo = mutableTransaction.memo,
                 pluginDataOutputSize = 0
             )
 
@@ -68,6 +69,7 @@ class InputSetter(
             val params = UnspentOutputQueue.Parameters(
                 value = mutableTransaction.recipientValue,
                 senderPay = senderPay,
+                memo = mutableTransaction.memo,
                 fee = feeRate,
                 outputsLimit = null,
                 outputScriptType = mutableTransaction.recipientAddress.scriptType,
@@ -85,9 +87,10 @@ class InputSetter(
             val value = mutableTransaction.recipientValue
             unspentOutputInfo = unspentOutputSelector.select(
                 value,
+                mutableTransaction.memo,
                 feeRate,
-                mutableTransaction.recipientAddress.scriptType,
-                changeScriptType,  // Assuming changeScriptType is defined somewhere
+                mutableTransaction.recipientAddress.scriptType,  // Assuming changeScriptType is defined somewhere
+                changeScriptType,
                 senderPay,
                 mutableTransaction.getPluginDataOutputSize()
             )
