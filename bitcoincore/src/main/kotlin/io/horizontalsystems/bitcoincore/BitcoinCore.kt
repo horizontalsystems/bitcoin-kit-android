@@ -187,6 +187,7 @@ class BitcoinCore(
     fun sendInfo(
         value: Long,
         address: String? = null,
+        memo: String?,
         senderPay: Boolean = true,
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
@@ -202,6 +203,7 @@ class BitcoinCore(
             feeRate = feeRate,
             senderPay = senderPay,
             toAddress = address,
+            memo = memo,
             unspentOutputs = outputs,
             pluginData = pluginData
         ) ?: throw CoreError.ReadOnlyCore
@@ -209,6 +211,7 @@ class BitcoinCore(
 
     fun send(
         address: String,
+        memo: String?,
         value: Long,
         senderPay: Boolean = true,
         feeRate: Int,
@@ -224,6 +227,7 @@ class BitcoinCore(
         }
         return transactionCreator?.create(
             toAddress = address,
+            memo = memo,
             value = value,
             feeRate = feeRate,
             senderPay = senderPay,
@@ -236,6 +240,7 @@ class BitcoinCore(
 
     fun send(
         hash: ByteArray,
+        memo: String?,
         scriptType: ScriptType,
         value: Long,
         senderPay: Boolean = true,
@@ -252,6 +257,7 @@ class BitcoinCore(
         }
         return transactionCreator?.create(
             toAddress = address.stringValue,
+            memo = memo,
             value = value,
             feeRate = feeRate,
             senderPay = senderPay,
@@ -262,8 +268,8 @@ class BitcoinCore(
         ) ?: throw CoreError.ReadOnlyCore
     }
 
-    fun redeem(unspentOutput: UnspentOutput, address: String, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
-        return transactionCreator?.create(unspentOutput, address, feeRate, sortType, rbfEnabled) ?: throw CoreError.ReadOnlyCore
+    fun redeem(unspentOutput: UnspentOutput, address: String, memo: String?, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
+        return transactionCreator?.create(unspentOutput, address, memo, feeRate, sortType, rbfEnabled) ?: throw CoreError.ReadOnlyCore
     }
 
     fun receiveAddress(): String {
@@ -406,6 +412,7 @@ class BitcoinCore(
 
     fun maximumSpendableValue(
         address: String?,
+        memo: String?,
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>
@@ -425,6 +432,7 @@ class BitcoinCore(
             feeRate = feeRate,
             senderPay = false,
             toAddress = address,
+            memo = memo,
             unspentOutputs = outputs,
             pluginData = pluginData
         ).fee

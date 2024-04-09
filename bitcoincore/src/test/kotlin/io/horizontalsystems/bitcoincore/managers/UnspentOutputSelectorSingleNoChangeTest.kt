@@ -35,7 +35,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(dustCalculator.dust(any())).thenReturn(dust)
 
         assertThrows(SendValueErrors.Dust::class.java) {
-            selector.select(value, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
         }
     }
 
@@ -46,7 +46,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(emptyList())
 
         assertThrows(SendValueErrors.EmptyOutputs::class.java) {
-            selector.select(10000, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
         }
     }
 
@@ -64,7 +64,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
         `when`(dustCalculator.dust(any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
-        `when`(calculator.outputSize(any())).thenReturn(2)
+//        `when`(calculator.outputSize(any())).thenReturn(2)
         `when`(calculator.transactionSize(
             ArgumentMatchers.anyList(),
             ArgumentMatchers.anyList(), any())).thenReturn(30)
@@ -72,7 +72,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         assertThrows(SendValueErrors.NoSingleOutput::class.java) {
-            selector.select(value, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
         }
     }
 
@@ -91,7 +91,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
         `when`(dustCalculator.dust(any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
-        `when`(calculator.outputSize(any())).thenReturn(2)
+//        `when`(calculator.outputSize(any())).thenReturn(2)
         `when`(calculator.transactionSize(
             ArgumentMatchers.anyList(),
             ArgumentMatchers.anyList(), any())).thenReturn(30)
@@ -99,7 +99,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         val selectedInfo =
-            selector.select(value, feeRate, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(value, null, feeRate, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
         Assert.assertEquals(null, selectedInfo.changeValue)
         Assert.assertEquals(1, selectedInfo.outputs.size)
         Assert.assertArrayEquals(arrayOf(outputs[1]), selectedInfo.outputs.toTypedArray())
@@ -119,7 +119,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
         `when`(dustCalculator.dust(any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
-        `when`(calculator.outputSize(any())).thenReturn(2)
+//        `when`(calculator.outputSize(any())).thenReturn(2)
         `when`(calculator.transactionSize(
             ArgumentMatchers.anyList(),
             ArgumentMatchers.anyList(), any())).thenReturn(30)
@@ -127,7 +127,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         assertThrows(SendValueErrors.HasOutputFailedToSpend::class.java) {
-            selector.select(value, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
         }
     }
 

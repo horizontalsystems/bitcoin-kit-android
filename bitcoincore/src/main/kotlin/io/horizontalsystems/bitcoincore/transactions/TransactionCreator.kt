@@ -20,6 +20,7 @@ class TransactionCreator(
     @Throws
     fun create(
         toAddress: String,
+        memo: String?,
         value: Long,
         feeRate: Int,
         senderPay: Boolean,
@@ -30,6 +31,7 @@ class TransactionCreator(
     ): FullTransaction {
         val mutableTransaction = builder.buildTransaction(
             toAddress = toAddress,
+            memo = memo,
             value = value,
             feeRate = feeRate,
             senderPay = senderPay,
@@ -46,11 +48,12 @@ class TransactionCreator(
     fun create(
         unspentOutput: UnspentOutput,
         toAddress: String,
+        memo: String?,
         feeRate: Int,
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean
     ): FullTransaction {
-        val mutableTransaction = builder.buildTransaction(unspentOutput, toAddress, feeRate, sortType, rbfEnabled)
+        val mutableTransaction = builder.buildTransaction(unspentOutput, toAddress, memo, feeRate, sortType, rbfEnabled)
 
         return create(mutableTransaction)
     }

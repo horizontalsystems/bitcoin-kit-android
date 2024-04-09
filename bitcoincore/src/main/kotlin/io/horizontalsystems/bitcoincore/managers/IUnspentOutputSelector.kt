@@ -4,7 +4,15 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IUnspentOutputSelector {
-    fun select(value: Long, feeRate: Int, outputScriptType: ScriptType = ScriptType.P2PKH, changeType: ScriptType = ScriptType.P2PKH, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo
+    fun select(
+        value: Long,
+        memo: String?,
+        feeRate: Int,
+        outputScriptType: ScriptType = ScriptType.P2PKH,
+        changeType: ScriptType = ScriptType.P2PKH,
+        senderPay: Boolean,
+        pluginDataOutputSize: Int
+    ): SelectedUnspentOutputInfo
 }
 
 data class SelectedUnspentOutputInfo(
@@ -27,12 +35,28 @@ class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutp
     val all: List<UnspentOutput>
         get() = unspentOutputProvider.getSpendableUtxo()
 
-    override fun select(value: Long, feeRate: Int, outputScriptType: ScriptType, changeType: ScriptType, senderPay: Boolean, pluginDataOutputSize: Int): SelectedUnspentOutputInfo {
+    override fun select(
+        value: Long,
+        memo: String?,
+        feeRate: Int,
+        outputScriptType: ScriptType,
+        changeType: ScriptType,
+        senderPay: Boolean,
+        pluginDataOutputSize: Int
+    ): SelectedUnspentOutputInfo {
         var lastError: SendValueErrors? = null
 
         for (selector in concreteSelectors) {
             try {
-                return selector.select(value, feeRate, outputScriptType, changeType, senderPay, pluginDataOutputSize)
+                return selector.select(
+                    value,
+                    memo,
+                    feeRate,
+                    outputScriptType,
+                    changeType,
+                    senderPay,
+                    pluginDataOutputSize
+                )
             } catch (e: SendValueErrors) {
                 lastError = e
             }

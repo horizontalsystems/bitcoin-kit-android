@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.transactions.builder
 
 import io.horizontalsystems.bitcoincore.core.ITransactionDataSorterFactory
+import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.transactions.scripts.OP_RETURN
@@ -28,7 +29,17 @@ class OutputSetter(private val transactionDataSorterFactory: ITransactionDataSor
             list.add(TransactionOutput(0, 0, data, ScriptType.NULL_DATA))
         }
 
-        val sorted = transactionDataSorterFactory.sorter(sortType).sortOutputs(list)
+        val sorted = transactionDataSorterFactory.sorter(sortType).sortOutputs(list).toMutableList()
+
+        transaction.memo?.let { memo ->
+            val data = BitcoinOutput()
+                .writeByte(OP_RETURN)
+                .writeString(memo)
+                .toByteArray()
+
+            sorted.add(TransactionOutput(0, 0, data, ScriptType.NULL_DATA))
+        }
+
         sorted.forEachIndexed { index, transactionOutput ->
             transactionOutput.index = index
         }

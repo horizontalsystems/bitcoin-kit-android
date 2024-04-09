@@ -60,6 +60,7 @@ class UnspentOutputQueue(
         sizeCalculator.transactionSize(
             previousOutputs = selectedOutputs.map { it.output },
             outputs = listOf(parameters.outputScriptType),
+            memo = parameters.memo,
             pluginDataOutputSize = parameters.pluginDataOutputSize
         ) * parameters.fee
 
@@ -83,6 +84,7 @@ class UnspentOutputQueue(
     data class Parameters(
         val value: Long,
         val senderPay: Boolean,
+        val memo: String?,
         val fee: Int,
         val outputsLimit: Int?,
         val outputScriptType: ScriptType,

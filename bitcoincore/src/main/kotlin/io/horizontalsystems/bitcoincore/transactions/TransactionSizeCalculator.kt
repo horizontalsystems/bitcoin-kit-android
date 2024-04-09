@@ -77,7 +77,18 @@ class TransactionSizeCalculator {
         return 32 + 4 + 1 + scriptSigLength + 4 // PreviousOutputHex + InputIndex + sigLength + scriptSig + sequence
     }
 
-    fun transactionSize(previousOutputs: List<TransactionOutput>, outputs: List<TransactionOutput>): Long {
+    private fun getMemoSize(memo: String?): Int {
+        if (memo == null) return 0
+
+        val memoData = memo.toByteArray(Charsets.UTF_8)
+        return outputSizeByScriptSize(memoData.size) * 4
+    }
+
+    fun transactionSize(
+        previousOutputs: List<TransactionOutput>,
+        outputs: List<TransactionOutput>,
+        memo: String? = null,
+    ): Long {
         val txIsWitness = previousOutputs.any { it.scriptType.isWitness }
         val txWeight = if (txIsWitness) witnessTx else legacyTx
         val inputWeight = previousOutputs.sumOf { inputSize(it) * 4 + if (txIsWitness) witnessSize(it.scriptType) else 0 }
@@ -91,15 +102,24 @@ class TransactionSizeCalculator {
             }
         }
 
+        outputWeight += getMemoSize(memo)
+
         return toBytes(txWeight + inputWeight + outputWeight).toLong()
     }
 
-    fun transactionSize(previousOutputs: List<TransactionOutput>, outputs: List<ScriptType>, pluginDataOutputSize: Int): Long {
+    fun transactionSize(
+        previousOutputs: List<TransactionOutput>,
+        outputs: List<ScriptType>,
+        memo: String?,
+        pluginDataOutputSize: Int,
+    ): Long {
         val txIsWitness = previousOutputs.any { it.scriptType.isWitness }
         val txWeight = if (txIsWitness) witnessTx else legacyTx
 
         val inputWeight = previousOutputs.map { inputSize(it) * 4 + if (txIsWitness) witnessSize(it.scriptType) else 0 }.sum()
         var outputWeight = outputs.map { outputSize(it) }.sum() * 4 // to vbytes
+
+        outputWeight += getMemoSize(memo)
 
         if (pluginDataOutputSize > 0) {
             outputWeight += outputSizeByScriptSize(pluginDataOutputSize) * 4

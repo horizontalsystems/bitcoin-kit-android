@@ -18,6 +18,7 @@ class UnspentOutputSelector(
     @Throws(SendValueErrors::class)
     override fun select(
         value: Long,
+        memo: String?,
         feeRate: Int,
         outputScriptType: ScriptType,
         changeType: ScriptType,
@@ -39,6 +40,7 @@ class UnspentOutputSelector(
         val params = UnspentOutputQueue.Parameters(
             value = value,
             senderPay = senderPay,
+            memo = memo,
             fee = feeRate,
             outputsLimit = outputsLimit,
             outputScriptType = outputScriptType,

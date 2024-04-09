@@ -14,7 +14,7 @@ class MutableTransaction(isOutgoing: Boolean = true) {
 
     lateinit var recipientAddress: Address
     var recipientValue = 0L
-
+    var memo: String? = null
     var changeAddress: Address? = null
     var changeValue = 0L
 

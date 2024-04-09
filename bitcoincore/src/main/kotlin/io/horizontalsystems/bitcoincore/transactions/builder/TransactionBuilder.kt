@@ -3,7 +3,6 @@ package io.horizontalsystems.bitcoincore.transactions.builder
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.core.IRecipientSetter
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
-import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 
 class TransactionBuilder(
@@ -15,6 +14,7 @@ class TransactionBuilder(
 
     fun buildTransaction(
         toAddress: String,
+        memo: String?,
         value: Long,
         feeRate: Int,
         senderPay: Boolean,
@@ -25,7 +25,7 @@ class TransactionBuilder(
     ): MutableTransaction {
         val mutableTransaction = MutableTransaction()
 
-        recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false)
+        recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false, memo)
         inputSetter.setInputs(mutableTransaction, feeRate, senderPay, unspentOutputs, sortType, rbfEnabled)
         lockTimeSetter.setLockTime(mutableTransaction)
 
@@ -37,13 +37,21 @@ class TransactionBuilder(
     fun buildTransaction(
         unspentOutput: UnspentOutput,
         toAddress: String,
+        memo: String?,
         feeRate: Int,
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean
     ): MutableTransaction {
         val mutableTransaction = MutableTransaction(false)
 
-        recipientSetter.setRecipient(mutableTransaction, toAddress, unspentOutput.output.value, mapOf(), false)
+        recipientSetter.setRecipient(
+            mutableTransaction,
+            toAddress,
+            unspentOutput.output.value,
+            mapOf(),
+            false,
+            memo
+        )
         inputSetter.setInputs(mutableTransaction, unspentOutput, feeRate, rbfEnabled)
         lockTimeSetter.setLockTime(mutableTransaction)
 

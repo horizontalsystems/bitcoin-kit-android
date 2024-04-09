@@ -98,6 +98,7 @@ open class TransactionInfo {
                         changeOutput = it.get("changeOutput").asBoolean(),
                         value = it.get("value").asLong(),
                         address = if (it.get("address")?.isNull == false) it.get("address")?.asString() else null,
+                        memo = if (it.get("memo")?.isNull == false) it.get("memo")?.asString() else null,
                         pluginId = if (it.get("pluginId")?.isNull == false) it.get("pluginId")?.asString()?.toByte() else null,
                         pluginDataString = if (it.get("pluginDataString")?.isNull == false) it.get("pluginDataString")?.asString() else null)
 
@@ -117,6 +118,7 @@ open class TransactionInfo {
             outputObj.add("address", it.address)
             outputObj.add("pluginId", it.pluginId?.toString())
             outputObj.add("pluginDataString", it.pluginDataString)
+            outputObj.add("memo", it.memo)
             jsonArray.add(outputObj)
         }
         return jsonArray
@@ -173,13 +175,16 @@ enum class TransactionStatus(val code: Int) {
 
 data class TransactionInputInfo(val mine: Boolean, val value: Long? = null, val address: String? = null)
 
-data class TransactionOutputInfo(val mine: Boolean,
-                                 val changeOutput: Boolean,
-                                 val value: Long,
-                                 val address: String? = null,
-                                 val pluginId: Byte? = null,
-                                 val pluginData: IPluginOutputData? = null,
-                                 internal val pluginDataString: String? = null)
+data class TransactionOutputInfo(
+    val mine: Boolean,
+    val changeOutput: Boolean,
+    val value: Long,
+    val address: String? = null,
+    val memo: String?,
+    val pluginId: Byte? = null,
+    val pluginData: IPluginOutputData? = null,
+    internal val pluginDataString: String? = null,
+)
 
 data class BlockInfo(
         val headerHash: String,
