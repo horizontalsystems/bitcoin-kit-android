@@ -80,9 +80,13 @@ class BaseTransactionInfoConverter(private val pluginManager: PluginManager) {
         val payload = output.lockingScriptPayload ?: return null
         if (payload.isEmpty()) return null
 
-        val input = BitcoinInput(ByteArrayInputStream(payload))
-        input.readByte() // op_return
-        return input.readString()
+        return try {
+            val input = BitcoinInput(ByteArrayInputStream(payload))
+            input.readByte() // op_return
+            input.readString()
+        } catch (e: Throwable) {
+            null
+        }
     }
 
     private fun getInvalidTransactionInfo(
