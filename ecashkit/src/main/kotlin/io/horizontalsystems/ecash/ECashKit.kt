@@ -11,7 +11,6 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
@@ -161,15 +160,18 @@ class ECashKit : AbstractKit {
 
         val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
         val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
-        val apiTransactionProvider = apiTransactionProvider(networkType, syncMode, apiSyncStateManager)
+        val apiTransactionProvider = apiTransactionProvider(networkType)
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
         val blockValidatorSet = blockValidatorSet(networkType, storage)
 
-        val bitcoinCore = BitcoinCoreBuilder()
+        val purpose = Purpose.BIP44
+        val bitcoinCoreBuilder = BitcoinCoreBuilder()
+
+        val bitcoinCore = bitcoinCoreBuilder
             .setContext(context)
             .setExtendedKey(extendedKey)
             .setWatchAddressPublicKey(watchAddressPublicKey)
-            .setPurpose(Purpose.BIP44)
+            .setPurpose(purpose)
             .setNetwork(network)
             .setCheckpoint(checkpoint)
             .setPaymentAddressParser(paymentAddressParser)
@@ -185,7 +187,9 @@ class ECashKit : AbstractKit {
         //  extending bitcoinCore
 
         bitcoinCore.prependAddressConverter(CashAddressConverter(network.addressSegwitHrp))
-        bitcoinCore.addRestoreKeyConverter(ECashRestoreKeyConverter())
+        bitcoinCore.addRestoreKeyConverter(
+            ECashRestoreKeyConverter(bitcoinCoreBuilder.addressConverter, purpose)
+        )
 
         return bitcoinCore
     }
@@ -231,26 +235,12 @@ class ECashKit : AbstractKit {
         return blockValidatorSet
     }
 
-    private fun apiTransactionProvider(
-        networkType: NetworkType,
-        syncMode: SyncMode,
-        apiSyncStateManager: ApiSyncStateManager
-    ) = when (networkType) {
+    private fun apiTransactionProvider(networkType: NetworkType) = when (networkType) {
         NetworkType.MainNet -> {
-            val chronikApiProvider = ChronikApi()
-            if (syncMode is SyncMode.Blockchair) {
-                val blockchairApi = BlockchairApi(network.blockchairChainId)
-                val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
-                val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
+            val blockchairApi = BlockchairApi(network.blockchairChainId)
+            val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
 
-                BiApiTransactionProvider(
-                    restoreProvider = chronikApiProvider,
-                    syncProvider = blockchairProvider,
-                    syncStateManager = apiSyncStateManager
-                )
-            } else {
-                chronikApiProvider
-            }
+            BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
         }
 
         NetworkType.TestNet -> {
