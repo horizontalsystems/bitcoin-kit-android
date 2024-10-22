@@ -6,7 +6,6 @@ import io.horizontalsystems.bitcoincore.models.PeerAddress
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.peer.Peer
 import io.horizontalsystems.bitcoincore.network.peer.PeerDiscover
-import java.util.concurrent.CopyOnWriteArrayList
 
 class PeerAddressManager(private val network: Network) : IPeerAddressManager {
 
@@ -80,7 +79,7 @@ class PeerAddressManager(private val network: Network) : IPeerAddressManager {
 
         @Synchronized
         fun getLeastScoreFastestPeerAddressExcludingIps(ips: List<String>): PeerAddress? {
-            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.minBy { it.score }
+            return allPeers.filter { !ips.contains(it.ip) }.sortedBy { it.connectionTime }.minByOrNull { it.score }
         }
 
         @Synchronized
