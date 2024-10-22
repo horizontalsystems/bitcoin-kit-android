@@ -6,6 +6,10 @@ import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.util.logging.Level
 import java.util.logging.Logger
 
+// Go to
+// Edit Configurations... -> ToolsKt -> VM Options
+// And paste the following
+// -classpath $Classpath$:bitcoincashkit/src/main/resources:bitcoinkit/src/main/resources:dashkit/src/main/resources:ecashkit/src/main/resources:litecoinkit/src/main/resources
 fun main() {
     Logger.getLogger("").level = Level.SEVERE
     syncCheckpoints()
