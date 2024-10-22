@@ -13,7 +13,12 @@ import io.horizontalsystems.dashkit.TestNetDash
 import io.horizontalsystems.ecash.MainNetECash
 import io.horizontalsystems.litecoinkit.MainNetLitecoin
 import io.horizontalsystems.litecoinkit.TestNetLitecoin
-import java.io.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.OutputStream
+import java.io.OutputStreamWriter
+import java.io.PrintWriter
+import java.io.Writer
 import java.nio.ByteBuffer
 import java.nio.charset.StandardCharsets
 import kotlin.system.exitProcess
@@ -23,19 +28,19 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
     private val syncers = mutableListOf<CheckpointSyncer>().also {
         // Bitcoin
         it.add(CheckpointSyncer(MainNet(), 2016, 1, this))
-        it.add(CheckpointSyncer(TestNet(), 2016, 1, this))
+//        it.add(CheckpointSyncer(TestNet(), 2016, 1, this))
 
         // Bitcoin Cash
         it.add(CheckpointSyncer(MainNetBitcoinCash(), 147, 147, this))
-        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 147, this))
+//        it.add(CheckpointSyncer(TestNetBitcoinCash(), 147, 147, this))
 
         // Dash
         it.add(CheckpointSyncer(MainNetDash(), 24, 24, this))
-        it.add(CheckpointSyncer(TestNetDash(), 24, 24, this))
+//        it.add(CheckpointSyncer(TestNetDash(), 24, 24, this))
 
         // Litecoin
         it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
-        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
+//        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
 
         // Ecash
         it.add(CheckpointSyncer(MainNetECash(), 147, 147, this))
@@ -56,6 +61,9 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         val checkpointFile = "${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
 
         writeCheckpoints(checkpointFile, checkpoints)
+
+        println("Synced: ${syncers.count { it.isSynced }}")
+        println("Remaining: ${syncers.count { !it.isSynced }}")
 
         if (syncers.none { !it.isSynced }) {
             exitProcess(0)
