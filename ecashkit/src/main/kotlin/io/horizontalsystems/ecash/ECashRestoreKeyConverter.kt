@@ -4,11 +4,11 @@ import io.horizontalsystems.bitcoincore.core.scriptType
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
+import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.hdwalletkit.HDWallet
 
 class ECashRestoreKeyConverter(
-    private val addressConverter: AddressConverterChain,
+    private val addressConverter: IAddressConverter,
     private val purpose: HDWallet.Purpose
 ) : IRestoreKeyConverter {
     override fun keysForApiRestore(publicKey: PublicKey): List<String> {
