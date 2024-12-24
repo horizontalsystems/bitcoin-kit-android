@@ -7,7 +7,6 @@ import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
 import io.horizontalsystems.bitcoincore.apisync.BCoinApi
-import io.horizontalsystems.bitcoincore.apisync.BiApiTransactionProvider
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairBlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairTransactionProvider
@@ -19,15 +18,15 @@ import io.horizontalsystems.bitcoincore.core.purpose
 import io.horizontalsystems.bitcoincore.managers.ApiSyncStateManager
 import io.horizontalsystems.bitcoincore.managers.Bip44RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.Bip49RestoreKeyConverter
+import io.horizontalsystems.bitcoincore.managers.Bip84RestoreKeyConverter
+import io.horizontalsystems.bitcoincore.managers.Bip86RestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.BlockValidatorHelper
-import io.horizontalsystems.bitcoincore.managers.KeyHashRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.models.Address
 import io.horizontalsystems.bitcoincore.models.Checkpoint
 import io.horizontalsystems.bitcoincore.models.WatchAddressPublicKey
 import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.storage.CoreDatabase
 import io.horizontalsystems.bitcoincore.storage.Storage
-import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 import io.horizontalsystems.bitcoincore.utils.Base58AddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
@@ -167,7 +166,7 @@ class LitecoinKit : AbstractKit {
         val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
         val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
         val blockchairApi = BlockchairApi(network.blockchairChainId)
-        val apiTransactionProvider = apiTransactionProvider(networkType, syncMode, apiSyncStateManager, blockchairApi)
+        val apiTransactionProvider = apiTransactionProvider(networkType, blockchairApi)
         val paymentAddressParser = PaymentAddressParser("litecoin", removeScheme = true)
         val blockValidatorSet = blockValidatorSet(storage, networkType)
 
@@ -208,11 +207,11 @@ class LitecoinKit : AbstractKit {
             }
 
             Purpose.BIP84 -> {
-                bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter(ScriptType.P2WPKH))
+                bitcoinCore.addRestoreKeyConverter(Bip84RestoreKeyConverter(SegwitAddressConverter(network.addressSegwitHrp)))
             }
 
             Purpose.BIP86 -> {
-                bitcoinCore.addRestoreKeyConverter(KeyHashRestoreKeyConverter(ScriptType.P2TR))
+                bitcoinCore.addRestoreKeyConverter(Bip86RestoreKeyConverter(SegwitAddressConverter(network.addressSegwitHrp)))
             }
         }
 
@@ -260,25 +259,11 @@ class LitecoinKit : AbstractKit {
 
     private fun apiTransactionProvider(
         networkType: NetworkType,
-        syncMode: SyncMode,
-        apiSyncStateManager: ApiSyncStateManager,
         blockchairApi: BlockchairApi
     ) = when (networkType) {
         NetworkType.MainNet -> {
-            val bCoinApiProvider = BCoinApi("https://ltc.blocksdecoded.com/api")
-
-            if (syncMode is SyncMode.Blockchair) {
-                val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
-                val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
-
-                BiApiTransactionProvider(
-                    restoreProvider = bCoinApiProvider,
-                    syncProvider = blockchairProvider,
-                    syncStateManager = apiSyncStateManager
-                )
-            } else {
-                bCoinApiProvider
-            }
+            val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
+            BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
         }
 
         NetworkType.TestNet -> {
