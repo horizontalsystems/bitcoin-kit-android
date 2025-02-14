@@ -18,6 +18,12 @@ class CoinbaseTransactionSerializer {
             output.write(coinbaseTransaction.merkleRootQuorums)
         }
 
+        if (coinbaseTransaction.version >= 3) {
+            coinbaseTransaction.bestCLHeightDiff?.let { output.writeVarInt(it) }
+            coinbaseTransaction.bestCLSignature?.let { output.write(it) }
+            coinbaseTransaction.creditPoolBalance?.let { output.writeLong(it) }
+        }
+
         return output.toByteArray()
     }
 

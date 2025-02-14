@@ -10,6 +10,9 @@ class CoinbaseTransaction(input: BitcoinInputMarkable) {
     val height: Long
     val merkleRootMNList: ByteArray
     val merkleRootQuorums: ByteArray?
+    var bestCLHeightDiff: Long? = null
+    var bestCLSignature: ByteArray? = null
+    var creditPoolBalance: Long? = null
 
     init {
         coinbaseTransactionSize = input.readVarInt()
@@ -20,6 +23,12 @@ class CoinbaseTransaction(input: BitcoinInputMarkable) {
         merkleRootQuorums = when {
             version >= 2 -> input.readBytes(32)
             else -> null
+        }
+
+        if (version >= 3) {
+            bestCLHeightDiff = input.readVarInt()
+            bestCLSignature = input.readBytes(96)
+            creditPoolBalance = input.readLong()
         }
     }
 }
