@@ -11,7 +11,6 @@ import io.horizontalsystems.bitcoincore.AbstractKit
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.SyncMode
 import io.horizontalsystems.bitcoincore.BitcoinCoreBuilder
-import io.horizontalsystems.bitcoincore.apisync.BlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.BlockchainComApi
 import io.horizontalsystems.bitcoincore.apisync.HsBlockHashFetcher
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
@@ -177,7 +176,7 @@ class BitcoinCashKit : AbstractKit {
         val storage = Storage(database)
         val checkpoint = Checkpoint.resolveCheckpoint(syncMode, network, storage)
         val apiSyncStateManager = ApiSyncStateManager(storage, network.syncableFromApi && syncMode !is SyncMode.Full)
-        val apiTransactionProvider = apiTransactionProvider(networkType, syncMode, checkpoint)
+        val apiTransactionProvider = apiTransactionProvider(networkType, syncMode)
         val paymentAddressParser = PaymentAddressParser("bitcoincash", removeScheme = false)
         val blockValidatorSet = blockValidatorSet(networkType, storage)
 
@@ -252,28 +251,23 @@ class BitcoinCashKit : AbstractKit {
 
     private fun apiTransactionProvider(
         networkType: NetworkType,
-        syncMode: SyncMode,
-        checkpoint: Checkpoint
+        syncMode: SyncMode
     ): IApiTransactionProvider {
-        val hsBlockHashFetcher = HsBlockHashFetcher("https://api.blocksdecoded.com/v1/blockchains/bitcoin-cash")
+        val blockchairApi = BlockchairApi(network.blockchairChainId)
+        val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
         return when (networkType) {
             is NetworkType.MainNet -> {
-
                 if (syncMode is SyncMode.Blockchair) {
-                    val blockchairApi = BlockchairApi(network.blockchairChainId)
-                    val blockchairBlockHashFetcher = BlockchairBlockHashFetcher(blockchairApi)
-                    val blockHashFetcher = BlockHashFetcher(hsBlockHashFetcher, blockchairBlockHashFetcher, checkpoint.block.height)
-                    val blockchairProvider = BlockchairTransactionProvider(blockchairApi, blockHashFetcher)
-                    blockchairProvider
+                    BlockchairTransactionProvider(blockchairApi, blockchairBlockHashFetcher)
                 } else {
-                    BlockchainComApi("https://api.haskoin.com/bch/blockchain", hsBlockHashFetcher)
+                    BlockchainComApi("https://api.haskoin.com/bch/blockchain", blockchairBlockHashFetcher)
                 }
             }
 
             NetworkType.TestNet -> {
                 BlockchainComApi(
                     transactionApiUrl = "https://api.haskoin.com/bchtest/blockchain",
-                    blockHashFetcher = hsBlockHashFetcher
+                    blockHashFetcher = HsBlockHashFetcher("https://api.blocksdecoded.com/v1/blockchains/bitcoin-cash")
                 )
             }
         }
