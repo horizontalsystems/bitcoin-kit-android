@@ -5,10 +5,22 @@ import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
-import io.horizontalsystems.bitcoincore.transactions.scripts.*
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_CHECKMULTISIG
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_CHECKMULTISIGVERIFY
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_CHECKSIG
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_CHECKSIGVERIFY
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_DUP
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_ENDIF
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_EQUAL
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_EQUALVERIFY
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_HASH160
+import io.horizontalsystems.bitcoincore.transactions.scripts.OP_RETURN
+import io.horizontalsystems.bitcoincore.transactions.scripts.OpCodes
+import io.horizontalsystems.bitcoincore.transactions.scripts.Script
+import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.Utils
-import java.util.*
+import java.util.Arrays
 
 class TransactionExtractor(
     private val addressConverter: IAddressConverter,
@@ -40,6 +52,9 @@ class TransactionExtractor(
             } else if (isP2TR(lockingScript)) {
                 payload = lockingScript.copyOfRange(2, lockingScript.size)
                 scriptType = ScriptType.P2TR
+            } else if (isP2WSH(lockingScript)) {
+                payload = lockingScript.copyOfRange(2, lockingScript.size)
+                scriptType = ScriptType.P2WSH
             } else if (isNullData(lockingScript)) {
                 payload = lockingScript
                 scriptType = ScriptType.NULL_DATA
@@ -190,6 +205,12 @@ class TransactionExtractor(
     private fun isP2TR(lockingScript: ByteArray): Boolean {
         return lockingScript.size == 34 &&
                 lockingScript[0] == 0x51.toByte() &&
+                lockingScript[1] == 32.toByte()
+    }
+
+    private fun isP2WSH(lockingScript: ByteArray): Boolean {
+        return lockingScript.size == 34 &&
+                lockingScript[0] == 0.toByte() &&
                 lockingScript[1] == 32.toByte()
     }
 
