@@ -273,11 +273,6 @@ class BitcoinCashKit : AbstractKit {
         }
     }
 
-    private fun network(networkType: NetworkType) = when (networkType) {
-        is NetworkType.MainNet -> MainNetBitcoinCash(networkType.coinType)
-        NetworkType.TestNet -> TestNetBitcoinCash()
-    }
-
     companion object {
         const val maxTargetBits: Long = 0x1d00ffff              // Maximum difficulty
         const val targetSpacing = 10 * 60                       // 10 minutes per block.
@@ -306,6 +301,44 @@ class BitcoinCashKit : AbstractKit {
                     continue
                 }
             }
+        }
+
+        private fun network(networkType: NetworkType) = when (networkType) {
+            is NetworkType.MainNet -> MainNetBitcoinCash(networkType.coinType)
+            NetworkType.TestNet -> TestNetBitcoinCash()
+        }
+
+        private fun addressConverter(network: Network): AddressConverterChain {
+            val addressConverter = AddressConverterChain()
+
+            val bech32 = CashAddressConverter(network.addressSegwitHrp)
+            addressConverter.prependConverter(bech32)
+
+            return addressConverter
+        }
+
+        fun firstAddress(
+            seed: ByteArray,
+            networkType: NetworkType,
+        ): Address {
+            return BitcoinCore.firstAddress(
+                seed,
+                Purpose.BIP44,
+                network(networkType),
+                addressConverter(network(networkType))
+            )
+        }
+
+        fun firstAddress(
+            extendedKey: HDExtendedKey,
+            networkType: NetworkType,
+        ): Address {
+            return BitcoinCore.firstAddress(
+                extendedKey,
+                Purpose.BIP44,
+                network(networkType),
+                addressConverter(network(networkType))
+            )
         }
     }
 }

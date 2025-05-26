@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore
 
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.blocks.IPeerSyncListener
+import io.horizontalsystems.bitcoincore.core.AccountWallet
 import io.horizontalsystems.bitcoincore.core.DataProvider
 import io.horizontalsystems.bitcoincore.core.IConnectionManager
 import io.horizontalsystems.bitcoincore.core.IInitialDownload
@@ -10,6 +11,8 @@ import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.core.IPublicKeyManager
 import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.core.PluginManager
+import io.horizontalsystems.bitcoincore.core.Wallet
+import io.horizontalsystems.bitcoincore.core.WatchAccountWallet
 import io.horizontalsystems.bitcoincore.core.description
 import io.horizontalsystems.bitcoincore.core.scriptType
 import io.horizontalsystems.bitcoincore.extensions.toHexString
@@ -28,6 +31,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.models.UsedAddress
+import io.horizontalsystems.bitcoincore.network.Network
 import io.horizontalsystems.bitcoincore.network.messages.IMessageParser
 import io.horizontalsystems.bitcoincore.network.messages.IMessageSerializer
 import io.horizontalsystems.bitcoincore.network.messages.NetworkMessageParser
@@ -53,7 +57,11 @@ import io.horizontalsystems.bitcoincore.utils.AddressConverterChain
 import io.horizontalsystems.bitcoincore.utils.DirectExecutor
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
 import io.horizontalsystems.bitcoincore.utils.PaymentAddressParser
+import io.horizontalsystems.hdwalletkit.HDExtendedKey
+import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
+import io.horizontalsystems.hdwalletkit.HDWalletAccount
+import io.horizontalsystems.hdwalletkit.HDWalletAccountWatch
 import io.reactivex.Single
 import java.util.Date
 import java.util.concurrent.Executor
@@ -531,6 +539,53 @@ class BitcoinCore(
     sealed class SendType {
         object P2P: SendType()
         class API(val blockchairApi: BlockchairApi): SendType()
+    }
+
+    companion object {
+        fun firstAddress(seed: ByteArray, purpose: Purpose, network: Network, addressConverter: AddressConverterChain) : Address {
+            val wallet = Wallet(HDWallet(seed, network.coinType, purpose), 20)
+            val publicKey = wallet.publicKey(0, 0, true)
+
+            return addressConverter.convert(publicKey, purpose.scriptType)
+        }
+
+        fun firstAddress(
+            extendedKey: HDExtendedKey,
+            purpose: Purpose,
+            network: Network,
+            addressConverter: AddressConverterChain
+        ): Address {
+            val publicKey = if (!extendedKey.isPublic) {
+                when (extendedKey.derivedType) {
+                    HDExtendedKey.DerivedType.Master -> {
+                        val wallet = Wallet(HDWallet(extendedKey.key, network.coinType, purpose), 0)
+                        wallet.publicKey(0, 0, true)
+                    }
+
+                    HDExtendedKey.DerivedType.Account -> {
+                        val wallet = AccountWallet(HDWalletAccount(extendedKey.key), 0)
+                        wallet.publicKey(0,true)
+                    }
+
+                    HDExtendedKey.DerivedType.Bip32 -> {
+                        throw IllegalStateException("Custom Bip32 Extended Keys are not supported")
+                    }
+                }
+            } else {
+                when (extendedKey.derivedType) {
+                    HDExtendedKey.DerivedType.Account -> {
+                        val wallet = WatchAccountWallet(HDWalletAccountWatch(extendedKey.key), 0)
+                        wallet.publicKey(0,true)
+                    }
+
+                    HDExtendedKey.DerivedType.Bip32, HDExtendedKey.DerivedType.Master -> {
+                        throw IllegalStateException("Only Account Extended Public Keys are supported")
+                    }
+                }
+            }
+
+            return addressConverter.convert(publicKey, purpose.scriptType)
+        }
     }
 
 }
