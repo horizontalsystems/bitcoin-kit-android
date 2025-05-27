@@ -33,10 +33,10 @@ class UnspentOutputSelectorTest {
         val value = 54L
         val selector =
             UnspentOutputSelector(calculator, dustCalculator, unspentOutputProvider, null)
-        `when`(dustCalculator.dust(any())).thenReturn(dust)
+        `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
 
         assertThrows(SendValueErrors.Dust::class.java) {
-            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
         }
     }
 
@@ -47,7 +47,7 @@ class UnspentOutputSelectorTest {
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(emptyList())
 
         assertThrows(SendValueErrors.InsufficientUnspentOutputs::class.java) {
-            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
         }
     }
 
@@ -64,7 +64,7 @@ class UnspentOutputSelectorTest {
         val value = 12000
 
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
-        `when`(dustCalculator.dust(any())).thenReturn(dust)
+        `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
 //        `when`(calculator.outputSize(any())).thenReturn(2)
         `when`(calculator.transactionSize(anyList(), anyList(), any())).thenReturn(30)
@@ -72,7 +72,16 @@ class UnspentOutputSelectorTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         val selectedInfo =
-            selector.select(value.toLong(), null, feeRate, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(
+                value.toLong(),
+                null,
+                feeRate,
+                ScriptType.P2PKH,
+                ScriptType.P2WPKH,
+                false,
+                0,
+                null
+            )
         assertEquals(outputs, selectedInfo.outputs)
         assertEquals(11850, selectedInfo.recipientValue)
     }
@@ -95,7 +104,7 @@ class UnspentOutputSelectorTest {
         )
 
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
-        `when`(dustCalculator.dust(any())).thenReturn(dust)
+        `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
 //        `when`(calculator.outputSize(any())).thenReturn(2)
         `when`(calculator.transactionSize(anyList(), anyList(), any())).thenReturn(30)
@@ -103,7 +112,16 @@ class UnspentOutputSelectorTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         val selectedInfo =
-            selector.select(value.toLong(), null, feeRate, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0)
+            selector.select(
+                value.toLong(),
+                null,
+                feeRate,
+                ScriptType.P2PKH,
+                ScriptType.P2WPKH,
+                false,
+                0,
+                null
+            )
         assertEquals(4, selectedInfo.outputs.size)
         assertEquals(10850, selectedInfo.recipientValue)
     }

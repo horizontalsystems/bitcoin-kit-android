@@ -199,7 +199,8 @@ class BitcoinCore(
         senderPay: Boolean = true,
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
-        pluginData: Map<Byte, IPluginData>
+        pluginData: Map<Byte, IPluginData>,
+        dustThreshold: Int?
     ): BitcoinSendInfo {
         val outputs = unspentOutputs?.mapNotNull {
             unspentOutputSelector.all.firstOrNull { unspentOutput ->
@@ -213,7 +214,8 @@ class BitcoinCore(
             toAddress = address,
             memo = memo,
             unspentOutputs = outputs,
-            pluginData = pluginData
+            pluginData = pluginData,
+            dustThreshold = dustThreshold
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -226,7 +228,8 @@ class BitcoinCore(
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        rbfEnabled: Boolean
+        rbfEnabled: Boolean,
+        dustThreshold: Int?
     ): FullTransaction {
         val outputs = unspentOutputs?.mapNotNull {
             unspentOutputSelector.all.firstOrNull { unspentOutput ->
@@ -242,7 +245,8 @@ class BitcoinCore(
             sortType = sortType,
             unspentOutputs = outputs,
             pluginData = pluginData,
-            rbfEnabled = rbfEnabled
+            rbfEnabled = rbfEnabled,
+            dustThreshold = dustThreshold,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -255,7 +259,8 @@ class BitcoinCore(
         feeRate: Int,
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>?,
-        rbfEnabled: Boolean
+        rbfEnabled: Boolean,
+        dustThreshold: Int?
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
         val outputs = unspentOutputs?.mapNotNull {
@@ -272,7 +277,8 @@ class BitcoinCore(
             sortType = sortType,
             unspentOutputs = outputs,
             pluginData = mapOf(),
-            rbfEnabled = rbfEnabled
+            rbfEnabled = rbfEnabled,
+            dustThreshold = dustThreshold
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -423,7 +429,8 @@ class BitcoinCore(
         memo: String?,
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
-        pluginData: Map<Byte, IPluginData>
+        pluginData: Map<Byte, IPluginData>,
+        dustThreshold: Int?
     ): Long {
         if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
 
@@ -442,20 +449,21 @@ class BitcoinCore(
             toAddress = address,
             memo = memo,
             unspentOutputs = outputs,
-            pluginData = pluginData
+            pluginData = pluginData,
+            dustThreshold = dustThreshold
         ).fee
 
         return max(0L, spendableBalance - sendAllFee)
     }
 
-    fun minimumSpendableValue(address: String?): Int {
+    fun minimumSpendableValue(address: String?, dustThreshold: Int?): Int {
         // by default script type is P2PKH, since it is most used
         val scriptType = when {
             address != null -> addressConverter.convert(address).scriptType
             else -> ScriptType.P2PKH
         }
 
-        return dustCalculator?.dust(scriptType) ?: throw CoreError.ReadOnlyCore
+        return dustCalculator?.dust(scriptType, dustThreshold) ?: throw CoreError.ReadOnlyCore
     }
 
     fun getRawTransaction(transactionHash: String): String? {
@@ -466,11 +474,16 @@ class BitcoinCore(
         return dataProvider.getTransaction(hash)
     }
 
-    fun replacementTransaction(transactionHash: String, minFee: Long, type: ReplacementType): ReplacementTransaction {
+    fun replacementTransaction(
+        transactionHash: String,
+        minFee: Long,
+        type: ReplacementType,
+        dustThreshold: Int?
+    ): ReplacementTransaction {
         val replacementTransactionBuilder = this.replacementTransactionBuilder ?: throw CoreError.ReadOnlyCore
 
         val (mutableTransaction, fullInfo, descendantTransactionHashes) =
-            replacementTransactionBuilder.replacementTransaction(transactionHash, minFee, type)
+            replacementTransactionBuilder.replacementTransaction(transactionHash, minFee, type, dustThreshold)
         val info = dataProvider.transactionInfo(fullInfo)
         return ReplacementTransaction(mutableTransaction, info, descendantTransactionHashes)
     }
@@ -481,8 +494,12 @@ class BitcoinCore(
         return transactionCreator.create(replacementTransaction.mutableTransaction)
     }
 
-    fun replacementTransactionInfo(transactionHash: String, type: ReplacementType): ReplacementTransactionInfo? {
-        return replacementTransactionBuilder?.replacementInfo(transactionHash, type)
+    fun replacementTransactionInfo(
+        transactionHash: String,
+        type: ReplacementType,
+        dustThreshold: Int?
+    ): ReplacementTransactionInfo? {
+        return replacementTransactionBuilder?.replacementInfo(transactionHash, type, dustThreshold)
     }
 
     sealed class KitState {

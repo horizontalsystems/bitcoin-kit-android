@@ -23,7 +23,8 @@ class UnspentOutputSelector(
         outputScriptType: ScriptType,
         changeType: ScriptType,
         senderPay: Boolean,
-        pluginDataOutputSize: Int
+        pluginDataOutputSize: Int,
+        dustThreshold: Int?
     ): SelectedUnspentOutputInfo {
         val sortedOutputs =
             unspentOutputProvider.getSpendableUtxo().sortedWith(compareByDescending<UnspentOutput> {
@@ -33,7 +34,7 @@ class UnspentOutputSelector(
             })
 
         // check if value is not dust. recipientValue may be less, but not more
-        if (value < dustCalculator.dust(outputScriptType)) {
+        if (value < dustCalculator.dust(outputScriptType, dustThreshold)) {
             throw SendValueErrors.Dust
         }
 
@@ -45,7 +46,8 @@ class UnspentOutputSelector(
             outputsLimit = outputsLimit,
             outputScriptType = outputScriptType,
             changeType = changeType,
-            pluginDataOutputSize = pluginDataOutputSize
+            pluginDataOutputSize = pluginDataOutputSize,
+            dustThreshold = dustThreshold
         )
         val queue = UnspentOutputQueue(params, calculator, dustCalculator)
 
