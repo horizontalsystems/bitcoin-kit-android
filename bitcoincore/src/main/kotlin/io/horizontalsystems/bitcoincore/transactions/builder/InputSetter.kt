@@ -62,7 +62,8 @@ class InputSetter(
         senderPay: Boolean,
         unspentOutputs: List<UnspentOutput>?,
         sortType: TransactionDataSortType,
-        rbfEnabled: Boolean
+        rbfEnabled: Boolean,
+        dustThreshold: Int?
     ): OutputInfo {
         val unspentOutputInfo: SelectedUnspentOutputInfo
         if (unspentOutputs != null) {
@@ -74,7 +75,8 @@ class InputSetter(
                 outputsLimit = null,
                 outputScriptType = mutableTransaction.recipientAddress.scriptType,
                 changeType = changeScriptType,  // Assuming changeScriptType is defined somewhere
-                pluginDataOutputSize = mutableTransaction.getPluginDataOutputSize()
+                pluginDataOutputSize = mutableTransaction.getPluginDataOutputSize(),
+                dustThreshold = dustThreshold
             )
             val queue = UnspentOutputQueue(
                 params,
@@ -92,7 +94,8 @@ class InputSetter(
                 mutableTransaction.recipientAddress.scriptType,  // Assuming changeScriptType is defined somewhere
                 changeScriptType,
                 senderPay,
-                mutableTransaction.getPluginDataOutputSize()
+                mutableTransaction.getPluginDataOutputSize(),
+                dustThreshold
             )
         }
 

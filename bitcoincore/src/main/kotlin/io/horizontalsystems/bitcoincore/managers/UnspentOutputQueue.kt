@@ -14,7 +14,7 @@ class UnspentOutputQueue(
     private var selectedOutputs: MutableList<UnspentOutput> = mutableListOf()
     private var totalValue: Long = 0L
 
-    val recipientOutputDust = dustCalculator.dust(parameters.outputScriptType)
+    val recipientOutputDust = dustCalculator.dust(parameters.outputScriptType, parameters.dustThreshold)
 
     fun push(output: UnspentOutput) {
         selectedOutputs.add(output)
@@ -89,6 +89,7 @@ class UnspentOutputQueue(
         val outputsLimit: Int?,
         val outputScriptType: ScriptType,
         val changeType: ScriptType,
-        val pluginDataOutputSize: Int
+        val pluginDataOutputSize: Int,
+        val dustThreshold: Int?
     )
 }

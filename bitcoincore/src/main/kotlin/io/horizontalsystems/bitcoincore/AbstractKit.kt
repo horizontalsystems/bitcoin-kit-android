@@ -75,7 +75,8 @@ abstract class AbstractKit {
         senderPay: Boolean = true,
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
-        pluginData: Map<Byte, IPluginData> = mapOf()
+        pluginData: Map<Byte, IPluginData> = mapOf(),
+        dustThreshold: Int?
     ): BitcoinSendInfo {
         return bitcoinCore.sendInfo(
             value = value,
@@ -84,7 +85,8 @@ abstract class AbstractKit {
             senderPay = senderPay,
             feeRate = feeRate,
             unspentOutputs = unspentOutputs,
-            pluginData = pluginData
+            pluginData = pluginData,
+            dustThreshold = dustThreshold
         )
     }
 
@@ -98,8 +100,20 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutputInfo>? = null,
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
+        dustThreshold: Int?,
     ): FullTransaction {
-        return bitcoinCore.send(address, memo, value, senderPay, feeRate, sortType, unspentOutputs, pluginData, rbfEnabled)
+        return bitcoinCore.send(
+            address,
+            memo,
+            value,
+            senderPay,
+            feeRate,
+            sortType,
+            unspentOutputs,
+            pluginData,
+            rbfEnabled,
+            dustThreshold
+        )
     }
 
     fun send(
@@ -111,8 +125,20 @@ abstract class AbstractKit {
         sortType: TransactionDataSortType,
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
+        dustThreshold: Int?,
     ): FullTransaction {
-        return bitcoinCore.send(address, memo, value, senderPay, feeRate, sortType, null, pluginData, rbfEnabled)
+        return bitcoinCore.send(
+            address,
+            memo,
+            value,
+            senderPay,
+            feeRate,
+            sortType,
+            null,
+            pluginData,
+            rbfEnabled,
+            dustThreshold,
+        )
     }
 
     fun send(
@@ -125,8 +151,20 @@ abstract class AbstractKit {
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>? = null,
         rbfEnabled: Boolean,
+        dustThreshold: Int?,
     ): FullTransaction {
-        return bitcoinCore.send(hash, memo, scriptType, value, senderPay, feeRate, sortType, unspentOutputs, rbfEnabled)
+        return bitcoinCore.send(
+            hash,
+            memo,
+            scriptType,
+            value,
+            senderPay,
+            feeRate,
+            sortType,
+            unspentOutputs,
+            rbfEnabled,
+            dustThreshold
+        )
     }
 
     fun send(
@@ -138,8 +176,20 @@ abstract class AbstractKit {
         feeRate: Int,
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean,
+        dustThreshold: Int?,
     ): FullTransaction {
-        return bitcoinCore.send(hash, memo, scriptType, value, senderPay, feeRate, sortType, null, rbfEnabled)
+        return bitcoinCore.send(
+            hash,
+            memo,
+            scriptType,
+            value,
+            senderPay,
+            feeRate,
+            sortType,
+            null,
+            rbfEnabled,
+            dustThreshold,
+        )
     }
 
     fun redeem(unspentOutput: UnspentOutput, address: String, memo: String?, feeRate: Int, sortType: TransactionDataSortType, rbfEnabled: Boolean): FullTransaction {
@@ -186,41 +236,60 @@ abstract class AbstractKit {
         bitcoinCore.watchTransaction(filter, listener)
     }
 
-    fun maximumSpendableValue(address: String?, memo: String?, feeRate: Int, unspentOutputs: List<UnspentOutputInfo>?, pluginData: Map<Byte, IPluginData>): Long {
-        return bitcoinCore.maximumSpendableValue(address, memo, feeRate, unspentOutputs, pluginData)
+    fun maximumSpendableValue(
+        address: String?,
+        memo: String?,
+        feeRate: Int,
+        unspentOutputs: List<UnspentOutputInfo>?,
+        pluginData: Map<Byte, IPluginData>,
+        dustThreshold: Int?
+    ): Long {
+        return bitcoinCore.maximumSpendableValue(
+            address,
+            memo,
+            feeRate,
+            unspentOutputs,
+            pluginData,
+            dustThreshold
+        )
     }
 
-    fun minimumSpendableValue(address: String?): Int {
-        return bitcoinCore.minimumSpendableValue(address)
+    fun minimumSpendableValue(address: String?, dustThreshold: Int?): Int {
+        return bitcoinCore.minimumSpendableValue(address, dustThreshold)
     }
 
     fun getRawTransaction(transactionHash: String): String? {
         return bitcoinCore.getRawTransaction(transactionHash)
     }
 
-    fun speedUpTransaction(transactionHash: String, minFee: Long): ReplacementTransaction {
-        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.SpeedUp)
+    fun speedUpTransaction(transactionHash: String, minFee: Long, dustThreshold: Int?): ReplacementTransaction {
+        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.SpeedUp, dustThreshold)
     }
 
-    fun cancelTransaction(transactionHash: String, minFee: Long): ReplacementTransaction {
+    fun cancelTransaction(transactionHash: String, minFee: Long, dustThreshold: Int?): ReplacementTransaction {
         val publicKey = bitcoinCore.receivePublicKey()
         val address = bitcoinCore.address(publicKey)
-        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.Cancel(address, publicKey))
+        return bitcoinCore.replacementTransaction(
+            transactionHash,
+            minFee,
+            ReplacementType.Cancel(address, publicKey),
+            dustThreshold
+        )
     }
 
     fun send(replacementTransaction: ReplacementTransaction): FullTransaction {
         return bitcoinCore.send(replacementTransaction)
     }
 
-    fun speedUpTransactionInfo(transactionHash: String): ReplacementTransactionInfo? {
-        return bitcoinCore.replacementTransactionInfo(transactionHash, ReplacementType.SpeedUp)
+    fun speedUpTransactionInfo(transactionHash: String, dustThreshold: Int?): ReplacementTransactionInfo? {
+        return bitcoinCore.replacementTransactionInfo(transactionHash, ReplacementType.SpeedUp, dustThreshold)
     }
 
-    fun cancelTransactionInfo(transactionHash: String): ReplacementTransactionInfo? {
+    fun cancelTransactionInfo(transactionHash: String, dustThreshold: Int?): ReplacementTransactionInfo? {
         val receivePublicKey = bitcoinCore.receivePublicKey()
         val address = bitcoinCore.address(receivePublicKey)
         val type = ReplacementType.Cancel(address, receivePublicKey)
-        return bitcoinCore.replacementTransactionInfo(transactionHash, type)
+        return bitcoinCore.replacementTransactionInfo(transactionHash, type, dustThreshold)
     }
 
 }

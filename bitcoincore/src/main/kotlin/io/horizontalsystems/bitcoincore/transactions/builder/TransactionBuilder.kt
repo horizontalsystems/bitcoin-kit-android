@@ -21,12 +21,21 @@ class TransactionBuilder(
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
-        rbfEnabled: Boolean
+        rbfEnabled: Boolean,
+        dustThreshold: Int?
     ): MutableTransaction {
         val mutableTransaction = MutableTransaction()
 
         recipientSetter.setRecipient(mutableTransaction, toAddress, value, pluginData, false, memo)
-        inputSetter.setInputs(mutableTransaction, feeRate, senderPay, unspentOutputs, sortType, rbfEnabled)
+        inputSetter.setInputs(
+            mutableTransaction,
+            feeRate,
+            senderPay,
+            unspentOutputs,
+            sortType,
+            rbfEnabled,
+            dustThreshold
+        )
         lockTimeSetter.setLockTime(mutableTransaction)
 
         outputSetter.setOutputs(mutableTransaction, sortType)

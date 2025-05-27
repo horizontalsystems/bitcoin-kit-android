@@ -27,7 +27,8 @@ class TransactionCreator(
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
-        rbfEnabled: Boolean
+        rbfEnabled: Boolean,
+        dustThreshold: Int?
     ): FullTransaction {
         val mutableTransaction = builder.buildTransaction(
             toAddress = toAddress,
@@ -38,7 +39,8 @@ class TransactionCreator(
             sortType = sortType,
             unspentOutputs = unspentOutputs,
             pluginData = pluginData,
-            rbfEnabled = rbfEnabled
+            rbfEnabled = rbfEnabled,
+            dustThreshold = dustThreshold
         )
 
         return create(mutableTransaction)
