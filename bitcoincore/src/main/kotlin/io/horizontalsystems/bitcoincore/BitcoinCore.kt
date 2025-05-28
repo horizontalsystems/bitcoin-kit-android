@@ -161,7 +161,7 @@ class BitcoinCore(
         get() = transactionCreator == null
 
     fun getUnspentOutputs(filters: UtxoFilters): List<UnspentOutputInfo> {
-        return unspentOutputSelector.getAll(filters).map {
+        return unspentOutputSelector.getAllSpendable(filters).map {
             UnspentOutputInfo.fromUnspentOutput(it)
         }
     }
@@ -207,7 +207,7 @@ class BitcoinCore(
         filters: UtxoFilters
     ): BitcoinSendInfo {
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAllSpendable(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -240,7 +240,7 @@ class BitcoinCore(
         filters: UtxoFilters
     ): FullTransaction {
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAllSpendable(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -276,7 +276,7 @@ class BitcoinCore(
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAllSpendable(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -442,7 +442,7 @@ class BitcoinCore(
         address: String?,
         memo: String?,
         feeRate: Int,
-        unspentOutputs: List<UnspentOutputInfo>?,
+        unspentOutputInfos: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
         dustThreshold: Int?,
         changeToFirstInput: Boolean,
@@ -450,13 +450,16 @@ class BitcoinCore(
     ): Long {
         if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
 
-        val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
-                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
-            }
-        }
+        val allSpendable = unspentOutputSelector.getAllSpendable(filters)
 
-        val spendableBalance = outputs?.sumOf { it.output.value } ?: balance.spendable
+        val outputs = unspentOutputInfos?.mapNotNull { unspentOutputInfo ->
+            allSpendable.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(unspentOutputInfo.transactionHash) &&
+                    unspentOutput.output.index == unspentOutputInfo.outputIndex
+            }
+        } ?: allSpendable
+
+        val spendableBalance = outputs.sumOf { it.output.value }
 
         val sendAllFee = transactionFeeCalculator.sendInfo(
             value = spendableBalance,
