@@ -15,6 +15,7 @@ import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.reactivex.Single
 
@@ -23,8 +24,9 @@ abstract class AbstractKit {
     protected abstract var bitcoinCore: BitcoinCore
     protected abstract var network: Network
 
-    val unspentOutputs
-        get() = bitcoinCore.unspentOutputs
+    fun getUnspentOutputs(filters: UtxoFilters): List<UnspentOutputInfo> {
+        return bitcoinCore.getUnspentOutputs(filters)
+    }
 
     val balance
         get() = bitcoinCore.balance
@@ -77,7 +79,8 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData> = mapOf(),
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): BitcoinSendInfo {
         return bitcoinCore.sendInfo(
             value = value,
@@ -89,6 +92,7 @@ abstract class AbstractKit {
             pluginData = pluginData,
             dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
+            filters = filters,
         )
     }
 
@@ -104,6 +108,7 @@ abstract class AbstractKit {
         rbfEnabled: Boolean,
         dustThreshold: Int?,
         changeToFirstInput: Boolean,
+        filters: UtxoFilters,
     ): FullTransaction {
         return bitcoinCore.send(
             address,
@@ -117,6 +122,7 @@ abstract class AbstractKit {
             rbfEnabled,
             dustThreshold,
             changeToFirstInput,
+            filters,
         )
     }
 
@@ -131,6 +137,7 @@ abstract class AbstractKit {
         rbfEnabled: Boolean,
         dustThreshold: Int?,
         changeToFirstInput: Boolean,
+        filters: UtxoFilters,
     ): FullTransaction {
         return bitcoinCore.send(
             address,
@@ -144,6 +151,7 @@ abstract class AbstractKit {
             rbfEnabled,
             dustThreshold,
             changeToFirstInput,
+            filters,
         )
     }
 
@@ -159,6 +167,7 @@ abstract class AbstractKit {
         rbfEnabled: Boolean,
         dustThreshold: Int?,
         changeToFirstInput: Boolean,
+        filters: UtxoFilters,
     ): FullTransaction {
         return bitcoinCore.send(
             hash,
@@ -172,6 +181,7 @@ abstract class AbstractKit {
             rbfEnabled,
             dustThreshold,
             changeToFirstInput,
+            filters,
         )
     }
 
@@ -186,6 +196,7 @@ abstract class AbstractKit {
         rbfEnabled: Boolean,
         dustThreshold: Int?,
         changeToFirstInput: Boolean,
+        filters: UtxoFilters,
     ): FullTransaction {
         return bitcoinCore.send(
             hash,
@@ -199,6 +210,7 @@ abstract class AbstractKit {
             rbfEnabled,
             dustThreshold,
             changeToFirstInput,
+            filters,
         )
     }
 
@@ -253,7 +265,8 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): Long {
         return bitcoinCore.maximumSpendableValue(
             address,
@@ -263,6 +276,7 @@ abstract class AbstractKit {
             pluginData,
             dustThreshold,
             changeToFirstInput,
+            filters,
         )
     }
 
@@ -274,18 +288,35 @@ abstract class AbstractKit {
         return bitcoinCore.getRawTransaction(transactionHash)
     }
 
-    fun speedUpTransaction(transactionHash: String, minFee: Long, dustThreshold: Int?): ReplacementTransaction {
-        return bitcoinCore.replacementTransaction(transactionHash, minFee, ReplacementType.SpeedUp, dustThreshold)
+    fun speedUpTransaction(
+        transactionHash: String,
+        minFee: Long,
+        dustThreshold: Int?,
+        filters: UtxoFilters
+    ): ReplacementTransaction {
+        return bitcoinCore.replacementTransaction(
+            transactionHash,
+            minFee,
+            ReplacementType.SpeedUp,
+            dustThreshold,
+            filters
+        )
     }
 
-    fun cancelTransaction(transactionHash: String, minFee: Long, dustThreshold: Int?): ReplacementTransaction {
+    fun cancelTransaction(
+        transactionHash: String,
+        minFee: Long,
+        dustThreshold: Int?,
+        filters: UtxoFilters
+    ): ReplacementTransaction {
         val publicKey = bitcoinCore.receivePublicKey()
         val address = bitcoinCore.address(publicKey)
         return bitcoinCore.replacementTransaction(
             transactionHash,
             minFee,
             ReplacementType.Cancel(address, publicKey),
-            dustThreshold
+            dustThreshold,
+            filters
         )
     }
 
@@ -293,15 +324,20 @@ abstract class AbstractKit {
         return bitcoinCore.send(replacementTransaction)
     }
 
-    fun speedUpTransactionInfo(transactionHash: String, dustThreshold: Int?): ReplacementTransactionInfo? {
-        return bitcoinCore.replacementTransactionInfo(transactionHash, ReplacementType.SpeedUp, dustThreshold)
+    fun speedUpTransactionInfo(transactionHash: String, dustThreshold: Int?, filters: UtxoFilters): ReplacementTransactionInfo? {
+        return bitcoinCore.replacementTransactionInfo(
+            transactionHash,
+            ReplacementType.SpeedUp,
+            dustThreshold,
+            filters
+        )
     }
 
-    fun cancelTransactionInfo(transactionHash: String, dustThreshold: Int?): ReplacementTransactionInfo? {
+    fun cancelTransactionInfo(transactionHash: String, dustThreshold: Int?, filters: UtxoFilters): ReplacementTransactionInfo? {
         val receivePublicKey = bitcoinCore.receivePublicKey()
         val address = bitcoinCore.address(receivePublicKey)
         val type = ReplacementType.Cancel(address, receivePublicKey)
-        return bitcoinCore.replacementTransactionInfo(transactionHash, type, dustThreshold)
+        return bitcoinCore.replacementTransactionInfo(transactionHash, type, dustThreshold, filters)
     }
 
 }

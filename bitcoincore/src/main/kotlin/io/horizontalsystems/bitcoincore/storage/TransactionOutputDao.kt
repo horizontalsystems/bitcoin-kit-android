@@ -1,6 +1,11 @@
 package io.horizontalsystems.bitcoincore.storage
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 
 @Dao
@@ -39,6 +44,9 @@ interface TransactionOutputDao {
 
     @Query("select * from TransactionOutput where transactionHash = :hash order by rowId")
     fun getByHash(hash: ByteArray): List<TransactionOutput>
+
+    @Query("select count(*) from TransactionOutput where transactionHash = :hash")
+    fun getCountByHash(hash: ByteArray): Int
 
     @Query("UPDATE `transactionOutput` SET failedToSpend = 1 WHERE transactionHash = :transactionHash AND `index` = :index")
     fun markFailedToSpend(transactionHash: ByteArray, index: Int)

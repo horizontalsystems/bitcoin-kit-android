@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 
 class UnspentOutputProvider(
     private val storage: IStorage,
@@ -12,10 +13,22 @@ class UnspentOutputProvider(
     val pluginManager: PluginManager
 ) : IUnspentOutputProvider {
 
-    override fun getSpendableUtxo(): List<UnspentOutput> {
+    override fun getSpendableUtxo(filters: UtxoFilters): List<UnspentOutput> {
         return allUtxo().filter {
-            pluginManager.isSpendable(it) && it.transaction.status == Transaction.Status.RELAYED
+            isSpendable(it) && filters.filterUtxo(it, storage)
         }
+    }
+
+    private fun isSpendable(utxo: UnspentOutput): Boolean {
+        if (!pluginManager.isSpendable(utxo)) {
+            return false
+        }
+
+        if (utxo.transaction.status != Transaction.Status.RELAYED) {
+            return false
+        }
+
+        return true
     }
 
     private fun getUnspendableTimeLockedUtxo() = allUtxo().filter {
@@ -27,7 +40,7 @@ class UnspentOutputProvider(
     }
 
     fun getBalance(): BalanceInfo {
-        val spendable = getSpendableUtxo().sumOf { it.output.value }
+        val spendable = getSpendableUtxo(UtxoFilters()).sumOf { it.output.value }
         val unspendableTimeLocked = getUnspendableTimeLockedUtxo().sumOf { it.output.value }
         val unspendableNotRelayed = getUnspendableNotRelayedUtxo().sumOf { it.output.value }
 
@@ -35,10 +48,10 @@ class UnspentOutputProvider(
     }
 
     // Only confirmed spendable outputs
-    fun getConfirmedSpendableUtxo(): List<UnspentOutput> {
+    fun getConfirmedSpendableUtxo(filters: UtxoFilters): List<UnspentOutput> {
         val lastBlockHeight = storage.lastBlock()?.height ?: 0
 
-        return getSpendableUtxo().filter {
+        return getSpendableUtxo(filters).filter {
             val block = it.block ?: return@filter false
             return@filter block.height <= lastBlockHeight - confirmationsThreshold + 1
         }

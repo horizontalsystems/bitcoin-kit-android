@@ -49,6 +49,7 @@ import io.horizontalsystems.bitcoincore.rbf.ReplacementType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.TransactionCreator
 import io.horizontalsystems.bitcoincore.transactions.TransactionFeeCalculator
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
@@ -159,10 +160,11 @@ class BitcoinCore(
     val watchAccount: Boolean
         get() = transactionCreator == null
 
-    val unspentOutputs: List<UnspentOutputInfo>
-        get() = unspentOutputSelector.all.map {
+    fun getUnspentOutputs(filters: UtxoFilters): List<UnspentOutputInfo> {
+        return unspentOutputSelector.getAll(filters).map {
             UnspentOutputInfo.fromUnspentOutput(it)
         }
+    }
 
     //
     // API methods
@@ -201,10 +203,11 @@ class BitcoinCore(
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): BitcoinSendInfo {
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -218,6 +221,7 @@ class BitcoinCore(
             pluginData = pluginData,
             dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
+            filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -232,10 +236,11 @@ class BitcoinCore(
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): FullTransaction {
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -251,6 +256,7 @@ class BitcoinCore(
             rbfEnabled = rbfEnabled,
             dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
+            filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -265,11 +271,12 @@ class BitcoinCore(
         unspentOutputs: List<UnspentOutputInfo>?,
         rbfEnabled: Boolean,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -285,6 +292,7 @@ class BitcoinCore(
             rbfEnabled = rbfEnabled,
             dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
+            filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -437,12 +445,13 @@ class BitcoinCore(
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): Long {
         if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
 
         val outputs = unspentOutputs?.mapNotNull {
-            unspentOutputSelector.all.firstOrNull { unspentOutput ->
+            unspentOutputSelector.getAll(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
             }
         }
@@ -459,6 +468,7 @@ class BitcoinCore(
             pluginData = pluginData,
             dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
+            filters = filters,
         ).fee
 
         return max(0L, spendableBalance - sendAllFee)
@@ -486,12 +496,19 @@ class BitcoinCore(
         transactionHash: String,
         minFee: Long,
         type: ReplacementType,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        filters: UtxoFilters
     ): ReplacementTransaction {
         val replacementTransactionBuilder = this.replacementTransactionBuilder ?: throw CoreError.ReadOnlyCore
 
         val (mutableTransaction, fullInfo, descendantTransactionHashes) =
-            replacementTransactionBuilder.replacementTransaction(transactionHash, minFee, type, dustThreshold)
+            replacementTransactionBuilder.replacementTransaction(
+                transactionHash,
+                minFee,
+                type,
+                dustThreshold,
+                filters
+            )
         val info = dataProvider.transactionInfo(fullInfo)
         return ReplacementTransaction(mutableTransaction, info, descendantTransactionHashes)
     }
@@ -505,9 +522,10 @@ class BitcoinCore(
     fun replacementTransactionInfo(
         transactionHash: String,
         type: ReplacementType,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        filters: UtxoFilters
     ): ReplacementTransactionInfo? {
-        return replacementTransactionBuilder?.replacementInfo(transactionHash, type, dustThreshold)
+        return replacementTransactionBuilder?.replacementInfo(transactionHash, type, dustThreshold, filters)
     }
 
     sealed class KitState {
