@@ -43,8 +43,7 @@ class ReplacementTransactionBuilder(
         minFeeRate: Int,
         utxo: List<TransactionOutput>,
         fixedOutputs: List<TransactionOutput>,
-        outputs: List<TransactionOutput>,
-        dustThreshold: Int?
+        outputs: List<TransactionOutput>
     ): Pair<List<TransactionOutput>, /*Fee*/Long>? {
 
         var minFee = minFee
@@ -70,7 +69,7 @@ class ReplacementTransactionBuilder(
         val output = TransactionOutput(outputs.first())
         output.value = output.value - (minFee - fee)
 
-        if (output.value > dustCalculator.dust(output.scriptType, dustThreshold)) {
+        if (output.value > dustCalculator.dust(output.scriptType, null)) {
             return Pair(listOf(output) + outputs.drop(1), fee)
         }
 
@@ -126,8 +125,7 @@ class ReplacementTransactionBuilder(
         originalFullInfo: FullTransactionInfo,
         minFee: Long,
         originalFeeRate: Int,
-        fixedUtxo: List<TransactionOutput>,
-        dustThreshold: Int?
+        fixedUtxo: List<TransactionOutput>
     ): MutableTransaction? {
         // If an output has a pluginId, it most probably has a time-locked value and it shouldn't be altered.
         var fixedOutputs = originalFullInfo.outputs.filter { it.publicKeyPath == null || it.pluginId != null }
@@ -156,8 +154,7 @@ class ReplacementTransactionBuilder(
                     minFeeRate = originalFeeRate,
                     utxo = fixedUtxo + utxo.map { it.output },
                     fixedOutputs = fixedOutputs,
-                    outputs = outputs,
-                    dustThreshold = dustThreshold
+                    outputs = outputs
                 )?.let { (outputs, fee) ->
                     optimalReplacement.let { _optimalReplacement ->
                         if (_optimalReplacement != null) {
@@ -198,11 +195,9 @@ class ReplacementTransactionBuilder(
         originalFeeRate: Int,
         fixedUtxo: List<TransactionOutput>,
         userAddress: Address,
-        publicKey: PublicKey,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        publicKey: PublicKey
     ): MutableTransaction? {
-        val unusedUtxo = unspentOutputProvider.getConfirmedSpendableUtxo(filters).sortedBy { it.output.value }
+        val unusedUtxo = unspentOutputProvider.getConfirmedSpendableUtxo(UtxoFilters()).sortedBy { it.output.value }
         val originalInputsValue = fixedUtxo.sumOf { it.value }
 
         var optimalReplacement: Triple</*inputs*/ List<UnspentOutput>, /*outputs*/ List<TransactionOutput>, /*fee*/ Long>? = null
@@ -220,7 +215,7 @@ class ReplacementTransactionBuilder(
             )
         )
         do {
-            if (originalInputsValue - minFee < dustCalculator.dust(userAddress.scriptType, dustThreshold)) {
+            if (originalInputsValue - minFee < dustCalculator.dust(userAddress.scriptType, null)) {
                 utxoCount++
                 continue
             }
@@ -232,8 +227,7 @@ class ReplacementTransactionBuilder(
                 minFeeRate = originalFeeRate,
                 utxo = fixedUtxo + utxo.map { it.output },
                 fixedOutputs = listOf(),
-                outputs = outputs,
-                dustThreshold = dustThreshold
+                outputs = outputs
             )?.let { (outputs, fee) ->
                 optimalReplacement.let { _optimalReplacement ->
                     if (_optimalReplacement != null) {
@@ -268,9 +262,7 @@ class ReplacementTransactionBuilder(
     fun replacementTransaction(
         transactionHash: String,
         minFee: Long,
-        type: ReplacementType,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        type: ReplacementType
     ): Triple<MutableTransaction, FullTransactionInfo, List<String>> {
         val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray())
             ?: throw BuildError.InvalidTransaction("No FullTransactionInfo")
@@ -307,8 +299,7 @@ class ReplacementTransactionBuilder(
                 originalFullInfo,
                 minFee,
                 originalFeeRate,
-                fixedUtxo,
-                dustThreshold
+                fixedUtxo
             )
             is ReplacementType.Cancel -> cancelReplacement(
                 originalFullInfo,
@@ -316,9 +307,7 @@ class ReplacementTransactionBuilder(
                 originalFeeRate,
                 fixedUtxo,
                 type.address,
-                type.publicKey,
-                dustThreshold,
-                filters
+                type.publicKey
             )
         }
 
@@ -345,9 +334,7 @@ class ReplacementTransactionBuilder(
 
     fun replacementInfo(
         transactionHash: String,
-        type: ReplacementType,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        type: ReplacementType
     ): ReplacementTransactionInfo? {
         val originalFullInfo = storage.getFullTransactionInfo(transactionHash.toReversedByteArray()) ?: return null
         check(originalFullInfo.block == null) { throw BuildError.InvalidTransaction("Transaction already in block") }
@@ -390,7 +377,7 @@ class ReplacementTransactionBuilder(
             }
 
             is ReplacementType.Cancel -> {
-                val dustValue = dustCalculator.dust(type.address.scriptType, dustThreshold).toLong()
+                val dustValue = dustCalculator.dust(type.address.scriptType, null).toLong()
                 val fixedOutputs = listOf(
                     TransactionOutput(
                         value = dustValue,
@@ -406,7 +393,7 @@ class ReplacementTransactionBuilder(
             }
         }
 
-        val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo(filters).sumOf { it.output.value }
+        val confirmedUtxoTotalValue = unspentOutputProvider.getConfirmedSpendableUtxo(UtxoFilters()).sumOf { it.output.value }
         val maxFeeAmount = originalFee + removableOutputsValue + confirmedUtxoTotalValue
 
         return if (absoluteFee > maxFeeAmount) {
