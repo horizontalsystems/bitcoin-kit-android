@@ -194,7 +194,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                 feePriority.feeRate,
                 null,
                 getPluginData(),
-                null
+                null,
+                false
             )
         } catch (e: Exception) {
             amountLiveData.value = 0
@@ -226,7 +227,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             feeRate = feePriority.feeRate,
             unspentOutputs = null,
             pluginData = getPluginData(),
-            dustThreshold = null
+            dustThreshold = null,
+            changeToFirstInput = false
         )
     }
 

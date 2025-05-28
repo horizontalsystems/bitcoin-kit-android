@@ -76,7 +76,8 @@ abstract class AbstractKit {
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData> = mapOf(),
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): BitcoinSendInfo {
         return bitcoinCore.sendInfo(
             value = value,
@@ -86,7 +87,8 @@ abstract class AbstractKit {
             feeRate = feeRate,
             unspentOutputs = unspentOutputs,
             pluginData = pluginData,
-            dustThreshold = dustThreshold
+            dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         )
     }
 
@@ -101,6 +103,7 @@ abstract class AbstractKit {
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
         dustThreshold: Int?,
+        changeToFirstInput: Boolean,
     ): FullTransaction {
         return bitcoinCore.send(
             address,
@@ -112,7 +115,8 @@ abstract class AbstractKit {
             unspentOutputs,
             pluginData,
             rbfEnabled,
-            dustThreshold
+            dustThreshold,
+            changeToFirstInput,
         )
     }
 
@@ -126,6 +130,7 @@ abstract class AbstractKit {
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
         dustThreshold: Int?,
+        changeToFirstInput: Boolean,
     ): FullTransaction {
         return bitcoinCore.send(
             address,
@@ -138,6 +143,7 @@ abstract class AbstractKit {
             pluginData,
             rbfEnabled,
             dustThreshold,
+            changeToFirstInput,
         )
     }
 
@@ -152,6 +158,7 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutputInfo>? = null,
         rbfEnabled: Boolean,
         dustThreshold: Int?,
+        changeToFirstInput: Boolean,
     ): FullTransaction {
         return bitcoinCore.send(
             hash,
@@ -163,7 +170,8 @@ abstract class AbstractKit {
             sortType,
             unspentOutputs,
             rbfEnabled,
-            dustThreshold
+            dustThreshold,
+            changeToFirstInput,
         )
     }
 
@@ -177,6 +185,7 @@ abstract class AbstractKit {
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean,
         dustThreshold: Int?,
+        changeToFirstInput: Boolean,
     ): FullTransaction {
         return bitcoinCore.send(
             hash,
@@ -189,6 +198,7 @@ abstract class AbstractKit {
             null,
             rbfEnabled,
             dustThreshold,
+            changeToFirstInput,
         )
     }
 
@@ -242,7 +252,8 @@ abstract class AbstractKit {
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): Long {
         return bitcoinCore.maximumSpendableValue(
             address,
@@ -250,7 +261,8 @@ abstract class AbstractKit {
             feeRate,
             unspentOutputs,
             pluginData,
-            dustThreshold
+            dustThreshold,
+            changeToFirstInput,
         )
     }
 

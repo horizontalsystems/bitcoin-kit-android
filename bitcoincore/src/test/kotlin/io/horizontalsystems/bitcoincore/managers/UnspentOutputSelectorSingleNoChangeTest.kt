@@ -35,7 +35,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
 
         assertThrows(SendValueErrors.Dust::class.java) {
-            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false)
         }
     }
 
@@ -46,7 +46,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(emptyList())
 
         assertThrows(SendValueErrors.EmptyOutputs::class.java) {
-            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
+            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false)
         }
     }
 
@@ -72,7 +72,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         assertThrows(SendValueErrors.NoSingleOutput::class.java) {
-            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false)
         }
     }
 
@@ -99,7 +99,17 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         val selectedInfo =
-            selector.select(value, null, feeRate, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
+            selector.select(
+                value,
+                null,
+                feeRate,
+                ScriptType.P2PKH,
+                ScriptType.P2WPKH,
+                false,
+                0,
+                null,
+                false
+            )
         Assert.assertEquals(null, selectedInfo.changeValue)
         Assert.assertEquals(1, selectedInfo.outputs.size)
         Assert.assertArrayEquals(arrayOf(outputs[1]), selectedInfo.outputs.toTypedArray())
@@ -127,7 +137,7 @@ class UnspentOutputSelectorSingleNoChangeTest {
         `when`(queueParams.fee).thenReturn(fee)
 
         assertThrows(SendValueErrors.HasOutputFailedToSpend::class.java) {
-            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false)
         }
     }
 
