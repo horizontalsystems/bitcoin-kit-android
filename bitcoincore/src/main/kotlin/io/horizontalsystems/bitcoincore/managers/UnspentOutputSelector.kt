@@ -24,7 +24,8 @@ class UnspentOutputSelector(
         changeType: ScriptType,
         senderPay: Boolean,
         pluginDataOutputSize: Int,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): SelectedUnspentOutputInfo {
         val sortedOutputs =
             unspentOutputProvider.getSpendableUtxo().sortedWith(compareByDescending<UnspentOutput> {
@@ -47,7 +48,8 @@ class UnspentOutputSelector(
             outputScriptType = outputScriptType,
             changeType = changeType,
             pluginDataOutputSize = pluginDataOutputSize,
-            dustThreshold = dustThreshold
+            dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         )
         val queue = UnspentOutputQueue(params, calculator, dustCalculator)
 

@@ -63,7 +63,8 @@ class InputSetter(
         unspentOutputs: List<UnspentOutput>?,
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): OutputInfo {
         val unspentOutputInfo: SelectedUnspentOutputInfo
         if (unspentOutputs != null) {
@@ -76,7 +77,8 @@ class InputSetter(
                 outputScriptType = mutableTransaction.recipientAddress.scriptType,
                 changeType = changeScriptType,  // Assuming changeScriptType is defined somewhere
                 pluginDataOutputSize = mutableTransaction.getPluginDataOutputSize(),
-                dustThreshold = dustThreshold
+                dustThreshold = dustThreshold,
+                changeToFirstInput = changeToFirstInput
             )
             val queue = UnspentOutputQueue(
                 params,
@@ -95,7 +97,8 @@ class InputSetter(
                 changeScriptType,
                 senderPay,
                 mutableTransaction.getPluginDataOutputSize(),
-                dustThreshold
+                dustThreshold,
+                changeToFirstInput
             )
         }
 
@@ -111,8 +114,13 @@ class InputSetter(
         // Add change output if needed
         var changeInfo: ChangeInfo? = null
         unspentOutputInfo.changeValue?.let { changeValue ->
-            val changePubKey = publicKeyManager.changePublicKey()
-            val changeAddress = addressConverter.convert(changePubKey, changeScriptType)
+            val firstOutput = unspentOutputInfo.outputs.firstOrNull()
+            val changeAddress = if (changeToFirstInput && firstOutput != null) {
+                addressConverter.convert(firstOutput.publicKey, firstOutput.output.scriptType)
+            } else {
+                val changePubKey = publicKeyManager.changePublicKey()
+                addressConverter.convert(changePubKey, changeScriptType)
+            }
 
             mutableTransaction.changeAddress = changeAddress
             mutableTransaction.changeValue = changeValue

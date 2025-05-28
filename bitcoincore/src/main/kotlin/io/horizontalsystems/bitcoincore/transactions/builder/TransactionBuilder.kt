@@ -22,7 +22,8 @@ class TransactionBuilder(
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): MutableTransaction {
         val mutableTransaction = MutableTransaction()
 
@@ -34,7 +35,8 @@ class TransactionBuilder(
             unspentOutputs,
             sortType,
             rbfEnabled,
-            dustThreshold
+            dustThreshold,
+            changeToFirstInput,
         )
         lockTimeSetter.setLockTime(mutableTransaction)
 

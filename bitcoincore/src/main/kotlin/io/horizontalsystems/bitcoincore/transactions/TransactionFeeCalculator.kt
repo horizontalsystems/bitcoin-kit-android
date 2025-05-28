@@ -27,7 +27,8 @@ class TransactionFeeCalculator(
         memo: String?,
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): BitcoinSendInfo {
         val mutableTransaction = MutableTransaction()
 
@@ -47,7 +48,8 @@ class TransactionFeeCalculator(
             unspentOutputs = unspentOutputs,
             sortType = TransactionDataSortType.None,
             rbfEnabled = false,
-            dustThreshold = dustThreshold
+            dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         )
 
         val inputsTotalValue = mutableTransaction.inputsToSign.sumOf { it.previousOutput.value }

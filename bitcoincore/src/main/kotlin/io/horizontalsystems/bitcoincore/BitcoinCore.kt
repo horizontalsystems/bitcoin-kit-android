@@ -200,7 +200,8 @@ class BitcoinCore(
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): BitcoinSendInfo {
         val outputs = unspentOutputs?.mapNotNull {
             unspentOutputSelector.all.firstOrNull { unspentOutput ->
@@ -215,7 +216,8 @@ class BitcoinCore(
             memo = memo,
             unspentOutputs = outputs,
             pluginData = pluginData,
-            dustThreshold = dustThreshold
+            dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -229,7 +231,8 @@ class BitcoinCore(
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): FullTransaction {
         val outputs = unspentOutputs?.mapNotNull {
             unspentOutputSelector.all.firstOrNull { unspentOutput ->
@@ -247,6 +250,7 @@ class BitcoinCore(
             pluginData = pluginData,
             rbfEnabled = rbfEnabled,
             dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -260,7 +264,8 @@ class BitcoinCore(
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>?,
         rbfEnabled: Boolean,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): FullTransaction {
         val address = addressConverter.convert(hash, scriptType)
         val outputs = unspentOutputs?.mapNotNull {
@@ -278,7 +283,8 @@ class BitcoinCore(
             unspentOutputs = outputs,
             pluginData = mapOf(),
             rbfEnabled = rbfEnabled,
-            dustThreshold = dustThreshold
+            dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         ) ?: throw CoreError.ReadOnlyCore
     }
 
@@ -430,7 +436,8 @@ class BitcoinCore(
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?
+        dustThreshold: Int?,
+        changeToFirstInput: Boolean
     ): Long {
         if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
 
@@ -450,7 +457,8 @@ class BitcoinCore(
             memo = memo,
             unspentOutputs = outputs,
             pluginData = pluginData,
-            dustThreshold = dustThreshold
+            dustThreshold = dustThreshold,
+            changeToFirstInput = changeToFirstInput,
         ).fee
 
         return max(0L, spendableBalance - sendAllFee)
