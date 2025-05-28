@@ -450,16 +450,19 @@ class BitcoinCore(
     ): Long {
         if (transactionFeeCalculator == null) throw CoreError.ReadOnlyCore
 
-        val allSpendable = unspentOutputSelector.getAllSpendable(filters)
+        val outputs = unspentOutputInfos?.let { getOutputsFromInfos(it, filters) }
 
-        val outputs = unspentOutputInfos?.mapNotNull { unspentOutputInfo ->
-            allSpendable.firstOrNull { unspentOutput ->
-                unspentOutput.transaction.hash.contentEquals(unspentOutputInfo.transactionHash) &&
-                    unspentOutput.output.index == unspentOutputInfo.outputIndex
+        val spendableBalance = when {
+            outputs == null && filters.isEmpty() -> {
+                balance.spendable
             }
-        } ?: allSpendable
-
-        val spendableBalance = outputs.sumOf { it.output.value }
+            outputs != null -> {
+                outputs.sumOf { it.output.value }
+            }
+            else -> {
+                unspentOutputSelector.getAllSpendable(filters).sumOf { it.output.value }
+            }
+        }
 
         val sendAllFee = transactionFeeCalculator.sendInfo(
             value = spendableBalance,
@@ -475,6 +478,20 @@ class BitcoinCore(
         ).fee
 
         return max(0L, spendableBalance - sendAllFee)
+    }
+
+    private fun getOutputsFromInfos(
+        unspentOutputInfos: List<UnspentOutputInfo>,
+        filters: UtxoFilters,
+    ): List<UnspentOutput> {
+        val allSpendable = unspentOutputSelector.getAllSpendable(filters)
+
+        return unspentOutputInfos.mapNotNull { unspentOutputInfo ->
+            allSpendable.firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(unspentOutputInfo.transactionHash) &&
+                    unspentOutput.output.index == unspentOutputInfo.outputIndex
+            }
+        }
     }
 
     fun minimumSpendableValue(address: String?, dustThreshold: Int?): Int {
