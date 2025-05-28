@@ -195,7 +195,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                 null,
                 getPluginData(),
                 null,
-                false
+                false,
+                UtxoFilters()
             )
         } catch (e: Exception) {
             amountLiveData.value = 0
@@ -228,7 +229,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             unspentOutputs = null,
             pluginData = getPluginData(),
             dustThreshold = null,
-            changeToFirstInput = false
+            changeToFirstInput = false,
+            filters = UtxoFilters()
         )
     }
 

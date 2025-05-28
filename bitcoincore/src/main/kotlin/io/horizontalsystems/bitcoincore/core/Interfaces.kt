@@ -122,6 +122,7 @@ interface IStorage {
     fun getPreviousOutput(input: TransactionInput): TransactionOutput?
     fun getOutput(transactionHash: ByteArray, index: Int): TransactionOutput?
     fun getTransactionOutputs(transaction: Transaction): List<TransactionOutput>
+    fun getTransactionOutputsCount(hash: ByteArray): Int
     fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput>
     fun getMyOutputs(): List<TransactionOutput>
     fun getOutputsForBloomFilter(blockHeight: Int, irregularScriptTypes: List<ScriptType>): List<TransactionOutput>

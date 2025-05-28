@@ -13,6 +13,7 @@ import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionInput
 import io.horizontalsystems.bitcoincore.storage.InputToSign
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import io.horizontalsystems.bitcoincore.utils.IAddressConverter
@@ -64,7 +65,8 @@ class InputSetter(
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): OutputInfo {
         val unspentOutputInfo: SelectedUnspentOutputInfo
         if (unspentOutputs != null) {
@@ -98,7 +100,8 @@ class InputSetter(
                 senderPay,
                 mutableTransaction.getPluginDataOutputSize(),
                 dustThreshold,
-                changeToFirstInput
+                changeToFirstInput,
+                filters
             )
         }
 

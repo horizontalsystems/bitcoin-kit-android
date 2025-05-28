@@ -5,6 +5,7 @@ import io.horizontalsystems.bitcoincore.managers.BloomFilterManager
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.builder.MutableTransaction
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionSigner
@@ -29,7 +30,8 @@ class TransactionCreator(
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): FullTransaction {
         val mutableTransaction = builder.buildTransaction(
             toAddress = toAddress,
@@ -43,6 +45,7 @@ class TransactionCreator(
             rbfEnabled = rbfEnabled,
             dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
+            filters = filters,
         )
 
         return create(mutableTransaction)

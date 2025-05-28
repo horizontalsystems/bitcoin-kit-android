@@ -469,6 +469,10 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
         return store.output.getByHash(transaction.hash)
     }
 
+    override fun getTransactionOutputsCount(hash: ByteArray): Int {
+        return store.output.getCountByHash(hash)
+    }
+
     override fun getOutputsOfPublicKey(publicKey: PublicKey): List<TransactionOutput> {
         return store.output.getListByPath(publicKey.path)
     }

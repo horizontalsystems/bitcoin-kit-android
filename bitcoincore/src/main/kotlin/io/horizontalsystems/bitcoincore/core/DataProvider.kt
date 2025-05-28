@@ -12,6 +12,8 @@ import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
 import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
+import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.reactivex.Single
 import io.reactivex.disposables.Disposable
 import io.reactivex.subjects.PublishSubject
@@ -105,7 +107,9 @@ class DataProvider(
         }
     }
 
-    fun getSpendableUtxo() = unspentOutputProvider.getSpendableUtxo()
+    fun getSpendableUtxo(filters: UtxoFilters): List<UnspentOutput> {
+        return unspentOutputProvider.getSpendableUtxo(filters)
+    }
 
     fun transactionInfo(fullInfo: FullTransactionInfo): TransactionInfo {
         return transactionInfoConverter.transactionInfo(fullInfo)

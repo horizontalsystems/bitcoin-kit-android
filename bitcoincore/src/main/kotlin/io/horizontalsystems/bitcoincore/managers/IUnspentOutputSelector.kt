@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 
 interface IUnspentOutputSelector {
@@ -13,7 +14,8 @@ interface IUnspentOutputSelector {
         senderPay: Boolean,
         pluginDataOutputSize: Int,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): SelectedUnspentOutputInfo
 }
 
@@ -34,8 +36,9 @@ sealed class SendValueErrors : Exception() {
 class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutputProvider) : IUnspentOutputSelector {
     private val concreteSelectors = mutableListOf<IUnspentOutputSelector>()
 
-    val all: List<UnspentOutput>
-        get() = unspentOutputProvider.getSpendableUtxo()
+    fun getAll(filters: UtxoFilters): List<UnspentOutput> {
+        return unspentOutputProvider.getSpendableUtxo(filters)
+    }
 
     override fun select(
         value: Long,
@@ -46,7 +49,8 @@ class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutp
         senderPay: Boolean,
         pluginDataOutputSize: Int,
         dustThreshold: Int?,
-        changeToFirstInput: Boolean
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters
     ): SelectedUnspentOutputInfo {
         var lastError: SendValueErrors? = null
 
@@ -61,7 +65,8 @@ class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutp
                     senderPay,
                     pluginDataOutputSize,
                     dustThreshold,
-                    changeToFirstInput
+                    changeToFirstInput,
+                    filters
                 )
             } catch (e: SendValueErrors) {
                 lastError = e

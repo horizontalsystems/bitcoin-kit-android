@@ -7,6 +7,7 @@ import io.horizontalsystems.bitcoincore.models.Block
 import io.horizontalsystems.bitcoincore.models.Transaction
 import io.horizontalsystems.bitcoincore.models.TransactionOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.TransactionSizeCalculator
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
 import org.junit.Assert.assertEquals
@@ -36,7 +37,7 @@ class UnspentOutputSelectorTest {
         `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
 
         assertThrows(SendValueErrors.Dust::class.java) {
-            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null,)
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false, UtxoFilters())
         }
     }
 
@@ -44,10 +45,10 @@ class UnspentOutputSelectorTest {
     fun testSelect_EmptyOutputs() {
         val selector =
             UnspentOutputSelector(calculator, dustCalculator, unspentOutputProvider, null)
-        `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(emptyList())
+        `when`(unspentOutputProvider.getSpendableUtxo(UtxoFilters())).thenReturn(emptyList())
 
         assertThrows(SendValueErrors.InsufficientUnspentOutputs::class.java) {
-            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null,)
+            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false, UtxoFilters())
         }
     }
 
@@ -63,7 +64,7 @@ class UnspentOutputSelectorTest {
         val fee = 150
         val value = 12000
 
-        `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
+        `when`(unspentOutputProvider.getSpendableUtxo(UtxoFilters())).thenReturn(outputs)
         `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
 //        `when`(calculator.outputSize(any())).thenReturn(2)
@@ -81,7 +82,8 @@ class UnspentOutputSelectorTest {
                 false,
                 0,
                 null,
-                false
+                false,
+                UtxoFilters()
             )
         assertEquals(outputs, selectedInfo.outputs)
         assertEquals(11850, selectedInfo.recipientValue)
@@ -104,7 +106,7 @@ class UnspentOutputSelectorTest {
             createUnspentOutput(5000),
         )
 
-        `when`(unspentOutputProvider.getSpendableUtxo()).thenReturn(outputs)
+        `when`(unspentOutputProvider.getSpendableUtxo(UtxoFilters())).thenReturn(outputs)
         `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
         `when`(calculator.inputSize(any())).thenReturn(10)
 //        `when`(calculator.outputSize(any())).thenReturn(2)
@@ -122,7 +124,8 @@ class UnspentOutputSelectorTest {
                 false,
                 0,
                 null,
-                false
+                false,
+                UtxoFilters()
             )
         assertEquals(4, selectedInfo.outputs.size)
         assertEquals(10850, selectedInfo.recipientValue)
