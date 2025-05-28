@@ -515,9 +515,7 @@ class BitcoinCore(
     fun replacementTransaction(
         transactionHash: String,
         minFee: Long,
-        type: ReplacementType,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        type: ReplacementType
     ): ReplacementTransaction {
         val replacementTransactionBuilder = this.replacementTransactionBuilder ?: throw CoreError.ReadOnlyCore
 
@@ -525,9 +523,7 @@ class BitcoinCore(
             replacementTransactionBuilder.replacementTransaction(
                 transactionHash,
                 minFee,
-                type,
-                dustThreshold,
-                filters
+                type
             )
         val info = dataProvider.transactionInfo(fullInfo)
         return ReplacementTransaction(mutableTransaction, info, descendantTransactionHashes)
@@ -541,11 +537,9 @@ class BitcoinCore(
 
     fun replacementTransactionInfo(
         transactionHash: String,
-        type: ReplacementType,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        type: ReplacementType
     ): ReplacementTransactionInfo? {
-        return replacementTransactionBuilder?.replacementInfo(transactionHash, type, dustThreshold, filters)
+        return replacementTransactionBuilder?.replacementInfo(transactionHash, type)
     }
 
     sealed class KitState {

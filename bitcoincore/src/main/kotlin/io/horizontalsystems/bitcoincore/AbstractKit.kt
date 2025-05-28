@@ -290,33 +290,25 @@ abstract class AbstractKit {
 
     fun speedUpTransaction(
         transactionHash: String,
-        minFee: Long,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        minFee: Long
     ): ReplacementTransaction {
         return bitcoinCore.replacementTransaction(
             transactionHash,
             minFee,
-            ReplacementType.SpeedUp,
-            dustThreshold,
-            filters
+            ReplacementType.SpeedUp
         )
     }
 
     fun cancelTransaction(
         transactionHash: String,
-        minFee: Long,
-        dustThreshold: Int?,
-        filters: UtxoFilters
+        minFee: Long
     ): ReplacementTransaction {
         val publicKey = bitcoinCore.receivePublicKey()
         val address = bitcoinCore.address(publicKey)
         return bitcoinCore.replacementTransaction(
             transactionHash,
             minFee,
-            ReplacementType.Cancel(address, publicKey),
-            dustThreshold,
-            filters
+            ReplacementType.Cancel(address, publicKey)
         )
     }
 
@@ -324,20 +316,18 @@ abstract class AbstractKit {
         return bitcoinCore.send(replacementTransaction)
     }
 
-    fun speedUpTransactionInfo(transactionHash: String, dustThreshold: Int?, filters: UtxoFilters): ReplacementTransactionInfo? {
+    fun speedUpTransactionInfo(transactionHash: String): ReplacementTransactionInfo? {
         return bitcoinCore.replacementTransactionInfo(
             transactionHash,
-            ReplacementType.SpeedUp,
-            dustThreshold,
-            filters
+            ReplacementType.SpeedUp
         )
     }
 
-    fun cancelTransactionInfo(transactionHash: String, dustThreshold: Int?, filters: UtxoFilters): ReplacementTransactionInfo? {
+    fun cancelTransactionInfo(transactionHash: String): ReplacementTransactionInfo? {
         val receivePublicKey = bitcoinCore.receivePublicKey()
         val address = bitcoinCore.address(receivePublicKey)
         val type = ReplacementType.Cancel(address, receivePublicKey)
-        return bitcoinCore.replacementTransactionInfo(transactionHash, type, dustThreshold, filters)
+        return bitcoinCore.replacementTransactionInfo(transactionHash, type)
     }
 
 }
