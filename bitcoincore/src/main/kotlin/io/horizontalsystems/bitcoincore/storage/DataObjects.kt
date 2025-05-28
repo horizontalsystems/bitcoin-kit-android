@@ -85,6 +85,8 @@ data class UtxoFilters(
     val scriptTypes: List<ScriptType>? = null,
     val maxOutputsCountForInputs: Int? = null
 ) {
+    fun isEmpty() = scriptTypes == null && maxOutputsCountForInputs == null
+
     fun filterUtxo(utxo: UnspentOutput, storage: IStorage): Boolean {
         if (
             scriptTypes != null &&
