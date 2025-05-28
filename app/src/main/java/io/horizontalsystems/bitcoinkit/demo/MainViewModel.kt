@@ -13,6 +13,7 @@ import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
+import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoinkit.BitcoinKit
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hodler.HodlerData
@@ -166,7 +167,10 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                         feeRate = feePriority.feeRate,
                         sortType = TransactionDataSortType.Shuffle,
                         pluginData = getPluginData(),
-                        rbfEnabled = true
+                        rbfEnabled = true,
+                        dustThreshold = null,
+                        changeToFirstInput = false,
+                        filters = UtxoFilters()
                     )
 
                     amountLiveData.value = null
