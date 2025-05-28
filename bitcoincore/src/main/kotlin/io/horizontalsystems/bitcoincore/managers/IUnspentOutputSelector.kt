@@ -36,7 +36,7 @@ sealed class SendValueErrors : Exception() {
 class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutputProvider) : IUnspentOutputSelector {
     private val concreteSelectors = mutableListOf<IUnspentOutputSelector>()
 
-    fun getAll(filters: UtxoFilters): List<UnspentOutput> {
+    fun getAllSpendable(filters: UtxoFilters): List<UnspentOutput> {
         return unspentOutputProvider.getSpendableUtxo(filters)
     }
 
