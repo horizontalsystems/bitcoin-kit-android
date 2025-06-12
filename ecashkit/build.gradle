@@ -53,9 +53,9 @@ dependencies {
     implementation 'com.google.protobuf:protobuf-javalite:3.22.2'
 
     // Room
-    implementation 'androidx.room:room-runtime:2.2.5'
-    implementation 'androidx.room:room-rxjava2:2.2.5'
-    kapt 'androidx.room:room-compiler:2.2.5'
+    implementation libs.room.runtime
+    implementation libs.room.rxjava2
+    kapt libs.room.compiler
 
     api project(':bitcoincore')
     api project(':bitcoincashkit')
