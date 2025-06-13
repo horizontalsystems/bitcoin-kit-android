@@ -1,0 +1,9 @@
+[versions]
+roomRuntime = "2.4.3"
+
+[libraries]
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomRuntime" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+room-rxjava2 = { module = "androidx.room:room-rxjava2", version.ref = "roomRuntime" }
+
+[plugins]
