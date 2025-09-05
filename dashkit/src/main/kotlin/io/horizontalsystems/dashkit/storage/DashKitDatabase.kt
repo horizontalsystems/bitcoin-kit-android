@@ -4,12 +4,13 @@ import android.content.Context
 import androidx.room.*
 import io.horizontalsystems.dashkit.models.*
 
-@Database(version = 4, exportSchema = false, entities = [
+@Database(version = 5, exportSchema = false, entities = [
     Masternode::class,
     Quorum::class,
     MasternodeListState::class,
     InstantTransactionInput::class,
-    InstantTransactionHash::class
+    InstantTransactionHash::class,
+    LockedTransactionHash::class,
 ])
 
 abstract class DashKitDatabase : RoomDatabase() {
@@ -18,6 +19,7 @@ abstract class DashKitDatabase : RoomDatabase() {
     abstract val quorumDao: QuorumDao
     abstract val masternodeListStateDao: MasternodeListStateDao
     abstract val instantTransactionInputDao: InstantTransactionInputDao
+    abstract val lockedTransactionDao: LockedTransactionDao
 
     companion object {
 
@@ -70,6 +72,18 @@ interface MasternodeDao {
 
     @Query("DELETE FROM Masternode")
     fun clearAll()
+}
+
+@Dao
+interface LockedTransactionDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insert(lockedTxHash: LockedTransactionHash)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM LockedTransactionHash WHERE txHash = :txHash)")
+    fun exist(txHash: ByteArray): Boolean
+
+    @Delete
+    fun delete(lockedTxHash: LockedTransactionHash) // Corrected parameter type
 }
 
 @Dao

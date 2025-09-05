@@ -45,6 +45,14 @@ class DashStorage(private val dashStore: DashKitDatabase, private val coreStorag
         return dashStore.quorumDao.getByType(quorumType.value)
     }
 
+    override fun addLockedTransaction(txHash: ByteArray) {
+        dashStore.lockedTransactionDao.insert(LockedTransactionHash(txHash))
+    }
+
+    override fun isTransactionLocked(txHash: ByteArray): Boolean {
+        return dashStore.lockedTransactionDao.exist(txHash)
+    }
+
     fun getFullTransactionInfo(txHash: ByteArray): FullTransactionInfo? {
         return coreStorage.getFullTransactionInfo(txHash)
     }

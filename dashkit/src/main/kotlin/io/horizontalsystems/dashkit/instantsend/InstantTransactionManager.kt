@@ -62,6 +62,14 @@ class InstantTransactionManager(
         return storage.isTransactionExists(txHash)
     }
 
+    fun isTransactionLocked(txHash: ByteArray): Boolean {
+        return storage.isTransactionLocked(txHash)
+    }
+
+    fun makeTransactionLocked(txHash: ByteArray) {
+        storage.addLockedTransaction(txHash)
+    }
+
     fun makeInstant(txHash: ByteArray) {
         state.append(txHash)
         storage.addInstantTransactionHash(txHash)

@@ -14,6 +14,8 @@ interface IDashStorage {
     fun removeInstantTransactionInputs(txHash: ByteArray)
     fun isTransactionExists(txHash: ByteArray): Boolean
     fun getQuorumsByType(quorumType: QuorumType): List<Quorum>
+    fun addLockedTransaction(txHash: ByteArray)
+    fun isTransactionLocked(txHash: ByteArray): Boolean
 
     var masternodes: List<Masternode>
     var masternodeListState: MasternodeListState?

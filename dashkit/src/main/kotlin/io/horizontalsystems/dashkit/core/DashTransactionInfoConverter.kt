@@ -26,19 +26,20 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
         val txInfo = baseConverter.transactionInfo(fullTransactionInfo)
 
         return DashTransactionInfo(
-                txInfo.uid,
-                txInfo.transactionHash,
-                txInfo.transactionIndex,
-                txInfo.inputs,
-                txInfo.outputs,
-                txInfo.amount,
-                txInfo.type,
-                txInfo.fee,
-                txInfo.blockHeight,
-                txInfo.timestamp,
-                txInfo.status,
-                txInfo.conflictingTxHash,
-                instantTransactionManager.isTransactionInstant(fullTransactionInfo.header.hash)
+            txInfo.uid,
+            txInfo.transactionHash,
+            txInfo.transactionIndex,
+            txInfo.inputs,
+            txInfo.outputs,
+            txInfo.amount,
+            txInfo.type,
+            txInfo.fee,
+            txInfo.blockHeight,
+            txInfo.timestamp,
+            txInfo.status,
+            txInfo.conflictingTxHash,
+            instantTransactionManager.isTransactionInstant(fullTransactionInfo.header.hash),
+            instantTransactionManager.isTransactionLocked(fullTransactionInfo.header.hash),
         )
     }
 
@@ -62,7 +63,8 @@ class DashTransactionInfoConverter(private val instantTransactionManager: Instan
                 timestamp = transaction.timestamp,
                 status = TransactionStatus.INVALID,
                 conflictingTxHash = null,
-                instantTx = false
+                instantTx = false,
+                txlock = false,
             )
         }
     }
