@@ -83,7 +83,7 @@ class UnspentOutputQueue(
         }
 
         val receiveValue = if (parameters.senderPay) parameters.value else parameters.value - feeWithoutChange
-        if (receiveValue <= recipientOutputDust) {
+        if (receiveValue < recipientOutputDust) {
             throw SendValueErrors.Dust
         }
 
