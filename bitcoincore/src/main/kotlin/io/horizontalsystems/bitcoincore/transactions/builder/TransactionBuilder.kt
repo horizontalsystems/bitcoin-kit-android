@@ -23,7 +23,6 @@ class TransactionBuilder(
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): MutableTransaction {
@@ -37,7 +36,6 @@ class TransactionBuilder(
             unspentOutputs,
             sortType,
             rbfEnabled,
-            dustThreshold,
             changeToFirstInput,
             filters,
         )

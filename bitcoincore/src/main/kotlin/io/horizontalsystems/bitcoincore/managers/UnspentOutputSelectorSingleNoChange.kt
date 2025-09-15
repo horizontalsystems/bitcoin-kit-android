@@ -20,11 +20,10 @@ class UnspentOutputSelectorSingleNoChange(
         changeType: ScriptType,
         senderPay: Boolean,
         pluginDataOutputSize: Int,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): SelectedUnspentOutputInfo {
-        val dust = dustCalculator.dust(outputScriptType, dustThreshold)
+        val dust = dustCalculator.dust(outputScriptType)
         if (value < dust) {
             throw SendValueErrors.Dust
         }
@@ -53,7 +52,6 @@ class UnspentOutputSelectorSingleNoChange(
             outputScriptType = outputScriptType,
             changeType = changeType,
             pluginDataOutputSize = pluginDataOutputSize,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
         )
         val queue = UnspentOutputQueue(params, calculator, dustCalculator)
