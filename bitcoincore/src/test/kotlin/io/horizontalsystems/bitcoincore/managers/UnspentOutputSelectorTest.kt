@@ -37,7 +37,7 @@ class UnspentOutputSelectorTest {
         `when`(dustCalculator.dust(any(), any())).thenReturn(dust)
 
         assertThrows(SendValueErrors.Dust::class.java) {
-            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false, UtxoFilters())
+            selector.select(value, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, false, UtxoFilters())
         }
     }
 
@@ -48,7 +48,7 @@ class UnspentOutputSelectorTest {
         `when`(unspentOutputProvider.getSpendableUtxo(UtxoFilters())).thenReturn(emptyList())
 
         assertThrows(SendValueErrors.InsufficientUnspentOutputs::class.java) {
-            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, null, false, UtxoFilters())
+            selector.select(10000, null, 100, ScriptType.P2PKH, ScriptType.P2WPKH, false, 0, false, UtxoFilters())
         }
     }
 
@@ -81,7 +81,6 @@ class UnspentOutputSelectorTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )
@@ -123,7 +122,6 @@ class UnspentOutputSelectorTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )

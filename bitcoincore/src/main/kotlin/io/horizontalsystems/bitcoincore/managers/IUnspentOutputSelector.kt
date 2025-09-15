@@ -13,7 +13,6 @@ interface IUnspentOutputSelector {
         changeType: ScriptType = ScriptType.P2PKH,
         senderPay: Boolean,
         pluginDataOutputSize: Int,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): SelectedUnspentOutputInfo
@@ -48,7 +47,6 @@ class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutp
         changeType: ScriptType,
         senderPay: Boolean,
         pluginDataOutputSize: Int,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): SelectedUnspentOutputInfo {
@@ -64,7 +62,6 @@ class UnspentOutputSelectorChain(private val unspentOutputProvider: IUnspentOutp
                     changeType,
                     senderPay,
                     pluginDataOutputSize,
-                    dustThreshold,
                     changeToFirstInput,
                     filters
                 )

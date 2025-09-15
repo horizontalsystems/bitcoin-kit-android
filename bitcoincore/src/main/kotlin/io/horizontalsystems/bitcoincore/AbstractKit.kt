@@ -78,7 +78,6 @@ abstract class AbstractKit {
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData> = mapOf(),
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): BitcoinSendInfo {
@@ -90,7 +89,6 @@ abstract class AbstractKit {
             feeRate = feeRate,
             unspentOutputs = unspentOutputs,
             pluginData = pluginData,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         )
@@ -106,7 +104,6 @@ abstract class AbstractKit {
         unspentOutputs: List<UnspentOutputInfo>? = null,
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters,
     ): FullTransaction {
@@ -120,7 +117,6 @@ abstract class AbstractKit {
             unspentOutputs,
             pluginData,
             rbfEnabled,
-            dustThreshold,
             changeToFirstInput,
             filters,
         )
@@ -135,7 +131,6 @@ abstract class AbstractKit {
         sortType: TransactionDataSortType,
         pluginData: Map<Byte, IPluginData> = mapOf(),
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters,
     ): FullTransaction {
@@ -149,7 +144,6 @@ abstract class AbstractKit {
             null,
             pluginData,
             rbfEnabled,
-            dustThreshold,
             changeToFirstInput,
             filters,
         )
@@ -165,7 +159,6 @@ abstract class AbstractKit {
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>? = null,
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters,
     ): FullTransaction {
@@ -179,7 +172,6 @@ abstract class AbstractKit {
             sortType,
             unspentOutputs,
             rbfEnabled,
-            dustThreshold,
             changeToFirstInput,
             filters,
         )
@@ -194,7 +186,6 @@ abstract class AbstractKit {
         feeRate: Int,
         sortType: TransactionDataSortType,
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters,
     ): FullTransaction {
@@ -208,7 +199,6 @@ abstract class AbstractKit {
             sortType,
             null,
             rbfEnabled,
-            dustThreshold,
             changeToFirstInput,
             filters,
         )
@@ -264,7 +254,6 @@ abstract class AbstractKit {
         feeRate: Int,
         unspentOutputInfos: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): Long {
@@ -274,14 +263,13 @@ abstract class AbstractKit {
             feeRate,
             unspentOutputInfos,
             pluginData,
-            dustThreshold,
             changeToFirstInput,
             filters,
         )
     }
 
-    fun minimumSpendableValue(address: String?, dustThreshold: Int?): Int {
-        return bitcoinCore.minimumSpendableValue(address, dustThreshold)
+    fun minimumSpendableValue(address: String?): Int {
+        return bitcoinCore.minimumSpendableValue(address)
     }
 
     fun getRawTransaction(transactionHash: String): String? {

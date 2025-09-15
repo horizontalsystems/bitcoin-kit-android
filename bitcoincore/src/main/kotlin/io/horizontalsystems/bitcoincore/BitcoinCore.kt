@@ -202,7 +202,6 @@ class BitcoinCore(
         feeRate: Int,
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): BitcoinSendInfo {
@@ -219,7 +218,6 @@ class BitcoinCore(
             memo = memo,
             unspentOutputs = outputs,
             pluginData = pluginData,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
@@ -235,7 +233,6 @@ class BitcoinCore(
         unspentOutputs: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): FullTransaction {
@@ -254,7 +251,6 @@ class BitcoinCore(
             unspentOutputs = outputs,
             pluginData = pluginData,
             rbfEnabled = rbfEnabled,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
@@ -270,7 +266,6 @@ class BitcoinCore(
         sortType: TransactionDataSortType,
         unspentOutputs: List<UnspentOutputInfo>?,
         rbfEnabled: Boolean,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): FullTransaction {
@@ -290,7 +285,6 @@ class BitcoinCore(
             unspentOutputs = outputs,
             pluginData = mapOf(),
             rbfEnabled = rbfEnabled,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
@@ -444,7 +438,6 @@ class BitcoinCore(
         feeRate: Int,
         unspentOutputInfos: List<UnspentOutputInfo>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): Long {
@@ -472,7 +465,6 @@ class BitcoinCore(
             memo = memo,
             unspentOutputs = outputs,
             pluginData = pluginData,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         ).fee
@@ -494,14 +486,14 @@ class BitcoinCore(
         }
     }
 
-    fun minimumSpendableValue(address: String?, dustThreshold: Int?): Int {
+    fun minimumSpendableValue(address: String?): Int {
         // by default script type is P2PKH, since it is most used
         val scriptType = when {
             address != null -> addressConverter.convert(address).scriptType
             else -> ScriptType.P2PKH
         }
 
-        return dustCalculator?.dust(scriptType, dustThreshold) ?: throw CoreError.ReadOnlyCore
+        return dustCalculator?.dust(scriptType) ?: throw CoreError.ReadOnlyCore
     }
 
     fun getRawTransaction(transactionHash: String): String? {

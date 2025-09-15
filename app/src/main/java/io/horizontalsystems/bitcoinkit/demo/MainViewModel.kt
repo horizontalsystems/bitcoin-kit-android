@@ -168,7 +168,6 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                         sortType = TransactionDataSortType.Shuffle,
                         pluginData = getPluginData(),
                         rbfEnabled = true,
-                        dustThreshold = null,
                         changeToFirstInput = false,
                         filters = UtxoFilters()
                     )
@@ -198,7 +197,6 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
                 feePriority.feeRate,
                 null,
                 getPluginData(),
-                null,
                 false,
                 UtxoFilters()
             )
@@ -232,7 +230,6 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
             feeRate = feePriority.feeRate,
             unspentOutputs = null,
             pluginData = getPluginData(),
-            dustThreshold = null,
             changeToFirstInput = false,
             filters = UtxoFilters()
         )

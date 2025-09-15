@@ -28,7 +28,6 @@ class TransactionFeeCalculator(
         memo: String?,
         unspentOutputs: List<UnspentOutput>?,
         pluginData: Map<Byte, IPluginData>,
-        dustThreshold: Int?,
         changeToFirstInput: Boolean,
         filters: UtxoFilters
     ): BitcoinSendInfo {
@@ -50,7 +49,6 @@ class TransactionFeeCalculator(
             unspentOutputs = unspentOutputs,
             sortType = TransactionDataSortType.None,
             rbfEnabled = false,
-            dustThreshold = dustThreshold,
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         )

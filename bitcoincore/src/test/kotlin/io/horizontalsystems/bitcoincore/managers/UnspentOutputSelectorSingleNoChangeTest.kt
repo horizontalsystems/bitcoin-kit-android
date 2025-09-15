@@ -44,7 +44,6 @@ class UnspentOutputSelectorSingleNoChangeTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )
@@ -66,7 +65,6 @@ class UnspentOutputSelectorSingleNoChangeTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )
@@ -103,7 +101,6 @@ class UnspentOutputSelectorSingleNoChangeTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )
@@ -141,7 +138,6 @@ class UnspentOutputSelectorSingleNoChangeTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )
@@ -180,7 +176,6 @@ class UnspentOutputSelectorSingleNoChangeTest {
                 ScriptType.P2WPKH,
                 false,
                 0,
-                null,
                 false,
                 UtxoFilters()
             )
