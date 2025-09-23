@@ -28,11 +28,7 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
-
-    implementation project(':bitcoincore')
-    implementation project(':bitcoinkit')
-    implementation project(':dashkit')
-    implementation project(':bitcoincashkit')
-    implementation project(':litecoinkit')
-    implementation project(':ecashkit')
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.65'
+    implementation 'de.sfuhrm:saphir-hash-jca:3.0.6'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5'
 }

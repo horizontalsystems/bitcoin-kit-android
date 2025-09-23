@@ -1,11 +1,9 @@
 package io.horizontalsystems.tools
 
-import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
-import io.horizontalsystems.bitcoincore.core.IPeerAddressManagerListener
-import io.horizontalsystems.bitcoincore.models.PeerAddress
-import io.horizontalsystems.bitcoincore.network.Network
-import io.horizontalsystems.bitcoincore.network.peer.Peer
-import io.horizontalsystems.bitcoincore.network.peer.PeerDiscover
+import io.horizontalsystems.tools.models.PeerAddress
+import io.horizontalsystems.tools.network.Network
+import io.horizontalsystems.tools.peer.Peer
+import io.horizontalsystems.tools.peer.PeerDiscover
 
 class PeerAddressManager(private val network: Network) : IPeerAddressManager {
 
