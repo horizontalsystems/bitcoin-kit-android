@@ -156,7 +156,8 @@ class SyncManager(
         syncState = if (progress >= 1) {
             KitState.Synced
         } else {
-            KitState.Syncing(progress)
+            val remainingBlocks = allBlocksToDownload - blocksDownloaded
+            KitState.Syncing(progress, remainingBlocks)
         }
     }
 
@@ -173,7 +174,9 @@ class SyncManager(
             }
 
             else -> {
-                KitState.Syncing(forceAddedBlocks / forceAddedBlocksTotal.toDouble())
+                val remainingBlocks = forceAddedBlocksTotal - forceAddedBlocks
+                val progress = forceAddedBlocks / forceAddedBlocksTotal.toDouble()
+                KitState.Syncing(progress, remainingBlocks)
             }
         }
     }

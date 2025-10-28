@@ -537,7 +537,7 @@ class BitcoinCore(
     sealed class KitState {
         object Synced : KitState()
         class NotSynced(val exception: Throwable) : KitState()
-        class Syncing(val progress: Double) : KitState()
+        class Syncing(val progress: Double, val blocksRemaining: Int? = null) : KitState()
         class ApiSyncing(val transactions: Int) : KitState()
 
         override fun equals(other: Any?) = when {
