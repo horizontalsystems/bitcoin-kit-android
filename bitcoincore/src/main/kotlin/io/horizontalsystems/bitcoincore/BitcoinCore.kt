@@ -170,10 +170,12 @@ class BitcoinCore(
     // API methods
     //
     fun start() {
+        connectionManager.onEnterForeground()
         syncManager.start()
     }
 
     fun stop() {
+        connectionManager.onEnterBackground()
         dataProvider.clear()
         syncManager.stop()
     }

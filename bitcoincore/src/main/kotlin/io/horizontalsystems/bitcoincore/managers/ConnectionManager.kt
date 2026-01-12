@@ -19,10 +19,6 @@ class ConnectionManager(context: Context) : IConnectionManager {
     private var hasConnection = false
     private var callback = ConnectionStatusCallback()
 
-    init {
-        onEnterForeground()
-    }
-
     override fun onEnterForeground() {
         setInitialValues()
         try {
