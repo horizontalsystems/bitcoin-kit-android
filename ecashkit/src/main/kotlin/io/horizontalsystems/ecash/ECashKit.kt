@@ -278,5 +278,43 @@ class ECashKit : AbstractKit {
                 }
             }
         }
+
+        private fun network(networkType: NetworkType) = when (networkType) {
+            NetworkType.MainNet -> MainNetECash()
+            NetworkType.TestNet -> TODO()
+        }
+
+        private fun addressConverter(network: Network): AddressConverterChain {
+            val addressConverter = AddressConverterChain()
+
+            val bech32 = CashAddressConverter(network.addressSegwitHrp)
+            addressConverter.prependConverter(bech32)
+
+            return addressConverter
+        }
+
+        fun firstAddress(
+            seed: ByteArray,
+            networkType: NetworkType,
+        ): Address {
+            return BitcoinCore.firstAddress(
+                seed,
+                Purpose.BIP44,
+                network(networkType),
+                addressConverter(network(networkType))
+            )
+        }
+
+        fun firstAddress(
+            extendedKey: HDExtendedKey,
+            networkType: NetworkType,
+        ): Address {
+            return BitcoinCore.firstAddress(
+                extendedKey,
+                Purpose.BIP44,
+                network(networkType),
+                addressConverter(network(networkType))
+            )
+        }
     }
 }
