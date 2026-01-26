@@ -6,6 +6,10 @@ import io.horizontalsystems.bitcoincore.utils.HashUtils
 import java.util.logging.Level
 import java.util.logging.Logger
 
+//use following command to run Checkpoint update
+//  ./gradlew tools:runTools
+
+
 // Go to
 // Edit Configurations... -> ToolsKt -> VM Options
 // And paste the following

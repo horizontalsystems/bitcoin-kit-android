@@ -22,6 +22,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
     namespace 'io.horizontalsystems.tools'
 }
 
@@ -35,4 +38,37 @@ dependencies {
     implementation project(':bitcoincashkit')
     implementation project(':litecoinkit')
     implementation project(':ecashkit')
+}
+
+// Task to run Tools.main() from command line: ./gradlew tools:runTools
+tasks.register('runTools', JavaExec) {
+    dependsOn 'assembleDebug'
+
+    mainClass = 'io.horizontalsystems.tools.ToolsKt'
+    workingDir = rootProject.projectDir
+
+    doFirst {
+        def modules = ['bitcoincore', 'bitcoinkit', 'dashkit', 'bitcoincashkit', 'litecoinkit', 'ecashkit', 'hodler']
+        def classDirs = modules.collect {
+            file("${rootProject.projectDir}/${it}/build/intermediates/runtime_library_classes_dir/debug/bundleLibRuntimeToDirDebug")
+        }
+        // Add tools module classes from different location
+        classDirs += file("${rootProject.projectDir}/tools/build/tmp/kotlin-classes/debug")
+
+        def resourceDirs = [
+            "${rootProject.projectDir}/bitcoincashkit/src/main/resources",
+            "${rootProject.projectDir}/bitcoinkit/src/main/resources",
+            "${rootProject.projectDir}/dashkit/src/main/resources",
+            "${rootProject.projectDir}/ecashkit/src/main/resources",
+            "${rootProject.projectDir}/litecoinkit/src/main/resources"
+        ]
+
+        // Collect all JAR dependencies from gradle cache
+        def gradleUserHome = gradle.gradleUserHomeDir
+        def jarFiles = fileTree("${gradleUserHome}/caches/modules-2/files-2.1").matching {
+            include '**/*.jar'
+        }.files
+
+        classpath = files(classDirs) + files(resourceDirs) + files(android.bootClasspath) + files(jarFiles)
+    }
 }
