@@ -49,7 +49,11 @@ target_link_libraries( # Specifies the target library.
         # Links the target library to the bls library
         bls blstmp relic_s)
 
+# 16 KB page size alignment required by Google Play
+target_link_options(dashjbls PRIVATE "-Wl,-z,max-page-size=16384")
+
 #add_subdirectory(src/main/cpp)
 include(bls-signatures.cmake)
 
 add_library(pthread SHARED pthread.c)
+target_link_options(pthread PRIVATE "-Wl,-z,max-page-size=16384")
