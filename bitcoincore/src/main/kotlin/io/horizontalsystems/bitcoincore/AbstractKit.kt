@@ -28,6 +28,10 @@ abstract class AbstractKit {
         return bitcoinCore.getUnspentOutputs(filters)
     }
 
+    fun selectUnspentOutputs(value: Long, feeRate: Int): List<UnspentOutputInfo> {
+        return bitcoinCore.selectUnspentOutputs(value, feeRate)
+    }
+
     val balance
         get() = bitcoinCore.balance
 
