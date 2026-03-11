@@ -166,6 +166,21 @@ class BitcoinCore(
         }
     }
 
+    fun selectUnspentOutputs(value: Long, feeRate: Int): List<UnspentOutputInfo> {
+        val sendInfo = transactionFeeCalculator?.sendInfo(
+            value = value,
+            feeRate = feeRate,
+            senderPay = true,
+            toAddress = null,
+            memo = null,
+            unspentOutputs = null,
+            pluginData = mapOf(),
+            changeToFirstInput = false,
+            filters = UtxoFilters()
+        ) ?: throw CoreError.ReadOnlyCore
+        return sendInfo.unspentOutputs.map { UnspentOutputInfo.fromUnspentOutput(it) }
+    }
+
     //
     // API methods
     //
