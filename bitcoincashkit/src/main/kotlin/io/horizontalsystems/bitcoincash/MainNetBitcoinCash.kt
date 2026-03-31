@@ -23,12 +23,9 @@ class MainNetBitcoinCash(coinType: CoinType = CoinType.Type145) : Network() {
     override val sigHashValue = Sighash.FORKID or Sighash.ALL
 
     override var dnsSeeds = listOf(
-        "x5.seed.bitcoinabc.org",                   // Bitcoin ABC seeder
-        "btccash-seeder.bitcoinunlimited.info",     // BU backed seeder
-        "x5.seeder.jasonbcox.com",                  // Jason B. Cox
-        "seed.deadalnix.me",                        // Amaury SÉCHET
-        "seed.bchd.cash",                           // BCHD
-        "x5.seeder.fabien.cash"                     // Fabien
+        "seed.bitcoin-cash.node.org",      // BCHN Mainnet Seeder
+        "seed.bch.loping.net",             // Loping.net Seeder
+        "dnsseed.electroncash.de"          // Electron Cash community seeder
     )
 
     enum class CoinType(val value: Int) {
