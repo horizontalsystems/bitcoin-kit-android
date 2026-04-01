@@ -23,8 +23,6 @@ class MainNetLitecoin : Network() {
     override var dnsSeeds = listOf(
         "seed-a.litecoin.loshan.co.uk",  // Loshan - official, trusted
         "dnsseed.thrasher.io",           // Thrasher - official, trusted
-        "dnsseed.litecointools.com",     // Litecoin Tools
         "dnsseed.litecoinpool.org",      // Litecoin Pool
-        "dnsseed.koin-project.com"       // Koin Project - added in recent Core
     )
 }
