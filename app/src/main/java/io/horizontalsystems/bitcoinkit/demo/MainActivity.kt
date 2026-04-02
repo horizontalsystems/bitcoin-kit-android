@@ -12,6 +12,7 @@ class MainActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
     private val balanceFragment = BalanceFragment()
     private val transactionsFragment = TransactionsFragment()
     private val sendReceiveFragment = SendReceiveFragment()
+    private val litecoinFragment = LitecoinFragment()
     private val fm = supportFragmentManager
     private var active: Fragment = balanceFragment
 
@@ -24,6 +25,7 @@ class MainActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
         val navigation = findViewById<BottomNavigationView>(R.id.navigation)
         navigation.setOnNavigationItemSelectedListener(this)
 
+        fm.beginTransaction().add(R.id.fragment_container, litecoinFragment, "4").hide(litecoinFragment).commit()
         fm.beginTransaction().add(R.id.fragment_container, sendReceiveFragment, "3").hide(sendReceiveFragment).commit()
         fm.beginTransaction().add(R.id.fragment_container, transactionsFragment, "2").hide(transactionsFragment).commit()
         fm.beginTransaction().add(R.id.fragment_container, balanceFragment, "1").commit()
@@ -37,6 +39,7 @@ class MainActivity : AppCompatActivity(), BottomNavigationView.OnNavigationItemS
             R.id.navigation_home -> balanceFragment
             R.id.navigation_transactions -> transactionsFragment
             R.id.navigation_send_receive -> sendReceiveFragment
+            R.id.navigation_litecoin -> litecoinFragment
             else -> null
         }
 

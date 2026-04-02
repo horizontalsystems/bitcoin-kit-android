@@ -34,6 +34,9 @@ import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.HDExtendedKey
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.horizontalsystems.litecoinkit.mweb.MwebAddressConverter
+import io.horizontalsystems.litecoinkit.mweb.MwebBech32
+import io.horizontalsystems.litecoinkit.mweb.MwebKeychain
 import io.horizontalsystems.litecoinkit.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.litecoinkit.validators.ProofOfWorkValidator
 
@@ -48,11 +51,24 @@ class LitecoinKit : AbstractKit {
     override var bitcoinCore: BitcoinCore
     override var network: Network
 
+    /** Non-null when the kit was created from a master HD key and MWEB keys could be derived. */
+    var mwebKeychain: MwebKeychain? = null
+        private set
+
     var listener: Listener? = null
         set(value) {
             field = value
             bitcoinCore.listener = value
         }
+
+    /**
+     * Returns the MWEB stealth address for this wallet (ltcmweb1... on mainnet, tmweb1... on testnet).
+     * Returns null if the kit was created from an account key or a watch address.
+     */
+    fun mwebAddress(): String? = mwebKeychain?.let { keychain ->
+        val hrp = if (network is MainNetLitecoin) "ltcmweb" else "tmweb"
+        MwebBech32.encode(hrp, keychain.scanPubKey, keychain.spendPubKey)
+    }
 
     constructor(
         context: Context,
@@ -98,6 +114,7 @@ class LitecoinKit : AbstractKit {
         confirmationsThreshold: Int = defaultConfirmationsThreshold
     ) {
         network = network(networkType)
+        mwebKeychain = MwebKeychain.tryCreate(extendedKey, networkType)
 
         bitcoinCore = bitcoinCore(
             context = context,
@@ -196,6 +213,10 @@ class LitecoinKit : AbstractKit {
         val base58AddressConverter = Base58AddressConverter(network.addressVersion, network.addressScriptVersion)
 
         bitcoinCore.prependAddressConverter(bech32AddressConverter)
+
+        // MWEB stealth address support — prepended last so it is tried first in the chain
+        val mwebHrp = if (networkType == NetworkType.MainNet) "ltcmweb" else "tmweb"
+        bitcoinCore.prependAddressConverter(MwebAddressConverter(mwebHrp))
 
         when (purpose) {
             Purpose.BIP44 -> {

@@ -13,4 +13,8 @@
         android:id="@+id/navigation_send_receive"
         android:title="Send/Receive" />
 
+    <item
+        android:id="@+id/navigation_litecoin"
+        android:title="Litecoin" />
+
 </menu>

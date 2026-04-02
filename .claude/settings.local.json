@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep \"fun pubKey\\\\|val pubKey\\\\|var pubKey\\\\|pubKey:\" /tmp/io/horizontalsystems/hdwalletkit/*.kt)"
+    ]
+  }
+}
