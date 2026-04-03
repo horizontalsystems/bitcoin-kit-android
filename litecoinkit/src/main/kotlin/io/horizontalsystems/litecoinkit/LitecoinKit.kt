@@ -34,9 +34,18 @@ import io.horizontalsystems.bitcoincore.utils.SegwitAddressConverter
 import io.horizontalsystems.hdwalletkit.HDExtendedKey
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.Mnemonic
+import io.horizontalsystems.bitcoincore.extensions.toReversedByteArray
 import io.horizontalsystems.litecoinkit.mweb.MwebAddressConverter
 import io.horizontalsystems.litecoinkit.mweb.MwebBech32
 import io.horizontalsystems.litecoinkit.mweb.MwebKeychain
+import io.horizontalsystems.litecoinkit.mweb.MwebManager
+import io.horizontalsystems.litecoinkit.mweb.MwebScanner
+import io.horizontalsystems.litecoinkit.mweb.network.messages.GetMwebUtxosMessageParser
+import io.horizontalsystems.litecoinkit.mweb.network.messages.GetMwebUtxosMessageSerializer
+import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebUtxosMessageParser
+import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebUtxosMessageSerializer
+import io.horizontalsystems.litecoinkit.mweb.storage.MwebDatabase
+import io.horizontalsystems.litecoinkit.mweb.storage.MwebStorage
 import io.horizontalsystems.litecoinkit.validators.LegacyDifficultyAdjustmentValidator
 import io.horizontalsystems.litecoinkit.validators.ProofOfWorkValidator
 
@@ -53,6 +62,10 @@ class LitecoinKit : AbstractKit {
 
     /** Non-null when the kit was created from a master HD key and MWEB keys could be derived. */
     var mwebKeychain: MwebKeychain? = null
+        private set
+
+    /** Non-null once the kit is fully initialized; manages MWEB UTXO syncing. */
+    var mwebManager: MwebManager? = null
         private set
 
     var listener: Listener? = null
@@ -127,6 +140,23 @@ class LitecoinKit : AbstractKit {
             peerSize = peerSize,
             confirmationsThreshold = confirmationsThreshold
         )
+
+        val mwebDb = MwebDatabase.getInstance(context, "Litecoin-MWEB-${networkType.name}-$walletId")
+        val mwebStorage = MwebStorage(mwebDb)
+        val mwebScanner = mwebKeychain?.let { MwebScanner(it) }
+        val manager = MwebManager(
+            mwebStorage = mwebStorage,
+            scanner = mwebScanner,
+            lastBlockHashProvider = { bitcoinCore.lastBlockInfo?.headerHash?.toReversedByteArray() }
+        )
+        mwebManager = manager
+
+        bitcoinCore.addMessageParser(GetMwebUtxosMessageParser())
+        bitcoinCore.addMessageSerializer(GetMwebUtxosMessageSerializer())
+        bitcoinCore.addMessageParser(MwebUtxosMessageParser())
+        bitcoinCore.addMessageSerializer(MwebUtxosMessageSerializer())
+        bitcoinCore.addPeerSyncListener(manager)
+        bitcoinCore.addPeerTaskHandler(manager)
     }
 
     /**
@@ -165,6 +195,22 @@ class LitecoinKit : AbstractKit {
             peerSize = peerSize,
             confirmationsThreshold = confirmationsThreshold
         )
+
+        val mwebDb = MwebDatabase.getInstance(context, "Litecoin-MWEB-${networkType.name}-$walletId")
+        val mwebStorage = MwebStorage(mwebDb)
+        val manager = MwebManager(
+            mwebStorage = mwebStorage,
+            scanner = null,
+            lastBlockHashProvider = { bitcoinCore.lastBlockInfo?.headerHash?.toReversedByteArray() }
+        )
+        mwebManager = manager
+
+        bitcoinCore.addMessageParser(GetMwebUtxosMessageParser())
+        bitcoinCore.addMessageSerializer(GetMwebUtxosMessageSerializer())
+        bitcoinCore.addMessageParser(MwebUtxosMessageParser())
+        bitcoinCore.addMessageSerializer(MwebUtxosMessageSerializer())
+        bitcoinCore.addPeerSyncListener(manager)
+        bitcoinCore.addPeerTaskHandler(manager)
     }
 
     private fun bitcoinCore(

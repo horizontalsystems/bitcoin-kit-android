@@ -52,6 +52,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.annotation:annotation:1.1.0'
 
+    // EC crypto for MWEB output scanning
+    implementation 'org.bouncycastle:bcpkix-jdk15on:1.65'
+
     // Room
     implementation 'androidx.room:room-runtime:2.5.0'
     implementation 'androidx.room:room-rxjava2:2.5.0'

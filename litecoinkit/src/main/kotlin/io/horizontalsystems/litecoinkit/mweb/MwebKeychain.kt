@@ -20,6 +20,8 @@ class MwebKeychain(extendedKey: HDExtendedKey, networkType: LitecoinKit.NetworkT
 
     val scanPubKey: ByteArray
     val spendPubKey: ByteArray
+    /** 32-byte private scalar for the scan key. Required for ECDH output scanning. */
+    val scanPrivKeyBytes: ByteArray
 
     init {
         if (extendedKey.derivedType != HDExtendedKey.DerivedType.Master) {
@@ -29,7 +31,11 @@ class MwebKeychain(extendedKey: HDExtendedKey, networkType: LitecoinKit.NetworkT
         }
         val coinType = if (networkType == LitecoinKit.NetworkType.MainNet) 2 else 1
         val keychain = HDKeychain(extendedKey.key)
-        scanPubKey = keychain.getKeyByPath("m/1'/$coinType'/0'").pubKey
+        val scanHDKey = keychain.getKeyByPath("m/1'/$coinType'/0'")
+        scanPubKey = scanHDKey.pubKey
+        // privKeyBytes may be < 32 bytes if leading byte is 0; pad to 32
+        val rawPriv = scanHDKey.privKeyBytes
+        scanPrivKeyBytes = if (rawPriv.size == 32) rawPriv else ByteArray(32 - rawPriv.size) + rawPriv
         spendPubKey = keychain.getKeyByPath("m/1'/$coinType'/1'").pubKey
     }
 

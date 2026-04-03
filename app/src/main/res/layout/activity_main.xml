@@ -25,6 +25,7 @@
         app:layout_constraintRight_toRightOf="parent"
         android:background="@android:color/white"
         app:menu="@menu/navigation"
+        app:labelVisibilityMode="labeled"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
