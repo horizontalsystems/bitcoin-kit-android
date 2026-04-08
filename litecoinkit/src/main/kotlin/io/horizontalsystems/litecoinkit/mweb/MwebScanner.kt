@@ -31,7 +31,8 @@ class MwebScanner(private val keychain: MwebKeychain) {
     data class OwnedOutput(
         val outputId: String,
         val value: Long,
-        val raw: MwebRawOutput
+        val raw: MwebRawOutput,
+        val derivationScalar: ByteArray  // t = SHA-256(scanPrivKey * Ke); needed to derive spend key
     )
 
     /** Scans a list of raw outputs; returns only those belonging to this wallet. */
@@ -58,7 +59,13 @@ class MwebScanner(private val keychain: MwebKeychain) {
             )
 
             tryOwn(raw)?.let { owned ->
-                walletEntities.add(MwebWalletOutput(outputId = id, value = owned.value))
+                walletEntities.add(
+                    MwebWalletOutput(
+                        outputId = id,
+                        value = owned.value,
+                        derivationScalar = owned.derivationScalar
+                    )
+                )
             }
         }
 
@@ -91,7 +98,7 @@ class MwebScanner(private val keychain: MwebKeychain) {
             value = value or ((raw.maskedValue[i].toInt() and 0xFF xor (t[i].toInt() and 0xFF)).toLong() shl (i * 8))
         }
 
-        OwnedOutput(raw.commitment.toHex(), value, raw)
+        OwnedOutput(raw.commitment.toHex(), value, raw, derivationScalar = t)
     }.getOrNull()
 
     private fun digest(data: ByteArray): ByteArray = sha256.digest(data)

@@ -16,6 +16,12 @@ class MwebStorage(private val db: MwebDatabase) {
 
     fun unspentOutputCount(): Int = db.mwebDao.getUnspentOutputCount()
 
+    fun getUnspentWalletOutputIds(): List<String> = db.mwebDao.getUnspentWalletOutputIds()
+
+    fun getSpendableOutputs(): List<MwebDao.SpendableOutput> = db.mwebDao.getSpendableOutputs()
+
+    fun markOutputsAsSpent(outputIds: List<String>) = db.mwebDao.markOutputsAsSpent(outputIds)
+
     fun totalStoredOutputs(): Long = db.mwebDao.getOutputCount()
 
     fun getSyncState(): MwebSyncState? = db.mwebDao.getSyncState()

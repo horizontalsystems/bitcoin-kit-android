@@ -22,6 +22,8 @@ class MwebKeychain(extendedKey: HDExtendedKey, networkType: LitecoinKit.NetworkT
     val spendPubKey: ByteArray
     /** 32-byte private scalar for the scan key. Required for ECDH output scanning. */
     val scanPrivKeyBytes: ByteArray
+    /** 32-byte private scalar for the spend key. Required for signing MWEB inputs. */
+    val spendPrivKeyBytes: ByteArray
 
     init {
         if (extendedKey.derivedType != HDExtendedKey.DerivedType.Master) {
@@ -33,10 +35,17 @@ class MwebKeychain(extendedKey: HDExtendedKey, networkType: LitecoinKit.NetworkT
         val keychain = HDKeychain(extendedKey.key)
         val scanHDKey = keychain.getKeyByPath("m/1'/$coinType'/0'")
         scanPubKey = scanHDKey.pubKey
-        // privKeyBytes may be < 32 bytes if leading byte is 0; pad to 32
-        val rawPriv = scanHDKey.privKeyBytes
-        scanPrivKeyBytes = if (rawPriv.size == 32) rawPriv else ByteArray(32 - rawPriv.size) + rawPriv
-        spendPubKey = keychain.getKeyByPath("m/1'/$coinType'/1'").pubKey
+        scanPrivKeyBytes = toBytes32(scanHDKey.privKeyBytes)
+        val spendHDKey = keychain.getKeyByPath("m/1'/$coinType'/1'")
+        spendPubKey = spendHDKey.pubKey
+        spendPrivKeyBytes = toBytes32(spendHDKey.privKeyBytes)
+    }
+
+    private fun toBytes32(raw: ByteArray): ByteArray = when {
+        raw.size == 32 -> raw
+        raw.size == 33 && raw[0] == 0.toByte() -> raw.copyOfRange(1, 33)  // BigInteger leading sign byte
+        raw.size < 32 -> ByteArray(32 - raw.size) + raw                   // pad with leading zeros
+        else -> throw IllegalArgumentException("Unexpected private key length: ${raw.size}")
     }
 
     companion object {

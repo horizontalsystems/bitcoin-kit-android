@@ -30,6 +30,34 @@ interface MwebDao {
     @Query("SELECT COUNT(*) FROM mweb_wallet_outputs WHERE isSpent = 0")
     fun getUnspentOutputCount(): Int
 
+    @Query("SELECT outputId FROM mweb_wallet_outputs WHERE isSpent = 0")
+    fun getUnspentWalletOutputIds(): List<String>
+
+    @Query("UPDATE mweb_wallet_outputs SET isSpent = 1 WHERE outputId IN (:outputIds)")
+    fun markOutputsAsSpent(outputIds: List<String>)
+
+    @Query("""
+        SELECT w.outputId, w.value, w.derivationScalar,
+               o.commitment, o.senderPubKey, o.receiverPubKey, o.features, o.leafIndex, o.blockHash
+        FROM mweb_wallet_outputs w
+        INNER JOIN mweb_outputs o ON w.outputId = o.outputId
+        WHERE w.isSpent = 0
+        ORDER BY w.value ASC
+    """)
+    fun getSpendableOutputs(): List<SpendableOutput>
+
+    data class SpendableOutput(
+        val outputId: String,
+        val value: Long,
+        val derivationScalar: ByteArray,
+        val commitment: ByteArray,
+        val senderPubKey: ByteArray,
+        val receiverPubKey: ByteArray,
+        val features: Byte,
+        val leafIndex: Long,
+        val blockHash: String
+    )
+
     // --- Sync state ---
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

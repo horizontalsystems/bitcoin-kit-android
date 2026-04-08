@@ -40,8 +40,12 @@ import io.horizontalsystems.litecoinkit.mweb.MwebBech32
 import io.horizontalsystems.litecoinkit.mweb.MwebKeychain
 import io.horizontalsystems.litecoinkit.mweb.MwebManager
 import io.horizontalsystems.litecoinkit.mweb.MwebScanner
+import io.horizontalsystems.litecoinkit.mweb.MwebSigner
+import io.horizontalsystems.litecoinkit.mweb.MwebTransactionBuilder
 import io.horizontalsystems.litecoinkit.mweb.network.messages.GetMwebUtxosMessageParser
 import io.horizontalsystems.litecoinkit.mweb.network.messages.GetMwebUtxosMessageSerializer
+import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebTransactionMessageParser
+import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebTransactionMessageSerializer
 import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebUtxosMessageParser
 import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebUtxosMessageSerializer
 import io.horizontalsystems.litecoinkit.mweb.storage.MwebDatabase
@@ -68,6 +72,17 @@ class LitecoinKit : AbstractKit {
     var mwebManager: MwebManager? = null
         private set
 
+    private var mwebStorage: MwebStorage? = null
+    private var mwebTransactionBuilder: MwebTransactionBuilder? = null
+
+    /** Total MWEB balance in satoshis (unspent owned outputs only). Returns 0 if MWEB not initialized. */
+    val mwebBalance: Long
+        get() = mwebStorage?.totalBalance() ?: 0L
+
+    /** Number of unspent owned MWEB outputs. Returns 0 if MWEB not initialized. */
+    val mwebUnspentOutputCount: Int
+        get() = mwebStorage?.unspentOutputCount() ?: 0
+
     var listener: Listener? = null
         set(value) {
             field = value
@@ -82,6 +97,48 @@ class LitecoinKit : AbstractKit {
         val hrp = if (network is MainNetLitecoin) "ltcmweb" else "tmweb"
         MwebBech32.encode(hrp, keychain.scanPubKey, keychain.spendPubKey)
     }
+
+    /**
+     * Sends MWEB funds to a canonical Litecoin address via a peg-out.
+     *
+     * **Limitation**: Change is not supported — [amount] + [fee] must exactly equal
+     * the sum of selected UTXOs. Use [estimatePegOutFee] to compute the fee first,
+     * then choose an amount accordingly (or send all available MWEB balance).
+     *
+     * @param toAddress canonical Litecoin destination (ltc1..., L..., M...)
+     * @param amount    amount to send in satoshis (excluding fee)
+     * @param fee       fee in satoshis (use [estimatePegOutFee] to estimate)
+     * @throws IllegalStateException    if MWEB spending is unavailable (watch-only wallet or no master key)
+     * @throws IllegalArgumentException if MWEB balance is insufficient
+     * @throws IllegalStateException    if no MWEB peer is connected yet
+     */
+    fun pegOut(toAddress: String, amount: Long, fee: Long) {
+        val builder = mwebTransactionBuilder
+            ?: throw IllegalStateException("MWEB peg-out requires a master HD key")
+        val manager = mwebManager
+            ?: throw IllegalStateException("MwebManager not initialized")
+
+        val address = parseAddress(toAddress, network)
+        val pegOutScript = buildScriptPubKey(address)
+
+        val mwebTx = builder.buildPegOut(pegOutScript = pegOutScript, sendAmount = amount, fee = fee)
+        val mwebTxBytes = mwebTx.serialize()
+
+        // Optimistically mark spent inputs; will be reconciled on next MWEB sync
+        val spentIds = mwebTx.inputs.map { input -> input.outputId.joinToString("") { "%02x".format(it) } }
+        mwebStorage?.markOutputsAsSpent(spentIds)
+
+        manager.broadcastMwebTransaction(mwebTxBytes)
+    }
+
+    /**
+     * Estimates the fee for a peg-out of [amount] satoshis at [feeRate] sat/byte.
+     * Returns 0 if MWEB is not initialized.
+     */
+    fun estimatePegOutFee(amount: Long, feeRate: Int): Long =
+        mwebTransactionBuilder?.estimateFee(amount, feeRate) ?: 0L
+
+    private fun buildScriptPubKey(address: Address): ByteArray = address.lockingScript
 
     constructor(
         context: Context,
@@ -141,11 +198,16 @@ class LitecoinKit : AbstractKit {
             confirmationsThreshold = confirmationsThreshold
         )
 
-        val mwebDb = MwebDatabase.getInstance(context, "Litecoin-MWEB-${networkType.name}-$walletId")
-        val mwebStorage = MwebStorage(mwebDb)
+        val mwebDb = MwebDatabase.getInstance(context, getMwebDatabaseName(networkType, walletId))
+        val storage = MwebStorage(mwebDb)
+        this.mwebStorage = storage
         val mwebScanner = mwebKeychain?.let { MwebScanner(it) }
+        val mwebSigner = mwebKeychain?.let { MwebSigner(it) }
+        if (mwebSigner != null) {
+            mwebTransactionBuilder = MwebTransactionBuilder(storage, mwebSigner)
+        }
         val manager = MwebManager(
-            mwebStorage = mwebStorage,
+            mwebStorage = storage,
             scanner = mwebScanner,
             lastBlockHashProvider = { bitcoinCore.lastBlockInfo?.headerHash?.toReversedByteArray() }
         )
@@ -155,6 +217,8 @@ class LitecoinKit : AbstractKit {
         bitcoinCore.addMessageSerializer(GetMwebUtxosMessageSerializer())
         bitcoinCore.addMessageParser(MwebUtxosMessageParser())
         bitcoinCore.addMessageSerializer(MwebUtxosMessageSerializer())
+        bitcoinCore.addMessageParser(MwebTransactionMessageParser())
+        bitcoinCore.addMessageSerializer(MwebTransactionMessageSerializer())
         bitcoinCore.addPeerSyncListener(manager)
         bitcoinCore.addPeerTaskHandler(manager)
     }
@@ -196,10 +260,11 @@ class LitecoinKit : AbstractKit {
             confirmationsThreshold = confirmationsThreshold
         )
 
-        val mwebDb = MwebDatabase.getInstance(context, "Litecoin-MWEB-${networkType.name}-$walletId")
-        val mwebStorage = MwebStorage(mwebDb)
+        val mwebDb = MwebDatabase.getInstance(context, getMwebDatabaseName(networkType, walletId))
+        val storage = MwebStorage(mwebDb)
+        this.mwebStorage = storage
         val manager = MwebManager(
-            mwebStorage = mwebStorage,
+            mwebStorage = storage,
             scanner = null,
             lastBlockHashProvider = { bitcoinCore.lastBlockInfo?.headerHash?.toReversedByteArray() }
         )
@@ -209,6 +274,8 @@ class LitecoinKit : AbstractKit {
         bitcoinCore.addMessageSerializer(GetMwebUtxosMessageSerializer())
         bitcoinCore.addMessageParser(MwebUtxosMessageParser())
         bitcoinCore.addMessageSerializer(MwebUtxosMessageSerializer())
+        bitcoinCore.addMessageParser(MwebTransactionMessageParser())
+        bitcoinCore.addMessageSerializer(MwebTransactionMessageSerializer())
         bitcoinCore.addPeerSyncListener(manager)
         bitcoinCore.addPeerTaskHandler(manager)
     }
@@ -348,6 +415,9 @@ class LitecoinKit : AbstractKit {
         private fun getDatabaseName(networkType: NetworkType, walletId: String, syncMode: SyncMode, purpose: Purpose): String =
             "Litecoin-${networkType.name}-$walletId-${syncMode.javaClass.simpleName}-${purpose.name}"
 
+        private fun getMwebDatabaseName(networkType: NetworkType, walletId: String): String =
+            "Litecoin-MWEB-${networkType.name}-$walletId"
+
         fun clear(context: Context, networkType: NetworkType, walletId: String) {
             for (syncMode in listOf(SyncMode.Api(), SyncMode.Full(), SyncMode.Blockchair())) {
                 for (purpose in Purpose.values())
@@ -357,6 +427,7 @@ class LitecoinKit : AbstractKit {
                         continue
                     }
             }
+            SQLiteDatabase.deleteDatabase(context.getDatabasePath(getMwebDatabaseName(networkType, walletId)))
         }
 
         private fun network(networkType: NetworkType) = when (networkType) {

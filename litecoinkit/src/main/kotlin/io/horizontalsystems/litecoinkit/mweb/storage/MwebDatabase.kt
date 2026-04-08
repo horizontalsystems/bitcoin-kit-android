@@ -10,7 +10,7 @@ import io.horizontalsystems.litecoinkit.mweb.storage.entities.MwebWalletOutput
 
 @Database(
     entities = [MwebOutput::class, MwebWalletOutput::class, MwebSyncState::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class MwebDatabase : RoomDatabase() {

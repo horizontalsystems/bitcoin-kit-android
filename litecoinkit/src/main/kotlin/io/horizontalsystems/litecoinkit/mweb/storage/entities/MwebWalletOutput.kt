@@ -10,5 +10,6 @@ import androidx.room.PrimaryKey
 data class MwebWalletOutput(
     @PrimaryKey val outputId: String,  // FK to MwebOutput.outputId
     val value: Long,                   // satoshis (recovered from maskedValue)
-    val isSpent: Boolean = false
+    val isSpent: Boolean = false,
+    val derivationScalar: ByteArray = ByteArray(32)  // t = SHA-256(scanPrivKey * Ke), needed for spending
 )
