@@ -121,14 +121,14 @@ class LitecoinKit : AbstractKit {
         val address = parseAddress(toAddress, network)
         val pegOutScript = buildScriptPubKey(address)
 
-        val mwebTx = builder.buildPegOut(pegOutScript = pegOutScript, sendAmount = amount, fee = fee)
-        val mwebTxBytes = mwebTx.serialize()
+        val result = builder.buildPegOut(pegOutScript = pegOutScript, sendAmount = amount, fee = fee)
+        val mwebTxBytes = result.tx.serialize()
 
         // Optimistically mark spent inputs; will be reconciled on next MWEB sync
-        val spentIds = mwebTx.inputs.map { input -> input.outputId.joinToString("") { "%02x".format(it) } }
-        mwebStorage?.markOutputsAsSpent(spentIds)
+        mwebStorage?.markOutputsAsSpent(result.spentDbOutputIds)
 
         manager.broadcastMwebTransaction(mwebTxBytes)
+
     }
 
     /**

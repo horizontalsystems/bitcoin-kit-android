@@ -144,6 +144,7 @@ class MwebManager(
                 maskedValue = raw.maskedValue,
                 maskedNonce = raw.maskedNonce,
                 rangeProofSize = raw.rangeProof.size,
+                rangeProofBytes = raw.rangeProof,
                 leafIndex = raw.leafIndex,
                 blockHash = blockHashHex
             )

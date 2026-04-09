@@ -53,6 +53,7 @@ class MwebScanner(private val keychain: MwebKeychain) {
                     maskedValue = raw.maskedValue,
                     maskedNonce = raw.maskedNonce,
                     rangeProofSize = raw.rangeProof.size,
+                    rangeProofBytes = raw.rangeProof,
                     leafIndex = raw.leafIndex,
                     blockHash = blockHash
                 )

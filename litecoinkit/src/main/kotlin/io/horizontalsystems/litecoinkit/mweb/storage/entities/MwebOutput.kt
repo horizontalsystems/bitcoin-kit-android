@@ -12,17 +12,19 @@ import androidx.room.PrimaryKey
  *   receiverPubKey– 33-byte one-time pubkey Ko (derived by sender for recipient)
  *   maskedValue   – 8-byte XOR-masked amount
  *   maskedNonce   – 4-byte XOR-masked nonce (for key derivation)
+ *   rangeProofBytes – full range proof bytes (needed to compute output_id = BLAKE3(serialized_output))
  */
 @Entity(tableName = "mweb_outputs")
 data class MwebOutput(
-    @PrimaryKey val outputId: String,       // lowercase hex of commitment
+    @PrimaryKey val outputId: String,       // lowercase hex of commitment (used as DB key only)
     val commitment: ByteArray,              // 33 bytes
     val senderPubKey: ByteArray,            // 33 bytes (Ke)
     val receiverPubKey: ByteArray,          // 33 bytes (Ko)
     val features: Byte,                     // OutputMessage feature flags
     val maskedValue: ByteArray,             // 8 bytes
     val maskedNonce: ByteArray,             // 4 bytes
-    val rangeProofSize: Int,                // for informational purposes
+    val rangeProofSize: Int,                // byte count of the range proof
+    val rangeProofBytes: ByteArray,         // full range proof — needed for output_id computation
     val leafIndex: Long,                    // global MWEB UTXO set index
     val blockHash: String                   // canonical block hash (hex)
 )

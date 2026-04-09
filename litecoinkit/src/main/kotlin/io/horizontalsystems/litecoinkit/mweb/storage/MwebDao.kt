@@ -38,7 +38,9 @@ interface MwebDao {
 
     @Query("""
         SELECT w.outputId, w.value, w.derivationScalar,
-               o.commitment, o.senderPubKey, o.receiverPubKey, o.features, o.leafIndex, o.blockHash
+               o.commitment, o.senderPubKey, o.receiverPubKey, o.features,
+               o.maskedValue, o.maskedNonce, o.rangeProofBytes,
+               o.leafIndex, o.blockHash
         FROM mweb_wallet_outputs w
         INNER JOIN mweb_outputs o ON w.outputId = o.outputId
         WHERE w.isSpent = 0
@@ -54,6 +56,9 @@ interface MwebDao {
         val senderPubKey: ByteArray,
         val receiverPubKey: ByteArray,
         val features: Byte,
+        val maskedValue: ByteArray,
+        val maskedNonce: ByteArray,
+        val rangeProofBytes: ByteArray,
         val leafIndex: Long,
         val blockHash: String
     )

@@ -14,11 +14,13 @@ class LitecoinViewModel : ViewModel(), LitecoinKit.Listener {
 
     val syncState = MutableLiveData<BitcoinCore.KitState>()
     val balance = MutableLiveData<BalanceInfo>()
+    val mwebBalance = MutableLiveData<Long>()
     val lastBlock = MutableLiveData<BlockInfo>()
     val status = MutableLiveData<Status>()
     val receiveAddress = MutableLiveData<String>()
     val mwebAddress = MutableLiveData<String>()
-    val errorLiveData = MutableLiveData<String>()
+    val pegOutFeeEstimate = MutableLiveData<Long?>()
+    val pegOutResult = MutableLiveData<String>()
 
     private lateinit var litecoinKit: LitecoinKit
     private val walletId = "LitecoinMwebDemo"
@@ -38,6 +40,7 @@ class LitecoinViewModel : ViewModel(), LitecoinKit.Listener {
         litecoinKit.listener = this
 
         balance.value = litecoinKit.balance
+        mwebBalance.value = litecoinKit.mwebBalance
         lastBlock.value = litecoinKit.lastBlockInfo
         syncState.value = litecoinKit.syncState
         status.value = Status.STOPPED
@@ -63,6 +66,21 @@ class LitecoinViewModel : ViewModel(), LitecoinKit.Listener {
         init()
     }
 
+    fun estimatePegOutFee(amountSat: Long, feeRate: Int) {
+        val fee = litecoinKit.estimatePegOutFee(amountSat, feeRate)
+        pegOutFeeEstimate.value = fee
+    }
+
+    fun pegOut(toAddress: String, amountSat: Long, fee: Long) {
+        try {
+            litecoinKit.pegOut(toAddress, amountSat, fee)
+            mwebBalance.postValue(litecoinKit.mwebBalance)
+            pegOutResult.postValue("Sent! Amount: $amountSat sat, fee: $fee sat")
+        } catch (e: Exception) {
+            pegOutResult.postValue("Error: ${e.message}")
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         litecoinKit.stop()
@@ -72,6 +90,7 @@ class LitecoinViewModel : ViewModel(), LitecoinKit.Listener {
 
     override fun onBalanceUpdate(balance: BalanceInfo) {
         this.balance.postValue(balance)
+        mwebBalance.postValue(litecoinKit.mwebBalance)
     }
 
     override fun onLastBlockInfoUpdate(blockInfo: BlockInfo) {
@@ -80,6 +99,7 @@ class LitecoinViewModel : ViewModel(), LitecoinKit.Listener {
 
     override fun onKitStateUpdate(state: BitcoinCore.KitState) {
         syncState.postValue(state)
+        mwebBalance.postValue(litecoinKit.mwebBalance)
     }
 
     override fun onTransactionsUpdate(inserted: List<TransactionInfo>, updated: List<TransactionInfo>) = Unit

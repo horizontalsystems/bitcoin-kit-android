@@ -1,30 +1,25 @@
 package io.horizontalsystems.litecoinkit.mweb
 
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
+import io.horizontalsystems.hdwalletkit.ECKey
 import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebInput
 import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebKernel
 import io.horizontalsystems.litecoinkit.mweb.network.messages.MwebTx
 import io.horizontalsystems.litecoinkit.mweb.storage.MwebDao
 import io.horizontalsystems.litecoinkit.mweb.storage.MwebStorage
-import java.math.BigInteger
-import java.security.MessageDigest
 
 /**
  * Constructs signed MWEB peg-out transactions.
  *
  * A peg-out converts MWEB coins to canonical Litecoin by:
  *   1. Spending one or more MWEB UTXOs (inputs)
- *   2. Creating a peg-out kernel that specifies the destination canonical scriptPubKey
+ *   2. Creating a peg-out kernel specifying the destination canonical scriptPubKey
  *   3. Producing zero new MWEB outputs (no change — see limitation below)
  *
- * **MVP Limitation**: Change is not supported. If the selected UTXOs exceed
- * `sendAmount + fee`, an exception is thrown. The caller must select an exact
- * combination of UTXOs or use `send-all` semantics. Generating MWEB change
- * requires Bulletproof+ range proof creation, which is not yet implemented.
+ * Cryptographic operations are delegated to [MwebSigner]. Hash operations use BLAKE3 via [MwebHash].
  *
- * **Signing caveats**: The exact preimages for the input message and kernel message
- * hashes follow the most likely LIP-0003 interpretation. These MUST be verified
- * against litecoin-project/litecoin src/mweb/mweb_transact.cpp before production use.
+ * **MVP limitation**: Change is not supported. Selected UTXOs must total exactly `sendAmount + fee`.
+ * Generating MWEB change requires Bulletproof+ range proof creation (out of scope).
  */
 class MwebTransactionBuilder(
     private val storage: MwebStorage,
@@ -35,12 +30,12 @@ class MwebTransactionBuilder(
      * Builds and signs a peg-out [MwebTx].
      *
      * @param pegOutScript scriptPubKey of the destination canonical address
-     * @param sendAmount   amount to send in satoshis (must not include fee)
+     * @param sendAmount   amount in satoshis (exclusive of fee)
      * @param fee          fee in satoshis
-     * @throws IllegalArgumentException if MWEB balance is insufficient
-     * @throws IllegalStateException    if selected UTXOs total != sendAmount + fee (change not supported)
      */
-    fun buildPegOut(pegOutScript: ByteArray, sendAmount: Long, fee: Long): MwebTx {
+    data class PegOutResult(val tx: MwebTx, val spentDbOutputIds: List<String>)
+
+    fun buildPegOut(pegOutScript: ByteArray, sendAmount: Long, fee: Long): PegOutResult {
         val totalNeeded = sendAmount + fee
 
         val allSpendable = storage.getSpendableOutputs()
@@ -53,70 +48,74 @@ class MwebTransactionBuilder(
         check(selectedTotal == totalNeeded) {
             "MWEB peg-out with change is not yet supported. " +
                 "Selected ${selected.size} output(s) totalling $selectedTotal sat, " +
-                "but only $totalNeeded sat needed. " +
-                "Please select exact UTXOs or adjust the fee."
+                "but only $totalNeeded sat needed. Adjust fee or UTXO selection."
         }
 
-        // Per-output spend keys: spendPrivKey + t (mod n)
+        // Per-output spend keys: k_o_i = spendPrivKey + t_i (mod n)
         val outputSpendKeys = selected.map { signer.computeOutputSpendKey(it.derivationScalar) }
 
-        // Kernel excess = sum of all input spend keys (no MWEB outputs to subtract)
-        val kernelExcessPubKey = signer.computeKernelExcessPubKey(outputSpendKeys)
-        val kernelExcessKey = sumScalars(outputSpendKeys)
+        // Kernel excess = -(sum of k_o_i) mod n
+        val kernelExcessScalar = signer.computeKernelExcessScalar(outputSpendKeys)
+        val kernelExcessCommitment = signer.computeKernelExcessCommitment(kernelExcessScalar)
 
         // Build and sign the kernel
-        val kernelFeatures = MwebKernel.FEAT_PEGGED_OUT
-        val kernelMessage = buildKernelMessage(kernelFeatures, fee, sendAmount, pegOutScript)
-        val kernelSig = signer.signKernel(kernelExcessKey, kernelMessage)
+        val kernelFeatures = MwebKernel.FEAT_PEGOUT_WITH_FEE
+        val kernelMessage = buildKernelMessage(kernelFeatures, fee, sendAmount, pegOutScript, kernelExcessCommitment)
+        val kernelSig = signer.signKernel(kernelExcessScalar, kernelMessage)
 
         val kernel = MwebKernel(
             features = kernelFeatures,
             fee = fee,
             pegOutAmount = sendAmount,
             pegOutScript = pegOutScript,
-            excessPubKey = kernelExcessPubKey,
+            excessCommitment = kernelExcessCommitment,
             signature = kernelSig
         )
 
         // Build and sign each input
         val inputs = selected.mapIndexed { i, output ->
-            val inputMessage = buildInputMessage(kernelExcessPubKey, output.commitment)
-            val inputSig = signer.signInput(outputSpendKeys[i], inputMessage)
+            val k_o = outputSpendKeys[i]
+            val K_o = output.receiverPubKey                    // one-time output pubkey from DB
+            val k_agg = signer.computeAggregatedSigningKey(k_o, K_o, kernelExcessScalar, kernelExcessCommitment)
+            val K_agg = ECKey.fromPrivate(k_agg).pubKey        // inputPubKey (33 bytes)
+            val outputId = computeOutputId(output)             // 32-byte BLAKE3 hash
+            val sig = signer.signInput(k_agg, outputId)
             MwebInput(
-                features = 0x00,
-                outputId = output.commitment,
+                outputId = outputId,
                 commitment = output.commitment,
-                inputPubKey = output.receiverPubKey,  // Ko — one-time spend pubkey
-                signature = inputSig
+                inputPubKey = K_agg,
+                outputPubKey = K_o,
+                signature = sig
             )
         }
 
-        return MwebTx(inputs = inputs, kernels = listOf(kernel))
+        return PegOutResult(
+            tx = MwebTx(inputs = inputs, kernels = listOf(kernel)),
+            spentDbOutputIds = selected.map { it.outputId }   // commitment-hex, matches DB primary key
+        )
     }
 
     /**
      * Estimates the fee for a peg-out transaction in satoshis.
      *
-     * Approximate sizes:
-     *   Per input:  1 + 33 + 33 + 33 + 64 = 164 bytes
-     *   Kernel:     1 + 8 + 8 + varint + scriptLen + 33 + 64 ≈ 155 + scriptLen bytes
+     * Per-input wire size:  32 + 33 + 33 + 33 + 64 = 195 bytes
+     * Kernel wire size:     1 + varint(fee) + 1 + 8 + varint(scriptLen) + script + 33 + 64 ≈ 115 + scriptLen bytes
      */
     fun estimateFee(sendAmount: Long, feeRate: Int): Long {
-        val allSpendable = storage.getSpendableOutputs()
-        val selected = selectCoins(allSpendable, sendAmount)
-        val scriptLen = 22  // typical P2WPKH scriptPubKey length
-        val txSize = selected.size * 164L + 155L + scriptLen
+        val selected = selectCoins(storage.getSpendableOutputs(), sendAmount)
+        val scriptLen = 22   // typical P2WPKH scriptPubKey
+        val txSize = selected.size * 195L + 115L + scriptLen
         return txSize * feeRate
     }
 
-    // Greedy ascending coin selection: smallest first until total >= target
+    // Greedy ascending coin selection: smallest UTXOs first until sum >= target
     private fun selectCoins(
         available: List<MwebDao.SpendableOutput>,
         target: Long
     ): List<MwebDao.SpendableOutput> {
         val result = mutableListOf<MwebDao.SpendableOutput>()
         var sum = 0L
-        for (output in available) {  // already sorted ASC by DAO query
+        for (output in available) {   // already sorted ASC by DAO query
             if (sum >= target) break
             result.add(output)
             sum += output.value
@@ -125,54 +124,46 @@ class MwebTransactionBuilder(
     }
 
     /**
-     * Kernel message hash.
+     * Kernel signature message = BLAKE3(features || excess_commitment || fee_varint || pegout_count || amount_LE64 || scriptLen_varint || script)
      *
-     * Preimage: features(1) || fee_LE64(8) || pegOutAmount_LE64(8) || varint(scriptLen) || script
-     * Hash: double-SHA256(preimage)
-     *
-     * CAVEAT: Verify exact construction against litecoin-project source before shipping.
+     * NOTE: Field order and encoding (varint vs LE64 for fee) should be confirmed against
+     * src/libmw/include/mw/models/tx/Kernel.h → GetSignatureMessage().
      */
     private fun buildKernelMessage(
         features: Byte,
         fee: Long,
         pegOutAmount: Long,
-        pegOutScript: ByteArray
+        pegOutScript: ByteArray,
+        excessCommitment: ByteArray
     ): ByteArray {
         val preimage = BitcoinOutput()
             .writeByte(features.toInt())
-            .writeLong(fee)
-            .writeLong(pegOutAmount)
+            .write(excessCommitment)                        // 33-byte Pedersen commitment
+            .writeVarInt(fee)
+            .writeVarInt(1L)                               // pegout count = 1
+            .writeLong(pegOutAmount)                       // amount LE64
             .writeVarInt(pegOutScript.size.toLong())
             .write(pegOutScript)
             .toByteArray()
-        return doubleSha256(preimage)
+        return MwebHash.blake3(preimage)
     }
 
     /**
-     * Input signing message hash.
+     * Computes output_id = BLAKE3(serialized_output).
      *
-     * Preimage: kernelExcessPubKey(33) || commitment(33)
-     * Hash: SHA-256(preimage)
+     * Serialization order: commitment(33) || senderPubKey(33) || receiverPubKey(33) ||
+     *                      features(1) || maskedValue(8) || maskedNonce(4) || rangeProofBytes(var)
      *
-     * CAVEAT: Verify exact construction against litecoin-project source before shipping.
+     * NOTE: Field order should be verified against src/libmw/include/mw/models/tx/Output.h → GetOutputID().
      */
-    private fun buildInputMessage(kernelExcessPubKey: ByteArray, commitment: ByteArray): ByteArray {
-        return sha256(kernelExcessPubKey + commitment)
+    private fun computeOutputId(output: MwebDao.SpendableOutput): ByteArray {
+        val preimage = output.commitment +
+            output.senderPubKey +
+            output.receiverPubKey +
+            byteArrayOf(output.features) +
+            output.maskedValue +
+            output.maskedNonce +
+            output.rangeProofBytes
+        return MwebHash.blake3(preimage)
     }
-
-    private fun sumScalars(keys: List<ByteArray>): ByteArray {
-        val n = io.horizontalsystems.hdwalletkit.ECKey.ecParams.n
-        val sum = keys.map { BigInteger(1, it) }.fold(BigInteger.ZERO) { acc, k -> acc.add(k).mod(n) }
-        val bytes = sum.toByteArray()
-        return when {
-            bytes.size == 32 -> bytes
-            bytes.size == 33 && bytes[0] == 0.toByte() -> bytes.copyOfRange(1, 33)
-            bytes.size < 32 -> ByteArray(32 - bytes.size) + bytes
-            else -> throw IllegalStateException("Scalar overflow")
-        }
-    }
-
-    private fun sha256(data: ByteArray): ByteArray = MessageDigest.getInstance("SHA-256").digest(data)
-
-    private fun doubleSha256(data: ByteArray): ByteArray = sha256(sha256(data))
 }

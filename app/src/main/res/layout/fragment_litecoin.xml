@@ -58,6 +58,20 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="—"
+            android:layout_marginBottom="8dp" />
+
+        <!-- MWEB balance -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MWEB balance"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ltcMwebBalance"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="—"
             android:layout_marginBottom="16dp" />
 
         <!-- LTC receive address -->
@@ -103,6 +117,94 @@
             android:layout_height="wrap_content"
             android:text="Copy"
             android:layout_marginBottom="24dp" />
+
+        <!-- MWEB Peg-Out -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MWEB Peg-Out (MWEB → LTC)"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/ltcPegOutAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Destination LTC address"
+            android:inputType="text"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/ltcPegOutAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Amount (satoshis)"
+            android:inputType="number"
+            android:layout_marginBottom="8dp" />
+
+        <EditText
+            android:id="@+id/ltcPegOutFeeRate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Fee rate (sat/byte, default 10)"
+            android:inputType="number"
+            android:layout_marginBottom="8dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Estimated fee: "
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/ltcPegOutFeeEstimate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="—" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <Button
+                android:id="@+id/ltcButtonEstimateFee"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Estimate Fee"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/ltcButtonPegOut"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Send (Peg-Out)" />
+
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="?android:attr/listDivider"
+            android:layout_marginBottom="16dp" />
 
         <!-- Action buttons -->
         <LinearLayout

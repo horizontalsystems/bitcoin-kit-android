@@ -6,25 +6,23 @@ import java.math.BigInteger
 import java.security.SecureRandom
 
 /**
- * Produces per-output spend keys and Schnorr signatures for MWEB transactions.
+ * Produces per-output spend keys and Schnorr signatures for MWEB peg-out transactions.
  *
- * In LIP-0003, for a stealth address output sent to (scanPubKey, spendPubKey):
- *   derivation scalar  t   = SHA-256(scanPrivKey * Ke)  [stored in MwebWalletOutput]
- *   per-output spend key   = spendPrivKey + t  (mod curve order)
- *   commitment blinding r  = spendPrivKey + t  (the blinding factor IS the spend key)
+ * Key relationships (LIP-0003):
+ *   k_o   = spendPrivKey + t  (mod n)      — per-output spend key / commitment blinding factor
+ *   K_o   = k_o * G                        — one-time output pubkey (= receiverPubKey stored in DB)
+ *   k_exc = -(sum of k_o_i)  (mod n)       — kernel excess scalar (negated for peg-out)
+ *   K_exc = k_exc * G                      — kernel excess Pedersen commitment (33-byte compressed point)
  *
- * NOTE: The input signing message and kernel message constructions below follow the most
- * likely LIP-0003 interpretation. Verify the exact preimages against
- * litecoin-project/litecoin src/mweb/mweb_transact.cpp before production deployment.
+ * Input aggregated signing key (one per UTXO being spent):
+ *   k_agg = k_o + BLAKE3(K_exc || K_o) * k_exc   (mod n)
+ *   K_agg = k_agg * G                             — inputPubKey field in wire format
  */
 class MwebSigner(private val keychain: MwebKeychain) {
 
     private val curveOrder: BigInteger = ECKey.ecParams.n
 
-    /**
-     * Computes the per-output spend private key.
-     * Result = (spendPrivKey + derivationScalar) mod n, padded to 32 bytes.
-     */
+    /** k_o = (spendPrivKey + t) mod n */
     fun computeOutputSpendKey(derivationScalar: ByteArray): ByteArray {
         val spendPriv = BigInteger(1, keychain.spendPrivKeyBytes)
         val t = BigInteger(1, derivationScalar)
@@ -32,36 +30,61 @@ class MwebSigner(private val keychain: MwebKeychain) {
     }
 
     /**
-     * Computes the kernel excess public key (33-byte compressed EC point).
-     * excessPubKey = sum(outputSpendKey_i) * G
+     * Kernel excess scalar = -(sum of k_o_i) mod n.
+     * For peg-out with no MWEB change, the excess equals the negation of all input blinding factors.
      */
-    fun computeKernelExcessPubKey(outputSpendKeys: List<ByteArray>): ByteArray {
-        val sumScalar = outputSpendKeys
+    fun computeKernelExcessScalar(outputSpendKeys: List<ByteArray>): ByteArray {
+        val sum = outputSpendKeys
             .map { BigInteger(1, it) }
             .fold(BigInteger.ZERO) { acc, k -> acc.add(k).mod(curveOrder) }
-        return ECKey.fromPrivate(toBytes32(sumScalar)).pubKey
+        return toBytes32(curveOrder.subtract(sum).mod(curveOrder))
     }
 
     /**
-     * Signs an MWEB input with a 64-byte BIP-340 Schnorr signature.
-     *
-     * @param outputSpendKeyBytes 32-byte per-output spend key from [computeOutputSpendKey]
-     * @param message             32-byte message hash
+     * Kernel excess commitment = excessScalar * G (33-byte compressed EC point).
+     * This is a Pedersen commitment with value=0 and blinding=excessScalar.
      */
-    fun signInput(outputSpendKeyBytes: ByteArray, message: ByteArray): ByteArray {
-        require(message.size == 32) { "MWEB input message must be exactly 32 bytes" }
-        return Schnorr.sign(message, outputSpendKeyBytes, SecureRandom().generateSeed(32))
+    fun computeKernelExcessCommitment(excessScalar: ByteArray): ByteArray =
+        ECKey.fromPrivate(excessScalar).pubKey
+
+    /**
+     * Aggregated input signing key for one UTXO:
+     *   k_agg = k_o + BLAKE3(K_exc || K_o) * k_exc   (mod n)
+     *
+     * @param k_o   per-output spend key (32 bytes)
+     * @param K_o   one-time output pubkey = receiverPubKey (33 bytes)
+     * @param k_exc kernel excess scalar (32 bytes)
+     * @param K_exc kernel excess commitment (33 bytes)
+     */
+    fun computeAggregatedSigningKey(
+        k_o: ByteArray,
+        K_o: ByteArray,
+        k_exc: ByteArray,
+        K_exc: ByteArray
+    ): ByteArray {
+        val h = BigInteger(1, MwebHash.blake3(K_exc + K_o))
+        val ko = BigInteger(1, k_o)
+        val ke = BigInteger(1, k_exc)
+        val k_agg = ko.add(h.multiply(ke)).mod(curveOrder)
+        return toBytes32(k_agg)
     }
 
     /**
-     * Signs an MWEB kernel with a 64-byte BIP-340 Schnorr signature.
-     *
-     * @param kernelExcessKeyBytes 32-byte sum of all input spend keys (mod n)
-     * @param kernelMessage        32-byte kernel message hash
+     * Signs an MWEB input. The message is the 32-byte output_id (BLAKE3 hash of the output).
+     * Uses the aggregated signing key from [computeAggregatedSigningKey].
      */
-    fun signKernel(kernelExcessKeyBytes: ByteArray, kernelMessage: ByteArray): ByteArray {
-        require(kernelMessage.size == 32) { "MWEB kernel message must be exactly 32 bytes" }
-        return Schnorr.sign(kernelMessage, kernelExcessKeyBytes, SecureRandom().generateSeed(32))
+    fun signInput(k_agg: ByteArray, outputId: ByteArray): ByteArray {
+        require(outputId.size == 32) { "output_id must be 32 bytes, got ${outputId.size}" }
+        return Schnorr.sign(outputId, k_agg, SecureRandom().generateSeed(32))
+    }
+
+    /**
+     * Signs an MWEB kernel. The message is the 32-byte BLAKE3 kernel signature message.
+     * Uses the kernel excess scalar from [computeKernelExcessScalar].
+     */
+    fun signKernel(excessScalar: ByteArray, kernelMessage: ByteArray): ByteArray {
+        require(kernelMessage.size == 32) { "kernel message must be 32 bytes, got ${kernelMessage.size}" }
+        return Schnorr.sign(kernelMessage, excessScalar, SecureRandom().generateSeed(32))
     }
 
     private fun toBytes32(n: BigInteger): ByteArray {

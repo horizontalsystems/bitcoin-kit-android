@@ -3,90 +3,89 @@ package io.horizontalsystems.litecoinkit.mweb.network.messages
 import io.horizontalsystems.bitcoincore.io.BitcoinOutput
 
 /**
- * MWEB Input wire format (LIP-0003).
+ * MWEB Input wire format (verified against litecoin-project/litecoin src/libmw/include/mw/models/tx/Input.h).
  *
- * Wire layout:
- *   features      : 1 byte   (0x00 = standard, 0x01 = pegin)
- *   output_id     : 33 bytes (commitment of the UTXO being spent)
- *   commitment    : 33 bytes (same as output_id for standard inputs)
- *   input_pubkey  : 33 bytes (one-time spend pubkey Ko)
- *   signature     : 64 bytes (Schnorr sig over the input message)
- *
- * CAVEAT: The exact input message signed (preimage fed into SHA-256 before Schnorr signing)
- * must be verified against litecoin-project/litecoin src/mweb/mweb_transact.cpp.
+ * Wire layout (NO features byte):
+ *   output_id     : 32 bytes  (BLAKE3 hash of the serialized output being spent)
+ *   commitment    : 33 bytes  (Pedersen commitment of the output)
+ *   input_pubkey  : 33 bytes  (K_agg — aggregated signing pubkey)
+ *   output_pubkey : 33 bytes  (K_o   — original one-time output pubkey = receiverPubKey)
+ *   signature     : 64 bytes  (Schnorr sig over output_id using k_agg)
  */
 data class MwebInput(
-    val features: Byte,
-    val outputId: ByteArray,      // 33 bytes — commitment of the UTXO
-    val commitment: ByteArray,    // 33 bytes — same as outputId for standard inputs
-    val inputPubKey: ByteArray,   // 33 bytes — Ko (one-time spend pubkey)
-    val signature: ByteArray      // 64 bytes — Schnorr sig
+    val outputId: ByteArray,       // 32 bytes — BLAKE3(serialized_output)
+    val commitment: ByteArray,     // 33 bytes
+    val inputPubKey: ByteArray,    // 33 bytes — K_agg
+    val outputPubKey: ByteArray,   // 33 bytes — K_o (receiverPubKey from DB)
+    val signature: ByteArray       // 64 bytes
 ) {
     fun serialize(): ByteArray = BitcoinOutput()
-        .writeByte(features.toInt())
-        .write(outputId)
-        .write(commitment)
-        .write(inputPubKey)
-        .write(signature)
+        .write(outputId)           // 32 bytes
+        .write(commitment)         // 33 bytes
+        .write(inputPubKey)        // 33 bytes
+        .write(outputPubKey)       // 33 bytes
+        .write(signature)          // 64 bytes
         .toByteArray()
 }
 
 /**
- * MWEB Kernel wire format for peg-out (LIP-0003).
+ * MWEB Kernel wire format for peg-out (verified against src/libmw/include/mw/models/tx/Kernel.h).
  *
  * Kernel feature bits:
- *   0x01 = KERN_FEAT_PEGGED_IN
- *   0x02 = KERN_FEAT_PLAIN (no extra fields)
- *   0x04 = KERN_FEAT_HEIGHT_LOCKED
- *   0x08 = KERN_FEAT_PEGGED_OUT
+ *   0x01 = KERN_FEAT_FEE
+ *   0x02 = KERN_FEAT_PEGIN
+ *   0x04 = KERN_FEAT_PEGOUT
+ *   0x08 = KERN_FEAT_HEIGHT_LOCK
  *
- * Wire layout for peg-out (features = 0x08):
- *   features        : 1 byte
- *   fee             : 8 bytes LE uint64
- *   peg_out_amount  : 8 bytes LE uint64
- *   script_len      : varint
- *   peg_out_script  : script_len bytes (scriptPubKey of destination canonical address)
- *   excess_pubkey   : 33 bytes (sum of input spend pubkeys)
- *   signature       : 64 bytes (Schnorr sig over the kernel message)
+ * A peg-out that charges a fee uses features = 0x05 (FEAT_FEE | FEAT_PEGOUT).
  *
- * CAVEAT: The exact kernel message hash construction must be verified against
- * litecoin-project/litecoin src/mweb/mweb_transact.cpp::Kernel::GetMessageHash().
+ * Wire layout for features=0x05:
+ *   features          : 1 byte
+ *   fee               : varint
+ *   pegouts           : varint(count=1) + LE64(amount) + varint(scriptLen) + script
+ *   excess_commitment : 33 bytes  (Pedersen commitment blind*G, where blind = -(sum of k_o_i))
+ *   signature         : 64 bytes  (Schnorr sig over kernel message)
+ *
+ * NOTE: Fee encoding (varint vs LE64) should be verified against Kernel.h Serialize() if test
+ * transactions are rejected. Most likely varint based on the Hasher.Append API in the source.
  */
 data class MwebKernel(
     val features: Byte,
     val fee: Long,
     val pegOutAmount: Long,
     val pegOutScript: ByteArray,
-    val excessPubKey: ByteArray,  // 33 bytes
-    val signature: ByteArray      // 64 bytes
+    val excessCommitment: ByteArray,   // 33 bytes — Pedersen commitment blind*G
+    val signature: ByteArray           // 64 bytes
 ) {
     fun serialize(): ByteArray {
         val out = BitcoinOutput()
         out.writeByte(features.toInt())
-        out.writeLong(fee)
-        out.writeLong(pegOutAmount)
+        out.writeVarInt(fee)
+        out.writeVarInt(1L)                                         // pegout count = 1
+        out.writeLong(pegOutAmount)                                 // amount LE64
         out.writeVarInt(pegOutScript.size.toLong())
         out.write(pegOutScript)
-        out.write(excessPubKey)
-        out.write(signature)
+        out.write(excessCommitment)                                 // 33 bytes
+        out.write(signature)                                        // 64 bytes
         return out.toByteArray()
     }
 
     companion object {
-        const val FEAT_PEGGED_OUT: Byte = 0x08
+        const val FEAT_FEE: Byte = 0x01
+        const val FEAT_PEGOUT: Byte = 0x04
+        const val FEAT_PEGOUT_WITH_FEE: Byte = 0x05    // FEE | PEGOUT
     }
 }
 
 /**
  * MWEB Transaction wire format.
  *
- * For a peg-out, [outputs] is empty (no new MWEB outputs are created).
- * Generating MWEB outputs requires Bulletproof range proofs (not yet supported).
+ * For a peg-out, [outputs] is empty — no new MWEB outputs are created.
  *
  * Wire layout:
  *   input_count  : varint
  *   inputs       : MwebInput[]
- *   output_count : varint (0 for peg-out)
+ *   output_count : varint  (0 for peg-out)
  *   kernel_count : varint
  *   kernels      : MwebKernel[]
  */
@@ -98,7 +97,7 @@ data class MwebTx(
         val out = BitcoinOutput()
         out.writeVarInt(inputs.size.toLong())
         inputs.forEach { out.write(it.serialize()) }
-        out.writeVarInt(0L)  // no MWEB outputs for peg-out
+        out.writeVarInt(0L)
         out.writeVarInt(kernels.size.toLong())
         kernels.forEach { out.write(it.serialize()) }
         return out.toByteArray()

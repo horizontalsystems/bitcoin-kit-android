@@ -55,6 +55,9 @@ dependencies {
     // EC crypto for MWEB output scanning
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.65'
 
+    // BLAKE3 hash — required for MWEB output_id, kernel message, and input signing
+    implementation 'com.appmattus.crypto:cryptohash:0.10.1'
+
     // Room
     implementation 'androidx.room:room-runtime:2.5.0'
     implementation 'androidx.room:room-rxjava2:2.5.0'
