@@ -21,6 +21,7 @@ class MainNetLitecoin : Network() {
     override val syncableFromApi = true
 
     override var dnsSeeds = listOf(
+        "ltc.unstoppable.money",
         "seed-a.litecoin.loshan.co.uk",  // Loshan - official, trusted
         "dnsseed.thrasher.io",           // Thrasher - official, trusted
         "dnsseed.litecoinpool.org",      // Litecoin Pool
