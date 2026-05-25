@@ -280,6 +280,25 @@ abstract class AbstractKit {
         return bitcoinCore.getRawTransaction(transactionHash)
     }
 
+    fun rawTransaction(
+        address: String,
+        memo: String?,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutputInfo>? = null,
+        pluginData: Map<Byte, IPluginData> = mapOf(),
+        rbfEnabled: Boolean,
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters,
+    ): String {
+        return bitcoinCore.rawTransaction(
+            address, memo, value, senderPay, feeRate, sortType,
+            unspentOutputs, pluginData, rbfEnabled, changeToFirstInput, filters,
+        )
+    }
+
     fun speedUpTransaction(
         transactionHash: String,
         minFee: Long
