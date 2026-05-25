@@ -72,6 +72,36 @@ class TransactionCreator(
         return fullTransaction
     }
 
+    fun buildSignedTransaction(
+        toAddress: String,
+        memo: String?,
+        value: Long,
+        feeRate: Int,
+        senderPay: Boolean,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutput>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean,
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters,
+    ): FullTransaction {
+        val mutableTransaction = builder.buildTransaction(
+            toAddress = toAddress,
+            memo = memo,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = unspentOutputs,
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled,
+            changeToFirstInput = changeToFirstInput,
+            filters = filters,
+        )
+        transactionSigner.sign(mutableTransaction)
+        return mutableTransaction.build()
+    }
+
     private fun processAndSend(transaction: FullTransaction): FullTransaction {
         transactionSender.canSendTransaction()
 

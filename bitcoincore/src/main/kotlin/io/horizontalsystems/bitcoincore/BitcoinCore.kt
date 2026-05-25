@@ -50,6 +50,7 @@ import io.horizontalsystems.bitcoincore.storage.FullTransaction
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
 import io.horizontalsystems.bitcoincore.storage.UtxoFilters
+import io.horizontalsystems.bitcoincore.serializers.TransactionSerializer
 import io.horizontalsystems.bitcoincore.transactions.TransactionCreator
 import io.horizontalsystems.bitcoincore.transactions.TransactionFeeCalculator
 import io.horizontalsystems.bitcoincore.transactions.TransactionSyncer
@@ -515,6 +516,40 @@ class BitcoinCore(
 
     fun getRawTransaction(transactionHash: String): String? {
         return dataProvider.getRawTransaction(transactionHash)
+    }
+
+    fun rawTransaction(
+        address: String,
+        memo: String?,
+        value: Long,
+        senderPay: Boolean = true,
+        feeRate: Int,
+        sortType: TransactionDataSortType,
+        unspentOutputs: List<UnspentOutputInfo>?,
+        pluginData: Map<Byte, IPluginData>,
+        rbfEnabled: Boolean,
+        changeToFirstInput: Boolean,
+        filters: UtxoFilters,
+    ): String {
+        val outputs = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.getAllSpendable(filters).firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
+        val fullTransaction = transactionCreator?.buildSignedTransaction(
+            toAddress = address,
+            memo = memo,
+            value = value,
+            feeRate = feeRate,
+            senderPay = senderPay,
+            sortType = sortType,
+            unspentOutputs = outputs,
+            pluginData = pluginData,
+            rbfEnabled = rbfEnabled,
+            changeToFirstInput = changeToFirstInput,
+            filters = filters,
+        ) ?: throw CoreError.ReadOnlyCore
+        return TransactionSerializer.serialize(fullTransaction).toHexString()
     }
 
     fun getTransaction(hash: String): TransactionInfo? {
