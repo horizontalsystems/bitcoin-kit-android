@@ -56,6 +56,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         syncers.forEach { it.start() }
     }
 
+    @Synchronized
     override fun onSync(network: Network, checkpoints: List<Block>) {
         val networkName = network.javaClass.simpleName
         val checkpointFile = "${packagePath(network)}/src/main/resources/${networkName}.checkpoint"
@@ -65,6 +66,9 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         println("Synced: ${syncers.count { it.isSynced }}")
         println("Remaining: ${syncers.count { !it.isSynced }}")
 
+        // Serialize so that the syncer that triggers exitProcess() does so
+        // only after every preceding network finished writing its file —
+        // otherwise the JVM dies mid-write and only one checkpoint persists.
         if (syncers.none { !it.isSynced }) {
             exitProcess(0)
         }

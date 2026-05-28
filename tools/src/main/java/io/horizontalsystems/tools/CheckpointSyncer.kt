@@ -169,10 +169,14 @@ class CheckpointSyncer(
 
     private fun assignNextSyncPeer() {
         peersQueue.execute {
-            print("assignNextSyncPeer, connected peers: ${peerManager.connected().size}")
-            print("synced peers: ${peerManager.connected().count { it.synced }}")
+            val connected = peerManager.connected()
+            print("assignNextSyncPeer, connected peers: ${connected.size}")
+            print("synced peers: ${connected.count { it.synced }}")
 
-            if (peerManager.connected().all { it.synced }) {
+            // `all {}` is vacuously true on an empty list — guard against the
+            // case where every peer has disconnected, which would otherwise
+            // flip `isSynced` to true without any real sync work being done.
+            if (connected.isNotEmpty() && connected.all { it.synced }) {
                 isSynced = true
                 peerGroup.stop()
                 print("Synced")
