@@ -4,6 +4,7 @@ import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BitcoinSendInfo
 import io.horizontalsystems.bitcoincore.models.PublicKey
+import io.horizontalsystems.bitcoincore.models.SignedRawTransaction
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -292,7 +293,7 @@ abstract class AbstractKit {
         rbfEnabled: Boolean,
         changeToFirstInput: Boolean,
         filters: UtxoFilters,
-    ): String {
+    ): SignedRawTransaction {
         return bitcoinCore.rawTransaction(
             address, memo, value, senderPay, feeRate, sortType,
             unspentOutputs, pluginData, rbfEnabled, changeToFirstInput, filters,

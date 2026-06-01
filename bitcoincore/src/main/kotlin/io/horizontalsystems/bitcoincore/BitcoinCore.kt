@@ -16,6 +16,7 @@ import io.horizontalsystems.bitcoincore.core.WatchAccountWallet
 import io.horizontalsystems.bitcoincore.core.description
 import io.horizontalsystems.bitcoincore.core.scriptType
 import io.horizontalsystems.bitcoincore.extensions.toHexString
+import io.horizontalsystems.bitcoincore.extensions.toReversedHex
 import io.horizontalsystems.bitcoincore.managers.IRestoreKeyConverter
 import io.horizontalsystems.bitcoincore.managers.IUnspentOutputSelector
 import io.horizontalsystems.bitcoincore.managers.RestoreKeyConverterChain
@@ -27,6 +28,7 @@ import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BitcoinSendInfo
 import io.horizontalsystems.bitcoincore.models.BlockInfo
 import io.horizontalsystems.bitcoincore.models.PublicKey
+import io.horizontalsystems.bitcoincore.models.SignedRawTransaction
 import io.horizontalsystems.bitcoincore.models.TransactionDataSortType
 import io.horizontalsystems.bitcoincore.models.TransactionFilterType
 import io.horizontalsystems.bitcoincore.models.TransactionInfo
@@ -530,7 +532,7 @@ class BitcoinCore(
         rbfEnabled: Boolean,
         changeToFirstInput: Boolean,
         filters: UtxoFilters,
-    ): String {
+    ): SignedRawTransaction {
         val outputs = unspentOutputs?.mapNotNull {
             unspentOutputSelector.getAllSpendable(filters).firstOrNull { unspentOutput ->
                 unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
@@ -549,7 +551,10 @@ class BitcoinCore(
             changeToFirstInput = changeToFirstInput,
             filters = filters,
         ) ?: throw CoreError.ReadOnlyCore
-        return TransactionSerializer.serialize(fullTransaction).toHexString()
+        return SignedRawTransaction(
+            hex = TransactionSerializer.serialize(fullTransaction).toHexString(),
+            transactionHash = fullTransaction.header.hash.toReversedHex(),
+        )
     }
 
     fun getTransaction(hash: String): TransactionInfo? {
