@@ -19,22 +19,35 @@ class ConnectionManager(context: Context) : IConnectionManager {
     private var hasConnection = false
     private var callback = ConnectionStatusCallback()
 
+    @Volatile
+    private var isRegistered = false
+
+    @Synchronized
     override fun onEnterForeground() {
         setInitialValues()
+        // Avoid re-registering an already active callback: it does not increase the
+        // app's network-callback quota and keeps a single source of connectivity updates.
+        if (isRegistered) return
         try {
-            connectivityManager.unregisterNetworkCallback(callback)
+            connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(), callback)
+            isRegistered = true
         } catch (e: Exception) {
-            //was not registered, or already unregistered
+            // registerNetworkCallback may throw TooManyRequestsException once the app-wide
+            // limit of network callbacks is exceeded. Don't crash; fall back to the value
+            // computed by setInitialValues() above.
+            isRegistered = false
         }
-        connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(), callback)
     }
 
+    @Synchronized
     override fun onEnterBackground() {
+        if (!isRegistered) return
         try {
             connectivityManager.unregisterNetworkCallback(callback)
         } catch (e: Exception) {
             //already unregistered
         }
+        isRegistered = false
     }
 
     private fun setInitialValues() {
