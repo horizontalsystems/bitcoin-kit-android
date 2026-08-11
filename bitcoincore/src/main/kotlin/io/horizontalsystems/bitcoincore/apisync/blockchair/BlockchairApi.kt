@@ -132,7 +132,10 @@ class BlockchairApi(
                 )
             }
         } catch (http404Exception: ApiManagerException.Http404Exception) {
-            return Pair(emptyList(), emptyList())
+            // A missing-dashboard response for a chunk must fail the scan: treating it as
+            // an empty history silently drops every transaction of the chunk's addresses,
+            // which surfaces as lost sends after gap-expansion rounds.
+            throw ApiManagerException.Other("Address dashboard unavailable for ${addresses.size} addresses")
         }
     }
 
@@ -160,7 +163,8 @@ class BlockchairApi(
             }
             return map
         } catch (http404Exception: ApiManagerException.Http404Exception) {
-            return emptyMap()
+            // Heights of confirmed transactions must resolve; failing keeps the sync retryable.
+            throw ApiManagerException.Other("Block dashboard unavailable for heights $heights")
         }
     }
 
