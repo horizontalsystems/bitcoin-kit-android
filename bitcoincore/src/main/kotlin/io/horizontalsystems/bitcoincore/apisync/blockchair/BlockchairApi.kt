@@ -7,7 +7,9 @@ import io.horizontalsystems.bitcoincore.apisync.model.BlockHeaderItem
 import io.horizontalsystems.bitcoincore.apisync.model.TransactionItem
 import io.horizontalsystems.bitcoincore.extensions.hexToByteArray
 import io.horizontalsystems.bitcoincore.managers.ApiManager
-import io.horizontalsystems.bitcoincore.managers.ApiManagerException
+import java.util.concurrent.Callable
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Executors
 import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -22,6 +24,42 @@ class BlockchairApi(
 
     init {
         dateFormat.timeZone = TimeZone.getTimeZone("GMT")
+    }
+
+    /**
+     * Runs an API request on the shared, spaced executor with bounded retries.
+     *
+     * All chains of the bitcoin family talk to the same host; restoring a wallet
+     * with many coins fires their scans concurrently, which the endpoint answers
+     * with transient 404/429 responses. Serializing and spacing the requests keeps
+     * the load acceptable, and retrying with backoff rides out the residual
+     * failures. When retries are exhausted the error propagates, failing the sync
+     * loudly: an error response must never be treated as an empty history, or the
+     * affected addresses' transactions would be silently lost.
+     */
+    private fun <T> request(block: () -> T): T {
+        val future = executor.submit(Callable {
+            var lastError: Exception? = null
+            for (attempt in 0 until maxAttempts) {
+                if (attempt > 0) {
+                    Thread.sleep(retryBaseDelayMs shl (attempt - 1))
+                }
+                try {
+                    Thread.sleep(requestSpacingMs)
+                    return@Callable block()
+                } catch (e: InterruptedException) {
+                    throw e
+                } catch (e: Exception) {
+                    lastError = e
+                }
+            }
+            throw lastError!!
+        })
+        try {
+            return future.get()
+        } catch (e: ExecutionException) {
+            throw e.cause ?: e
+        }
     }
 
     fun transactions(addresses: List<String>, stopHeight: Int?): List<TransactionItem> {
@@ -95,44 +133,40 @@ class BlockchairApi(
         receivedAddressItems: List<AddressItem> = emptyList(),
         receivedTransactionItems: List<Transaction> = emptyList()
     ): Pair<List<AddressItem>, List<Transaction>> {
-        try {
-            val params = "?transaction_details=true&limit=$limit,0&offset=${receivedTransactionItems.size}"
-            val url = "$chainId/dashboards/addresses/${addresses.joinToString(separator = ",")}"
-            val response = apiManager.doOkHttpGet(url + params).asObject()
-            val data = response.get("data").asObject()
+        val params = "?transaction_details=true&limit=$limit,0&offset=${receivedTransactionItems.size},0"
+        val url = "$chainId/dashboards/addresses/${addresses.joinToString(separator = ",")}"
+        val response = request { apiManager.doOkHttpGet(url + params) }.asObject()
+        val data = response.get("data").asObject()
 
-            val addressItems = data.get("addresses").asObject().map {
-                val address = it.name
-                val script = it.value.asObject().getString("script_hex", "")
-                AddressItem(script, address)
-            }
+        val addressItems = data.get("addresses").asObject().map {
+            val address = it.name
+            val script = it.value.asObject().getString("script_hex", "")
+            AddressItem(script, address)
+        }
 
-            val transactionItems = data.get("transactions").asArray().map {
-                val txObject = it.asObject()
-                Transaction(
-                    hash = txObject["hash"].asString(),
-                    blockId = txObject["block_id"]?.asInt(),
-                    balanceChange = txObject["balance_change"].asLong(),
-                    address = txObject["address"].asString()
-                )
-            }
+        val transactionItems = data.get("transactions").asArray().map {
+            val txObject = it.asObject()
+            Transaction(
+                hash = txObject["hash"].asString(),
+                blockId = txObject["block_id"]?.asInt(),
+                balanceChange = txObject["balance_change"].asLong(),
+                address = txObject["address"].asString()
+            )
+        }
 
-            val filteredTransactionItems = transactionItems.filter { it.blockId == null || stopHeight == null || it.blockId > stopHeight }
-            val addressesMerged = receivedAddressItems + addressItems
-            val transactionsMerged = receivedTransactionItems + filteredTransactionItems
+        val filteredTransactionItems = transactionItems.filter { it.blockId == null || stopHeight == null || it.blockId > stopHeight }
+        val addressesMerged = receivedAddressItems + addressItems
+        val transactionsMerged = receivedTransactionItems + filteredTransactionItems
 
-            return if (filteredTransactionItems.size < limit) {
-                Pair(addressesMerged, transactionsMerged)
-            } else {
-                fetchTransactions(
-                    addresses = addresses,
-                    stopHeight = stopHeight,
-                    receivedAddressItems = addressesMerged,
-                    receivedTransactionItems = transactionsMerged
-                )
-            }
-        } catch (http404Exception: ApiManagerException.Http404Exception) {
-            return Pair(emptyList(), emptyList())
+        return if (filteredTransactionItems.size < limit) {
+            Pair(addressesMerged, transactionsMerged)
+        } else {
+            fetchTransactions(
+                addresses = addresses,
+                stopHeight = stopHeight,
+                receivedAddressItems = addressesMerged,
+                receivedTransactionItems = transactionsMerged
+            )
         }
     }
 
@@ -145,23 +179,29 @@ class BlockchairApi(
     }
 
     private fun fetchBlockHashes(heights: List<Int>): Map<Int, String> {
-        try {
-            val params = "?limit=0"
-            val url = "$chainId/dashboards/blocks/${heights.joinToString(separator = ",")}"
-            val response = apiManager.doOkHttpGet(url + params).asObject()
+        val params = "?limit=0"
+        val url = "$chainId/dashboards/blocks/${heights.joinToString(separator = ",")}"
+        val response = request { apiManager.doOkHttpGet(url + params) }.asObject()
 
-            val map = mutableMapOf<Int, String>()
-            val data = response.get("data").asObject()
-            data.forEach { blockElement ->
-                val block = blockElement.value.asObject()["block"].asObject()
-                val blockHeight = block["id"].asInt()
-                val blockHash = block["hash"].asString()
-                map[blockHeight] = blockHash
-            }
-            return map
-        } catch (http404Exception: ApiManagerException.Http404Exception) {
-            return emptyMap()
+        val map = mutableMapOf<Int, String>()
+        val data = response.get("data").asObject()
+        data.forEach { blockElement ->
+            val block = blockElement.value.asObject()["block"].asObject()
+            val blockHeight = block["id"].asInt()
+            val blockHash = block["hash"].asString()
+            map[blockHeight] = blockHash
         }
+        return map
+    }
+
+    companion object {
+        private const val requestSpacingMs = 250L
+        private const val retryBaseDelayMs = 1000L
+        private const val maxAttempts = 4
+
+        // Shared across all chains' instances: the endpoint rate-limits per client,
+        // not per blockchain.
+        private val executor = Executors.newSingleThreadExecutor()
     }
 
     private data class Transaction(

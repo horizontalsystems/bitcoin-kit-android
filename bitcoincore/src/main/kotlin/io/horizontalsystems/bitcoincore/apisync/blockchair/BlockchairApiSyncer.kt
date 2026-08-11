@@ -31,14 +31,24 @@ class BlockchairApiSyncer(
     private val logger = Logger.getLogger("BlockchairApiSyncer")
     private val disposables = CompositeDisposable()
 
+    // A retry can arrive while a previous scan is still running (connection flaps,
+    // manual refresh); two interleaved scans write discovery state concurrently and
+    // finish in arbitrary order, so only one scan may run at a time.
+    @Volatile
+    private var syncing = false
+
     override var listener: IApiSyncerListener? = null
 
     override val willSync: Boolean = true
 
     override fun sync() {
+        if (syncing) return
+        syncing = true
+
         scanSingle()
             .subscribeOn(Schedulers.io())
             .observeOn(Schedulers.io())
+            .doFinally { syncing = false }
             .subscribe({}, {
                 handleError(it)
             }).let {
@@ -48,6 +58,7 @@ class BlockchairApiSyncer(
 
     override fun terminate() {
         disposables.clear()
+        syncing = false
     }
 
     private fun handleError(error: Throwable) {
