@@ -23,11 +23,8 @@ class MainNetECash : Network() {
     override val sigHashValue = Sighash.FORKID or Sighash.ALL
 
     override var dnsSeeds = listOf(
-        "x5.seed.bitcoinabc.org",                   // Bitcoin ABC seeder
-        "btccash-seeder.bitcoinunlimited.info",     // BU backed seeder
-        "x5.seeder.jasonbcox.com",                  // Jason B. Cox
-        "seed.deadalnix.me",                        // Amaury SÉCHET
-        "seed.bchd.cash",                           // BCHD
-        "x5.seeder.fabien.cash"                     // Fabien
+        "seed.bitcoinabc.org",      // Bitcoin ABC seeder
+        "seeder.fabien.cash",       // Fabien
+        "seeder.status.cash"        // status.cash
     )
 }
