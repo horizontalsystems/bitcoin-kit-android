@@ -17,8 +17,12 @@ class BlockHashFetcher(
         if (beforeCheckpoint.isNotEmpty()) {
             blockHashes += hsBlockHashFetcher.fetch(beforeCheckpoint)
         }
-        if (afterCheckpoint.isNotEmpty()) {
-            blockHashes += blockchairBlockHashFetcher.fetch(afterCheckpoint)
+
+        // The HS index can lag behind the checkpoint or have holes in its backfill; any
+        // height it did not return is resolved through Blockchair rather than failing the sync.
+        val remaining = afterCheckpoint + beforeCheckpoint.filter { it !in blockHashes }
+        if (remaining.isNotEmpty()) {
+            blockHashes += blockchairBlockHashFetcher.fetch(remaining)
         }
 
         return blockHashes
