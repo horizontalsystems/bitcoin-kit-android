@@ -13,9 +13,12 @@ import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.BlockHashPublicKey
 import io.horizontalsystems.bitcoincore.models.PublicKey
 import io.horizontalsystems.bitcoincore.storage.BlockHeader
-import io.reactivex.Single
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
 import java.util.logging.Logger
 
 class BlockchairApiSyncer(
@@ -29,25 +32,26 @@ class BlockchairApiSyncer(
 ) : IApiSyncer {
 
     private val logger = Logger.getLogger("BlockchairApiSyncer")
-    private val disposables = CompositeDisposable()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override var listener: IApiSyncerListener? = null
 
     override val willSync: Boolean = true
 
     override fun sync() {
-        scanSingle()
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
-            .subscribe({}, {
-                handleError(it)
-            }).let {
-                disposables.add(it)
+        scope.launch {
+            try {
+                scan()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                handleError(e)
             }
+        }
     }
 
     override fun terminate() {
-        disposables.clear()
+        scope.coroutineContext.cancelChildren()
     }
 
     private fun handleError(error: Throwable) {
@@ -70,28 +74,23 @@ class BlockchairApiSyncer(
         blockchain.insertLastBlock(header, blockHeaderItem.height)
     }
 
-    private fun scanSingle(): Single<Unit> = Single.create { emitter ->
-        try {
-            val allKeys = storage.getPublicKeys()
-            // A height-based cutoff is only valid for incremental re-scans of a wallet
-            // whose initial restore has completed. During the initial restore the storage
-            // may already hold block hashes from an earlier failed attempt; using their
-            // height as a cutoff would skip all older history for keys discovered later
-            // (gap expansion), permanently losing transactions.
-            val stopHeight = if (apiSyncStateManager.restored) {
-                storage.downloadedTransactionsBestBlockHeight()
-            } else {
-                null
-            }
-            fetchRecursive(allKeys, allKeys, stopHeight)
-            fetchLastBlock()
-
-            apiSyncStateManager.restored = true
-            listener?.onSyncSuccess()
-            emitter.onSuccess(Unit)
-        } catch (e: Throwable) {
-            emitter.tryOnError(e)
+    private fun scan() {
+        val allKeys = storage.getPublicKeys()
+        // A height-based cutoff is only valid for incremental re-scans of a wallet
+        // whose initial restore has completed. During the initial restore the storage
+        // may already hold block hashes from an earlier failed attempt; using their
+        // height as a cutoff would skip all older history for keys discovered later
+        // (gap expansion), permanently losing transactions.
+        val stopHeight = if (apiSyncStateManager.restored) {
+            storage.downloadedTransactionsBestBlockHeight()
+        } else {
+            null
         }
+        fetchRecursive(allKeys, allKeys, stopHeight)
+        fetchLastBlock()
+
+        apiSyncStateManager.restored = true
+        listener?.onSyncSuccess()
     }
 
     private fun fetchRecursive(

@@ -138,7 +138,7 @@ bitcoinKit.receiveAddress()   // "mgv1KTzGZby57K5EngZVaPdPtphPmEWjiS"
 
 #### Transactions
 
-You can get your transactions using `transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null)` method of the *BitcoinKit* instance. It returns *Single<List<TransactionInfo>>*. You'll need to subscribe and get transactions asynchronously. See [RX Single Observers](http://reactivex.io/RxJava/3.x/javadoc/io/reactivex/rxjava3/core/Single.html) for more info.
+You can get your transactions using `transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null)` method of the *BitcoinKit* instance. It is a `suspend` function returning *List<TransactionInfo>*, so call it from a coroutine (e.g. `viewModelScope.launch { val txs = bitcoinKit.transactions() }`).
 
 
 ```kotlin

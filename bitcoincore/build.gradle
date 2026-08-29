@@ -57,15 +57,12 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation 'androidx.annotation:annotation:1.1.0'
 
-    // RxJava
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.19'
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.5'
+    // Coroutines
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
 
     // Room
     implementation 'androidx.room:room-runtime:2.5.0'
     kapt 'androidx.room:room-compiler:2.5.0'
-
-    implementation 'androidx.room:room-rxjava2:2.5.0'
 
     // For cryptography
     implementation 'org.bouncycastle:bcpkix-jdk15on:1.65'
