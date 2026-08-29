@@ -14,11 +14,19 @@ import io.horizontalsystems.bitcoincore.storage.FullTransactionInfo
 import io.horizontalsystems.bitcoincore.storage.TransactionWithBlock
 import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UtxoFilters
-import io.reactivex.Single
-import io.reactivex.disposables.Disposable
-import io.reactivex.subjects.PublishSubject
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 
+@OptIn(FlowPreview::class)
 class DataProvider(
         private val storage: IStorage,
         private val unspentOutputProvider: UnspentOutputProvider,
@@ -33,8 +41,8 @@ class DataProvider(
     }
 
     var listener: Listener? = null
-    private val balanceUpdateSubject: PublishSubject<Boolean> = PublishSubject.create()
-    private val balanceSubjectDisposable: Disposable
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private val balanceUpdateFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     //  Getters
     var balance: BalanceInfo = unspentOutputProvider.getBalance()
@@ -53,10 +61,10 @@ class DataProvider(
             blockInfo(it)
         }
 
-        balanceSubjectDisposable = balanceUpdateSubject.debounce(500, TimeUnit.MILLISECONDS)
-                .subscribe {
-                    balance = unspentOutputProvider.getBalance()
-                }
+        balanceUpdateFlow
+                .debounce(500)
+                .onEach { balance = unspentOutputProvider.getBalance() }
+                .launchIn(scope)
     }
 
     override fun onBlockInsert(block: Block) {
@@ -65,7 +73,7 @@ class DataProvider(
 
             lastBlockInfo = blockInfo
             listener?.onLastBlockInfoUpdate(blockInfo)
-            balanceUpdateSubject.onNext(true)
+            balanceUpdateFlow.tryEmit(Unit)
         }
     }
 
@@ -75,23 +83,23 @@ class DataProvider(
                 storage.getFullTransactionInfo(updated.map { TransactionWithBlock(it, block) }).map { transactionInfoConverter.transactionInfo(it) }
         )
 
-        balanceUpdateSubject.onNext(true)
+        balanceUpdateFlow.tryEmit(Unit)
     }
 
     override fun onTransactionsDelete(hashes: List<String>) {
         listener?.onTransactionsDelete(hashes)
-        balanceUpdateSubject.onNext(true)
+        balanceUpdateFlow.tryEmit(Unit)
     }
 
     fun clear() {
-        balanceSubjectDisposable.dispose()
+        scope.cancel()
     }
 
-    fun transactions(fromUid: String?, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
-        return Single.create { emitter ->
+    suspend fun transactions(fromUid: String?, type: TransactionFilterType? = null, limit: Int? = null): List<TransactionInfo> {
+        return withContext(Dispatchers.IO) {
             val fromTransaction = fromUid?.let { storage.getValidOrInvalidTransaction(it) }
             val transactions = storage.getFullTransactionInfo(fromTransaction, type, limit)
-            emitter.onSuccess(transactions.map { transactionInfoConverter.transactionInfo(it) })
+            transactions.map { transactionInfoConverter.transactionInfo(it) }
         }
     }
 

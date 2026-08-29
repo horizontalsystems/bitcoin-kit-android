@@ -66,7 +66,6 @@ import io.horizontalsystems.hdwalletkit.HDWallet
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.HDWalletAccount
 import io.horizontalsystems.hdwalletkit.HDWalletAccountWatch
-import io.reactivex.Single
 import java.util.Date
 import java.util.concurrent.Executor
 import kotlin.math.max
@@ -210,7 +209,7 @@ class BitcoinCore(
         connectionManager.onEnterBackground()
     }
 
-    fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+    suspend fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): List<TransactionInfo> {
         return dataProvider.transactions(fromUid, type, limit)
     }
 

@@ -2,7 +2,6 @@ package io.horizontalsystems.bitcoincore.apisync.legacy
 
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.reactivex.Single
 
 class BlockHashDiscoveryBatch(
     private val blockHashScanner: BlockHashScanner,
@@ -10,14 +9,8 @@ class BlockHashDiscoveryBatch(
     private val maxHeight: Int,
     private val gapLimit: Int
 ) {
-    fun discoverBlockHashes(): Single<Pair<List<PublicKey>, List<BlockHash>>> {
-        return Single.create { emitter ->
-            try {
-                emitter.onSuccess(fetchRecursive())
-            } catch (e: Exception) {
-                emitter.tryOnError(e)
-            }
-        }
+    fun discoverBlockHashes(): Pair<List<PublicKey>, List<BlockHash>> {
+        return fetchRecursive()
     }
 
     private fun fetchRecursive(

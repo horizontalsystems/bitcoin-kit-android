@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoinkit.demo
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import io.horizontalsystems.bitcoincore.BitcoinCore
 import io.horizontalsystems.bitcoincore.BitcoinCore.KitState
 import io.horizontalsystems.bitcoincore.core.IPluginData
@@ -19,7 +20,7 @@ import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hodler.HodlerData
 import io.horizontalsystems.hodler.HodlerPlugin
 import io.horizontalsystems.hodler.LockTimeInterval
-import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel(), BitcoinKit.Listener {
 
@@ -38,7 +39,6 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     val transactionRaw = MutableLiveData<String>()
     val statusInfo = MutableLiveData<Map<String, Any>>()
     lateinit var networkName: String
-    private val disposables = CompositeDisposable()
 
     private var started = false
         set(value) {
@@ -250,10 +250,8 @@ class MainViewModel : ViewModel(), BitcoinKit.Listener {
     fun setTransactionFilterType(transactionFilterType: TransactionFilterType?) {
         this.transactionFilterType = transactionFilterType
 
-        bitcoinKit.transactions(type = transactionFilterType).subscribe { txList: List<TransactionInfo> ->
-            transactions.postValue(txList)
-        }.let {
-            disposables.add(it)
+        viewModelScope.launch {
+            transactions.postValue(bitcoinKit.transactions(type = transactionFilterType))
         }
     }
 }

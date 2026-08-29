@@ -1,13 +1,11 @@
 //package io.horizontalsystems.bitcoincore.managers
 //
 //import com.nhaarman.mockitokotlin2.*
-//import io.horizontalsystems.bitcoincore.RxTestRule
 //import io.horizontalsystems.bitcoincore.core.ErrorStorage
 //import io.horizontalsystems.bitcoincore.core.IStorage
 //import io.horizontalsystems.bitcoincore.core.ISyncStateListener
 //import io.horizontalsystems.bitcoincore.models.BlockHash
 //import io.horizontalsystems.bitcoincore.models.PublicKey
-//import io.reactivex.Single
 //import org.mockito.Mockito.mock
 //import org.mockito.Mockito.reset
 //import org.spekframework.spek2.Spek
@@ -26,7 +24,6 @@
 //    val errorStorage = mock(ErrorStorage::class.java)
 //
 //    beforeEachTest {
-//        RxTestRule.setup()
 //
 //        initialSyncer = InitialSyncer(storage, blockDiscovery, stateManager, publicKeyManager, stateListener, errorStorage)
 //        initialSyncer.listener = listener
@@ -95,12 +92,12 @@
 //            context("when blockDiscovery succeeds") {
 //                beforeEach {
 //                    // account 1
-//                    whenever(blockDiscovery.discoverBlockHashes(0, true)).thenReturn(Single.just(Pair(listOf(publicKey1), listOf(blockHash1))))
-//                    whenever(blockDiscovery.discoverBlockHashes(0, false)).thenReturn(Single.just(Pair(listOf(publicKey2), listOf(blockHash2))))
+//                    whenever(blockDiscovery.discoverBlockHashes(0, true)).thenReturn((Pair(listOf(publicKey1), listOf(blockHash1))))
+//                    whenever(blockDiscovery.discoverBlockHashes(0, false)).thenReturn((Pair(listOf(publicKey2), listOf(blockHash2))))
 //
 //                    // account 2
-//                    whenever(blockDiscovery.discoverBlockHashes(1, true)).thenReturn(Single.just(Pair(listOf(), listOf())))
-//                    whenever(blockDiscovery.discoverBlockHashes(1, false)).thenReturn(Single.just(Pair(listOf(), listOf())))
+//                    whenever(blockDiscovery.discoverBlockHashes(1, true)).thenReturn((Pair(listOf(), listOf())))
+//                    whenever(blockDiscovery.discoverBlockHashes(1, false)).thenReturn((Pair(listOf(), listOf())))
 //
 //                    initialSyncer.sync()
 //                }
@@ -136,6 +133,6 @@
 //    }
 //
 //    describe("#stop") {
-//        it("clears disposables") {}
+//        it("cancels running sync") {}
 //    }
 //})

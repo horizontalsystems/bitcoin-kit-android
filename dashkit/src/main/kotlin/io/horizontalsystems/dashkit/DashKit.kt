@@ -75,7 +75,6 @@ import io.horizontalsystems.dashkit.validators.DarkGravityWaveValidator
 import io.horizontalsystems.hdwalletkit.HDExtendedKey
 import io.horizontalsystems.hdwalletkit.HDWallet.Purpose
 import io.horizontalsystems.hdwalletkit.Mnemonic
-import io.reactivex.Single
 
 class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
     enum class NetworkType {
@@ -333,10 +332,8 @@ class DashKit : AbstractKit, IInstantTransactionDelegate, BitcoinCore.Listener {
         }
     }
 
-    fun dashTransactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<DashTransactionInfo>> {
-        return transactions(fromUid, type, limit).map {
-            it.mapNotNull { it as? DashTransactionInfo }
-        }
+    suspend fun dashTransactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): List<DashTransactionInfo> {
+        return transactions(fromUid, type, limit).mapNotNull { it as? DashTransactionInfo }
     }
 
     fun getDashTransaction(hash: String): DashTransactionInfo? {

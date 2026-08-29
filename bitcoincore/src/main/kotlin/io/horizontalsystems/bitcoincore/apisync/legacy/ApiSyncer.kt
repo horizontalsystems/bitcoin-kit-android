@@ -7,8 +7,12 @@ import io.horizontalsystems.bitcoincore.core.IStorage
 import io.horizontalsystems.bitcoincore.managers.ApiSyncStateManager
 import io.horizontalsystems.bitcoincore.models.BlockHash
 import io.horizontalsystems.bitcoincore.models.PublicKey
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.launch
 import java.util.logging.Logger
 
 class ApiSyncer(
@@ -25,27 +29,25 @@ class ApiSyncer(
     override var listener: IApiSyncerListener? = null
 
     private val logger = Logger.getLogger("ApiSyncer")
-    private val disposables = CompositeDisposable()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun terminate() {
-        disposables.clear()
+        scope.coroutineContext.cancelChildren()
     }
 
     override fun sync() {
-        val disposable = blockHashDiscovery.discoverBlockHashes()
-            .subscribeOn(Schedulers.io())
-            .observeOn(Schedulers.io())
-            .subscribe(
-                { (publicKeys, blockHashes) ->
-                    val sortedUniqueBlockHashes = blockHashes.distinctBy { it.height }.sortedBy { it.height }
+        scope.launch {
+            try {
+                val (publicKeys, blockHashes) = blockHashDiscovery.discoverBlockHashes()
+                val sortedUniqueBlockHashes = blockHashes.distinctBy { it.height }.sortedBy { it.height }
 
-                    handle(publicKeys, sortedUniqueBlockHashes)
-                },
-                {
-                    handleError(it)
-                })
-
-        disposables.add(disposable)
+                handle(publicKeys, sortedUniqueBlockHashes)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Throwable) {
+                handleError(e)
+            }
+        }
     }
 
     private fun handle(keys: List<PublicKey>, blockHashes: List<BlockHash>) {

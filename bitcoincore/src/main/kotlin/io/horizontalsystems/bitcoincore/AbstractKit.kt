@@ -18,7 +18,6 @@ import io.horizontalsystems.bitcoincore.storage.UnspentOutput
 import io.horizontalsystems.bitcoincore.storage.UnspentOutputInfo
 import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 import io.horizontalsystems.bitcoincore.transactions.scripts.ScriptType
-import io.reactivex.Single
 
 abstract class AbstractKit {
 
@@ -67,7 +66,7 @@ abstract class AbstractKit {
         bitcoinCore.onEnterBackground()
     }
 
-    fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): Single<List<TransactionInfo>> {
+    suspend fun transactions(fromUid: String? = null, type: TransactionFilterType? = null, limit: Int? = null): List<TransactionInfo> {
         return bitcoinCore.transactions(fromUid, type, limit)
     }
 
