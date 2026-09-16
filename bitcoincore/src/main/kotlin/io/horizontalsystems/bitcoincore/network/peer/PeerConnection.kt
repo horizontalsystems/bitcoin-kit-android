@@ -17,7 +17,7 @@ class PeerConnection(
         private val host: String,
         private val network: Network,
         private val listener: Listener,
-        private val sendingExecutor: ExecutorService,
+        executorService: ExecutorService,
         private val networkMessageParser: NetworkMessageParser,
         private val networkMessageSerializer: NetworkMessageSerializer)
     : Runnable {
@@ -30,6 +30,9 @@ class PeerConnection(
     }
 
     private val socket = NetworkUtils.createSocket()
+
+    // Messages to one peer must reach the socket in the order they were queued
+    private val sendingExecutor = SerialExecutor(executorService)
 
     private val logger = Logger.getLogger("Peer[$host]")
     private var outputStream: OutputStream? = null
