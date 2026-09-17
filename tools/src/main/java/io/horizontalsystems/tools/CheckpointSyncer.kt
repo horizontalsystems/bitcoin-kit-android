@@ -28,6 +28,9 @@ import io.horizontalsystems.bitcoincore.storage.BlockHeader
 import io.horizontalsystems.dashkit.MainNetDash
 import io.horizontalsystems.dashkit.TestNetDash
 import io.horizontalsystems.dashkit.X11Hasher
+import io.horizontalsystems.dogecoinkit.DogecoinBlockHeaderParser
+import io.horizontalsystems.dogecoinkit.DogecoinHeadersMessageParser
+import io.horizontalsystems.dogecoinkit.MainNetDogecoin
 import java.util.LinkedList
 import java.util.concurrent.Executors
 
@@ -70,7 +73,14 @@ class CheckpointSyncer(
             add(VersionMessageParser())
             add(VerAckMessageParser())
             add(InvMessageParser())
-            add(HeadersMessageParser(blockHeaderHasher))
+            // Dogecoin headers carry a variable-length AuxPoW blob before the transaction
+            // count, so the core parser would lose wire alignment on the first merge-mined
+            // header and every header after it in the batch.
+            if (network is MainNetDogecoin) {
+                add(DogecoinHeadersMessageParser(DogecoinBlockHeaderParser(blockHeaderHasher)))
+            } else {
+                add(HeadersMessageParser(blockHeaderHasher))
+            }
         }
 
         val networkMessageSerializer = NetworkMessageSerializer(network.magic).apply {
