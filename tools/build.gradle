@@ -34,6 +34,7 @@ dependencies {
     implementation project(':dashkit')
     implementation project(':bitcoincashkit')
     implementation project(':litecoinkit')
+    implementation project(':dogecoinkit')
     implementation project(':ecashkit')
 }
 
@@ -49,6 +50,7 @@ def kitProjectPaths = [
         ':bitcoincashkit',
         ':dashkit',
         ':litecoinkit',
+        ':dogecoinkit',
         ':ecashkit',
 ]
 def kitResourcePaths = [
@@ -56,6 +58,7 @@ def kitResourcePaths = [
         'bitcoincashkit/src/main/resources',
         'dashkit/src/main/resources',
         'litecoinkit/src/main/resources',
+        'dogecoinkit/src/main/resources',
         'ecashkit/src/main/resources',
 ]
 

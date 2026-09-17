@@ -10,6 +10,7 @@ import io.horizontalsystems.bitcoinkit.MainNet
 import io.horizontalsystems.bitcoinkit.TestNet
 import io.horizontalsystems.dashkit.MainNetDash
 import io.horizontalsystems.dashkit.TestNetDash
+import io.horizontalsystems.dogecoinkit.MainNetDogecoin
 import io.horizontalsystems.ecash.MainNetECash
 import io.horizontalsystems.litecoinkit.MainNetLitecoin
 import io.horizontalsystems.litecoinkit.TestNetLitecoin
@@ -41,6 +42,11 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
         // Litecoin
         it.add(CheckpointSyncer(MainNetLitecoin(), 2016, 2, this))
 //        it.add(CheckpointSyncer(TestNetLitecoin(), 2016, 2, this))
+
+        // Dogecoin
+        // Only one block is kept: this kit installs no difficulty validator, so no ancestors
+        // are needed. See DogecoinKit.blockValidatorSet.
+        it.add(CheckpointSyncer(MainNetDogecoin(), 2016, 1, this))
 
         // Ecash
         it.add(CheckpointSyncer(MainNetECash(), 147, 147, this))
@@ -118,6 +124,7 @@ class BuildCheckpoints : CheckpointSyncer.Listener {
             is TestNetDash -> "dashkit"
             is MainNetLitecoin,
             is TestNetLitecoin -> "litecoinkit"
+            is MainNetDogecoin -> "dogecoinkit"
             is MainNetECash -> "ecashkit"
             else -> throw Exception("Invalid network: ${network.javaClass.name}")
         }
