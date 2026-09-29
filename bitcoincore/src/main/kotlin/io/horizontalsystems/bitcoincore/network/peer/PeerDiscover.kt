@@ -2,7 +2,9 @@ package io.horizontalsystems.bitcoincore.network.peer
 
 import io.horizontalsystems.bitcoincore.core.IPeerAddressManager
 import io.horizontalsystems.bitcoincore.utils.NetworkUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 import java.net.Inet6Address
@@ -28,7 +30,8 @@ class PeerDiscover(private val peerAddressManager: IPeerAddressManager) {
         logger.info("Lookup peers from DNS seed...")
 
         // todo: launch coroutines for each dns resolve
-        GlobalScope.launch {
+        // Resolving blocks on network I/O, up to the SOCKS timeout per seed
+        GlobalScope.launch(Dispatchers.IO) {
             var found = false
             try {
                 found = lookupSeeds(dnsList)
@@ -37,6 +40,14 @@ class PeerDiscover(private val peerAddressManager: IPeerAddressManager) {
                     lookupInProgress = false
                     nextLookupTime = System.currentTimeMillis() + if (found) LOOKUP_INTERVAL_MILLIS else RETRY_INTERVAL_MILLIS
                 }
+            }
+
+            // With no known peers nothing else asks for a lookup again, so once the cooldown
+            // expires the peer group is asked to connect, which looks up again only if it is
+            // still running and still has no peers
+            if (!found) {
+                delay(RETRY_INTERVAL_MILLIS)
+                peerAddressManager.listener?.onAddAddress()
             }
         }
     }
