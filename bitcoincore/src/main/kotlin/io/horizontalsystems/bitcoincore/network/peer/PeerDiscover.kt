@@ -53,7 +53,13 @@ class PeerDiscover(private val peerAddressManager: IPeerAddressManager) {
     }
 
     private fun lookupSeeds(dnsList: List<String>): Boolean {
-        val socksProxy = NetworkUtils.socksProxyAddress()
+        // A broken proxy setting must not fall back to the local resolver, the retry covers it
+        val socksProxy = try {
+            NetworkUtils.requireSocksProxyAddress()
+        } catch (e: IOException) {
+            logger.warning("Skip DNS seed lookup: ${e.message}")
+            return false
+        }
         var found = false
 
         dnsList.forEach { host ->

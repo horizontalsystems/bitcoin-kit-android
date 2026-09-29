@@ -2,6 +2,7 @@ package io.horizontalsystems.bitcoincore.utils
 
 import io.horizontalsystems.bitcoincore.extensions.toHexString
 import java.io.DataInputStream
+import java.io.IOException
 import java.net.*
 
 object NetworkUtils {
@@ -31,9 +32,26 @@ object NetworkUtils {
         throw RuntimeException("Bad IP: " + ip.toHexString())
     }
 
-    fun socksProxyAddress(): InetSocketAddress? {
-        val socksProxyHost = System.getProperty("socksProxyHost") ?: return null
-        val socksProxyPort = System.getProperty("socksProxyPort")?.toIntOrNull() ?: return null
+    fun socksProxyAddress(): InetSocketAddress? = try {
+        requireSocksProxyAddress()
+    } catch (e: IOException) {
+        null
+    }
+
+    /**
+     * Returns null when no SOCKS proxy is set, and throws when one is set but incomplete or
+     * invalid, so callers that must not bypass the proxy can tell the two apart.
+     */
+    fun requireSocksProxyAddress(): InetSocketAddress? {
+        val socksProxyHost = System.getProperty("socksProxyHost")
+        val socksProxyPortValue = System.getProperty("socksProxyPort")
+        if (socksProxyHost == null && socksProxyPortValue == null) return null
+
+        val socksProxyPort = socksProxyPortValue?.toIntOrNull()?.takeIf { it in 0..65535 }
+        if (socksProxyHost == null || socksProxyPort == null) {
+            throw IOException("Invalid SOCKS proxy configuration: host=$socksProxyHost, port=$socksProxyPortValue")
+        }
+
         return InetSocketAddress.createUnresolved(socksProxyHost, socksProxyPort)
     }
 
