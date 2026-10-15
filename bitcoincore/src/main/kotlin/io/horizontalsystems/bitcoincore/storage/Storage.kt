@@ -216,7 +216,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
                 ) else tx.transaction,
                 inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
                 outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) },
-                metadata.first { it.transactionHash.contentEquals(tx.transaction.hash) }
+                metadata.firstOrNull { it.transactionHash.contentEquals(tx.transaction.hash) }
+                    ?: TransactionMetadata(tx.transaction.hash)
             )
         }
     }
@@ -261,7 +262,8 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
                 tx.transaction,
                 inputs.filter { it.input.transactionHash.contentEquals(tx.transaction.hash) },
                 outputs.filter { it.transactionHash.contentEquals(tx.transaction.hash) },
-                metadata.first { it.transactionHash.contentEquals(tx.transaction.hash) }
+                metadata.firstOrNull { it.transactionHash.contentEquals(tx.transaction.hash) }
+                    ?: TransactionMetadata(tx.transaction.hash)
             )
         }
     }
@@ -369,7 +371,16 @@ open class Storage(protected open val store: CoreDatabase) : IStorage {
     }
 
     private fun convertToFullTransaction(transaction: Transaction): FullTransaction {
-        return FullTransaction(header = transaction, inputs = getTransactionInputs(transaction), outputs = getTransactionOutputs(transaction))
+        // The stored hash is authoritative: stored inputs can be replaced by a conflicting
+        // transaction spending the same outpoint, so rehashing them may not give this hash back
+        return FullTransaction(
+            header = transaction,
+            inputs = getTransactionInputs(transaction),
+            outputs = getTransactionOutputs(transaction),
+            forceHashUpdate = false
+        ).apply {
+            metadata = TransactionMetadata(transaction.hash)
+        }
     }
 
     private fun addWithoutTransaction(transaction: FullTransaction) {

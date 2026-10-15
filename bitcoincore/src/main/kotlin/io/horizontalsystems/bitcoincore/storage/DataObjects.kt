@@ -141,7 +141,9 @@ class FullTransactionInfo(
         }
 
     val fullTransaction: FullTransaction
-        get() = FullTransaction(header, inputs.map { it.input }, outputs)
+        get() = FullTransaction(header, inputs.map { it.input }, outputs, forceHashUpdate = false).also {
+            it.metadata = metadata
+        }
 
 }
 
