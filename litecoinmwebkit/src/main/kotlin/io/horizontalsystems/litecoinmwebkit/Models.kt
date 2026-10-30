@@ -70,10 +70,20 @@ data class MwebUtxoInfo(
     val blockTime: Long,
 )
 
-sealed class MwebSendError(message: String) : Exception(message) {
+sealed class MwebSendError(message: String, cause: Throwable? = null) : Exception(message, cause) {
     class InvalidAddress(message: String) : MwebSendError(message)
     class InsufficientBalance : MwebSendError("Insufficient balance")
     class NotSynced : MwebSendError("Daemon not synced")
     class DustAmount : MwebSendError("Amount below dust limit")
     class WatchOnly : MwebSendError("Spend secret not available")
+
+    /** The daemon rejected the transaction; nothing was broadcast and the recorded row is marked failed. */
+    class BroadcastRejected(message: String, cause: Throwable? = null) : MwebSendError(message, cause)
+
+    /**
+     * The daemon could not be reached or did not answer in time, so the
+     * transaction may or may not have been broadcast. The row stays pending
+     * and its inputs stay reserved until the network settles it.
+     */
+    class BroadcastUnknown(cause: Throwable) : MwebSendError("Broadcast result unknown: ${cause.message}", cause)
 }

@@ -15,6 +15,8 @@ import io.horizontalsystems.hdwalletkit.Mnemonic
 import io.horizontalsystems.litecoinkit.LitecoinKit
 import io.horizontalsystems.litecoinkit.MainNetLitecoin
 import io.horizontalsystems.litecoinkit.TestNetLitecoin
+import io.grpc.Status
+import io.grpc.StatusRuntimeException
 import io.horizontalsystems.litecoinmwebkit.proto.Utxo
 import io.horizontalsystems.litecoinmwebkit.storage.MwebAddressEntity
 import io.horizontalsystems.litecoinmwebkit.storage.MwebDatabase
@@ -260,36 +262,76 @@ class LitecoinMwebKit(
                 selection.coins.map { TemplateInput(it.outputId.hexToByteArray(), it.addressIndex) },
                 selection.outputs,
             )
-            val created = rpc.create(template, keychain.scanSecret, spendSecret, feeRatePerKb, false)
-            val txid = rpc.broadcast(created.rawTx.toByteArray())
+            val created = try {
+                rpc.create(template, keychain.scanSecret, spendSecret, feeRatePerKb, false)
+            } catch (e: Exception) {
+                throw MwebSendError.BroadcastRejected("Transaction creation failed: ${e.message}", e)
+            }
 
-            val uid = UUID.randomUUID().toString()
-            val now = System.currentTimeMillis() / 1000
             // Output IDs come back in template order: recipient (if MWEB), then change.
             val ownOutputIds = ArrayList<String>()
             var i = 0
             if (!isPegOut) i++
             if (selection.change > 0 && i < created.outputIdCount) ownOutputIds.add(created.getOutputId(i))
 
+            val uid = UUID.randomUUID().toString()
             val tx = MwebTransaction(
                 uid = uid,
                 type = if (isPegOut) MwebTransaction.TYPE_PEG_OUT else MwebTransaction.TYPE_OUTGOING,
                 amount = value,
                 fee = selection.fee,
-                timestamp = now,
+                timestamp = System.currentTimeMillis() / 1000,
                 height = 0,
                 status = MwebTransaction.STATUS_PENDING,
                 toAddress = address,
                 ownAddress = null,
-                txHash = if (isPegOut) txid else null,
+                txHash = null,
                 inputIds = selection.coins.joinToString(",") { it.outputId },
                 outputIds = ownOutputIds.joinToString(","),
             )
+            // Recorded before the broadcast so the row and the reservation of its inputs survive a
+            // crash or an unknown broadcast result.
             db.transactions().insert(tx)
             for (coin in selection.coins) {
                 db.utxos().update(coin.copy(spent = true, spentByTxUid = uid))
             }
-            tx.toInfo()
+
+            val txid = broadcast(rpc, created.rawTx.toByteArray(), uid)
+            val sent = tx.copy(txHash = if (isPegOut) txid else null)
+            db.transactions().update(sent)
+            sent.toInfo()
+        }
+    }
+
+    /**
+     * Broadcasts and returns the txid. A rejection by the daemon marks the
+     * row failed and releases its inputs; a transport failure leaves the
+     * row pending, since the transaction may have gone out. Must be called
+     * with [dbMutex] held.
+     */
+    private suspend fun broadcast(rpc: MwebRpc, rawTx: ByteArray, uid: String): String {
+        try {
+            return rpc.broadcast(rawTx)
+        } catch (e: Exception) {
+            if (isTransportFailure(e)) throw MwebSendError.BroadcastUnknown(e)
+            markFailed(uid)
+            throw MwebSendError.BroadcastRejected("Broadcast rejected: ${e.message}", e)
+        }
+    }
+
+    private fun isTransportFailure(e: Exception): Boolean {
+        val status = (e as? StatusRuntimeException)?.status ?: return false
+        return when (status.code) {
+            Status.Code.UNAVAILABLE, Status.Code.DEADLINE_EXCEEDED, Status.Code.CANCELLED, Status.Code.ABORTED -> true
+            else -> false
+        }
+    }
+
+    private fun markFailed(uid: String) {
+        val tx = db.transactions().get(uid) ?: return
+        db.transactions().update(tx.copy(status = MwebTransaction.STATUS_FAILED))
+        for (coin in db.utxos().all()) {
+            if (coin.spentByTxUid == uid) db.utxos().update(coin.copy(spent = false, spentByTxUid = null))
         }
     }
 
@@ -318,55 +360,57 @@ class LitecoinMwebKit(
 
     /**
      * Moves [value] litoshi from [litecoinKit] into this wallet, to the
-     * receive address at [addressIndex] (default: the next unused one). The
-     * Litecoin wallet pays the Litecoin fee and keeps its change on the
-     * Litecoin side; the MWEB fee is paid out of the peg-in amount, so the
-     * MWEB output carries exactly [value].
-     *
-     * Sequence: the daemon's dry run yields the MWEB fee; the Litecoin
-     * wallet builds an unsigned transaction paying value plus MWEB fee to
-     * the MWEB address with its usual change; the change output is set
-     * aside, because the daemon turns every non-MWEB output into a peg-out;
-     * the daemon replaces the MWEB output with the peg-in output and
-     * attaches the MWEB extension; the change output is put back; the
-     * Litecoin wallet signs; the daemon broadcasts (a plain broadcast would
-     * strip the extension); both wallets record the transaction.
+     * receive address at [addressIndex] (default: the next unused one).
      */
     @Throws(MwebSendError::class)
     suspend fun pegIn(litecoinKit: LitecoinKit, value: Long, feeRate: Int, addressIndex: Int? = null): MwebTransactionInfo {
+        val index = addressIndex ?: nextReceiveIndex()
+        return pegIn(litecoinKit, addressAt(index), value, feeRate)
+    }
+
+    /**
+     * Sends [value] litoshi from [litecoinKit] to any MWEB [address] of this
+     * network, own or foreign. The Litecoin wallet pays the Litecoin fee and
+     * keeps its change on the Litecoin side; the MWEB fee is paid out of the
+     * peg-in amount, so the MWEB output carries exactly [value].
+     *
+     * Sequence: the Litecoin wallet builds an unsigned transaction paying
+     * value plus MWEB fee to the MWEB address with its usual change; the
+     * change output is set aside, because the daemon turns every non-MWEB
+     * output into a peg-out, and the MWEB output is set to value; the daemon
+     * replaces it with the peg-in output and attaches the MWEB extension;
+     * the change output is put back; the Litecoin wallet signs; the daemon
+     * broadcasts (a plain broadcast would strip the extension); both wallets
+     * record the transaction.
+     *
+     * For a foreign address no output reaches this wallet's stream, so the
+     * row confirms when the Litecoin transaction does: the kit watches it
+     * through [litecoinKit] while running, and [refreshPegIns] does the same
+     * on demand.
+     */
+    @Throws(MwebSendError::class)
+    suspend fun pegIn(litecoinKit: LitecoinKit, address: String, value: Long, feeRate: Int): MwebTransactionInfo {
         val spendSecret = keychain.spendSecret ?: throw MwebSendError.WatchOnly()
         val rpc = this.rpc ?: throw MwebSendError.NotSynced()
         if (syncState !is MwebSyncState.Synced) throw MwebSendError.NotSynced()
         if (value <= 0) throw MwebSendError.DustAmount()
+        val destination = MwebAddress.decode(address, hrp)
         val feeRatePerKb = feeRate.toLong() * 1000
 
         return dbMutex.withLock {
-            val index = addressIndex ?: nextReceiveIndex()
-            val mwebAddress = addressAt(index)
-            val mwebScript = MwebAddress.decode(mwebAddress, hrp).scriptPubKey
+            val ownIndex = db.addresses().byAddress(destination.stringValue)?.index
             val mwebFee = pegInMwebFee(feeRate)
 
-            val unsigned = buildPegInTemplate(litecoinKit, value, mwebFee, feeRate, mwebScript)
-            val template = MwebTxSerializer.parse(unsigned.rawTransaction)
-            val change = unsigned.changeOutputIndex?.let { template.outputs.removeAt(it) }
-            // The daemon adds the MWEB fee on top of the MWEB output when it sizes the peg-in
-            // output, so the template output carries the value the recipient gets.
-            template.outputs[0] = TemplateOutput(mwebScript, value)
+            val unsigned = buildPegInTemplate(litecoinKit, value, mwebFee, feeRate, destination.scriptPubKey)
+            val template = MwebPegIn.template(unsigned.rawTransaction, unsigned.changeOutputIndex, destination.scriptPubKey, value)
 
-            val created = rpc.create(MwebTxSerializer.serialize(template), keychain.scanSecret, spendSecret, feeRatePerKb, false)
-            val withMweb = MwebTxSerializer.parse(created.rawTx.toByteArray())
-            if (withMweb.mweb == null || withMweb.outputs.size != 1) {
-                throw IllegalStateException("daemon returned no peg-in transaction")
+            val created = try {
+                rpc.create(template.rawTx, keychain.scanSecret, spendSecret, feeRatePerKb, false)
+            } catch (e: Exception) {
+                throw MwebSendError.BroadcastRejected("Transaction creation failed: ${e.message}", e)
             }
-            val pegInOutput = withMweb.outputs[0]
-            if (pegInOutput.value != value + mwebFee) {
-                throw IllegalStateException("peg-in output ${pegInOutput.value} differs from ${value + mwebFee}")
-            }
-            if (change != null) withMweb.outputs.add(change)
-
-            val signed = litecoinKit.signTransaction(MwebTxSerializer.serialize(withMweb), unsigned.inputs)
-            val txid = rpc.broadcast(signed)
-            litecoinKit.registerPendingTransaction(signed)
+            val withChange = MwebPegIn.withChange(created.rawTx.toByteArray(), template.change, value + mwebFee)
+            val signed = litecoinKit.signTransaction(withChange, unsigned.inputs)
 
             val uid = UUID.randomUUID().toString()
             val tx = MwebTransaction(
@@ -377,14 +421,57 @@ class LitecoinMwebKit(
                 timestamp = System.currentTimeMillis() / 1000,
                 height = 0,
                 status = MwebTransaction.STATUS_PENDING,
-                toAddress = mwebAddress,
-                ownAddress = mwebAddress,
-                txHash = txid,
+                toAddress = destination.stringValue,
+                ownAddress = if (ownIndex != null) destination.stringValue else null,
+                txHash = null,
                 inputIds = "",
-                outputIds = created.outputIdList.joinToString(","),
+                outputIds = if (ownIndex != null) created.outputIdList.joinToString(",") else "",
             )
             db.transactions().insert(tx)
-            tx.toInfo()
+
+            val txid = broadcast(rpc, signed, uid)
+            litecoinKit.registerPendingTransaction(signed)
+
+            val sent = tx.copy(txHash = txid)
+            db.transactions().update(sent)
+            if (ownIndex == null) watchPegIn(litecoinKit, uid)
+            sent.toInfo()
+        }
+    }
+
+    /**
+     * Marks pending peg-ins whose Litecoin transaction [litecoinKit] has
+     * seen in a block as confirmed. Peg-ins to own addresses also confirm
+     * through their MWEB output; this covers foreign destinations and
+     * restarts. Returns true while any peg-in is still pending. Call it when
+     * the Litecoin wallet reports new blocks.
+     */
+    suspend fun refreshPegIns(litecoinKit: LitecoinKit): Boolean = dbMutex.withLock {
+        var pending = false
+        for (tx in db.transactions().withStatus(MwebTransaction.STATUS_PENDING)) {
+            if (tx.type != MwebTransaction.TYPE_PEG_IN) continue
+            val hash = tx.txHash ?: continue
+            val info = litecoinKit.getTransaction(hash)
+            val height = info?.blockHeight
+            if (height != null) {
+                db.transactions().update(tx.copy(status = MwebTransaction.STATUS_CONFIRMED, height = height, timestamp = info.timestamp))
+            } else {
+                pending = true
+            }
+        }
+        pending
+    }
+
+    private fun watchPegIn(litecoinKit: LitecoinKit, uid: String) {
+        scope.launch {
+            while (isActive && db.transactions().get(uid)?.status == MwebTransaction.STATUS_PENDING) {
+                delay(PEG_IN_POLL_MS)
+                try {
+                    refreshPegIns(litecoinKit)
+                } catch (e: Exception) {
+                    Log.w(tag, "peg-in refresh failed", e)
+                }
+            }
         }
     }
 
@@ -402,7 +489,7 @@ class LitecoinMwebKit(
         try {
             // The MWEB output is replaced by the peg-in output (OP_9 <32-byte kernel hash>, 34 bytes)
             // in the final transaction; the HogEx input of the next block is charged to the sender too.
-            val pegInScriptDelta = MwebAddress.SCRIPT_SIZE - PEG_IN_SCRIPT_SIZE
+            val pegInScriptDelta = MwebAddress.SCRIPT_SIZE - MwebPegIn.PEG_IN_SCRIPT_SIZE
             return litecoinKit.buildUnsignedTransaction(
                 outputs = listOf(RawOutput(mwebScript, value + mwebFee)),
                 feeRate = feeRate,
@@ -708,8 +795,7 @@ class LitecoinMwebKit(
         /** Dust limit of a Litecoin output, applied to peg-outs. */
         const val LITECOIN_DUST = 546L
 
-        /** Size of the peg-in output script: OP_9 and a 32-byte kernel hash push. */
-        const val PEG_IN_SCRIPT_SIZE = 34
+        private const val PEG_IN_POLL_MS = 30_000L
 
         private const val BLOCK_INTERVAL_SECONDS = 150L
         private const val TIP_TOLERANCE_BLOCKS = 24L

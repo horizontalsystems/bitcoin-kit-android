@@ -36,11 +36,20 @@ kit.validateDestination(address)              // MWEB address, or Litecoin addre
 kit.estimateFee(address, value, feeRate)      // litoshi; feeRate in litoshi per virtual byte
 kit.send(address, value, feeRate)             // suspend; MWEB to MWEB, or peg-out to a Litecoin address
 kit.estimatePegInFee(litecoinKit, value, feeRate)
-kit.pegIn(litecoinKit, value, feeRate)        // suspend; moves coins from a LitecoinKit on the same seed
+kit.pegIn(litecoinKit, mwebAddress, value, feeRate) // suspend; Litecoin wallet pays any MWEB address (own or foreign)
+kit.pegIn(litecoinKit, value, feeRate)        // suspend; same, to the next own receive address
+kit.refreshPegIns(litecoinKit)                // suspend; confirms peg-ins from the Litecoin txid (foreign destinations)
 
 LitecoinMwebKit.firstAddress(seed)            // without a kit instance
 LitecoinMwebKit.clear(context, networkType, walletId)
 ```
+
+`send` and `pegIn` record the transaction as pending before broadcasting
+and reserve the coins it spends. If the daemon rejects it the row is marked
+failed, the coins are released and `MwebSendError.BroadcastRejected` is
+thrown; if the daemon cannot be reached the row stays pending and
+`MwebSendError.BroadcastUnknown` is thrown, since the transaction may have
+gone out.
 
 Keys: `MwebKeychain.fromSeed` derives the scan secret at `m/1000'/0'` and the
 spend secret at `m/1000'/1'`, the scheme Cake Wallet uses, so a seed restores
