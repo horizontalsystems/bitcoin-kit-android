@@ -262,3 +262,12 @@ interface IPublicKeyManager {
     fun gapShifts(): Boolean
     fun getPublicKeyByPath(path: String): PublicKey
 }
+
+/**
+ * Marks wallet outputs that cannot be spent yet for a chain-specific reason,
+ * such as a maturity rule. They count towards the time-locked part of the
+ * balance until [isSpendable] returns true.
+ */
+interface IUnspendableOutputRule {
+    fun isSpendable(unspentOutput: UnspentOutput, lastBlockHeight: Int, storage: IStorage): Boolean
+}

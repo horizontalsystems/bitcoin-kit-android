@@ -1,6 +1,7 @@
 package io.horizontalsystems.bitcoincore.managers
 
 import io.horizontalsystems.bitcoincore.core.IStorage
+import io.horizontalsystems.bitcoincore.core.IUnspendableOutputRule
 import io.horizontalsystems.bitcoincore.core.PluginManager
 import io.horizontalsystems.bitcoincore.models.BalanceInfo
 import io.horizontalsystems.bitcoincore.models.Transaction
@@ -10,7 +11,8 @@ import io.horizontalsystems.bitcoincore.storage.UtxoFilters
 class UnspentOutputProvider(
     private val storage: IStorage,
     private val confirmationsThreshold: Int = 6,
-    val pluginManager: PluginManager
+    val pluginManager: PluginManager,
+    private val unspendableOutputRule: IUnspendableOutputRule? = null
 ) : IUnspentOutputProvider {
 
     override fun getSpendableUtxo(filters: UtxoFilters): List<UnspentOutput> {
@@ -24,6 +26,10 @@ class UnspentOutputProvider(
             return false
         }
 
+        if (!ruleAllows(utxo)) {
+            return false
+        }
+
         if (utxo.transaction.status != Transaction.Status.RELAYED) {
             return false
         }
@@ -32,7 +38,13 @@ class UnspentOutputProvider(
     }
 
     private fun getUnspendableTimeLockedUtxo() = allUtxo().filter {
-        !pluginManager.isSpendable(it)
+        !pluginManager.isSpendable(it) || !ruleAllows(it)
+    }
+
+    private fun ruleAllows(utxo: UnspentOutput): Boolean {
+        val rule = unspendableOutputRule ?: return true
+        val lastBlockHeight = storage.lastBlock()?.height ?: 0
+        return rule.isSpendable(utxo, lastBlockHeight, storage)
     }
 
     private fun getUnspendableNotRelayedUtxo() = allUtxo().filter {

@@ -188,6 +188,7 @@ class LitecoinKit : AbstractKit {
             .setApiTransactionProvider(apiTransactionProvider)
             .setApiSyncStateManager(apiSyncStateManager)
             .setBlockValidator(blockValidatorSet)
+            .setUnspendableOutputRule(HogExOutputMaturityRule())
             .build()
 
         //  extending bitcoinCore

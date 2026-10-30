@@ -1,5 +1,6 @@
 package io.horizontalsystems.bitcoincore
 
+import io.horizontalsystems.bitcoincore.core.IUnspendableOutputRule
 import android.content.Context
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApiSyncer
@@ -105,6 +106,7 @@ import io.horizontalsystems.bitcoincore.transactions.builder.OutputSetter
 import io.horizontalsystems.bitcoincore.transactions.builder.RecipientSetter
 import io.horizontalsystems.bitcoincore.transactions.builder.SchnorrInputSigner
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionBuilder
+import io.horizontalsystems.bitcoincore.transactions.builder.RawTransactionBuilder
 import io.horizontalsystems.bitcoincore.transactions.builder.TransactionSigner
 import io.horizontalsystems.bitcoincore.transactions.extractors.MyOutputsCache
 import io.horizontalsystems.bitcoincore.transactions.extractors.TransactionExtractor
@@ -140,6 +142,7 @@ class BitcoinCoreBuilder {
 
     // parameters with default values
     private var confirmationsThreshold = 6
+    private var unspendableOutputRule: IUnspendableOutputRule? = null
     private var syncMode: BitcoinCore.SyncMode = BitcoinCore.SyncMode.Api()
     private var peerSize = 10
     private val plugins = mutableListOf<IPlugin>()
@@ -178,6 +181,11 @@ class BitcoinCoreBuilder {
 
     fun setConfirmationThreshold(confirmationsThreshold: Int): BitcoinCoreBuilder {
         this.confirmationsThreshold = confirmationsThreshold
+        return this
+    }
+
+    fun setUnspendableOutputRule(rule: IUnspendableOutputRule): BitcoinCoreBuilder {
+        this.unspendableOutputRule = rule
         return this
     }
 
@@ -266,7 +274,7 @@ class BitcoinCoreBuilder {
 
         transactionInfoConverter.baseConverter = BaseTransactionInfoConverter(pluginManager)
 
-        val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold, pluginManager)
+        val unspentOutputProvider = UnspentOutputProvider(storage, confirmationsThreshold, pluginManager, unspendableOutputRule)
 
         val dataProvider = DataProvider(storage, unspentOutputProvider, transactionInfoConverter)
 
@@ -454,6 +462,7 @@ class BitcoinCoreBuilder {
         var transactionSender: TransactionSender? = null
         var transactionCreator: TransactionCreator? = null
         var replacementTransactionBuilder: ReplacementTransactionBuilder? = null
+        var rawTransactionBuilder: RawTransactionBuilder? = null
 
         if (privateWallet != null) {
             val ecdsaInputSigner = EcdsaInputSigner(privateWallet, network)
@@ -502,6 +511,18 @@ class BitcoinCoreBuilder {
             replacementTransactionBuilder = ReplacementTransactionBuilder(
                 storage, transactionSizeCalculator, dustCalculator, metadataExtractor, pluginManager, unspentOutputProvider, publicKeyManager, conflictsResolver, lockTimeSetter
             )
+            rawTransactionBuilder = RawTransactionBuilder(
+                storage,
+                unspentOutputSelector,
+                publicKeyManager,
+                addressConverter,
+                purpose.scriptType,
+                transactionSizeCalculatorInstance,
+                dustCalculatorInstance,
+                signer,
+                pendingTransactionProcessor,
+                bloomFilterManager
+            )
         }
 
         val bitcoinCore = BitcoinCore(
@@ -540,6 +561,7 @@ class BitcoinCoreBuilder {
         bitcoinCore.networkMessageParser = networkMessageParser
         bitcoinCore.networkMessageSerializer = networkMessageSerializer
         bitcoinCore.unspentOutputSelector = unspentOutputSelector
+        bitcoinCore.rawTransactionBuilder = rawTransactionBuilder
 
         peerGroup.peerTaskHandler = bitcoinCore.peerTaskHandlerChain
         peerGroup.inventoryItemsHandler = bitcoinCore.inventoryItemsHandlerChain

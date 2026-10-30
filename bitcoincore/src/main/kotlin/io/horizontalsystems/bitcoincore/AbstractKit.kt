@@ -1,5 +1,7 @@
 package io.horizontalsystems.bitcoincore
 
+import io.horizontalsystems.bitcoincore.models.RawOutput
+import io.horizontalsystems.bitcoincore.models.UnsignedTransaction
 import io.horizontalsystems.bitcoincore.core.IPluginData
 import io.horizontalsystems.bitcoincore.models.BitcoinPaymentData
 import io.horizontalsystems.bitcoincore.models.BitcoinSendInfo
@@ -72,6 +74,25 @@ abstract class AbstractKit {
 
     fun getTransaction(hash: String): TransactionInfo? {
         return bitcoinCore.getTransaction(hash)
+    }
+
+    fun buildUnsignedTransaction(
+        outputs: List<RawOutput>,
+        feeRate: Int,
+        extraVirtualBytes: Int = 0,
+        unspentOutputs: List<UnspentOutputInfo>? = null,
+        changeToFirstInput: Boolean = false,
+        filters: UtxoFilters = UtxoFilters(),
+    ): UnsignedTransaction {
+        return bitcoinCore.buildUnsignedTransaction(outputs, feeRate, extraVirtualBytes, unspentOutputs, changeToFirstInput, filters)
+    }
+
+    fun signTransaction(rawTransaction: ByteArray, inputs: List<UnspentOutputInfo>): ByteArray {
+        return bitcoinCore.signTransaction(rawTransaction, inputs)
+    }
+
+    fun registerPendingTransaction(signedTransaction: ByteArray): FullTransaction {
+        return bitcoinCore.registerPendingTransaction(signedTransaction)
     }
 
     fun sendInfo(

@@ -1,5 +1,8 @@
 package io.horizontalsystems.bitcoincore
 
+import io.horizontalsystems.bitcoincore.models.RawOutput
+import io.horizontalsystems.bitcoincore.models.UnsignedTransaction
+import io.horizontalsystems.bitcoincore.transactions.builder.RawTransactionBuilder
 import io.horizontalsystems.bitcoincore.apisync.blockchair.BlockchairApi
 import io.horizontalsystems.bitcoincore.blocks.IPeerSyncListener
 import io.horizontalsystems.bitcoincore.core.AccountWallet
@@ -104,6 +107,7 @@ class BitcoinCore(
     lateinit var networkMessageSerializer: NetworkMessageSerializer
     lateinit var initialDownload: IInitialDownload
     lateinit var unspentOutputSelector: UnspentOutputSelectorChain
+    var rawTransactionBuilder: RawTransactionBuilder? = null
     lateinit var watchedTransactionManager: WatchedTransactionManager
 
     val inventoryItemsHandlerChain = InventoryItemsHandlerChain()
@@ -558,6 +562,39 @@ class BitcoinCore(
 
     fun getTransaction(hash: String): TransactionInfo? {
         return dataProvider.getTransaction(hash)
+    }
+
+    /**
+     * Builds an unsigned transaction paying [outputs] (raw locking scripts)
+     * from the wallet's spendable outputs, see [RawTransactionBuilder.buildUnsignedTransaction].
+     */
+    fun buildUnsignedTransaction(
+        outputs: List<RawOutput>,
+        feeRate: Int,
+        extraVirtualBytes: Int = 0,
+        unspentOutputs: List<UnspentOutputInfo>? = null,
+        changeToFirstInput: Boolean = false,
+        filters: UtxoFilters = UtxoFilters(),
+    ): UnsignedTransaction {
+        val builder = rawTransactionBuilder ?: throw CoreError.ReadOnlyCore
+        val selected = unspentOutputs?.mapNotNull {
+            unspentOutputSelector.getAllSpendable(filters).firstOrNull { unspentOutput ->
+                unspentOutput.transaction.hash.contentEquals(it.transactionHash) && unspentOutput.output.index == it.outputIndex
+            }
+        }
+        return builder.buildUnsignedTransaction(outputs, feeRate, extraVirtualBytes, selected, changeToFirstInput, filters)
+    }
+
+    /** Signs the inputs of [rawTransaction], all of which must spend the wallet outputs in [inputs]. */
+    fun signTransaction(rawTransaction: ByteArray, inputs: List<UnspentOutputInfo>): ByteArray {
+        val builder = rawTransactionBuilder ?: throw CoreError.ReadOnlyCore
+        return builder.signTransaction(rawTransaction, inputs)
+    }
+
+    /** Records a transaction broadcast elsewhere as a pending outgoing wallet transaction. */
+    fun registerPendingTransaction(signedTransaction: ByteArray): FullTransaction {
+        val builder = rawTransactionBuilder ?: throw CoreError.ReadOnlyCore
+        return builder.registerPendingTransaction(signedTransaction)
     }
 
     fun replacementTransaction(
