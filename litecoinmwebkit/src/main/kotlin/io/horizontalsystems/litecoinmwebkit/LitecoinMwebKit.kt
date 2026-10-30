@@ -514,6 +514,7 @@ class LitecoinMwebKit(
                     if (headerHeight != lastHeight) {
                         lastHeight = headerHeight
                         reconcile(rpc)
+                        if (utxoStreamStarted) db.syncInfo().set(MwebSyncInfo(syncedHeight = headerHeight))
                     }
                 } else if (headersSynced) {
                     _syncState.value = MwebSyncState.Syncing(0.99, MwebSyncState.Stage.MwebData)
@@ -535,19 +536,15 @@ class LitecoinMwebKit(
     private suspend fun consumeUtxos(rpc: MwebRpc) {
         val synced = db.syncInfo().get()?.syncedHeight ?: 0
         val fromHeight = max(0, synced - RESCAN_MARGIN_BLOCKS)
-        var initialDone = false
+        utxoStreamStarted = true
         rpc.utxos(keychain.scanSecret, fromHeight).collect { utxo ->
+            // The already confirmed outputs arrive first in one burst; the stream then stays open
+            // for live updates. The daemon sends an empty marker before the first live update.
             if (utxo.outputId.isEmpty()) {
-                // Marker: every already confirmed output has been streamed.
-                initialDone = true
-                utxoStreamStarted = true
                 reconcile(rpc)
                 return@collect
             }
             dbMutex.withLock { handleUtxo(utxo) }
-            if (initialDone && utxo.height > 0) {
-                db.syncInfo().set(MwebSyncInfo(syncedHeight = utxo.height))
-            }
         }
         throw IllegalStateException("utxo stream ended")
     }

@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Litecoin MWEB"
+            android:textAppearance="@style/TextAppearance.AppCompat.Large" />
+
+        <TextView
+            android:id="@+id/mwebNetwork"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/mwebStart"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Start" />
+
+            <Button
+                android:id="@+id/mwebRefresh"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Refresh" />
+
+            <Button
+                android:id="@+id/mwebClear"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Clear" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="MWEB sync:"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/mwebSyncState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MWEB balance:"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/mwebBalance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Litecoin wallet (BIP84) sync:"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ltcSyncState"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Litecoin balance:"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/ltcBalance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/mwebReceive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="MWEB address" />
+
+            <Button
+                android:id="@+id/ltcReceive"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LTC address" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/mwebAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textIsSelectable="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Send from MWEB (MWEB or Litecoin address):"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/mwebSendAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="ltcmweb1... / tmweb1... / tltc1..."
+            android:inputType="text" />
+
+        <EditText
+            android:id="@+id/mwebSendAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="amount, LTC"
+            android:inputType="numberDecimal" />
+
+        <Button
+            android:id="@+id/mwebSend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Peg in from the Litecoin wallet:"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/mwebPegInAmount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="amount, LTC"
+            android:inputType="numberDecimal" />
+
+        <Button
+            android:id="@+id/mwebPegIn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Peg in" />
+
+        <TextView
+            android:id="@+id/mwebMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textIsSelectable="true" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="MWEB transactions:"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/mwebTransactions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textIsSelectable="true" />
+    </LinearLayout>
+</ScrollView>
