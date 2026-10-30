@@ -6,10 +6,12 @@ toolchain go1.27.3
 
 require (
 	github.com/ltcmweb/ltcd v0.25.12
+	github.com/ltcmweb/ltcd/chaincfg/chainhash v1.0.3
 	github.com/ltcmweb/mwebd v0.1.19
 	github.com/ltcmweb/mwebd/sign v0.1.0
 	github.com/ltcmweb/neutrino v0.17.4
 	github.com/ltcsuite/ltcwallet/walletdb v1.3.5
+	golang.org/x/crypto v0.48.0
 )
 
 require (
@@ -34,7 +36,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/ltcmweb/coinswapd v0.1.0 // indirect
 	github.com/ltcmweb/ltcd/btcec/v2 v2.3.3 // indirect
-	github.com/ltcmweb/ltcd/chaincfg/chainhash v1.0.3 // indirect
 	github.com/ltcmweb/neutrino/cache v1.1.0 // indirect
 	github.com/ltcmweb/secp256k1 v0.1.1 // indirect
 	github.com/ltcsuite/lnd/queue v1.1.0 // indirect
@@ -43,7 +44,6 @@ require (
 	github.com/tklauser/go-sysconf v0.3.12 // indirect
 	github.com/tklauser/numcpus v0.6.1 // indirect
 	go.etcd.io/bbolt v1.3.10 // indirect
-	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20231110203233-9a3e6036ecaa // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
