@@ -21,6 +21,46 @@ persisted history and the peg-in orchestration with `litecoinkit`.
 | `src/main/assets/mweb/checkpoint-*.bin` | Header checkpoint bundles per network |
 | `src/main/kotlin/` | Kotlin API |
 
+## Kotlin API
+
+```kotlin
+val kit = LitecoinMwebKit(context, seed, walletId = "wallet-1", networkType = LitecoinKit.NetworkType.MainNet)
+kit.start()
+
+kit.syncStateFlow      // StateFlow<MwebSyncState>: Syncing(progress, stage) / Synced / NotSynced
+kit.balanceFlow        // Flow<MwebBalance>: spendable and unconfirmed litoshi
+kit.transactionsFlow   // Flow<List<MwebTransactionInfo>>: persisted history, newest first
+
+kit.receiveAddress()   // next unused address (index 1 and up; index 0 is change)
+kit.validateDestination(address)              // MWEB address, or Litecoin address for a peg-out
+kit.estimateFee(address, value, feeRate)      // litoshi; feeRate in litoshi per virtual byte
+kit.send(address, value, feeRate)             // suspend; MWEB to MWEB, or peg-out to a Litecoin address
+kit.estimatePegInFee(litecoinKit, value, feeRate)
+kit.pegIn(litecoinKit, value, feeRate)        // suspend; moves coins from a LitecoinKit on the same seed
+
+LitecoinMwebKit.firstAddress(seed)            // without a kit instance
+LitecoinMwebKit.clear(context, networkType, walletId)
+```
+
+Keys: `MwebKeychain.fromSeed` derives the scan secret at `m/1000'/0'` and the
+spend secret at `m/1000'/1'`, the scheme Cake Wallet uses, so a seed restores
+the same MWEB account in both wallets.
+
+Restore semantics differ from the other kits: the light client only serves
+the current unspent set, so a restore recovers the exact balance but only the
+unspent incoming outputs. History of spent outputs and of sends cannot be
+replayed; the kit writes history rows when events happen and never deletes
+them on a rescan. Outputs that leave the unspent set without a send recorded
+locally (another wallet on the same seed) appear as `SpentElsewhere`.
+
+Peg-out outputs arrive in the Litecoin wallet as outputs of the block's HogEx
+transaction; `litecoinkit` reports them in the time-locked part of the
+balance until they have six confirmations.
+
+The daemon runs once per process and keeps the chain data in
+`<filesDir>/mweb/<network>` for every wallet; `MwebDaemon.deleteData` removes
+it. The daemon's own log is `<dataDir>/logs/debug.log`.
+
 ## Rebuilding the native library
 
 Prerequisites on the build machine:
