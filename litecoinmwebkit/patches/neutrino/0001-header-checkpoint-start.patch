@@ -1,0 +1,630 @@
+--- a/headerfs/checkpoint.go
++++ b/headerfs/checkpoint.go
+@@ -0,0 +1,200 @@
++package headerfs
++
++import (
++	"bytes"
++	"encoding/binary"
++	"fmt"
++	"io"
++	"os"
++
++	"github.com/ltcmweb/ltcd/chaincfg/chainhash"
++	"github.com/ltcmweb/ltcd/wire"
++)
++
++// checkpointMagic identifies a serialized Checkpoint.
++var checkpointMagic = [4]byte{'N', 'C', 'K', 'P'}
++
++// checkpointVersion is the current serialization version of a Checkpoint.
++const checkpointVersion = 1
++
++// Checkpoint is a trusted snapshot of the header chain that lets a fresh
++// header store start syncing from a recent height instead of genesis. It
++// carries a contiguous run of block headers ending at Height (enough for the
++// contextual header checks: at least one retarget window), the regular
++// compact filter header at Height, and optionally the MWEB
++// leaves-at-height map for heights at or below Height.
++//
++// Headers below the first bundled height are never downloaded. The stores
++// keep the genesis header at height 0 and report ErrHeaderNotFound for any
++// height strictly between genesis and the first bundled height.
++type Checkpoint struct {
++	// Net is the network the checkpoint belongs to.
++	Net wire.BitcoinNet
++
++	// Height is the height of the last header in Headers.
++	Height uint32
++
++	// Headers are the block headers for heights
++	// Height-len(Headers)+1 .. Height, in ascending order.
++	Headers []wire.BlockHeader
++
++	// FilterHeader is the regular compact filter header at Height.
++	FilterHeader chainhash.Hash
++
++	// MwebLeaves maps block heights at or below Height to the MWEB output
++	// MMR size at that height. It may be empty.
++	MwebLeaves map[uint32]uint64
++}
++
++// StartHeight returns the height of the first bundled header.
++func (c *Checkpoint) StartHeight() uint32 {
++	return c.Height - uint32(len(c.Headers)) + 1
++}
++
++// Validate checks that the checkpoint is internally consistent and belongs to
++// the given network.
++func (c *Checkpoint) Validate(net wire.BitcoinNet) error {
++	if c.Net != net {
++		return fmt.Errorf("checkpoint is for network %v, want %v",
++			c.Net, net)
++	}
++	if len(c.Headers) == 0 {
++		return fmt.Errorf("checkpoint has no headers")
++	}
++	if uint32(len(c.Headers)) > c.Height {
++		return fmt.Errorf("checkpoint headers reach below genesis")
++	}
++	for i := 1; i < len(c.Headers); i++ {
++		prevHash := c.Headers[i-1].BlockHash()
++		if c.Headers[i].PrevBlock != prevHash {
++			return fmt.Errorf("checkpoint header %d does not "+
++				"connect to its parent", c.StartHeight()+uint32(i))
++		}
++	}
++	for height := range c.MwebLeaves {
++		if height > c.Height {
++			return fmt.Errorf("checkpoint mweb leaves entry at "+
++				"height %d above checkpoint height %d", height,
++				c.Height)
++		}
++	}
++	return nil
++}
++
++// WriteCheckpoint serializes the checkpoint to w.
++func WriteCheckpoint(w io.Writer, c *Checkpoint) error {
++	var buf bytes.Buffer
++	buf.Write(checkpointMagic[:])
++	binary.Write(&buf, binary.LittleEndian, uint32(checkpointVersion))
++	binary.Write(&buf, binary.LittleEndian, uint32(c.Net))
++	binary.Write(&buf, binary.LittleEndian, c.Height)
++	binary.Write(&buf, binary.LittleEndian, uint32(len(c.Headers)))
++	for i := range c.Headers {
++		if err := c.Headers[i].Serialize(&buf); err != nil {
++			return err
++		}
++	}
++	buf.Write(c.FilterHeader[:])
++	binary.Write(&buf, binary.LittleEndian, uint32(len(c.MwebLeaves)))
++	heights := make([]uint32, 0, len(c.MwebLeaves))
++	for height := range c.MwebLeaves {
++		heights = append(heights, height)
++	}
++	sortUint32(heights)
++	for _, height := range heights {
++		binary.Write(&buf, binary.LittleEndian, height)
++		binary.Write(&buf, binary.LittleEndian, c.MwebLeaves[height])
++	}
++	_, err := w.Write(buf.Bytes())
++	return err
++}
++
++// ReadCheckpoint deserializes a checkpoint from r.
++func ReadCheckpoint(r io.Reader) (*Checkpoint, error) {
++	var magic [4]byte
++	if _, err := io.ReadFull(r, magic[:]); err != nil {
++		return nil, err
++	}
++	if magic != checkpointMagic {
++		return nil, fmt.Errorf("not a header checkpoint file")
++	}
++	var version, net, height, numHeaders uint32
++	for _, v := range []*uint32{&version, &net, &height, &numHeaders} {
++		if err := binary.Read(r, binary.LittleEndian, v); err != nil {
++			return nil, err
++		}
++	}
++	if version != checkpointVersion {
++		return nil, fmt.Errorf("unsupported checkpoint version %d",
++			version)
++	}
++	if numHeaders == 0 || numHeaders > height {
++		return nil, fmt.Errorf("invalid checkpoint header count %d",
++			numHeaders)
++	}
++	c := &Checkpoint{
++		Net:        wire.BitcoinNet(net),
++		Height:     height,
++		Headers:    make([]wire.BlockHeader, numHeaders),
++		MwebLeaves: make(map[uint32]uint64),
++	}
++	for i := range c.Headers {
++		if err := c.Headers[i].Deserialize(r); err != nil {
++			return nil, err
++		}
++	}
++	if _, err := io.ReadFull(r, c.FilterHeader[:]); err != nil {
++		return nil, err
++	}
++	var numLeaves uint32
++	if err := binary.Read(r, binary.LittleEndian, &numLeaves); err != nil {
++		return nil, err
++	}
++	for i := uint32(0); i < numLeaves; i++ {
++		var h uint32
++		var n uint64
++		if err := binary.Read(r, binary.LittleEndian, &h); err != nil {
++			return nil, err
++		}
++		if err := binary.Read(r, binary.LittleEndian, &n); err != nil {
++			return nil, err
++		}
++		c.MwebLeaves[h] = n
++	}
++	return c, nil
++}
++
++// ReadCheckpointFile reads a checkpoint from the file at path.
++func ReadCheckpointFile(path string) (*Checkpoint, error) {
++	f, err := os.Open(path)
++	if err != nil {
++		return nil, err
++	}
++	defer f.Close()
++	return ReadCheckpoint(f)
++}
++
++// sortUint32 sorts heights ascending (insertion sort keeps the package free
++// of extra imports; the slices are small).
++func sortUint32(s []uint32) {
++	for i := 1; i < len(s); i++ {
++		for j := i; j > 0 && s[j-1] > s[j]; j-- {
++			s[j-1], s[j] = s[j], s[j-1]
++		}
++	}
++}
++
++// writeAt writes data at the given offset of the store's flat file. The
++// store's own handle is opened in append mode, so a second handle is used.
++// The file grows sparsely when the offset lies beyond its current end.
++func (h *headerStore) writeAt(data []byte, offset int64) error {
++	f, err := os.OpenFile(h.fileName, os.O_RDWR, 0644)
++	if err != nil {
++		return err
++	}
++	defer f.Close()
++	if _, err := f.WriteAt(data, offset); err != nil {
++		return err
++	}
++	return f.Sync()
++}
+--- a/headerfs/file.go
++++ b/headerfs/file.go
+@@ -43,6 +43,16 @@
+ 		return nil, fmt.Errorf("unknown index type: %v", h.indexType)
+ 	}
+ 
++	// Heights between genesis and the seeded start height of a store
++	// created from a Checkpoint are not on disk.
++	if h.startHeight > 0 && seekDist > 0 &&
++		seekDist < uint64(h.startHeight)*uint64(headerSize) {
++
++		return nil, &ErrHeaderNotFound{fmt.Errorf("height %d is below "+
++			"the checkpoint start height %d",
++			seekDist/uint64(headerSize), h.startHeight)}
++	}
++
+ 	// TODO(roasbeef): add buffer pool
+ 
+ 	// With the number of bytes to read determined, we'll create a slice
+@@ -56,6 +66,16 @@
+ 	return rawHeader, nil
+ }
+ 
++// checkRange returns ErrHeaderNotFound when a range read would start inside
++// the gap between genesis and the seeded start height of the store.
++func (h *headerStore) checkRange(startHeight uint32) error {
++	if h.startHeight > 0 && startHeight > 0 && startHeight < h.startHeight {
++		return &ErrHeaderNotFound{fmt.Errorf("height %d is below the "+
++			"checkpoint start height %d", startHeight, h.startHeight)}
++	}
++	return nil
++}
++
+ // readHeaderRange will attempt to fetch a series of block headers within the
+ // target height range. This method batches a set of reads into a single system
+ // call thereby increasing performance when reading a set of contiguous
+@@ -66,6 +86,10 @@
+ func (h *blockHeaderStore) readHeaderRange(startHeight uint32,
+ 	endHeight uint32) ([]wire.BlockHeader, error) {
+ 
++	if err := h.checkRange(startHeight); err != nil {
++		return nil, err
++	}
++
+ 	// Based on the defined header type, we'll determine the number of
+ 	// bytes that we need to read from the file.
+ 	headerReader, err := readHeadersFromFile(
+@@ -139,6 +163,10 @@
+ func (f *FilterHeaderStore) readHeaderRange(startHeight uint32,
+ 	endHeight uint32) ([]chainhash.Hash, error) {
+ 
++	if err := f.checkRange(startHeight); err != nil {
++		return nil, err
++	}
++
+ 	// Based on the defined header type, we'll determine the number of
+ 	// bytes that we need to read from the file.
+ 	headerReader, err := readHeadersFromFile(
+--- a/headerfs/index.go
++++ b/headerfs/index.go
+@@ -26,6 +26,13 @@
+ 	// current block hash of the best known chain that the headers for
+ 	// regular filter are synced to.
+ 	regFilterTip = []byte("regular")
++
++	// bitcoinStart and regFilterStart track the lowest height (other than
++	// genesis) for which a header is stored, when the store was seeded
++	// from a Checkpoint instead of synced from genesis. The keys are
++	// absent for stores synced from genesis.
++	bitcoinStart   = []byte("bitcoin-start")
++	regFilterStart = []byte("regular-start")
+ )
+ 
+ var (
+@@ -193,6 +200,50 @@
+ 	})
+ }
+ 
++// startKey returns the key under which the seeded start height of this
++// index type is stored.
++func (h *headerIndex) startKey() ([]byte, error) {
++	switch h.indexType {
++	case Block:
++		return bitcoinStart, nil
++	case RegularFilter:
++		return regFilterStart, nil
++	default:
++		return nil, fmt.Errorf("unknown index type: %v", h.indexType)
++	}
++}
++
++// startHeight returns the seeded start height of the index, or 0 when the
++// store was synced from genesis.
++func (h *headerIndex) startHeight() (uint32, error) {
++	key, err := h.startKey()
++	if err != nil {
++		return 0, err
++	}
++	var height uint32
++	err = walletdb.View(h.db, func(tx walletdb.ReadTx) error {
++		rootBucket := tx.ReadBucket(indexBucket)
++		if v := rootBucket.Get(key); len(v) == 4 {
++			height = binary.BigEndian.Uint32(v)
++		}
++		return nil
++	})
++	return height, err
++}
++
++// putStartHeight records the seeded start height of the index.
++func (h *headerIndex) putStartHeight(height uint32) error {
++	key, err := h.startKey()
++	if err != nil {
++		return err
++	}
++	return walletdb.Update(h.db, func(tx walletdb.ReadWriteTx) error {
++		var heightBytes [4]byte
++		binary.BigEndian.PutUint32(heightBytes[:], height)
++		return tx.ReadWriteBucket(indexBucket).Put(key, heightBytes[:])
++	})
++}
++
+ // heightFromHash returns the height of the entry that matches the specified
+ // height. With this height, the caller is then able to seek to the appropriate
+ // spot in the flat files in order to extract the true header.
+--- a/headerfs/store.go
++++ b/headerfs/store.go
+@@ -98,6 +98,11 @@
+ 
+ 	file *os.File
+ 
++	// startHeight is the lowest height above genesis that is stored when
++	// the store was seeded from a Checkpoint, or 0 when it was synced
++	// from genesis.
++	startHeight uint32
++
+ 	*headerIndex
+ }
+ 
+@@ -134,9 +139,15 @@
+ 		return nil, err
+ 	}
+ 
++	startHeight, err := index.startHeight()
++	if err != nil {
++		return nil, err
++	}
++
+ 	return &headerStore{
+ 		fileName:    flatFileName,
+ 		file:        headerFile,
++		startHeight: startHeight,
+ 		headerIndex: index,
+ 	}, nil
+ }
+@@ -161,6 +172,17 @@
+ func NewBlockHeaderStore(filePath string, db walletdb.DB,
+ 	netParams *chaincfg.Params) (BlockHeaderStore, error) {
+ 
++	return NewBlockHeaderStoreFromCheckpoint(filePath, db, netParams, nil)
++}
++
++// NewBlockHeaderStoreFromCheckpoint is like NewBlockHeaderStore but seeds an
++// empty store from the given Checkpoint, so header sync starts at the
++// checkpoint height instead of genesis. A nil checkpoint, or a store that
++// already holds headers, behaves exactly like NewBlockHeaderStore.
++func NewBlockHeaderStoreFromCheckpoint(filePath string, db walletdb.DB,
++	netParams *chaincfg.Params, checkpoint *Checkpoint) (BlockHeaderStore,
++	error) {
++
+ 	hStore, err := newHeaderStore(db, filePath, Block)
+ 	if err != nil {
+ 		return nil, err
+@@ -188,6 +210,13 @@
+ 			return nil, err
+ 		}
+ 
++		if checkpoint != nil {
++			err := bhs.seedFromCheckpoint(netParams, checkpoint)
++			if err != nil {
++				return nil, err
++			}
++		}
++
+ 		return bhs, nil
+ 	}
+ 
+@@ -232,7 +261,55 @@
+ 
+ 	return bhs, nil
+ }
++
++// seedFromCheckpoint writes the checkpoint's headers at their real offsets in
++// the flat file (leaving the range between genesis and the first bundled
++// header unwritten) and indexes them, making the checkpoint height the chain
++// tip. The genesis header must already be written.
++func (h *blockHeaderStore) seedFromCheckpoint(netParams *chaincfg.Params,
++	checkpoint *Checkpoint) error {
+ 
++	if err := checkpoint.Validate(netParams.Net); err != nil {
++		return err
++	}
++
++	h.mtx.Lock()
++	defer h.mtx.Unlock()
++
++	startHeight := checkpoint.StartHeight()
++
++	headerBuf := headerBufPool.Get().(*bytes.Buffer)
++	headerBuf.Reset()
++	defer headerBufPool.Put(headerBuf)
++
++	entries := make(headerBatch, 0, len(checkpoint.Headers))
++	for i := range checkpoint.Headers {
++		header := &checkpoint.Headers[i]
++		if err := header.Serialize(headerBuf); err != nil {
++			return err
++		}
++		entries = append(entries, headerEntry{
++			hash:   header.BlockHash(),
++			height: startHeight + uint32(i),
++		})
++	}
++
++	offset := int64(startHeight) * BlockHeaderSize
++	if err := h.writeAt(headerBuf.Bytes(), offset); err != nil {
++		return err
++	}
++
++	if err := h.addHeaders(entries); err != nil {
++		return err
++	}
++	if err := h.putStartHeight(startHeight); err != nil {
++		return err
++	}
++	h.startHeight = startHeight
++
++	return nil
++}
++
+ // FetchHeader attempts to retrieve a block header determined by the passed
+ // block height.
+ //
+@@ -451,6 +528,12 @@
+ 			height -= decrement
+ 		}
+ 
++		// Headers below the seeded start height are not stored, so
++		// fall through to genesis.
++		if h.startHeight > 0 && height < h.startHeight {
++			height = 0
++		}
++
+ 		blockHeader, err := h.FetchHeaderByHeight(height)
+ 		if err != nil {
+ 			return locator, err
+@@ -611,7 +694,24 @@
+ func NewFilterHeaderStore(filePath string, db walletdb.DB,
+ 	filterType HeaderType, netParams *chaincfg.Params,
+ 	headerStateAssertion *FilterHeader) (*FilterHeaderStore, error) {
++
++	return NewFilterHeaderStoreFromCheckpoint(
++		filePath, db, filterType, netParams, headerStateAssertion, nil,
++	)
++}
+ 
++// NewFilterHeaderStoreFromCheckpoint is like NewFilterHeaderStore but seeds
++// an empty store with the checkpoint's filter header at the checkpoint
++// height, so filter header sync starts there instead of genesis. The block
++// header store must already be seeded from the same checkpoint, as the filter
++// header index relies on the block header index. A nil checkpoint, or a
++// store that already holds headers, behaves exactly like
++// NewFilterHeaderStore.
++func NewFilterHeaderStoreFromCheckpoint(filePath string, db walletdb.DB,
++	filterType HeaderType, netParams *chaincfg.Params,
++	headerStateAssertion *FilterHeader, checkpoint *Checkpoint) (
++	*FilterHeaderStore, error) {
++
+ 	fStore, err := newHeaderStore(db, filePath, filterType)
+ 	if err != nil {
+ 		return nil, err
+@@ -663,6 +763,13 @@
+ 		}
+ 		if err := fhs.WriteHeaders(genesisHeader); err != nil {
+ 			return nil, err
++		}
++
++		if checkpoint != nil {
++			err := fhs.seedFromCheckpoint(netParams, checkpoint)
++			if err != nil {
++				return nil, err
++			}
+ 		}
+ 
+ 		return fhs, nil
+@@ -725,6 +832,36 @@
+ 	return fhs, nil
+ }
+ 
++// seedFromCheckpoint writes the checkpoint's filter header at the checkpoint
++// height (leaving the range between genesis and it unwritten) and makes it
++// the filter header tip. The genesis filter header must already be written.
++func (f *FilterHeaderStore) seedFromCheckpoint(netParams *chaincfg.Params,
++	checkpoint *Checkpoint) error {
++
++	if err := checkpoint.Validate(netParams.Net); err != nil {
++		return err
++	}
++
++	f.mtx.Lock()
++	defer f.mtx.Unlock()
++
++	offset := int64(checkpoint.Height) * RegularFilterHeaderSize
++	if err := f.writeAt(checkpoint.FilterHeader[:], offset); err != nil {
++		return err
++	}
++
++	tipHash := checkpoint.Headers[len(checkpoint.Headers)-1].BlockHash()
++	if err := f.truncateIndex(&tipHash, false); err != nil {
++		return err
++	}
++	if err := f.putStartHeight(checkpoint.Height); err != nil {
++		return err
++	}
++	f.startHeight = checkpoint.Height
++
++	return nil
++}
++
+ // maybeResetHeaderState will reset the header state if the header assertion
+ // fails, but only if the target height is found. The boolean returned indicates
+ // that header state was reset.
+--- a/neutrino.go
++++ b/neutrino.go
+@@ -621,6 +621,13 @@
+ 	// up and this filter header state has diverged, then it'll remove the
+ 	// current on disk filter headers to sync them anew.
+ 	AssertFilterHeader *headerfs.FilterHeader
++
++	// HeaderCheckpoint is an optional trusted snapshot of the header
++	// chain. When set and the data directory holds no headers yet, the
++	// block and filter header stores are seeded from it and sync starts
++	// at its height instead of genesis. It has no effect on a data
++	// directory that already holds headers.
++	HeaderCheckpoint *headerfs.Checkpoint
+ 
+ 	// BroadcastTimeout is the amount of time we'll wait before giving up on
+ 	// a transaction broadcast attempt. Broadcasting transactions consists
+@@ -812,15 +819,15 @@
+ 		)
+ 	}
+ 
+-	s.BlockHeaders, err = headerfs.NewBlockHeaderStore(
+-		cfg.DataDir, cfg.Database, &cfg.ChainParams,
++	s.BlockHeaders, err = headerfs.NewBlockHeaderStoreFromCheckpoint(
++		cfg.DataDir, cfg.Database, &cfg.ChainParams, cfg.HeaderCheckpoint,
+ 	)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	s.RegFilterHeaders, err = headerfs.NewFilterHeaderStore(
++	s.RegFilterHeaders, err = headerfs.NewFilterHeaderStoreFromCheckpoint(
+ 		cfg.DataDir, cfg.Database, headerfs.RegularFilter,
+-		&cfg.ChainParams, cfg.AssertFilterHeader,
++		&cfg.ChainParams, cfg.AssertFilterHeader, cfg.HeaderCheckpoint,
+ 	)
+ 	if err != nil {
+ 		return nil, err
+@@ -831,6 +838,22 @@
+ 		return nil, err
+ 	}
+ 
++	// Seed the MWEB leaves-at-height map from the checkpoint when nothing
++	// has been synced yet, so the heights of old MWEB outputs can be
++	// resolved without fetching the MWEB headers below the checkpoint.
++	if cp := cfg.HeaderCheckpoint; cp != nil && len(cp.MwebLeaves) > 0 {
++		leaves, err := s.MwebCoinDB.GetLeavesAtHeight()
++		if err != nil {
++			return nil, err
++		}
++		if len(leaves) == 0 {
++			err = s.MwebCoinDB.PutLeavesAtHeight(cp.MwebLeaves)
++			if err != nil {
++				return nil, err
++			}
++		}
++	}
++
+ 	bm, err := newBlockManager(&blockManagerCfg{
+ 		ChainParams:      s.chainParams,
+ 		BlockHeaders:     s.BlockHeaders,
+--- a/blockmanager.go
++++ b/blockmanager.go
+@@ -1990,6 +1990,11 @@
+ 			header, err := headerStore.FetchHeaderByHeight(
+ 				ckptHeight,
+ 			)
++			if _, ok := err.(*headerfs.ErrHeaderNotFound); ok {
++				// The store was seeded from a checkpoint and
++				// holds no header at this height.
++				continue
++			}
+ 			if err != nil {
+ 				return i, err
+ 			}
+--- a/mwebheaders.go
++++ b/mwebheaders.go
+@@ -6,6 +6,7 @@
+ 	"github.com/ltcmweb/ltcd/ltcutil/mweb"
+ 	"github.com/ltcmweb/ltcd/wire"
+ 	"github.com/ltcmweb/neutrino/banman"
++	"github.com/ltcmweb/neutrino/headerfs"
+ 	"github.com/ltcmweb/neutrino/query"
+ )
+ 
+@@ -74,6 +75,11 @@
+ 			continue
+ 		}
+ 		header, err := b.cfg.BlockHeaders.FetchHeaderByHeight(height)
++		if _, ok := err.(*headerfs.ErrHeaderNotFound); ok {
++			// The header store was seeded from a checkpoint and
++			// holds no header at this height.
++			continue
++		}
+ 		if err != nil {
+ 			return err
+ 		}

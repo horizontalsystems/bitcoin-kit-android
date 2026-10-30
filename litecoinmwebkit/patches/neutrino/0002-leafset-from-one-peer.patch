@@ -1,0 +1,215 @@
+--- a/mwebhandler.go
++++ b/mwebhandler.go
+@@ -1,12 +1,139 @@
+ package neutrino
+ 
+ import (
++	"sync"
+ 	"time"
+ 
++	"github.com/ltcmweb/ltcd/chaincfg/chainhash"
+ 	"github.com/ltcmweb/ltcd/ltcutil/mweb"
+ 	"github.com/ltcmweb/ltcd/wire"
++	"github.com/ltcmweb/neutrino/banman"
++	"github.com/ltcmweb/neutrino/query"
+ )
+ 
++// mwebLeafsetQuery fetches the mwebheader and mwebleafset of one block from a
++// single peer through the work manager, which retries on another peer when
++// the first one does not answer in time. The leafset grows with the number of
++// MWEB outputs ever created, so asking every peer for it on every block, as
++// queryAllPeers would, multiplies the per-block traffic by the peer count.
++type mwebLeafsetQuery struct {
++	blockHash chainhash.Hash
++	blockMgr  *blockManager
++
++	mtx sync.Mutex
++
++	// partial holds the half of the answer each peer has delivered so
++	// far. The header and leafset must come from the same peer to be
++	// verified against each other.
++	partial map[string]*mwebLeafsetAnswer
++
++	header  *wire.MsgMwebHeader
++	leafset *wire.MsgMwebLeafset
++}
++
++type mwebLeafsetAnswer struct {
++	header  *wire.MsgMwebHeader
++	leafset *wire.MsgMwebLeafset
++}
++
++// getMwebLeafset returns the verified mwebheader and mwebleafset at the
++// given block hash.
++func (b *blockManager) getMwebLeafset(blockHash *chainhash.Hash) (
++	*wire.MsgMwebHeader, *wire.MsgMwebLeafset, error) {
++
++	gdmsg := wire.NewMsgGetData()
++	gdmsg.AddInvVect(wire.NewInvVect(wire.InvTypeMwebHeader, blockHash))
++	gdmsg.AddInvVect(wire.NewInvVect(wire.InvTypeMwebLeafset, blockHash))
++
++	q := &mwebLeafsetQuery{
++		blockHash: *blockHash,
++		blockMgr:  b,
++		partial:   make(map[string]*mwebLeafsetAnswer),
++	}
++
++	errChan := b.cfg.QueryDispatcher.Query(
++		[]*query.Request{{Req: gdmsg, HandleResp: q.handleResponse}},
++		query.Cancel(b.quit),
++	)
++
++	select {
++	case err := <-errChan:
++		if err == query.ErrWorkManagerShuttingDown {
++			return nil, nil, ErrShuttingDown
++		}
++		if err != nil {
++			return nil, nil, err
++		}
++	case <-b.quit:
++		return nil, nil, ErrShuttingDown
++	}
++
++	q.mtx.Lock()
++	defer q.mtx.Unlock()
++	if q.header == nil || q.leafset == nil {
++		return nil, nil, query.ErrQueryTimeout
++	}
++	return q.header, q.leafset, nil
++}
++
++// handleResponse is the response handler for the mwebheader and mwebleafset
++// getdata request.
++func (q *mwebLeafsetQuery) handleResponse(req, resp wire.Message,
++	peerAddr string) query.Progress {
++
++	q.mtx.Lock()
++	defer q.mtx.Unlock()
++
++	answer := q.partial[peerAddr]
++	if answer == nil {
++		answer = &mwebLeafsetAnswer{}
++		q.partial[peerAddr] = answer
++	}
++
++	switch m := resp.(type) {
++	case *wire.MsgMwebHeader:
++		if m.Merkle.Header.BlockHash() != q.blockHash {
++			return query.Progress{}
++		}
++		if err := mweb.VerifyHeader(m); err != nil {
++			log.Warnf("Failed to verify mwebheader at block hash "+
++				"%v from peer %v: %v", q.blockHash, peerAddr, err)
++			q.banPeer(peerAddr, banman.InvalidMwebHeader)
++			return query.Progress{}
++		}
++		answer.header = m
++
++	case *wire.MsgMwebLeafset:
++		answer.leafset = m
++
++	default:
++		return query.Progress{}
++	}
++
++	if answer.header == nil || answer.leafset == nil {
++		return query.Progress{Progressed: true}
++	}
++
++	if err := mweb.VerifyLeafset(answer.header, answer.leafset); err != nil {
++		log.Warnf("Failed to verify mwebleafset at block hash %v "+
++			"from peer %v: %v", q.blockHash, peerAddr, err)
++		q.banPeer(peerAddr, banman.InvalidMwebHeader)
++		delete(q.partial, peerAddr)
++		return query.Progress{}
++	}
++
++	q.header = answer.header
++	q.leafset = answer.leafset
++
++	return query.Progress{Finished: true, Progressed: true}
++}
++
++func (q *mwebLeafsetQuery) banPeer(peerAddr string, reason banman.Reason) {
++	if err := q.blockMgr.cfg.BanPeer(peerAddr, reason); err != nil {
++		log.Errorf("Unable to ban peer %v: %v", peerAddr, err)
++	}
++}
++
+ // mwebHandler is the mweb download handler for the block manager. It must be
+ // run as a goroutine. It requests and processes mweb messages in a
+ // separate goroutine from the peer handlers.
+@@ -77,62 +204,18 @@
+ 			continue
+ 		}
+ 
+-		gdmsg := wire.NewMsgGetData()
+-		gdmsg.AddInvVect(wire.NewInvVect(wire.InvTypeMwebHeader, &lastHash))
+-		gdmsg.AddInvVect(wire.NewInvVect(wire.InvTypeMwebLeafset, &lastHash))
+-
+-		var (
+-			mwebHeader  *wire.MsgMwebHeader
+-			mwebLeafset *wire.MsgMwebLeafset
+-			verified    bool
+-		)
+-		b.cfg.queryAllPeers(
+-			gdmsg,
+-			func(sp *ServerPeer, resp wire.Message, quit chan<- struct{},
+-				peerQuit chan<- struct{}) {
+-
+-				switch m := resp.(type) {
+-				case *wire.MsgMwebHeader:
+-					if m.Merkle.Header.BlockHash() != lastHash {
+-						return
+-					}
+-					if err := mweb.VerifyHeader(m); err != nil {
+-						log.Infof("Failed to verify mwebheader: %v", err)
+-						return
+-					}
+-					mwebHeader = m
+-
+-				case *wire.MsgMwebLeafset:
+-					mwebLeafset = m
+-
+-				default:
+-					return
+-				}
+-
+-				if mwebHeader == nil || mwebLeafset == nil {
+-					return
+-				}
+-
+-				err := mweb.VerifyLeafset(mwebHeader, mwebLeafset)
+-				if err != nil {
+-					log.Infof("Failed to verify mwebleafset: %v", err)
+-					return
+-				}
+-
+-				verified = true
+-
+-				close(quit)
+-				close(peerQuit)
+-			},
+-		)
+-		select {
+-		case <-b.quit:
++		mwebHeader, mwebLeafset, err := b.getMwebLeafset(&lastHash)
++		if err == ErrShuttingDown {
+ 			return
+-		default:
+-			if !verified {
+-				time.Sleep(time.Second)
+-				continue
++		} else if err != nil {
++			log.Infof("Failed to fetch mwebheader and mwebleafset "+
++				"at block hash %v: %v", lastHash, err)
++			select {
++			case <-time.After(time.Second):
++			case <-b.quit:
++				return
+ 			}
++			continue
+ 		}
+ 
+ 		log.Infof("Verified mwebheader and mwebleafset at "+

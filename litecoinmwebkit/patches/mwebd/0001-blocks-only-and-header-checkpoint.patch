@@ -1,0 +1,42 @@
+--- a/server.go
++++ b/server.go
+@@ -28,6 +28,7 @@
+ 	"github.com/ltcmweb/mwebd/proto"
+ 	"github.com/ltcmweb/mwebd/sign"
+ 	"github.com/ltcmweb/neutrino"
++	"github.com/ltcmweb/neutrino/headerfs"
+ 	"github.com/ltcmweb/neutrino/mwebdb"
+ 	"github.com/ltcsuite/ltcwallet/walletdb"
+ 	_ "github.com/ltcsuite/ltcwallet/walletdb/bdb"
+@@ -50,6 +51,16 @@
+ 
+ type ServerArgs struct {
+ 	Chain, DataDir, PeerAddr, ProxyAddr string
++
++	// BlocksOnly asks peers not to relay unconfirmed transactions. The
++	// daemon learns about its own unconfirmed MWEB outputs through
++	// Broadcast, so the relay traffic is pure overhead for it.
++	BlocksOnly bool
++
++	// HeaderCheckpoint seeds an empty data directory with a trusted
++	// recent header chain snapshot so the first sync starts there
++	// instead of at genesis. It is ignored once headers exist.
++	HeaderCheckpoint *headerfs.Checkpoint
+ }
+ 
+ func NewBareServer(chainParams chaincfg.Params) *Server {
+@@ -76,9 +87,11 @@
+ 	}
+ 
+ 	cfg := neutrino.Config{
+-		DataDir:     args.DataDir,
+-		Database:    s.db,
+-		ChainParams: chaincfg.MainNetParams,
++		DataDir:          args.DataDir,
++		Database:         s.db,
++		ChainParams:      chaincfg.MainNetParams,
++		BlocksOnly:       args.BlocksOnly,
++		HeaderCheckpoint: args.HeaderCheckpoint,
+ 	}
+ 
+ 	switch args.Chain {
