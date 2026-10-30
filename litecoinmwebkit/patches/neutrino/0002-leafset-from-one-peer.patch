@@ -1,6 +1,6 @@
 --- a/mwebhandler.go
 +++ b/mwebhandler.go
-@@ -1,12 +1,139 @@
+@@ -1,12 +1,178 @@
  package neutrino
  
  import (
@@ -13,7 +13,7 @@
 +	"github.com/ltcmweb/neutrino/banman"
 +	"github.com/ltcmweb/neutrino/query"
  )
- 
++
 +// mwebLeafsetQuery fetches the mwebheader and mwebleafset of one block from a
 +// single peer through the work manager, which retries on another peer when
 +// the first one does not answer in time. The leafset grows with the number of
@@ -37,6 +37,45 @@
 +type mwebLeafsetAnswer struct {
 +	header  *wire.MsgMwebHeader
 +	leafset *wire.MsgMwebLeafset
++}
++
++const (
++	// maxLeafsetDepth is the number of blocks below their tip for which
++	// peers serve mwebleafset and getmwebutxos requests
++	// (MAX_MWEB_LEAFSET_DEPTH in Litecoin Core). Asking for an older
++	// block gets the connection dropped.
++	maxLeafsetDepth = 10
++
++	// mwebRetryDelay is the pause after a failed mwebheader/mwebleafset
++	// fetch before the tip is re-read and the fetch retried.
++	mwebRetryDelay = 5 * time.Second
++)
++
++// headerTipIsStale reports whether the tip header is old enough that peers
++// are likely to be more than maxLeafsetDepth blocks ahead of it.
++func (b *blockManager) headerTipIsStale(tip *wire.BlockHeader) bool {
++	maxAge := time.Duration(maxLeafsetDepth) *
++		b.cfg.ChainParams.TargetTimePerBlock
++	return b.cfg.TimeSource.AdjustedTime().Sub(tip.Timestamp) > maxAge
++}
++
++// waitForHeaders blocks until the header tip has advanced past height,
++// mwebRetryDelay has passed, or the block manager is shutting down.
++func (b *blockManager) waitForHeaders(height uint32) {
++	deadline := time.Now().Add(mwebRetryDelay)
++	timer := time.AfterFunc(mwebRetryDelay, b.newHeadersSignal.Broadcast)
++	defer timer.Stop()
++
++	b.newHeadersSignal.L.Lock()
++	defer b.newHeadersSignal.L.Unlock()
++	for height >= b.headerTip && time.Now().Before(deadline) {
++		b.newHeadersSignal.Wait()
++		select {
++		case <-b.quit:
++			return
++		default:
++		}
++	}
 +}
 +
 +// getMwebLeafset returns the verified mwebheader and mwebleafset at the
@@ -105,7 +144,7 @@
 +			return query.Progress{}
 +		}
 +		answer.header = m
-+
+ 
 +	case *wire.MsgMwebLeafset:
 +		answer.leafset = m
 +
@@ -140,7 +179,28 @@
  // mwebHandler is the mweb download handler for the block manager. It must be
  // run as a goroutine. It requests and processes mweb messages in a
  // separate goroutine from the peer handlers.
-@@ -77,62 +204,18 @@
+@@ -65,6 +231,20 @@
+ 
+ 		lastHash := lastHeader.BlockHash()
+ 
++		// Peers serve the leafset only for blocks within
++		// maxLeafsetDepth of their tip and disconnect us for anything
++		// deeper. BlockHeadersSynced can report true while no sync
++		// peer is chosen yet (right after start, or when the sync peer
++		// just left), so also require the tip header to be recent
++		// before asking; otherwise wait for the header sync to catch
++		// up.
++		if b.headerTipIsStale(lastHeader) {
++			log.Infof("Header tip at height %v is too old for an mweb "+
++				"sync, waiting for new headers", lastHeight)
++			b.waitForHeaders(lastHeight)
++			continue
++		}
++
+ 		log.Infof("Starting mweb sync at (block_height=%v, block_hash=%v)",
+ 			lastHeight, lastHash)
+ 
+@@ -77,62 +257,18 @@
  			continue
  		}
  
@@ -205,7 +265,7 @@
 +			log.Infof("Failed to fetch mwebheader and mwebleafset "+
 +				"at block hash %v: %v", lastHash, err)
 +			select {
-+			case <-time.After(time.Second):
++			case <-time.After(mwebRetryDelay):
 +			case <-b.quit:
 +				return
  			}

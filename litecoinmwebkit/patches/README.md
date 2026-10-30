@@ -61,6 +61,19 @@ keeping the first verified answer. The leafset is one bit per MWEB output ever
 created (48 KB today), so with eight peers the old behaviour cost about
 400 KB per block; now it is about 55 KB.
 
+The same patch stops the handler from asking for the leafset of a stale
+tip. Litecoin Core serves `mwebleafset` and `getmwebutxos` only for blocks
+within 10 of its tip (`MAX_MWEB_LEAFSET_DEPTH`) and disconnects a peer that
+asks for anything older. `BlockHeadersSynced` is true whenever no sync peer
+is selected, which is the case right after start-up and whenever the sync
+peer just left, so the unpatched handler requests the leafset of whatever
+tip is on disk; after a checkpoint start, or a restart after an hour away,
+that tip is always too deep. With few peers (testnet has two) every
+connection was dropped before any header arrived and the sync never
+progressed. Now the handler waits for new headers while the tip header is
+older than 10 block intervals, and pauses 5 seconds instead of 1 after a
+failed fetch.
+
 ## mwebd/0001-blocks-only-and-header-checkpoint.patch
 
 Adds two fields to `mwebd.ServerArgs` and forwards them to `neutrino.Config`:
