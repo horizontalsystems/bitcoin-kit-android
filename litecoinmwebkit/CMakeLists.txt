@@ -14,9 +14,13 @@ set(EXTERNAL_LIBS_DIR ${CMAKE_SOURCE_DIR}/external-libs)
 # libmwebd: the MWEB daemon built by go/build.sh
 ############
 
+# IMPORTED_NO_SONAME makes the linker record the plain file name as the
+# dependency (libmwebd.so carries no SONAME), so the runtime loader finds it
+# next to libmwebkit.so instead of looking for the build-time path.
 add_library(mwebd SHARED IMPORTED)
-set_target_properties(mwebd PROPERTIES IMPORTED_LOCATION
-        ${EXTERNAL_LIBS_DIR}/${ANDROID_ABI}/libmwebd.so)
+set_target_properties(mwebd PROPERTIES
+        IMPORTED_LOCATION ${EXTERNAL_LIBS_DIR}/${ANDROID_ABI}/libmwebd.so
+        IMPORTED_NO_SONAME TRUE)
 
 target_include_directories(mwebkit PRIVATE ${EXTERNAL_LIBS_DIR}/include)
 
