@@ -48,7 +48,8 @@ data class MwebTransactionInfo(
     val amount: Long,
     /** Total fee paid, when this wallet created the transaction. */
     val fee: Long?,
-    val timestamp: Long,
+    /** Block time, or null for an output confirmed below the header checkpoint, whose block time is unknown. */
+    val timestamp: Long?,
     /** Block height, null while pending. */
     val blockHeight: Int?,
     val status: MwebTransactionStatus,

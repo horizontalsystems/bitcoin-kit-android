@@ -151,7 +151,7 @@ class MwebViewModel : ViewModel(), LitecoinKit.Listener {
     }
 
     private fun describe(tx: MwebTransactionInfo): String {
-        val when_ = dateFormat.format(Date(tx.timestamp * 1000))
+        val when_ = tx.timestamp?.let { dateFormat.format(Date(it * 1000)) } ?: "unknown date"
         val where = tx.toAddress ?: tx.ownAddress ?: ""
         return "$when_ ${tx.type} ${tx.status} ${format(tx.amount)} LTC" +
                 (tx.fee?.let { " fee $it" } ?: "") +

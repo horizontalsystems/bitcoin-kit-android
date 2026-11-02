@@ -48,6 +48,7 @@ data class MwebTransaction(
     val amount: Long,
     /** Total fee paid by this wallet, when it created the transaction. */
     val fee: Long?,
+    /** Block time, or 0 when unknown (confirmed below the header checkpoint). */
     val timestamp: Long,
     /** Block height, 0 while pending. */
     val height: Int,
@@ -117,10 +118,10 @@ interface MwebUtxoDao {
 
 @Dao
 interface MwebTransactionDao {
-    @Query("SELECT * FROM MwebTransaction ORDER BY timestamp DESC, uid DESC")
+    @Query("SELECT * FROM MwebTransaction ORDER BY timestamp DESC, height DESC, uid DESC")
     fun allFlow(): Flow<List<MwebTransaction>>
 
-    @Query("SELECT * FROM MwebTransaction ORDER BY timestamp DESC, uid DESC")
+    @Query("SELECT * FROM MwebTransaction ORDER BY timestamp DESC, height DESC, uid DESC")
     fun all(): List<MwebTransaction>
 
     @Query("SELECT * FROM MwebTransaction WHERE status = :status")

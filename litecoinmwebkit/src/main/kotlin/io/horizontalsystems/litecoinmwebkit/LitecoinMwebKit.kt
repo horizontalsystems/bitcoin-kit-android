@@ -641,7 +641,7 @@ class LitecoinMwebKit(
         if (existing != null) {
             if (utxo.height > 0 && existing.height != utxo.height) {
                 db.utxos().update(existing.copy(height = utxo.height, blockTime = utxo.blockTime.toLong()))
-                confirmOwnTransaction(existing.createdByTxUid, utxo.height, utxo.blockTime.toLong())
+                confirmOwnTransaction(existing.createdByTxUid, utxo.height, utxo.blockTime.toLong().takeIf { it > 0 })
             }
             return
         }
@@ -653,8 +653,15 @@ class LitecoinMwebKit(
         }
 
         val ownTx = db.transactions().all().firstOrNull { tx -> utxo.outputId in tx.outputIds.split(',') }
-        val now = System.currentTimeMillis() / 1000
-        val timestamp = if (utxo.blockTime > 0) utxo.blockTime.toLong() else now
+        // The daemon reports no block time for outputs mined below the header
+        // checkpoint, where it holds no headers. Such a row keeps timestamp 0,
+        // "unknown", rather than the time of the restore; only an unconfirmed
+        // output is dated by the clock.
+        val timestamp = when {
+            utxo.blockTime > 0 -> utxo.blockTime.toLong()
+            utxo.height > 0 -> 0L
+            else -> System.currentTimeMillis() / 1000
+        }
         db.utxos().insert(
             MwebUtxo(
                 outputId = utxo.outputId,
@@ -668,7 +675,7 @@ class LitecoinMwebKit(
         )
 
         if (ownTx != null) {
-            if (utxo.height > 0) confirmOwnTransaction(ownTx.uid, utxo.height, timestamp)
+            if (utxo.height > 0) confirmOwnTransaction(ownTx.uid, utxo.height, timestamp.takeIf { it > 0 })
             return
         }
 
@@ -690,10 +697,10 @@ class LitecoinMwebKit(
         )
     }
 
-    private fun confirmOwnTransaction(uid: String?, height: Int, timestamp: Long) {
+    private fun confirmOwnTransaction(uid: String?, height: Int, timestamp: Long?) {
         val tx = db.transactions().get(uid ?: return) ?: return
         if (tx.status == MwebTransaction.STATUS_CONFIRMED) return
-        db.transactions().update(tx.copy(status = MwebTransaction.STATUS_CONFIRMED, height = height, timestamp = timestamp))
+        db.transactions().update(tx.copy(status = MwebTransaction.STATUS_CONFIRMED, height = height, timestamp = timestamp ?: tx.timestamp))
     }
 
     /**
@@ -765,7 +772,7 @@ class LitecoinMwebKit(
         },
         amount = amount,
         fee = fee,
-        timestamp = timestamp,
+        timestamp = timestamp.takeIf { it > 0 },
         blockHeight = height.takeIf { it > 0 },
         status = when (status) {
             MwebTransaction.STATUS_CONFIRMED -> MwebTransactionStatus.Confirmed
